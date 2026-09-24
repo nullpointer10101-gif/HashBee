@@ -16,6 +16,7 @@ type Config struct {
 	// Telegram
 	BotToken      string
 	BotUsername   string
+	MiniAppURL    string
 	WebhookURL    string
 	WebhookSecret string
 
@@ -73,6 +74,7 @@ func Load() (*Config, error) {
 		Env:           getEnv("ENV", "development"),
 		BotToken:      getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", "")),
 		BotUsername:   getEnv("BOT_USERNAME", "hashbe_bot"),
+		MiniAppURL:    getEnv("MINIAPP_URL", "https://miniapp-five-topaz.vercel.app"),
 		WebhookURL:    getEnv("WEBHOOK_URL", ""),
 		WebhookSecret: getEnv("WEBHOOK_SECRET", ""),
 		DatabaseURL:   mustGetEnv("DATABASE_URL"),

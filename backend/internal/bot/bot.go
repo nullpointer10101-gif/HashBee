@@ -65,11 +65,18 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		_ = args
 	}
 
-	miniAppURL := fmt.Sprintf("https://t.me/%s/app", b.cfg.BotUsername)
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
 
+	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("🍯 Open HashBee", miniAppURL),
+			tgbotapi.InlineKeyboardButton{
+				Text:   "🍯 Open HashBee Miner",
+				WebApp: &webApp,
+			},
 		),
 	)
 
