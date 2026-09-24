@@ -86,6 +86,9 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 				WebApp: &webApp,
 			},
 		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonURL("🌐 Open WebApp Directly", miniAppURL),
+		),
 	)
 
 	welcomeText := `🐝 *Welcome to HashBee!*
