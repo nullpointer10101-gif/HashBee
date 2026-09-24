@@ -39,7 +39,7 @@ func (h *UserHandler) Auth(c *gin.Context) {
 		refID, err := uuid.Parse(referrerIDStr)
 		if err == nil && refID != u.ID {
 			// Try to set referrer — ignore error if already set
-			h.userSvc.SetReferrer(c.Request.Context(), u.ID, refID)
+			h.referralSvc.SetReferrer(c.Request.Context(), u.ID, refID)
 		}
 	}
 

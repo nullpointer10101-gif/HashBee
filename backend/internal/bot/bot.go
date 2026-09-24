@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -11,9 +12,9 @@ import (
 )
 
 type Bot struct {
-	api      *tgbotapi.BotAPI
-	cfg      *config.Config
-	userSvc  *services.UserService
+	api     *tgbotapi.BotAPI
+	cfg     *config.Config
+	userSvc *services.UserService
 }
 
 func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
@@ -32,7 +33,6 @@ func (b *Bot) SetWebhook(webhookURL string) error {
 	if err != nil {
 		return err
 	}
-	wh.SecretToken = b.cfg.WebhookSecret
 	_, err = b.api.Request(wh)
 	return err
 }
@@ -59,22 +59,17 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 }
 
 func (b *Bot) handleStart(msg *tgbotapi.Message) {
-	// Parse referrer from /start payload
 	args := msg.CommandArguments()
 	var referrerTelegramID *int64
-
 	if args != "" {
-		// The start param is the referrer's UUID user_id
-		// We resolve it separately — for the bot message we just note it
 		_ = args
 	}
 
 	miniAppURL := fmt.Sprintf("https://t.me/%s/app", b.cfg.BotUsername)
 
-	// Build inline keyboard with Open button
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonWebApp("🍯 Open HashBee", tgbotapi.WebAppInfo{URL: miniAppURL}),
+			tgbotapi.NewInlineKeyboardButtonURL("🍯 Open HashBee", miniAppURL),
 		),
 	)
 
@@ -115,7 +110,7 @@ Use /balance to check your current balance.`
 }
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
-	user, err := b.userSvc.GetByTelegramID(msg.Context(), msg.From.ID)
+	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
 		reply := tgbotapi.NewMessage(msg.Chat.ID, "You don't have an account yet. Open the app to get started!")
 		b.api.Send(reply)
@@ -140,7 +135,7 @@ func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	miniAppURL := fmt.Sprintf("https://t.me/%s/app", b.cfg.BotUsername)
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonWebApp("🍯 Collect Now", tgbotapi.WebAppInfo{URL: miniAppURL}),
+			tgbotapi.NewInlineKeyboardButtonURL("🍯 Collect Now", miniAppURL),
 		),
 	)
 
