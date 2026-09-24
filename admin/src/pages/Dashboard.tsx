@@ -55,21 +55,41 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [userQuery, setUserQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
   const api = axios.create({
-    baseURL: '/api/v1/admin',
+    baseURL: `${API_BASE}/api/admin`,
     headers: { Authorization: `Bearer ${token}` },
   })
 
   const loadData = async () => {
     try {
       const [statsRes, wRes, cRes] = await Promise.all([
-        api.get('/stats'),
-        api.get('/withdrawals/pending'),
+        api.get('/dashboard'),
+        api.get('/withdrawals'),
         api.get('/campaigns'),
       ])
-      setStats(statsRes.data.data)
-      setWithdrawals(wRes.data.data)
-      setCampaigns(cRes.data.data)
+      const s = statsRes.data || {}
+      setStats({
+        total_users: s.total_users || 0,
+        active_users_24h: s.dau || 0,
+        total_honey_supply: s.total_honey_issued || 0,
+        total_usd_liability: (s.total_honey_issued || 0) * 0.0001,
+        total_campaign_revenue: 0,
+        pending_withdrawals_count: s.pending_withdrawals || 0,
+      })
+      const wList = wRes.data?.withdrawals || []
+      setWithdrawals(wList.map((w: any) => ({
+        id: w.id,
+        user_id: w.user_id,
+        username: w.username || 'miner',
+        amount_honey: w.honey_amount || w.amount,
+        amount_usd: (w.honey_amount || w.amount) * 0.0001,
+        wallet_address: w.address,
+        payout_method: w.network,
+        status: w.status,
+        created_at: w.created_at,
+      })))
+      setCampaigns(cRes.data?.campaigns || [])
     } catch (err: any) {
       // Mock fallback data for dev
       setStats({
@@ -128,7 +148,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
   const handleApproveWithdrawal = async (id: string) => {
     try {
-      await api.post(`/withdrawals/${id}/approve`)
+      await api.patch(`/withdrawals/${id}`, { status: 'approved' })
       toast.success('Withdrawal approved! Payout initiated.')
       setWithdrawals((prev) => prev.filter((w) => w.id !== id))
     } catch (err: any) {
@@ -138,7 +158,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
   const handleRejectWithdrawal = async (id: string) => {
     try {
-      await api.post(`/withdrawals/${id}/reject`, { reason: 'Policy violation / suspicious activity' })
+      await api.patch(`/withdrawals/${id}`, { status: 'rejected', reason: 'Policy violation / suspicious activity' })
       toast.success('Withdrawal rejected. Funds refunded to user.')
       setWithdrawals((prev) => prev.filter((w) => w.id !== id))
     } catch (err: any) {

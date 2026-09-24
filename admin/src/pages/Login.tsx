@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
+
 export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
@@ -12,9 +14,10 @@ export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin 
     setLoading(true)
 
     try {
-      const res = await axios.post('/api/v1/admin/login', { username, password })
+      const res = await axios.post(`${API_BASE}/api/admin/login`, { username, password })
       toast.success('Admin login successful!')
-      onLogin(res.data.data.token)
+      const token = res.data?.token || res.data?.data?.token
+      onLogin(token)
     } catch (err: any) {
       // Dev mode fallback
       if (password === 'admin123' || password === '') {
