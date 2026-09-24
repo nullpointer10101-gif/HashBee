@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"hashbee/internal/models"
 )
@@ -136,8 +137,12 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, ownerID uuid.UUID,
 	return campaign, tx.Commit(ctx)
 }
 
-func (s *CampaignService) createMissionForCampaign(ctx context.Context, tx interface{ Exec(ctx context.Context, sql string, arguments ...any) (interface{}, error) }, campaign *models.Campaign) error {
-	return nil // Will be handled by a real pgx.Tx — simplified here
+func (s *CampaignService) createMissionForCampaign(ctx context.Context, tx pgx.Tx, campaign *models.Campaign) error {
+	_, err := tx.Exec(ctx,
+		`INSERT INTO missions (id, type, target, title, description, reward_bp, campaign_id, sort_order, status, is_official, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, 'Sponsored mission', $5, $6, 10, 'active', false, NOW(), NOW())`,
+		uuid.New(), campaign.Type, campaign.Target, campaign.Title, campaign.RewardBP, campaign.ID)
+	return err
 }
 
 // GetUserCampaigns returns campaigns owned by a user
