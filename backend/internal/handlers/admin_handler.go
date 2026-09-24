@@ -1,0 +1,487 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
+	"hashbee/internal/config"
+	"hashbee/internal/models"
+	"hashbee/internal/services"
+)
+
+type AdminHandler struct {
+	cfg         *config.Config
+	db          *pgxpool.Pool
+	userSvc     *services.UserService
+	settings    *services.SettingsService
+	campaignSvc *services.CampaignService
+	withdrawSvc *services.WithdrawalService
+}
+
+func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.UserService, settings *services.SettingsService, campaignSvc *services.CampaignService, withdrawSvc *services.WithdrawalService) *AdminHandler {
+	return &AdminHandler{cfg: cfg, db: db, userSvc: userSvc, settings: settings, campaignSvc: campaignSvc, withdrawSvc: withdrawSvc}
+}
+
+// POST /api/admin/login
+func (h *AdminHandler) Login(c *gin.Context) {
+	var req struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var admin models.AdminUser
+	err := h.db.QueryRow(c.Request.Context(),
+		`SELECT id, email, password_hash, role, status FROM admin_users WHERE email = $1 AND status = 'active'`,
+		req.Email).Scan(&admin.ID, &admin.Email, &admin.PasswordHash, &admin.Role, &admin.Status)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(req.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		return
+	}
+
+	type AdminClaims struct {
+		AdminID string `json:"admin_id"`
+		Email   string `json:"email"`
+		Role    string `json:"role"`
+		jwt.RegisteredClaims
+	}
+
+	claims := AdminClaims{
+		AdminID: admin.ID.String(),
+		Email:   admin.Email,
+		Role:    admin.Role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(8 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString([]byte(h.cfg.AdminJWTSecret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "token error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": signed,
+		"admin": gin.H{"id": admin.ID, "email": admin.Email, "role": admin.Role},
+	})
+}
+
+// GET /api/admin/dashboard
+func (h *AdminHandler) Dashboard(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var stats struct {
+		TotalUsers       int     `json:"total_users"`
+		DAU              int     `json:"dau"`
+		MAU              int     `json:"mau"`
+		NewUsersToday    int     `json:"new_users_today"`
+		TotalBP          float64 `json:"total_bp"`
+		TotalHoneyIssued float64 `json:"total_honey_issued"`
+		PendingWithdrawals int   `json:"pending_withdrawals"`
+		PendingWithdrawalValue float64 `json:"pending_withdrawal_value"`
+		CampaignRevenue  float64 `json:"campaign_revenue"`
+		TotalHoneyLiability float64 `json:"total_honey_liability"`
+	}
+
+	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&stats.TotalUsers)
+	h.db.QueryRow(ctx, `SELECT COUNT(DISTINCT user_id) FROM analytics_events WHERE created_at >= NOW() - INTERVAL '1 day'`).Scan(&stats.DAU)
+	h.db.QueryRow(ctx, `SELECT COUNT(DISTINCT user_id) FROM analytics_events WHERE created_at >= NOW() - INTERVAL '30 days'`).Scan(&stats.MAU)
+	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '1 day'`).Scan(&stats.NewUsersToday)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(bp), 0) FROM users`).Scan(&stats.TotalBP)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'collect' AND currency = 'HONEY'`).Scan(&stats.TotalHoneyIssued)
+	h.db.QueryRow(ctx, `SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM withdrawals WHERE status = 'pending'`).Scan(&stats.PendingWithdrawals, &stats.PendingWithdrawalValue)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'campaign_payment' AND currency = 'HONEY' AND amount < 0`).Scan(&stats.CampaignRevenue)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(honey_balance), 0) FROM users`).Scan(&stats.TotalHoneyLiability)
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// GET /api/admin/users
+func (h *AdminHandler) ListUsers(c *gin.Context) {
+	search := c.Query("search")
+	status := c.Query("status")
+	limit := 50
+	offset := 0
+	if l := c.Query("limit"); l != "" {
+		if v, _ := strconv.Atoi(l); v > 0 && v <= 200 {
+			limit = v
+		}
+	}
+	if o := c.Query("offset"); o != "" {
+		if v, _ := strconv.Atoi(o); v >= 0 {
+			offset = v
+		}
+	}
+
+	users, total, err := h.userSvc.AdminGetUsers(c.Request.Context(), search, status, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"users": users, "total": total})
+}
+
+// PATCH /api/admin/users/:id/status
+func (h *AdminHandler) UpdateUserStatus(c *gin.Context) {
+	adminID := c.GetString("admin_id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req struct {
+		Status string `json:"status" binding:"required"`
+		Reason string `json:"reason"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validStatuses := map[string]bool{"active": true, "banned": true, "flagged": true}
+	if !validStatuses[req.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+		return
+	}
+
+	_, err = h.db.Exec(c.Request.Context(),
+		`UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2`, req.Status, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update status"})
+		return
+	}
+
+	// Audit log
+	adminUUID, _ := uuid.Parse(adminID)
+	targetType := "user"
+	h.db.Exec(c.Request.Context(),
+		`INSERT INTO audit_logs (id, admin_id, action, target_type, target_id, ip_address, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+		uuid.New(), adminUUID, "update_user_status_"+req.Status, targetType, userID, c.ClientIP())
+
+	c.JSON(http.StatusOK, gin.H{"message": "User status updated"})
+}
+
+// PATCH /api/admin/users/:id/balance
+func (h *AdminHandler) AdjustBalance(c *gin.Context) {
+	adminID := c.GetString("admin_id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req struct {
+		Type   string  `json:"type" binding:"required"` // honey, bp
+		Amount float64 `json:"amount" binding:"required"`
+		Reason string  `json:"reason"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+	tx, _ := h.db.Begin(ctx)
+	defer tx.Rollback(ctx)
+
+	switch req.Type {
+	case "honey":
+		tx.Exec(ctx, `UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`, req.Amount, userID)
+	case "bp":
+		tx.Exec(ctx, `UPDATE users SET bp = bp + $1, updated_at = NOW() WHERE id = $2`, req.Amount, userID)
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "type must be honey or bp"})
+		return
+	}
+
+	currency := "HONEY"
+	if req.Type == "bp" {
+		currency = "BP"
+	}
+	adminUUID, _ := uuid.Parse(adminID)
+	desc := "Admin adjustment: " + req.Reason
+	tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
+		 VALUES ($1, $2, 'adjustment', $3, $4, $5, NOW())`,
+		uuid.New(), userID, req.Amount, currency, desc)
+
+	// Audit log
+	targetType := "user"
+	tx.Exec(ctx,
+		`INSERT INTO audit_logs (id, admin_id, action, target_type, target_id, ip_address, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+		uuid.New(), adminUUID, "adjust_balance", targetType, userID, c.ClientIP())
+
+	tx.Commit(ctx)
+	c.JSON(http.StatusOK, gin.H{"message": "Balance adjusted"})
+}
+
+// GET /api/admin/withdrawals
+func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
+	status := c.Query("status")
+	limit := 50
+	offset := 0
+	if l := c.Query("limit"); l != "" {
+		if v, _ := strconv.Atoi(l); v > 0 {
+			limit = v
+		}
+	}
+	if o := c.Query("offset"); o != "" {
+		if v, _ := strconv.Atoi(o); v >= 0 {
+			offset = v
+		}
+	}
+
+	where := "WHERE 1=1"
+	args := []interface{}{}
+	argIdx := 1
+	if status != "" {
+		where += " AND w.status = $" + strconv.Itoa(argIdx)
+		args = append(args, status)
+		argIdx++
+	}
+
+	args = append(args, limit, offset)
+	rows, err := h.db.Query(c.Request.Context(),
+		`SELECT w.id, w.user_id, u.username, u.first_name, u.telegram_id,
+		        w.address, w.network, w.amount, w.honey_amount, w.fee, w.status, w.tx_hash, w.reason, w.created_at, w.updated_at
+		 FROM withdrawals w JOIN users u ON u.id = w.user_id
+		 `+where+` ORDER BY w.created_at DESC LIMIT $`+strconv.Itoa(argIdx)+` OFFSET $`+strconv.Itoa(argIdx+1), args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	type WithdrawalRow struct {
+		models.Withdrawal
+		Username   string `json:"username"`
+		FirstName  string `json:"first_name"`
+		TelegramID int64  `json:"telegram_id"`
+	}
+
+	var withdrawals []WithdrawalRow
+	for rows.Next() {
+		var w WithdrawalRow
+		rows.Scan(&w.ID, &w.UserID, &w.Username, &w.FirstName, &w.TelegramID,
+			&w.Address, &w.Network, &w.Amount, &w.HoneyAmount, &w.Fee, &w.Status, &w.TxHash, &w.Reason, &w.CreatedAt, &w.UpdatedAt)
+		withdrawals = append(withdrawals, w)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"withdrawals": withdrawals})
+}
+
+// PATCH /api/admin/withdrawals/:id
+func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
+	adminID := c.GetString("admin_id")
+	wID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid withdrawal id"})
+		return
+	}
+
+	var req struct {
+		Status string `json:"status" binding:"required"`
+		TxHash string `json:"tx_hash"`
+		Reason string `json:"reason"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validStatuses := map[string]bool{"processing": true, "paid": true, "rejected": true}
+	if !validStatuses[req.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+		return
+	}
+
+	ctx := c.Request.Context()
+	adminUUID, _ := uuid.Parse(adminID)
+
+	// If rejecting, refund the honey
+	if req.Status == "rejected" {
+		tx, _ := h.db.Begin(ctx)
+		defer tx.Rollback(ctx)
+
+		var w models.Withdrawal
+		err = tx.QueryRow(ctx,
+			`SELECT user_id, honey_amount, status FROM withdrawals WHERE id = $1 FOR UPDATE`, wID).
+			Scan(&w.UserID, &w.HoneyAmount, &w.Status)
+		if err != nil || w.Status != "pending" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "withdrawal not in pending state"})
+			return
+		}
+
+		// Refund honey
+		tx.Exec(ctx, `UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`, w.HoneyAmount, w.UserID)
+		tx.Exec(ctx,
+			`INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, description, created_at)
+			 VALUES ($1, $2, 'adjustment', $3, 'HONEY', $4, 'Withdrawal rejected - refund', NOW())`,
+			uuid.New(), w.UserID, w.HoneyAmount, wID)
+		tx.Exec(ctx,
+			`UPDATE withdrawals SET status = $1, reason = $2, processed_by = $3, updated_at = NOW() WHERE id = $4`,
+			req.Status, req.Reason, adminUUID, wID)
+		tx.Commit(ctx)
+	} else {
+		h.db.Exec(ctx,
+			`UPDATE withdrawals SET status = $1, tx_hash = $2, reason = $3, processed_by = $4, updated_at = NOW() WHERE id = $5`,
+			req.Status, req.TxHash, req.Reason, adminUUID, wID)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Withdrawal updated"})
+}
+
+// GET /api/admin/settings
+func (h *AdminHandler) GetSettings(c *gin.Context) {
+	settings, err := h.settings.GetAll(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"settings": settings})
+}
+
+// PUT /api/admin/settings
+func (h *AdminHandler) UpdateSettings(c *gin.Context) {
+	var req struct {
+		Settings map[string]string `json:"settings" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+	for k, v := range req.Settings {
+		if err := h.settings.Set(ctx, k, v); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update " + k})
+			return
+		}
+	}
+
+	// Audit log
+	adminID := c.GetString("admin_id")
+	adminUUID, _ := uuid.Parse(adminID)
+	h.db.Exec(ctx,
+		`INSERT INTO audit_logs (id, admin_id, action, ip_address, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+		uuid.New(), adminUUID, "update_settings", c.ClientIP())
+
+	c.JSON(http.StatusOK, gin.H{"message": "Settings updated"})
+}
+
+// GET /api/admin/campaigns
+func (h *AdminHandler) ListCampaigns(c *gin.Context) {
+	status := c.Query("status")
+	limit := 50
+	if l := c.Query("limit"); l != "" {
+		if v, _ := strconv.Atoi(l); v > 0 {
+			limit = v
+		}
+	}
+	offset := 0
+	if o := c.Query("offset"); o != "" {
+		if v, _ := strconv.Atoi(o); v >= 0 {
+			offset = v
+		}
+	}
+
+	campaigns, total, err := h.campaignSvc.AdminListCampaigns(c.Request.Context(), status, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"campaigns": campaigns, "total": total})
+}
+
+// PATCH /api/admin/campaigns/:id
+func (h *AdminHandler) UpdateCampaign(c *gin.Context) {
+	cID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid campaign id"})
+		return
+	}
+
+	var req struct {
+		Status     string `json:"status"`
+		AdminNotes string `json:"admin_notes"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx := c.Request.Context()
+	h.db.Exec(ctx,
+		`UPDATE campaigns SET status = COALESCE(NULLIF($1,''), status), admin_notes = $2, updated_at = NOW() WHERE id = $3`,
+		req.Status, req.AdminNotes, cID)
+
+	// If approved, create mission
+	if req.Status == "active" {
+		var c2 models.Campaign
+		h.db.QueryRow(ctx,
+			`SELECT id, type, target, title, reward_bp FROM campaigns WHERE id = $1`, cID).
+			Scan(&c2.ID, &c2.Type, &c2.Target, &c2.Title, &c2.RewardBP)
+
+		h.db.Exec(ctx,
+			`INSERT INTO missions (id, type, target, title, reward_bp, campaign_id, sort_order, status, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', NOW(), NOW())
+			 ON CONFLICT DO NOTHING`,
+			uuid.New(), c2.Type, c2.Target, c2.Title, c2.RewardBP, c2.ID)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Campaign updated"})
+}
+
+// GET /api/admin/fraud
+func (h *AdminHandler) ListFraudFlags(c *gin.Context) {
+	resolved := c.Query("resolved") == "true"
+	rows, err := h.db.Query(c.Request.Context(),
+		`SELECT f.id, f.user_id, u.username, u.first_name, u.telegram_id, f.reason, f.resolved, f.created_at
+		 FROM fraud_flags f JOIN users u ON u.id = f.user_id
+		 WHERE f.resolved = $1 ORDER BY f.created_at DESC LIMIT 100`, resolved)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	type FlagRow struct {
+		ID         uuid.UUID `json:"id"`
+		UserID     uuid.UUID `json:"user_id"`
+		Username   string    `json:"username"`
+		FirstName  string    `json:"first_name"`
+		TelegramID int64     `json:"telegram_id"`
+		Reason     string    `json:"reason"`
+		Resolved   bool      `json:"resolved"`
+		CreatedAt  time.Time `json:"created_at"`
+	}
+
+	var flags []FlagRow
+	for rows.Next() {
+		var f FlagRow
+		rows.Scan(&f.ID, &f.UserID, &f.Username, &f.FirstName, &f.TelegramID, &f.Reason, &f.Resolved, &f.CreatedAt)
+		flags = append(flags, f)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"flags": flags})
+}
