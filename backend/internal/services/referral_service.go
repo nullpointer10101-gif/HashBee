@@ -19,6 +19,66 @@ func NewReferralService(db *pgxpool.Pool, settings *SettingsService) *ReferralSe
 	return &ReferralService{db: db, settings: settings}
 }
 
+// SetReferrer links an existing user to a referrer and establishes level 1-3 referral records
+func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uuid.UUID) error {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Check if user already has a referrer
+	var currentReferrer *uuid.UUID
+	err = tx.QueryRow(ctx, `SELECT referrer_id FROM users WHERE id = $1`, userID).Scan(&currentReferrer)
+	if err != nil || currentReferrer != nil {
+		return nil
+	}
+
+	welcomeBonus := s.settings.GetFloat(ctx, "welcome_bonus_bp", 2.0)
+
+	// Update user with referrer and welcome bonus
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET referrer_id = $1, bp = bp + $2, updated_at = NOW() WHERE id = $3`,
+		referrerID, welcomeBonus, userID)
+	if err != nil {
+		return err
+	}
+
+	// Level 1: direct referrer
+	_, err = tx.Exec(ctx,
+		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
+		 VALUES ($1, $2, $3, 1, 'pending', NOW())
+		 ON CONFLICT (referred_id) DO NOTHING`,
+		uuid.New(), referrerID, userID)
+	if err != nil {
+		return err
+	}
+
+	// Level 2: referrer's referrer
+	var l2ReferrerID *uuid.UUID
+	_ = tx.QueryRow(ctx, `SELECT referrer_id FROM users WHERE id = $1`, referrerID).Scan(&l2ReferrerID)
+	if l2ReferrerID != nil {
+		_, _ = tx.Exec(ctx,
+			`INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
+			 VALUES ($1, $2, $3, 2, 'pending', NOW())
+			 ON CONFLICT DO NOTHING`,
+			uuid.New(), *l2ReferrerID, userID)
+
+		// Level 3: level 2 referrer's referrer
+		var l3ReferrerID *uuid.UUID
+		_ = tx.QueryRow(ctx, `SELECT referrer_id FROM users WHERE id = $1`, *l2ReferrerID).Scan(&l3ReferrerID)
+		if l3ReferrerID != nil {
+			_, _ = tx.Exec(ctx,
+				`INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
+				 VALUES ($1, $2, $3, 3, 'pending', NOW())
+				 ON CONFLICT DO NOTHING`,
+				uuid.New(), *l3ReferrerID, userID)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 // GetSwarmStats returns referral stats for all 3 levels
 func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (map[int]SwarmLevelStats, error) {
 	rows, err := s.db.Query(ctx,

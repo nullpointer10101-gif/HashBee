@@ -71,12 +71,12 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Port:          getEnv("PORT", "8080"),
 		Env:           getEnv("ENV", "development"),
-		BotToken:      mustGetEnv("BOT_TOKEN"),
-		BotUsername:   getEnv("BOT_USERNAME", "HashBeeBot"),
+		BotToken:      getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", "")),
+		BotUsername:   getEnv("BOT_USERNAME", "hashbe_bot"),
 		WebhookURL:    getEnv("WEBHOOK_URL", ""),
 		WebhookSecret: getEnv("WEBHOOK_SECRET", ""),
 		DatabaseURL:   mustGetEnv("DATABASE_URL"),
-		RedisURL:      mustGetEnv("REDIS_URL"),
+		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret:     mustGetEnv("JWT_SECRET"),
 		AdminJWTSecret: mustGetEnv("ADMIN_JWT_SECRET"),
 
