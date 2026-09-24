@@ -6,10 +6,9 @@ WORKDIR /app
 # Install dependencies
 RUN apk add --no-cache git ca-certificates
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
+
+RUN go mod download && go mod tidy
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
