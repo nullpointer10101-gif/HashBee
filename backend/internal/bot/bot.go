@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -69,6 +70,13 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 	if miniAppURL == "" {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
+
+	// Auto-set the chat menu button for this user to open the Mini App
+	go func(chatID int64, appURL string) {
+		reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setChatMenuButton", b.cfg.BotToken)
+		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"⛏️ Open Miner","web_app":{"url":"%s"}}}`, chatID, appURL)
+		http.Post(reqURL, "application/json", strings.NewReader(payload))
+	}(msg.Chat.ID, miniAppURL)
 
 	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
