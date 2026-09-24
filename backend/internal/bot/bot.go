@@ -115,19 +115,47 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 *Hive* — Pending honey that fills up (max 8 hours). Collect regularly!
 *Swarm* — Your referral network. Invite friends for more BP.
 *Missions* — Complete tasks to earn BP rewards.
-*Cash Out* — Withdraw your Honey balance to crypto.
+*Cash Out* — Withdraw your Honey balance to crypto.`
 
-Use /balance to check your current balance.`
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.InlineKeyboardButton{
+				Text:   "🍯 Open HashBee Miner",
+				WebApp: &webApp,
+			},
+		),
+	)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
+	reply.ReplyMarkup = keyboard
 	b.api.Send(reply)
 }
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
+	keyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.InlineKeyboardButton{
+				Text:   "🍯 Open HashBee Miner",
+				WebApp: &webApp,
+			},
+		),
+	)
+
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
 		reply := tgbotapi.NewMessage(msg.Chat.ID, "You don't have an account yet. Open the app to get started!")
+		reply.ReplyMarkup = keyboard
 		b.api.Send(reply)
 		return
 	}
@@ -138,19 +166,27 @@ func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 ⚡ Bee Power: *%.2f BP*
 🔥 Streak: *%d days*
 
-Open the app to collect your Hive!`, user.HoneyBalance, user.BP, user.StreakCount)
+Open the miner to collect your pending Honey!`, user.HoneyBalance, user.BP, user.StreakCount)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
+	reply.ReplyMarkup = keyboard
 	b.api.Send(reply)
 }
 
 // SendHiveFullNotification sends a "your hive is full" notification
 func (b *Bot) SendHiveFullNotification(telegramID int64) {
-	miniAppURL := fmt.Sprintf("https://t.me/%s/app", b.cfg.BotUsername)
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("🍯 Collect Now", miniAppURL),
+			tgbotapi.InlineKeyboardButton{
+				Text:   "🍯 Collect Now",
+				WebApp: &webApp,
+			},
 		),
 	)
 
