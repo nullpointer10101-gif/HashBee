@@ -8,7 +8,8 @@ RUN apk add --no-cache git ca-certificates
 
 COPY . .
 
-RUN go mod download && go mod tidy
+# Remove any empty/invalid go.sum and generate fresh checksums
+RUN rm -f go.sum && go mod tidy
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
