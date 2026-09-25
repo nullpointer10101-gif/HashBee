@@ -7,7 +7,6 @@ import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { BannedScreen } from './components/BannedScreen'
-import { showOpenAd } from './services/adService'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
@@ -45,11 +44,12 @@ export const App: React.FC = () => {
       window.Telegram.WebApp.expand()
     }
 
-    // Trigger ad when opening the mini app
+    // Trigger AdExium ad on opening the mini app
     const timer = setTimeout(() => {
-      console.log('[HashBee] Triggering opening ad on launch...');
-      showOpenAd()
-    }, 800)
+      if (typeof (window as any).showAdexiumAdNow === 'function') {
+        (window as any).showAdexiumAdNow()
+      }
+    }, 1200)
 
     return () => clearTimeout(timer)
   }, [])
