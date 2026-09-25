@@ -484,11 +484,11 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 	}
 	close(jobs)
 
-	limiter := time.NewTicker(33 * time.Millisecond)
+	limiter := time.NewTicker(35 * time.Millisecond)
 	defer limiter.Stop()
 
 	var wg sync.WaitGroup
-	workers := 5
+	workers := 8
 	if total < workers {
 		workers = total
 	}
@@ -519,7 +519,14 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 				msg.ReplyMarkup = keyboard
 
 				if _, err := b.api.Send(msg); err != nil {
-					atomic.AddInt64(&failedCount, 1)
+					// Fallback to plain text if Markdown entity parsing failed
+					msgPlain := tgbotapi.NewMessage(r.TelegramID, userMsg)
+					msgPlain.ReplyMarkup = keyboard
+					if _, err2 := b.api.Send(msgPlain); err2 != nil {
+						atomic.AddInt64(&failedCount, 1)
+					} else {
+						atomic.AddInt64(&sentCount, 1)
+					}
 				} else {
 					atomic.AddInt64(&sentCount, 1)
 				}

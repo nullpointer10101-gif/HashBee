@@ -795,6 +795,44 @@ function toggleSpecificTgId(val) {
   document.getElementById('specificTgIdWrap').style.display = (val === 'single') ? 'block' : 'none';
 }
 
+let broadcastPollTimer = null;
+
+function startBroadcastPolling() {
+  const box = document.getElementById('broadcastProgressBox');
+  if (box) box.style.display = 'block';
+
+  if (broadcastPollTimer) clearInterval(broadcastPollTimer);
+
+  broadcastPollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(API_URL + '/api/admin/broadcast/status', { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      document.getElementById('broadcastNumbers').innerText = (data.done || 0) + ' / ' + (data.total || 0);
+      document.getElementById('broadcastSentCount').innerText = data.sent || 0;
+      document.getElementById('broadcastFailedCount').innerText = data.failed || 0;
+      document.getElementById('broadcastPercent').innerText = (data.percent || 0) + '%';
+      document.getElementById('broadcastProgressBar').style.width = (data.percent || 0) + '%';
+
+      if (data.is_running) {
+        document.getElementById('broadcastStatusText').innerText = '⚡ Broadcasting in progress (' + (data.percent || 0) + '%)...';
+        document.getElementById('broadcastStatusText').style.color = '#10b981';
+      } else {
+        clearInterval(broadcastPollTimer);
+        broadcastPollTimer = null;
+        document.getElementById('broadcastStatusText').innerText = '🎉 Broadcast Completed! (Sent: ' + (data.sent || 0) + ' / Total: ' + (data.total || 0) + ')';
+        document.getElementById('broadcastStatusText').style.color = '#06b6d4';
+        const btn = document.getElementById('sendBroadcastBtn');
+        if (btn) {
+          btn.innerText = '🚀 Send Hype Broadcast Now';
+          btn.disabled = false;
+        }
+      }
+    } catch (e) {}
+  }, 800);
+}
+
 async function sendBroadcast() {
   const msg = document.getElementById('broadcastMsg').value.trim();
   const btnText = document.getElementById('broadcastBtnText').value.trim();
@@ -836,9 +874,9 @@ async function sendBroadcast() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Broadcast failed');
     showToast('📢 ' + data.message);
+    startBroadcastPolling();
   } catch (err) {
     showToast(err.message, true);
-  } finally {
     btn.innerText = '🚀 Send Hype Broadcast Now';
     btn.disabled = false;
   }
