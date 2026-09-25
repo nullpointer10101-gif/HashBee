@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"time"
 	"context"
 	"fmt"
 	"log"
@@ -35,12 +36,6 @@ func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 				{
 					Text:   text,
 					WebApp: &WebAppInfo{URL: url},
-				},
-			},
-			{
-				{
-					Text: "🌐 Open WebApp Directly",
-					URL:  url,
 				},
 			},
 		},
@@ -110,8 +105,13 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		}
 	}
 
+	// Run user creation asynchronously so Telegram /start responds instantly without DB latency
 	if b.userSvc != nil {
-		_, _, _ = b.userSvc.GetOrCreate(context.Background(), msg.From.ID, msg.From.UserName, msg.From.FirstName, msg.From.LanguageCode, referrerTelegramID)
+		go func(from tgbotapi.User, refID *int64) {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			_, _, _ = b.userSvc.GetOrCreate(ctx, from.ID, from.UserName, from.FirstName, from.LanguageCode, refID)
+		}(*msg.From, referrerTelegramID)
 	}
 
 	miniAppURL := b.cfg.MiniAppURL
