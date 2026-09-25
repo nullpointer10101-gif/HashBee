@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -131,8 +130,6 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 	}
 
 	creditedCount := 0
-	memoRegex := regexp.MustCompile(`(?i)(?:HB_)?(\d{6,15})`)
-	normalizedUserSender := normalizeTonAddress(senderAddress)
 
 	for _, ev := range data.Events {
 		eventId := ev.EventID
@@ -143,14 +140,12 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 		for _, action := range ev.Actions {
 			var amountGram float64
 			var recipientAddr string
-			var senderAddr string
 			var comment string
 
 			if action.Type == "TonTransfer" && action.TonTransfer != nil {
 				transfer := action.TonTransfer
 				amountGram = float64(transfer.Amount) / 1e9
 				recipientAddr = strings.ToLower(transfer.Recipient.Address)
-				senderAddr = strings.ToLower(transfer.Sender.Address)
 				comment = strings.TrimSpace(transfer.Comment)
 			} else if action.Type == "JettonTransfer" && action.JettonTransfer != nil {
 				jt := action.JettonTransfer
@@ -161,7 +156,6 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				} else {
 					recipientAddr = strings.ToLower(jt.RecipientsWallet)
 				}
-				senderAddr = strings.ToLower(jt.Sender.Address)
 				comment = strings.TrimSpace(jt.Comment)
 			} else {
 				continue
