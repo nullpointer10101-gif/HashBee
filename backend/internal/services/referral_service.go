@@ -310,7 +310,7 @@ func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.U
 func (s *ReferralService) CountActiveReferrals(ctx context.Context, userID uuid.UUID) (int, error) {
 	var count int
 	err := s.db.QueryRow(ctx,
-		`SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1`,
+		`SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1 AND status = 'active'`,
 		userID).Scan(&count)
 	return count, err
 }
