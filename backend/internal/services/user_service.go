@@ -253,7 +253,6 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 // ComputeHiveStatus calculates current pending honey (server-side only)
 func (s *UserService) ComputeHiveStatus(ctx context.Context, user *models.User) models.HiveStatus {
 	capHours := s.settings.GetFloat(ctx, "hive_cap_hours", 8.0)
-	honeyPerBPPerHour := s.settings.GetFloat(ctx, "honey_per_bp_per_hour", 0.001)
 
 	now := time.Now()
 	elapsed := now.Sub(user.LastCollectAt).Seconds()

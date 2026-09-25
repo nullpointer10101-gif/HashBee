@@ -170,7 +170,6 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 
 // Reinvest converts Honey to BP at configured rate
 func (s *WithdrawalService) Reinvest(ctx context.Context, userID uuid.UUID, honeyAmount float64) (float64, error) {
-	reinvestRate := s.settings.GetFloat(ctx, "reinvest_rate", 100)
 
 	bpGained := honeyAmount * 50.0 // 20 USDT = 1000 GHS
 	if bpGained <= 0 {
