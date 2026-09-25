@@ -835,17 +835,35 @@ async function loadSettings() {
   try {
     const res = await fetch(API_URL + '/api/admin/settings', { headers: authHeaders() });
     const data = await res.json();
-    const settings = data.settings || {};
-    let html = '';
-    for (const [k, v] of Object.entries(settings)) {
+    let settingsList = [];
+    if (Array.isArray(data.settings)) {
+      settingsList = data.settings;
+    } else if (data.settings && typeof data.settings === 'object') {
+      settingsList = Object.entries(data.settings).map(([k, v]) => ({ key: k, value: v }));
+    }
+    
+    if (settingsList.length === 0) {
+      form.innerHTML = '<p style="color:var(--text-muted);">No system settings found.</p>';
+      return;
+    }
+
+    let html = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">';
+    for (const s of settingsList) {
+      const k = s.key;
+      const v = s.value !== undefined && s.value !== null ? s.value : '';
+      const desc = s.description || '';
       html += `
-        <div class="form-group">
-          <label class="form-label">${k}</label>
-          <input type="text" id="setting_${k}" class="form-input font-mono" value="${escapeHtml(v)}">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>${escapeHtml(k)}</span>
+            ${desc ? `<span style="font-size:10px; color:var(--text-muted); font-weight:normal;">${escapeHtml(desc)}</span>` : ''}
+          </label>
+          <input type="text" id="setting_${escapeHtml(k)}" data-key="${escapeHtml(k)}" class="form-input font-mono" value="${escapeHtml(v)}">
         </div>
       `;
     }
-    html += '<button onclick="saveSettings()" class="btn btn-gold" style="width:100%; justify-content:center; padding:12px; margin-top:12px;">Save Settings</button>';
+    html += '</div>';
+    html += '<button onclick="saveSettings()" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; margin-top:20px; font-size:13px; font-weight:800;">💾 Save System Settings</button>';
     form.innerHTML = html;
   } catch (err) {
     form.innerHTML = '<p style="color:#ef4444;">Error: ' + err.message + '</p>';
@@ -856,7 +874,7 @@ async function saveSettings() {
   const inputs = document.querySelectorAll('#settingsForm input');
   const payload = {};
   inputs.forEach(i => {
-    const key = i.id.replace('setting_', '');
+    const key = i.getAttribute('data-key') || i.id.replace('setting_', '');
     payload[key] = i.value;
   });
   try {
@@ -867,14 +885,15 @@ async function saveSettings() {
     });
     if (!res.ok) throw new Error('Failed to save settings');
     showToast('Settings saved successfully!');
+    loadSettings();
   } catch (err) {
     showToast(err.message, true);
   }
 }
 
 function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 if (token) {
