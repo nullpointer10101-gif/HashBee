@@ -790,13 +790,25 @@ export const Missions: React.FC = () => {
       {/* SECTION 1: REFERRAL MILESTONES (UP TO +500 GHS) */}
       {milestones.length > 0 && (
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center justify-between mb-2 px-1">
             <span className="text-xs font-black text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
               <span>👥</span> REFERRAL MILESTONES (UP TO +500 GHS)
             </span>
             <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
               VIRAL BOOST
             </span>
+          </div>
+
+          {/* Requirement Info Box */}
+          <div className="mb-3.5 p-3 rounded-2xl bg-[#141e1a] border border-[#283d35] flex items-start gap-2.5 text-xs text-stone-300 shadow-sm">
+            <span className="text-amber-400 text-sm mt-0.5 flex-shrink-0">⚡</span>
+            <div className="space-y-1">
+              <div className="font-extrabold text-amber-300 tracking-wide text-[11px] uppercase">Invite Requirements</div>
+              <div className="text-[11px] text-stone-300 leading-relaxed">
+                • <strong className="text-stone-100">10 Friends Tier:</strong> Counts all new joins directly.<br/>
+                • <strong className="text-emerald-400">20+ Milestones:</strong> Requires <strong className="text-emerald-300">Active Miners</strong> (friends who collect at least 1 harvest).
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2.5">
@@ -856,7 +868,7 @@ export const Missions: React.FC = () => {
                       />
                     </div>
                     <span className="text-[10px] font-mono font-bold text-stone-400 shrink-0">
-                      {progress + '/' + count + ' (' + percent + '%)'}
+                      {count <= 10 ? (progress + '/' + count + ' (' + percent + '%)') : (progress + '/' + count + ' Active (' + percent + '%)')}
                     </span>
                   </div>
                 </div>
