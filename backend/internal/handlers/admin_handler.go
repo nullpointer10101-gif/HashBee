@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
+	"hashbee/internal/bot"
 	"hashbee/internal/config"
 	"hashbee/internal/models"
 	"hashbee/internal/services"
