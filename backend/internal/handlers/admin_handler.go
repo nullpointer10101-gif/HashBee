@@ -461,8 +461,10 @@ func (h *AdminHandler) UpdateCampaign(c *gin.Context) {
 	}
 
 	var req struct {
-		Status     string `json:"status"`
-		AdminNotes string `json:"admin_notes"`
+		Status           string `json:"status"`
+		AdminNotes       string `json:"admin_notes"`
+		DoneCompletions  *int   `json:"done_completions"`
+		TotalCompletions *int   `json:"total_completions"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -470,22 +472,36 @@ func (h *AdminHandler) UpdateCampaign(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	h.db.Exec(ctx,
-		`UPDATE campaigns SET status = COALESCE(NULLIF($1,''), status), admin_notes = $2, updated_at = NOW() WHERE id = $3`,
-		req.Status, req.AdminNotes, cID)
 
-	// If approved, create mission
-	if req.Status == "active" {
-		var c2 models.Campaign
-		h.db.QueryRow(ctx,
-			`SELECT id, type, target, title, reward_bp FROM campaigns WHERE id = $1`, cID).
-			Scan(&c2.ID, &c2.Type, &c2.Target, &c2.Title, &c2.RewardBP)
+	if req.DoneCompletions != nil {
+		h.db.Exec(ctx, `UPDATE campaigns SET done_completions = $1, updated_at = NOW() WHERE id = $2`, *req.DoneCompletions, cID)
+	}
+	if req.TotalCompletions != nil {
+		h.db.Exec(ctx, `UPDATE campaigns SET total_completions = $1, updated_at = NOW() WHERE id = $2`, *req.TotalCompletions, cID)
+	}
 
+	if req.Status != "" {
 		h.db.Exec(ctx,
-			`INSERT INTO missions (id, type, target, title, reward_bp, campaign_id, sort_order, status, created_at, updated_at)
-			 VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', NOW(), NOW())
-			 ON CONFLICT DO NOTHING`,
-			uuid.New(), c2.Type, c2.Target, c2.Title, c2.RewardBP, c2.ID)
+			`UPDATE campaigns SET status = $1, admin_notes = COALESCE(NULLIF($2,''), admin_notes), updated_at = NOW() WHERE id = $3`,
+			req.Status, req.AdminNotes, cID)
+
+		if req.Status == "completed" || req.Status == "finished" || req.Status == "cancelled" {
+			h.db.Exec(ctx, `UPDATE missions SET status = 'completed', updated_at = NOW() WHERE campaign_id = $1`, cID)
+		} else if req.Status == "active" {
+			res, _ := h.db.Exec(ctx, `UPDATE missions SET status = 'active', updated_at = NOW() WHERE campaign_id = $1`, cID)
+			if res.RowsAffected() == 0 {
+				var c2 models.Campaign
+				if err := h.db.QueryRow(ctx,
+					`SELECT id, type, target, title, reward_bp FROM campaigns WHERE id = $1`, cID).
+					Scan(&c2.ID, &c2.Type, &c2.Target, &c2.Title, &c2.RewardBP); err == nil {
+					h.db.Exec(ctx,
+						`INSERT INTO missions (id, type, target, title, reward_bp, campaign_id, sort_order, status, created_at, updated_at)
+						 VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', NOW(), NOW())
+						 ON CONFLICT DO NOTHING`,
+						uuid.New(), c2.Type, c2.Target, c2.Title, c2.RewardBP, c2.ID)
+				}
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Campaign updated"})

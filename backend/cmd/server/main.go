@@ -53,6 +53,18 @@ func main() {
 		WHERE (payment_memo = 'CMP38C60EC604' OR target ILIKE '%referral199%') AND done_completions < 194
 	`)
 
+	// Mark linkkiemtienmoney campaign as completed
+	_, _ = pool.Exec(ctx, `
+		UPDATE campaigns 
+		SET status = 'completed', updated_at = NOW() 
+		WHERE payment_memo = 'CMP59C71940F2' OR target ILIKE '%linkkiemtienmoney%'
+	`)
+	_, _ = pool.Exec(ctx, `
+		UPDATE missions 
+		SET status = 'completed', updated_at = NOW() 
+		WHERE campaign_id IN (SELECT id FROM campaigns WHERE payment_memo = 'CMP59C71940F2' OR target ILIKE '%linkkiemtienmoney%')
+	`)
+
 	// Services
 	settingsSvc := services.NewSettingsService(pool)
 	userSvc := services.NewUserService(pool, settingsSvc)

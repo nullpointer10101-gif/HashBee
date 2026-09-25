@@ -641,17 +641,24 @@ async function loadCampaigns() {
           <td><span class="badge ${badgeClass}">${c.status}</span></td>
           <td class="font-mono text-muted" style="font-size:11px;">${new Date(c.created_at).toLocaleString()}</td>
           <td>
-            <div style="display:flex; gap:6px; align-items:center;">
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
               ${isWaiting ? `
-                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 10px; font-size:11px;">
+                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:5px 9px; font-size:11px;">
                   ⚡ Activate
                 </button>
-              ` : (c.status === 'completed' || c.status === 'finished' || (c.done_completions >= c.total_completions && c.total_completions > 0)) ? `
-                <span style="color:#6b7280; font-weight:800; font-size:11px; margin-right:4px;">COMPLETED</span>
+              ` : (c.status === 'completed' || c.status === 'finished') ? `
+                <button onclick="setCampaignStatus('${c.id}', 'active')" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ▶️ Reactivate
+                </button>
               ` : `
-                <span style="color:#10b981; font-weight:800; font-size:11px; margin-right:4px;">✓ LIVE</span>
+                <button onclick="setCampaignStatus('${c.id}', 'completed')" class="btn" style="background:#064e3b; color:#34d399; border:1px solid #059669; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ✅ Complete
+                </button>
               `}
-              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:6px 10px; font-size:11px;">
+              <button onclick="boostCampaign('${c.id}', ${c.done_completions || 0}, ${c.total_completions || 0})" class="btn" style="background:#451a03; color:#fbbf24; border:1px solid #d97706; padding:5px 9px; font-size:11px; font-weight:700;">
+                ⚡ Boost
+              </button>
+              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:5px 9px; font-size:11px;">
                 🗑️ Delete
               </button>
             </div>
@@ -717,17 +724,35 @@ async function activateCampaign(id) {
 }
 
 
-async function boostCampaign(id, currentDone) {
-  const newDone = prompt('Enter new completed count (progress):', currentDone);
-  if (newDone === null || isNaN(parseInt(newDone))) return;
+async function setCampaignStatus(id, newStatus) {
+  const label = newStatus === 'completed' ? 'mark this campaign as COMPLETED' : 'REACTIVATE this campaign';
+  if (!confirm('Are you sure you want to ' + label + '?')) return;
   try {
     const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ done_completions: parseInt(newDone) })
+      body: JSON.stringify({ status: newStatus, admin_notes: 'Status changed to ' + newStatus + ' by admin' })
+    });
+    if (!res.ok) throw new Error('Failed to update status');
+    showToast('✅ Campaign status updated to ' + newStatus.toUpperCase());
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function boostCampaign(id, currentDone, total) {
+  const newDone = prompt('⚡ Boost Campaign Progress:\nEnter new completed count (Current: ' + currentDone + '/' + total + '):', currentDone);
+  if (newDone === null || newDone.trim() === '' || isNaN(parseInt(newDone))) return;
+  const doneVal = parseInt(newDone.trim());
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ done_completions: doneVal })
     });
     if (!res.ok) throw new Error('Boost failed');
-    showToast('⚡ Campaign progress updated to ' + newDone);
+    showToast('⚡ Campaign progress updated to ' + doneVal + ' / ' + total);
     loadCampaigns();
   } catch (err) {
     showToast(err.message, true);

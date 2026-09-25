@@ -306,11 +306,33 @@
 
     <!-- TAB: USERS -->
     <div id="tab-users" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="font-size:20px; font-weight:900;">Platform Users</h2>
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username..." style="width:240px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers()">
-          <button onclick="loadUsers()" class="btn btn-secondary">🔍 Search</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h2 style="font-size:20px; font-weight:900;">Platform Users</h2>
+          <span id="usersTotalBadge" class="badge" style="background:#1e2d27; color:#10b981; font-size:12px; font-weight:800;">0 Total</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <select id="userSortFilter" class="form-input" style="width:160px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="created_desc">🕒 Newest First</option>
+            <option value="created_asc">⏳ Oldest First</option>
+            <option value="ghs_desc">⚡ Most GHS Power</option>
+            <option value="ghs_asc">🔋 Least GHS Power</option>
+            <option value="referrals_desc">👥 Most Referrals</option>
+            <option value="balance_desc">🍯 Most Honey</option>
+          </select>
+          <select id="userStatusFilter" class="form-input" style="width:120px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+          </select>
+          <select id="userPageSize" class="form-input" style="width:110px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+            <option value="250">250 / page</option>
+            <option value="500">500 / page</option>
+          </select>
+          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username..." style="width:190px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers(0)">
+          <button onclick="loadUsers(0)" class="btn btn-secondary" style="padding:8px 14px;">🔍 Search</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -331,6 +353,15 @@
             <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>
           </tbody>
         </table>
+      </div>
+      <!-- Pagination Controls -->
+      <div id="usersPagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding:12px 16px; background:#101714; border:1px solid #1c2b24; border-radius:12px; font-size:12px;">
+        <span id="usersPageInfo" style="color:var(--text-muted); font-weight:700;">Showing 0-0 of 0 users</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="usersPrevBtn" onclick="changeUserPage(-1)" class="btn btn-secondary" style="padding:6px 14px; font-size:11px;">◀ Prev</button>
+          <span id="usersPageNum" class="font-mono" style="font-weight:800; color:#fff; padding:0 8px;">Page 1 of 1</span>
+          <button id="usersNextBtn" onclick="changeUserPage(1)" class="btn btn-secondary" style="padding:6px 14px; font-size:11px;">Next ▶</button>
+        </div>
       </div>
     </div>
 
@@ -610,17 +641,24 @@ async function loadCampaigns() {
           <td><span class="badge ${badgeClass}">${c.status}</span></td>
           <td class="font-mono text-muted" style="font-size:11px;">${new Date(c.created_at).toLocaleString()}</td>
           <td>
-            <div style="display:flex; gap:6px; align-items:center;">
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
               ${isWaiting ? `
-                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 10px; font-size:11px;">
+                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:5px 9px; font-size:11px;">
                   ⚡ Activate
                 </button>
-              ` : (c.status === 'completed' || c.status === 'finished' || (c.done_completions >= c.total_completions && c.total_completions > 0)) ? `
-                <span style="color:#6b7280; font-weight:800; font-size:11px; margin-right:4px;">COMPLETED</span>
+              ` : (c.status === 'completed' || c.status === 'finished') ? `
+                <button onclick="setCampaignStatus('${c.id}', 'active')" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ▶️ Reactivate
+                </button>
               ` : `
-                <span style="color:#10b981; font-weight:800; font-size:11px; margin-right:4px;">✓ LIVE</span>
+                <button onclick="setCampaignStatus('${c.id}', 'completed')" class="btn" style="background:#064e3b; color:#34d399; border:1px solid #059669; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ✅ Complete
+                </button>
               `}
-              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:6px 10px; font-size:11px;">
+              <button onclick="boostCampaign('${c.id}', ${c.done_completions || 0}, ${c.total_completions || 0})" class="btn" style="background:#451a03; color:#fbbf24; border:1px solid #d97706; padding:5px 9px; font-size:11px; font-weight:700;">
+                ⚡ Boost
+              </button>
+              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:5px 9px; font-size:11px;">
                 🗑️ Delete
               </button>
             </div>
@@ -686,17 +724,35 @@ async function activateCampaign(id) {
 }
 
 
-async function boostCampaign(id, currentDone) {
-  const newDone = prompt('Enter new completed count (progress):', currentDone);
-  if (newDone === null || isNaN(parseInt(newDone))) return;
+async function setCampaignStatus(id, newStatus) {
+  const label = newStatus === 'completed' ? 'mark this campaign as COMPLETED' : 'REACTIVATE this campaign';
+  if (!confirm('Are you sure you want to ' + label + '?')) return;
   try {
     const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ done_completions: parseInt(newDone) })
+      body: JSON.stringify({ status: newStatus, admin_notes: 'Status changed to ' + newStatus + ' by admin' })
+    });
+    if (!res.ok) throw new Error('Failed to update status');
+    showToast('✅ Campaign status updated to ' + newStatus.toUpperCase());
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function boostCampaign(id, currentDone, total) {
+  const newDone = prompt('⚡ Boost Campaign Progress:\nEnter new completed count (Current: ' + currentDone + '/' + total + '):', currentDone);
+  if (newDone === null || newDone.trim() === '' || isNaN(parseInt(newDone))) return;
+  const doneVal = parseInt(newDone.trim());
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ done_completions: doneVal })
     });
     if (!res.ok) throw new Error('Boost failed');
-    showToast('⚡ Campaign progress updated to ' + newDone);
+    showToast('⚡ Campaign progress updated to ' + doneVal + ' / ' + total);
     loadCampaigns();
   } catch (err) {
     showToast(err.message, true);
