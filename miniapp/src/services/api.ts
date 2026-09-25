@@ -6,7 +6,7 @@ const getInitData = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
     return window.Telegram.WebApp.initData
   }
-  return 'query_id=STUB&user=%7B%22id%22%3A6446145632%2C%22first_name%22%3A%22BeeKeeper%22%2C%22username%22%3A%22miner%22%7D&auth_date=1600000000&hash=stub'
+  return ''
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
@@ -42,37 +42,58 @@ export const fetchProfile = async (): Promise<User> => {
     }
   }
 
-  const token = localStorage.getItem('hashbee_token')
-  let profileData: any = null
+  // Active Telegram user
+  const currentTgUser = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user : null
+  const currentTgId = currentTgUser?.id ? String(currentTgUser.id) : null
+  const storedTgId = typeof window !== 'undefined' ? localStorage.getItem('hashbee_user_id') : null
 
-  if (!token) {
-    try {
-      const authUrl = refParam ? `/api/auth?ref=${encodeURIComponent(refParam)}` : '/api/auth'
-      const res = await api.post(authUrl)
-      if (res.data?.token) {
-        localStorage.setItem('hashbee_token', res.data.token)
-      }
-      profileData = res.data?.profile
-    } catch (e) {
-      console.warn('Backend /api/auth failed, fallback to /api/me', e)
+  // If user switched accounts or is visiting via a referral link, clear the stale token
+  if ((currentTgId && storedTgId && currentTgId !== storedTgId) || refParam) {
+    localStorage.removeItem('hashbee_token')
+    if (currentTgId) {
+      localStorage.setItem('hashbee_user_id', currentTgId)
     }
   }
 
-  if (!profileData) {
-    const res = await api.get('/api/me')
-    profileData = res.data
+  let profileData: any = null
+
+  // ALWAYS authenticate with current Telegram initData first
+  try {
+    const authUrl = refParam ? `/api/auth?ref=${encodeURIComponent(refParam)}` : '/api/auth'
+    const res = await api.post(authUrl)
+    if (res.data?.token) {
+      localStorage.setItem('hashbee_token', res.data.token)
+      if (currentTgId) {
+        localStorage.setItem('hashbee_user_id', currentTgId)
+      } else if (res.data?.profile?.telegram_id) {
+        localStorage.setItem('hashbee_user_id', String(res.data.profile.telegram_id))
+      }
+    }
+    profileData = res.data?.profile
+  } catch (e) {
+    console.warn('Backend /api/auth attempt failed, falling back to /api/me', e)
   }
 
-  const tgId = profileData.telegram_id || 6446145632
+  if (!profileData) {
+    try {
+      const res = await api.get('/api/me')
+      profileData = res.data
+    } catch (e) {
+      localStorage.removeItem('hashbee_token')
+      throw e
+    }
+  }
+
+  const tgId = profileData.telegram_id || (currentTgUser?.id ? currentTgUser.id : 0)
 
   return {
     id: profileData.id,
     telegram_id: tgId,
-    username: profileData.username || 'miner',
-    first_name: profileData.first_name || 'BeeKeeper',
+    username: profileData.username || currentTgUser?.username || 'miner',
+    first_name: profileData.first_name || currentTgUser?.first_name || 'BeeKeeper',
     last_name: '',
     honey_balance: Number(profileData.honey_balance || 0),
-    bee_power: Number(profileData.bp || 10),
+    bee_power: Number(profileData.bp || 5),
     max_hive_capacity: 5000,
     current_unclaimed_honey: Number(profileData.hive?.pending_honey || 0),
     last_claimed_at: profileData.last_collect_at || profileData.created_at || new Date().toISOString(),

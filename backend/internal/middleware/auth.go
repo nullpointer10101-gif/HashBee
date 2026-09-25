@@ -106,7 +106,27 @@ func JWTAuth(cfg *config.Config, userSvc *services.UserService) gin.HandlerFunc 
 			return
 		}
 
-		user, err := userSvc.GetByTelegramID(c.Request.Context(), claims.TelegramID)
+		userTelegramID := claims.TelegramID
+
+		// If X-Telegram-Init-Data is present, verify that the JWT belongs to the same Telegram user
+		initData := c.GetHeader("X-Telegram-Init-Data")
+		if initData != "" {
+			if tgUser, err := parseInitDataUnsafe(initData); err == nil && tgUser.ID != 0 && tgUser.ID != 123456789 {
+				if tgUser.ID != userTelegramID {
+					// Account switched! Use the active Telegram account from initData
+					actualUser, _, err := userSvc.GetOrCreate(c.Request.Context(), tgUser.ID, tgUser.Username, tgUser.FirstName, tgUser.LanguageCode, nil)
+					if err == nil {
+						c.Set("user_id", actualUser.ID.String())
+						c.Set("telegram_id", tgUser.ID)
+						c.Set("user", actualUser)
+						c.Next()
+						return
+					}
+				}
+			}
+		}
+
+		user, err := userSvc.GetByTelegramID(c.Request.Context(), userTelegramID)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 			c.Abort()
