@@ -139,13 +139,15 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppKeyboard("🍯 Open Miner", appURLWithRef)
+	keyboard := newWebAppKeyboard("⛏️ Open Miner", appURLWithRef)
 
-	welcomeText := `🐝 *Welcome to HashBee!*
+	welcomeText := `⛏️ *MINE & EARN*
 
-Earn *USDT* passively using your *GHS Mining Power*, invite friends to earn bonuses, complete missions, and cash out!
+🎁 *Join And Get 1,000 POWER*
 
-⛏️ Your miner works 24/7 — come back regularly to claim your USDT.
+✅ *Minimum Withdrawal 0.05 USD*
+
+✍️ *Earn And Withdraw Without Restrictions.*
 
 Tap the button below to start earning:`
 

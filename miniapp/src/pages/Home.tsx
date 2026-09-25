@@ -176,7 +176,7 @@ export const Home: React.FC = () => {
               <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS</h2>
             </div>
 
-            {/* Input: Amount to deposit (USDT) */}
+            {/* Input: Amount to deposit (USD₮) */}
             <div className="mb-4">
               <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
                 Amount to deposit (USDT)
@@ -195,15 +195,13 @@ export const Home: React.FC = () => {
                 </span>
               </div>
               <div className="text-[10px] text-stone-400 font-semibold mt-1">
-                Minimum deposit: 1.00 USDT
+                Minimum deposit: 1.00 USD₮
               </div>
             </div>
 
             {/* +5% First Deposit Bonus Banner */}
-            <div className="bg-[#1f2d28] border border-[#2e423b] rounded-2xl py-2.5 px-4 text-center mb-4">
-              <span className="text-xs font-black text-[#93b3a6] tracking-wide">
-                +5% first deposit bonus!
-              </span>
+            <div className="bg-[#8ba89c] text-[#0f1614] rounded-2xl py-3 px-4 text-center mb-4 font-black text-xs uppercase tracking-wide shadow-sm">
+              +5% first deposit bonus!
             </div>
 
             {/* Card: YOU WILL GET */}
@@ -236,7 +234,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
                     {modalEarningsPerSecond.toFixed(8)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
                 </div>
 
                 {/* PER DAY */}
@@ -247,7 +245,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerDay.toFixed(4)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
                 </div>
 
                 {/* PER WEEK */}
@@ -258,7 +256,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerWeek.toFixed(4)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
                 </div>
 
                 {/* PER MONTH */}
@@ -269,13 +267,13 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerMonth.toFixed(2)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
                 </div>
               </div>
 
               {/* Footnote */}
               <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
-                These GHS last 30 days. Earnings: 0.9000 USDT per day per 1,000 GHS. Rate: 20.00 USDT = 1,000 GHS.
+                These GHS last 30 days. Earnings: 0.9000 USD₮ per day per 1,000 GHS. Rate: 20.00 USD₮ = 1,000 GHS.
               </div>
             </div>
 
@@ -285,7 +283,7 @@ export const Home: React.FC = () => {
                 setShowAddGhsModal(false)
                 setShowPayModal(true)
               }}
-              className="w-full py-4 rounded-2xl zentorno-btn-primary font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95"
+              className="w-full py-4 rounded-2xl bg-[#8ba89c] hover:bg-[#9cb8ac] text-[#0f1614] font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95 transition-all"
             >
               PAY ORDER
             </button>

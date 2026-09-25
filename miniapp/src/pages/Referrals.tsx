@@ -11,7 +11,7 @@ export const Referrals: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
 
-  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbee_bot'
+  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || '6446145632'
 
   const loadReferrals = async () => {
