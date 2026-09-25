@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -11,54 +11,20 @@
     <title>HashBee 🐝</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://ad.gigapub.tech" crossorigin />
+    <link rel="preconnect" href="https://cdn.tgads.space" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-            <!-- Telegram WebApp SDK -->
+    
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
-    <!-- AdExium Widget Monetization -->
-    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
-    <script type="text/javascript">
-      window.showAdexiumOpenAd = function() {
-        try {
-          if (!window.adexiumWidget && window.AdexiumWidget) {
-            window.adexiumWidget = new window.AdexiumWidget({
-              wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-              adFormat: 'interstitial'
-            });
-            window.adexiumWidget.autoMode();
-          }
-          if (window.adexiumWidget) {
-            console.log('[AdExium] 🚀 Triggering interstitial ad on bot open...');
-            if (typeof window.adexiumWidget.show === 'function') {
-              window.adexiumWidget.show();
-            } else if (typeof window.adexiumWidget.requestAd === 'function') {
-              window.adexiumWidget.requestAd();
-            }
-          }
-        } catch (e) {
-          console.log('[AdExium] onOpen ad error:', e);
-        }
-      };
 
-      document.addEventListener('DOMContentLoaded', () => {
-        try {
-          if (window.AdexiumWidget) {
-            const adexiumWidget = new window.AdexiumWidget({
-              wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-              adFormat: 'interstitial'
-            });
-            adexiumWidget.autoMode();
-            window.adexiumWidget = adexiumWidget;
-            console.log('[AdExium] Initialized autoMode successfully (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)');
-            setTimeout(() => {
-              window.showAdexiumOpenAd();
-            }, 1000);
-          }
-        } catch (e) {
-          console.error('[AdExium] init error:', e);
-        }
-      });
-    </script>
-    <script type="module" crossorigin src="/assets/index-DZFsT4qs.js"></script>
+    <!-- AdExium Widget Monetization -->
+    <script id="adexium-widget-sdk" type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+
+    <!-- GigaPub Ad SDK (Fallback) -->
+    <script id="gigapub-ad-sdk" type="text/javascript" src="https://ad.gigapub.tech/script?id=7451"></script>
+    <script id="gigapub-offerwall-sdk" type="text/javascript" src="https://wall.giga.pub/api/v1/loader.js?projectId=7451" async></script>
+    <script type="module" crossorigin src="/assets/index-BT8bKEtr.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-BEHGjEIr.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-ELO5M-Ho.js">
     <link rel="stylesheet" crossorigin href="/assets/index-C5l5ZNMO.css">

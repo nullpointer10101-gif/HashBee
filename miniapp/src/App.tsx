@@ -7,6 +7,7 @@ import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { BannedScreen } from './components/BannedScreen'
+import { showOpenAd } from './services/adService'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
@@ -46,10 +47,9 @@ export const App: React.FC = () => {
 
     // Trigger ad when opening the mini app
     const timer = setTimeout(() => {
-      if (typeof (window as any).showAdexiumOpenAd === 'function') {
-        (window as any).showAdexiumOpenAd()
-      }
-    }, 1200)
+      console.log('[HashBee] Triggering opening ad on launch...');
+      showOpenAd()
+    }, 800)
 
     return () => clearTimeout(timer)
   }, [])
