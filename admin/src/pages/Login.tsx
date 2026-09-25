@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
 
 export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
-  const [username, setUsername] = useState('admin')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -19,12 +19,7 @@ export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin 
       const token = res.data?.token || res.data?.data?.token
       onLogin(token)
     } catch (err: any) {
-      // Dev mode fallback
-      if (password === 'admin123' || password === '') {
-        toast.success('Admin authenticated (Dev Mode)')
-        onLogin('mock-jwt-admin-token')
-      } else {
-        toast.error(err?.response?.data?.error || 'Invalid admin credentials')
+      toast.error(err?.response?.data?.error || 'Invalid admin credentials')
       }
     } finally {
       setLoading(false)
