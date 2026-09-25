@@ -30,14 +30,28 @@ type InlineKeyboardMarkupCustom struct {
 }
 
 func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		text = "🐝 Open HashBee App"
+	}
+	url = strings.TrimSpace(url)
+	if url == "" {
+		url = "https://miniapp-five-topaz.vercel.app"
+	}
+
+	btn := InlineKeyboardButtonWithWebApp{
+		Text: text,
+	}
+
+	if strings.HasPrefix(url, "https://t.me/") || strings.HasPrefix(url, "http://t.me/") {
+		btn.URL = url
+	} else {
+		btn.WebApp = &WebAppInfo{URL: url}
+	}
+
 	return InlineKeyboardMarkupCustom{
 		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
-			{
-				{
-					Text:   text,
-					WebApp: &WebAppInfo{URL: url},
-				},
-			},
+			{btn},
 		},
 	}
 }
