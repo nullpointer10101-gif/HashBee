@@ -115,6 +115,33 @@ export const Missions: React.FC = () => {
     }
   }, [view])
 
+  // Auto-poll blockchain while on pay_campaign view so status turns active automatically upon payment
+  useEffect(() => {
+    if (view !== 'pay_campaign' || !selectedCampaign) return
+    let isCancelled = false
+    const interval = setInterval(async () => {
+      try {
+        await checkDeposit()
+        const updated = await fetchMyCampaigns()
+        if (isCancelled) return
+        const found = updated.find(
+          (c) =>
+            c.id === selectedCampaign.id ||
+            (c.payment_memo && selectedCampaign.payment_memo && c.payment_memo.toUpperCase() === selectedCampaign.payment_memo.toUpperCase())
+        )
+        if (found && found.status === 'active') {
+          setCampaigns(updated)
+          toast.success('🎉 Payment Received! Your campaign is now LIVE!', { duration: 5000 })
+          setView('campaigns')
+        }
+      } catch (e) {}
+    }, 5000)
+    return () => {
+      isCancelled = true
+      clearInterval(interval)
+    }
+  }, [view, selectedCampaign])
+
   const handleClaimMilestone = async (mission: Mission) => {
     setActionId(mission.id)
     try {
@@ -277,18 +304,21 @@ export const Missions: React.FC = () => {
   // Verify payment for campaign
   const handleVerifyCampaignPayment = async (camp: Campaign) => {
     setVerifyingPayment(true)
-    toast.loading('Checking blockchain for campaign payment...', { id: 'camp-verify' })
+    toast.loading('Scanning blockchain for payment...', { id: 'camp-verify' })
     try {
-      await checkDeposit()
+      const res = await checkDeposit()
       toast.dismiss('camp-verify')
       const updated = await fetchMyCampaigns()
       setCampaigns(updated)
-      const found = updated.find((c) => c.id === camp.id)
+      const found = updated.find((c) => c.id === camp.id || (c.payment_memo && camp.payment_memo && c.payment_memo.toUpperCase() === camp.payment_memo.toUpperCase()))
       if (found && found.status === 'active') {
-        toast.success('🎉 Payment verified! Your campaign is now LIVE!')
+        toast.success('🎉 Payment confirmed! Your campaign is now LIVE!', { duration: 4500 })
+        setView('campaigns')
+      } else if (res && res.credited > 0) {
+        toast.success('🎉 Payment received! Your campaign is now LIVE!', { duration: 4500 })
         setView('campaigns')
       } else {
-        toast.success('Blockchain scan complete! Campaigns activate within a minute of payment.')
+        toast.error(`⏳ Payment not detected yet. Please ensure you sent ${(camp.cost || 0.05).toFixed(2)} GRAM with memo "${camp.payment_memo || ''}". If you just sent it, please wait 15-30 seconds.`, { duration: 5500 })
       }
     } catch (err) {
       toast.dismiss('camp-verify')
