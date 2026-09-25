@@ -143,16 +143,16 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 
 	welcomeText := `⛏️ *MINE & EARN*
 
-🎁 *Join And Get 1,000 POWER*
+🎁 *Join And Get 50 GHS POWER*
 
-✅ *Minimum Withdrawal 0.05 USD*
+✅ *Minimum Withdrawal 0.05 GRAM*
 
 ✍️ *Earn And Withdraw Without Restrictions.*
 
 Tap the button below to start earning:`
 
 	if referrerTelegramID != nil {
-		welcomeText += fmt.Sprintf("\n\n🤝 You were invited by `%d`! You get a *+2.5 GHS* welcome bonus.", *referrerTelegramID)
+		welcomeText += fmt.Sprintf("\n\n🤝 You were invited by `%d`! You get a *+5 GHS* welcome bonus.", *referrerTelegramID)
 	}
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)

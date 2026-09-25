@@ -30,13 +30,15 @@ export interface UpgradeOption {
 export interface Mission {
   id: string
   title: string
-  description: string
-  reward_honey: number
+  description?: string
+  reward_honey?: number
   reward_power: number
-  type: 'telegram_channel' | 'social' | 'check_in' | 'custom'
+  type: string
   target_url?: string
   is_completed: boolean
   expires_at?: string
+  milestone_count?: number
+  progress?: number
 }
 
 export interface Withdrawal {

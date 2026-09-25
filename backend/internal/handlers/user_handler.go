@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -88,7 +90,11 @@ func (h *UserHandler) Collect(c *gin.Context) {
 
 	// Try to activate referrals after first collect
 	if !user.HasCollected {
-		go h.referralSvc.TryActivateReferral(c.Request.Context(), user.ID)
+		go func(uid uuid.UUID) {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = h.referralSvc.TryActivateReferral(ctx, uid)
+	}(user.ID)
 	}
 
 	profile := h.userSvc.GetUserProfile(c.Request.Context(), updatedUser)

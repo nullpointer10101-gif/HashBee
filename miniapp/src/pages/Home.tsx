@@ -18,7 +18,7 @@ export const Home: React.FC = () => {
   const [verifying, setVerifying] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
-  const ghs = user?.bee_power || 1000
+  const ghs = user?.bee_power || 5
   // Zentorno formula: 0.9000 USDT per day per 1,000 GHS
   const earningsPerDay = ghs * 0.0009
   const earningsPerSecond = earningsPerDay / 86400

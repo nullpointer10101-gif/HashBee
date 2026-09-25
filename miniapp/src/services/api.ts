@@ -142,7 +142,7 @@ export const fetchMissions = async (): Promise<Mission[]> => {
   const res = await api.get('/api/missions')
   const sponsored = res.data?.sponsored || []
   const milestone = res.data?.milestone || []
-  const all = [...sponsored, ...milestone]
+  const all = [...milestone, ...sponsored]
   if (all.length === 0) {
     throw new Error('No missions in backend')
   }
@@ -153,10 +153,17 @@ export const fetchMissions = async (): Promise<Mission[]> => {
     reward_honey: m.reward_honey || 100,
     reward_power: m.reward_bp || 0.1,
     type: m.type || 'telegram_channel',
-    target_url: m.target_url || '',
-    is_completed: m.is_completed || false,
+    target_url: m.target || m.target_url || '',
+    is_completed: m.user_status === 'reward_paid' || m.is_completed || false,
+    milestone_count: m.milestone_count,
+    progress: m.progress,
     expires_at: m.expires_at,
   }))
+}
+
+export const claimMilestone = async (missionId: string): Promise<{ reward_power: number }> => {
+  const res = await api.post(`/api/missions/${missionId}/claim`)
+  return { reward_power: Number(res.data?.reward_bp || 0) }
 }
 
 export const completeMission = async (missionId: string): Promise<{ reward_honey: number; reward_power: number }> => {
