@@ -65,15 +65,20 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 
 // SetWebhook sets the bot webhook URL
 func (b *Bot) SetWebhook(webhookURL string) error {
-	wh, err := tgbotapi.NewWebhook(webhookURL + "/bot/webhook")
+	fullURL := webhookURL + "/bot/webhook"
+	reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setWebhook", b.cfg.BotToken)
+	var payload string
+	if b.cfg.WebhookSecret != "" {
+		payload = fmt.Sprintf(`{"url":"%s","secret_token":"%s"}`, fullURL, b.cfg.WebhookSecret)
+	} else {
+		payload = fmt.Sprintf(`{"url":"%s"}`, fullURL)
+	}
+	resp, err := http.Post(reqURL, "application/json", strings.NewReader(payload))
 	if err != nil {
 		return err
 	}
-	if b.cfg.WebhookSecret != "" {
-		wh.SecretToken = b.cfg.WebhookSecret
-	}
-	_, err = b.api.Request(wh)
-	return err
+	defer resp.Body.Close()
+	return nil
 }
 
 func (b *Bot) HandleUpdate(update tgbotapi.Update) {
