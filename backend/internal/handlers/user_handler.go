@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -168,12 +169,12 @@ func (h *UserHandler) GetSwarm(c *gin.Context) {
 		"referral_link": referralLink,
 		"telegram_id":   user.TelegramID,
 		"swarm": gin.H{
-			"level1_count":        level1.TotalCount,
-			"level2_count":        level2.TotalCount,
-			"level3_count":        level3.TotalCount,
-			"level1_honey_earned": level1.TotalBPGenerated,
-			"level2_honey_earned": level2.TotalBPGenerated,
-			"level3_honey_earned": level3.TotalBPGenerated,
+			"level1_count":        level1.Total,
+			"level2_count":        level2.Total,
+			"level3_count":        level3.Total,
+			"level1_honey_earned": level1.TotalRewardBP,
+			"level2_honey_earned": level2.TotalRewardBP,
+			"level3_honey_earned": level3.TotalRewardBP,
 			"referrals":           allRefs,
 			"stats":               stats,
 		},

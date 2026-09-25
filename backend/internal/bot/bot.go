@@ -141,9 +141,7 @@ Earn *USDT* passively using your *GHS Mining Power*, invite friends to earn bonu
 Tap the button below to start earning:`
 
 	if referrerTelegramID != nil {
-		welcomeText += fmt.Sprintf("
-
-🤝 You were invited by `%d`! You get a *+2.5 GHS* welcome bonus.", *referrerTelegramID)
+		welcomeText += fmt.Sprintf("\n\n🤝 You were invited by `%d`! You get a *+2.5 GHS* welcome bonus.", *referrerTelegramID)
 	}
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
@@ -212,9 +210,7 @@ func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	}
 	keyboard := newWebAppKeyboard("🍯 Collect Now", miniAppURL)
 
-	text := "🍯 *Your Miner is full!*
-
-Your accumulated balance has reached maximum capacity. Claim your USDT now so your mining continues at full speed!"
+	text := "🍯 *Your Miner is full!*\n\nYour accumulated balance has reached maximum capacity. Claim your USDT now so your mining continues at full speed!"
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	msg.ReplyMarkup = keyboard
@@ -230,10 +226,7 @@ func (b *Bot) SendWithdrawalNotification(telegramID int64, status, reason string
 	case "paid":
 		text = "✅ Your Withdrawal has been *Paid*! Check your wallet."
 	case "rejected":
-		text = fmt.Sprintf("❌ Your Withdrawal was *Rejected*.
-Reason: %s
-
-Your balance has been refunded.", reason)
+		text = fmt.Sprintf("❌ Your Withdrawal was *Rejected*.\nReason: %s\n\nYour balance has been refunded.", reason)
 	default:
 		return
 	}
