@@ -21,6 +21,7 @@ import (
 )
 
 type BotBroadcaster interface {
+	BroadcastRecipientsProgress(ctx context.Context, text string, buttonText, buttonURL string, recipients []bot.BroadcastRecipient, onProgress func(sent, failed, total int)) (int, int)
 	BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int)
 	BroadcastWithButtonProgress(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64, onProgress func(sent, failed, total int)) (int, int)
 }
@@ -682,11 +683,13 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		req.ButtonURL = "https://miniapp-five-topaz.vercel.app"
 	}
 
-	var tgIDs []int64
+	var recipients []bot.BroadcastRecipient
 	if req.TargetTelegramID > 0 {
-		tgIDs = append(tgIDs, req.TargetTelegramID)
+		var fn string
+		_ = h.db.QueryRow(c.Request.Context(), `SELECT COALESCE(first_name, username, '') FROM users WHERE telegram_id = $1`, req.TargetTelegramID).Scan(&fn)
+		recipients = append(recipients, bot.BroadcastRecipient{TelegramID: req.TargetTelegramID, FirstName: fn})
 	} else {
-		rows, err := h.db.Query(c.Request.Context(), `SELECT telegram_id FROM users WHERE status = 'active'`)
+		rows, err := h.db.Query(c.Request.Context(), `SELECT telegram_id, COALESCE(first_name, username, '') FROM users WHERE status = 'active'`)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query users: " + err.Error()})
 			return
@@ -694,13 +697,14 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		defer rows.Close()
 		for rows.Next() {
 			var id int64
-			if err := rows.Scan(&id); err == nil && id > 0 {
-				tgIDs = append(tgIDs, id)
+			var fn string
+			if err := rows.Scan(&id, &fn); err == nil && id > 0 {
+				recipients = append(recipients, bot.BroadcastRecipient{TelegramID: id, FirstName: fn})
 			}
 		}
 	}
 
-	total := len(tgIDs)
+	total := len(recipients)
 	if total == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No active users found to broadcast"})
 		return
@@ -725,7 +729,7 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		defer cancel()
 
 		if h.bot != nil {
-			sent, failed := h.bot.BroadcastWithButtonProgress(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs, func(s, f, t int) {
+			sent, failed := h.bot.BroadcastRecipientsProgress(ctx, req.Message, req.ButtonText, req.ButtonURL, recipients, func(s, f, t int) {
 				broadcastMu.Lock()
 				done := s + f
 				pct := 0

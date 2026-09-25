@@ -461,3 +461,78 @@ func (b *Bot) CheckChatMember(chatUsername string, telegramID int64) (bool, erro
 
 	return false, nil
 }
+
+type BroadcastRecipient struct {
+	TelegramID int64
+	FirstName  string
+}
+
+// BroadcastRecipientsProgress sends personalized messages concurrently with rate limiting and progress callback
+func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, buttonText, buttonURL string, recipients []BroadcastRecipient, onProgress func(sent, failed, total int)) (int, int) {
+	if b == nil || b.api == nil || len(recipients) == 0 {
+		return 0, 0
+	}
+
+	keyboard := newWebAppKeyboard(buttonText, buttonURL)
+	total := len(recipients)
+	var sentCount int64
+	var failedCount int64
+
+	jobs := make(chan BroadcastRecipient, total)
+	for _, r := range recipients {
+		jobs <- r
+	}
+	close(jobs)
+
+	limiter := time.NewTicker(33 * time.Millisecond)
+	defer limiter.Stop()
+
+	var wg sync.WaitGroup
+	workers := 5
+	if total < workers {
+		workers = total
+	}
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for r := range jobs {
+				select {
+				case <-ctx.Done():
+					return
+				case <-limiter.C:
+				}
+
+				userMsg := text
+				if strings.Contains(text, "{name}") || strings.Contains(text, "{first_name}") {
+					name := strings.TrimSpace(r.FirstName)
+					if name == "" {
+						name = "Miner"
+					}
+					userMsg = strings.ReplaceAll(userMsg, "{name}", name)
+					userMsg = strings.ReplaceAll(userMsg, "{first_name}", name)
+				}
+
+				msg := tgbotapi.NewMessage(r.TelegramID, userMsg)
+				msg.ParseMode = "Markdown"
+				msg.ReplyMarkup = keyboard
+
+				if _, err := b.api.Send(msg); err != nil {
+					atomic.AddInt64(&failedCount, 1)
+				} else {
+					atomic.AddInt64(&sentCount, 1)
+				}
+
+				if onProgress != nil {
+					s := int(atomic.LoadInt64(&sentCount))
+					f := int(atomic.LoadInt64(&failedCount))
+					onProgress(s, f, total)
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+	return int(sentCount), int(failedCount)
+}

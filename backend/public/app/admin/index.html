@@ -421,6 +421,19 @@ let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.co
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
+  personalized_buzz: {
+    msg: `👋 Hey {name}, your Hive is buzzing! 🐝⚡
+
+⛏️ Your mining rig has accumulated unclaimed Honey! Don't let your honeycomb capacity cap out.
+
+💰 *What you can do in the app right now:*
+⚡ Collect your passive Honey earnings
+🎁 Claim free GHS bonuses from your referrals
+📢 Launch a Boost Campaign to get real members for your Telegram channel/bot at dirt-cheap launch prices!
+
+👇 Tap below to harvest your rewards & boost your power:`,
+    btn: '🐝 Open HashBee & Collect Now 🚀'
+  },
   mining_boost: {
     msg: `🚀 *DOUBLE YOUR MINING POWER TODAY!*
 
