@@ -153,7 +153,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	limit := 50
 	offset := 0
 	if l := c.Query("limit"); l != "" {
-		if v, _ := strconv.Atoi(l); v > 0 && v <= 200 {
+		if v, _ := strconv.Atoi(l); v > 0 && v <= 1000 {
 			limit = v
 		}
 	}
