@@ -50,8 +50,8 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, ownerID uuid.UUID,
 		return nil, fmt.Errorf("invalid campaign type")
 	}
 
-	if req.TotalCompletions < 50 {
-		req.TotalCompletions = 50
+	if req.TotalCompletions < 500 {
+		req.TotalCompletions = 500
 	}
 
 	if req.RewardBP <= 0 {

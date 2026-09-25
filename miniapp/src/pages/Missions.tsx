@@ -200,7 +200,7 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(100, Number(promoCompletions) || 100)
+    const completions = Math.max(500, Number(promoCompletions) || 500)
     const cost = completions * 0.001
 
     if (!user || user.honey_balance < cost) {
@@ -256,7 +256,7 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(100, Number(promoCompletions) || 100)
+    const completions = Math.max(500, Number(promoCompletions) || 500)
     const cost = completions * 0.001
     setPublishing(true)
 
@@ -541,10 +541,10 @@ export const Missions: React.FC = () => {
           {/* How many completions */}
           <div className="mb-3">
             <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1.5">
-              How many completions (Min 100)
+              How many completions (Min 500 Users = 0.50 GRAM)
             </label>
             <div className="grid grid-cols-3 gap-2 mb-2.5">
-              {[100, 250, 500, 1000, 2500].map((num) => (
+              {[500, 1000, 2000, 5000, 10000].map((num) => (
                 <button
                   key={num}
                   type="button"
@@ -562,11 +562,11 @@ export const Missions: React.FC = () => {
               <div className="flex items-center justify-center bg-[#15221e] border border-[#2b3d37] rounded-xl px-2">
                 <input
                   type="number"
-                  min={100}
-                  step={50}
+                  min={500}
+                  step={100}
                   value={promoCompletions}
                   onChange={(e) => setPromoCompletions(Number(e.target.value))}
-                  placeholder="100"
+                  placeholder="500"
                   className="w-full bg-transparent text-xs text-center font-black text-stone-200 focus:outline-none"
                 />
               </div>

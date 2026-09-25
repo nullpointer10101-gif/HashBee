@@ -252,6 +252,22 @@
             <input type="number" id="broadcastTargetTgId" class="form-input font-mono" placeholder="e.g. 6446145632">
           </div>
 
+          <!-- Live Broadcast Progress Card -->
+          <div id="broadcastProgressBox" style="display:none; margin-top:14px; margin-bottom:10px; padding:14px; border-radius:12px; background:#12211b; border:1px solid #10b981;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-weight:800; font-size:12px; color:#10b981;" id="broadcastStatusText">⚡ Broadcasting in progress...</span>
+              <span class="font-mono" style="font-size:12px; font-weight:800; color:#fff;" id="broadcastNumbers">0 / 0</span>
+            </div>
+            <div style="background:#0b1310; border-radius:999px; height:8px; overflow:hidden; margin-bottom:8px; border:1px solid #1c3328;">
+              <div id="broadcastProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #06b6d4); transition:width 0.3s ease;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#9ca3af;">
+              <span>✅ Sent: <b id="broadcastSentCount" style="color:#10b981;">0</b></span>
+              <span>❌ Failed: <b id="broadcastFailedCount" style="color:#ef4444;">0</b></span>
+              <span>📊 Progress: <b id="broadcastPercent" style="color:#06b6d4;">0%</b></span>
+            </div>
+          </div>
+
           <button onclick="sendBroadcast()" id="sendBroadcastBtn" class="btn btn-telegram" style="width:100%; justify-content:center; padding:14px; font-size:13px; margin-top:8px;">
             🚀 Send Hype Broadcast Now
           </button>
@@ -374,7 +390,7 @@
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
         <div class="form-group">
           <label class="form-label">Total Completions</label>
-          <input type="number" id="newCampCompletions" class="form-input" value="100" min="10" required>
+          <input type="number" id="newCampCompletions" class="form-input" value="500" min="500" required>
         </div>
         <div class="form-group">
           <label class="form-label">User Reward (GHS)</label>
