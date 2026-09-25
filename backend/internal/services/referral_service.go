@@ -314,3 +314,12 @@ func (s *ReferralService) CountActiveReferrals(ctx context.Context, userID uuid.
 		userID).Scan(&count)
 	return count, err
 }
+
+// CountTotalReferrals returns the count of all L1 referrals (pending or active) for a user
+func (s *ReferralService) CountTotalReferrals(ctx context.Context, userID uuid.UUID) (int, error) {
+	var count int
+	err := s.db.QueryRow(ctx,
+		`SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1`,
+		userID).Scan(&count)
+	return count, err
+}

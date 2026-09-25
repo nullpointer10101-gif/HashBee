@@ -56,7 +56,12 @@ func (s *MissionService) ListMissionsForUser(ctx context.Context, userID uuid.UU
 
 		// For milestone missions, compute progress
 		if m.Type == models.MissionTypeMilestone && m.MilestoneCount != nil {
-			count, _ := s.referral.CountActiveReferrals(ctx, userID)
+			var count int
+			if *m.MilestoneCount <= 10 {
+				count, _ = s.referral.CountTotalReferrals(ctx, userID)
+			} else {
+				count, _ = s.referral.CountActiveReferrals(ctx, userID)
+			}
 			progress := count
 			if progress > *m.MilestoneCount {
 				progress = *m.MilestoneCount
@@ -242,13 +247,21 @@ func (s *MissionService) ClaimMilestoneMission(ctx context.Context, userID, miss
 		return 0, fmt.Errorf("milestone mission not found")
 	}
 
-	activeCount, err := s.referral.CountActiveReferrals(ctx, userID)
+	var count int
+	if m.MilestoneCount != nil && *m.MilestoneCount <= 10 {
+		count, err = s.referral.CountTotalReferrals(ctx, userID)
+	} else {
+		count, err = s.referral.CountActiveReferrals(ctx, userID)
+	}
 	if err != nil {
 		return 0, err
 	}
 
-	if m.MilestoneCount != nil && activeCount < *m.MilestoneCount {
-		return 0, fmt.Errorf("not enough active referrals: have %d, need %d", activeCount, *m.MilestoneCount)
+	if m.MilestoneCount != nil && count < *m.MilestoneCount {
+		if *m.MilestoneCount <= 10 {
+			return 0, fmt.Errorf("not enough referrals: have %d, need %d", count, *m.MilestoneCount)
+		}
+		return 0, fmt.Errorf("not enough active referrals: have %d, need %d", count, *m.MilestoneCount)
 	}
 
 	// Check not already claimed
