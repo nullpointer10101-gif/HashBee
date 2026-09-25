@@ -763,7 +763,7 @@ async function sendBroadcast() {
   }
 }
 
-// 3. USERS (With Full Pagination)
+// 3. USERS (With Full Database-Wide Pagination & Sorting)
 let currentUserOffset = 0;
 let totalUsersCount = 0;
 
@@ -779,16 +779,17 @@ async function loadUsers(offset = 0) {
   currentUserOffset = offset;
   const search = document.getElementById('userSearch')?.value.trim() || '';
   const status = document.getElementById('userStatusFilter')?.value || '';
+  const sort = document.getElementById('userSortFilter')?.value || 'created_desc';
   const limit = parseInt(document.getElementById('userPageSize')?.value || '50');
   const tbody = document.getElementById('usersBody');
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>';
 
   try {
-    const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&limit=' + limit + '&offset=' + offset;
+    const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&sort=' + encodeURIComponent(sort) + '&limit=' + limit + '&offset=' + offset;
     const res = await fetch(url, { headers: authHeaders() });
     const data = await res.json();
     const list = data.users || [];
-    totalUsersCount = data.total || list.length;
+    totalUsersCount = data.total !== undefined ? data.total : list.length;
 
     // Update total badge
     const badge = document.getElementById('usersTotalBadge');
@@ -838,7 +839,7 @@ async function loadUsers(offset = 0) {
       </tr>
     `).join('');
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
   }
 }
 
