@@ -117,9 +117,7 @@
           <label class="form-label">Backend API URL</label>
           <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
         </div>
-        <button type="submit" id="loginBtn" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">
-          Login to Dashboard
-        </button>
+        <button type="submit" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
     </div>
   </div>
@@ -453,6 +451,7 @@
 let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
 if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
+if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -533,35 +532,53 @@ function authHeaders() {
   };
 };
 };
+};
 }
 
 async function handleLogin(e) {
-  e.preventDefault();
-  const loginId = document.getElementById('loginId').value.trim();
-  const password = document.getElementById('loginPw').value.trim();
-  API_URL = document.getElementById('apiBase').value.trim().replace(/\/$/, '');
+  if (e && e.preventDefault) e.preventDefault();
+  const loginId = (document.getElementById('loginId')?.value || '').trim();
+  const password = (document.getElementById('loginPw')?.value || '').trim();
+  let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee.onrender.com';
   localStorage.setItem('hb_api_url', API_URL);
 
-  document.getElementById('loginBtn').innerText = 'Signing in...';
+  if (!loginId || !password) {
+    showToast('Please enter both username/email and password', true);
+    return;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Signing in...';
+  }
 
   try {
-    const res = await fetch(API_URL + '/api/admin/login', {
+    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    console.log('Attempting login to:', activeUrl + '/api/admin/login');
+    const res = await fetch(activeUrl + '/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: loginId, password: password })
+      body: JSON.stringify({ identifier: loginId, username: loginId, email: loginId, password: password })
     });
-    const data = await res.json();
-    if (!res.ok || !data.token) {
-      throw new Error(data.error || 'Login failed');
+    const data = await res.json().catch(() => ({}));
+    const authToken = data.token || data.data?.token;
+    if (!res.ok || !authToken) {
+      throw new Error(data.error || 'Invalid credentials');
     }
-    token = data.token;
+    token = authToken;
     localStorage.setItem('hb_admin_token', token);
-    showToast('Login successful!');
-    initDashboard(data.admin);
+    showToast('🎉 Login successful!');
+    initDashboard(data.admin || data.data?.admin || { email: loginId });
   } catch (err) {
-    showToast(err.message, true);
+    console.error('Login error:', err);
+    showToast('Login Failed: ' + (err.message || 'Invalid credentials'), true);
   } finally {
-    document.getElementById('loginBtn').innerText = 'Login to Dashboard';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Login to Dashboard';
+    }
   }
 }
 
