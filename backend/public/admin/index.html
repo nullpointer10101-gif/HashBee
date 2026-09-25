@@ -224,7 +224,9 @@
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
               <option value="custom">✍️ Custom Message</option>
-              <option value="mining_boost">🚀 Double Mining Rate Hype</option>
+              <option value="personalized_buzz">👤 Personalized VIP (Hey {name})</option>
+              <option value="viral_20k">🚀 20,000+ Users Record Celebration</option>
+              <option value="mining_boost">⛏️ Double Mining Rate Hype</option>
               <option value="ghs_drop">🎁 Free 10 GHS Power Gift</option>
               <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
               <option value="withdraw_alert">💸 Instant GRAM Withdrawals Live</option>
@@ -457,13 +459,24 @@ const HYPE_TEMPLATES = {
 
 ⛏️ Your mining rig has accumulated unclaimed Honey! Don't let your honeycomb capacity cap out.
 
-💰 *What you can do in the app right now:*
+💰 *What you can do right now:*
 ⚡ Collect your passive Honey earnings
 🎁 Claim free GHS bonuses from your referrals
-📢 Launch a Boost Campaign to get real members for your Telegram channel/bot at dirt-cheap launch prices!
+📢 Launch a Boost Campaign to get real members for your Telegram channel/bot at dirt-cheap launch rates!
 
 👇 Tap below to harvest your rewards & boost your power:`,
     btn: '🐝 Open HashBee & Collect Now 🚀'
+  },
+  viral_20k: {
+    msg: `🚀 *20,000+ USERS ON DAY 1! THE HIVE IS ON FIRE!* 🔥
+
+We just shattered all records with *20,000+ active miners*! 🐝⚡
+
+💰 *Invite Friends* ➔ Earn Free GH/s Power & Boost 24/7 Mining!
+📢 *Promote Your Project* ➔ Get real Telegram members for your Bots & Channels at dirt-cheap launch rates!
+
+👇 *Tap below to mine, invite & promote now!*`,
+    btn: '🐝 Open App & Boost Now 🚀'
   },
   mining_boost: {
     msg: `🚀 *DOUBLE YOUR MINING POWER TODAY!*
