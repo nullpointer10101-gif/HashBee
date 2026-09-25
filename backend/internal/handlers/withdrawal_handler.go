@@ -64,6 +64,11 @@ func (h *WithdrawalHandler) Reinvest(c *gin.Context) {
 		return
 	}
 
+	if req.HoneyAmount < 1.0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Minimum reinvest amount is 1 USDT"})
+		return
+	}
+
 	bpGained, err := h.withdrawalSvc.Reinvest(c.Request.Context(), user.ID, req.HoneyAmount)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

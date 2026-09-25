@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { requestWithdrawal, reinvestHoney } from '../services/api'
+import { InsufficientFundsModal } from '../components/InsufficientFundsModal'
+import { DepositModal } from '../components/DepositModal'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 
@@ -12,6 +14,16 @@ export const Withdraw: React.FC = () => {
   const [selectedCrypto, setSelectedCrypto] = useState<'GRAM' | 'USDT_BSC'>('GRAM')
   const [submitting, setSubmitting] = useState(false)
   const [reinvesting, setReinvesting] = useState(false)
+  const [showInsufficientModal, setShowInsufficientModal] = useState(false)
+  const [showDepositModal, setShowDepositModal] = useState(false)
+  const [insufficientDetails, setInsufficientDetails] = useState<{
+    title?: string
+    message?: string
+    requiredAmount?: number
+  }>({
+    title: 'INSUFFICIENT FUNDS',
+    requiredAmount: 1.0,
+  })
   const navigate = useNavigate()
 
   const minWithdrawal = 0.05
@@ -38,7 +50,12 @@ export const Withdraw: React.FC = () => {
     }
 
     if (user && numAmount > user.honey_balance) {
-      toast.error('Insufficient balance')
+      setInsufficientDetails({
+        title: 'INSUFFICIENT BALANCE FOR WITHDRAWAL',
+        requiredAmount: numAmount,
+        message: `You requested ${numAmount.toFixed(2)} USDT, but your available balance is ${user.honey_balance.toFixed(4)} USDT. Deposit GRAM or add funds to increase your earnings!`
+      })
+      setShowInsufficientModal(true)
       return
     }
 
@@ -50,15 +67,30 @@ export const Withdraw: React.FC = () => {
       setWallet('')
       setAmount('')
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Withdrawal failed')
+      const errMsg = err?.response?.data?.error || 'Withdrawal failed'
+      if (errMsg.toLowerCase().includes('insufficient')) {
+        setInsufficientDetails({
+          title: 'INSUFFICIENT BALANCE FOR WITHDRAWAL',
+          requiredAmount: numAmount,
+          message: errMsg
+        })
+        setShowInsufficientModal(true)
+      } else {
+        toast.error(errMsg)
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleReinvest = async () => {
-    if (!user || user.honey_balance <= 0) {
-      toast.error('No balance to reinvest')
+    if (!user || user.honey_balance < 1.0) {
+      setInsufficientDetails({
+        title: 'INSUFFICIENT FUNDS TO REINVEST',
+        requiredAmount: 1.0,
+        message: `Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Your current balance is ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT. Please add funds to increase your mining power!`
+      })
+      setShowInsufficientModal(true)
       return
     }
 
@@ -68,7 +100,17 @@ export const Withdraw: React.FC = () => {
       toast.success(`🎉 Reinvested! +${res.power_gained} GHS Mining Power Added!`)
       await refreshUser()
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Reinvestment failed')
+      const errMsg = err?.response?.data?.error || ''
+      if (errMsg.toLowerCase().includes('insufficient') || errMsg.toLowerCase().includes('minimum') || user.honey_balance < 1.0) {
+        setInsufficientDetails({
+          title: 'INSUFFICIENT FUNDS TO REINVEST',
+          requiredAmount: 1.0,
+          message: errMsg || 'Minimum reinvest amount is 1.00 USDT. Please add funds to continue.'
+        })
+        setShowInsufficientModal(true)
+      } else {
+        toast.error(errMsg || 'Reinvestment failed')
+      }
     } finally {
       setReinvesting(false)
     }
@@ -78,7 +120,6 @@ export const Withdraw: React.FC = () => {
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      {/* Centered Page Header */}
       <div className="text-center mb-6">
         <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider">
           WITHDRAW
@@ -88,7 +129,6 @@ export const Withdraw: React.FC = () => {
         </p>
       </div>
 
-      {/* Card 1: YOUR BALANCE & REINVEST BALANCE */}
       <div className="zentorno-card p-5 mb-4 text-center">
         <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
           YOUR BALANCE
@@ -97,22 +137,19 @@ export const Withdraw: React.FC = () => {
           {userUsdtBalance} USDT
         </div>
 
-        {/* REINVEST BALANCE Button */}
         <button
           onClick={handleReinvest}
-          disabled={reinvesting || !user || user.honey_balance <= 0}
-          className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
+          disabled={reinvesting}
+          className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
         >
           <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          {reinvesting ? 'REINVESTING...' : 'REINVEST BALANCE (1 USDT = 50 GHS)'}
+          {reinvesting ? 'REINVESTING...' : 'REINVEST BALANCE (MIN 1 USDT = 50 GHS)'}
         </button>
       </div>
 
-      {/* Card 2: Form */}
       <form onSubmit={handleWithdraw} className="zentorno-card p-5 mb-4">
-        {/* WITHDRAW OPTION SELECTOR (ONLY 2 OPTIONS: USDT BSC & GRAM) */}
         <div className="mb-5">
           <label className="text-[11px] font-extrabold text-stone-400 block mb-2 uppercase tracking-wide">
             Withdrawal Currency (Select One)
@@ -146,7 +183,6 @@ export const Withdraw: React.FC = () => {
           </div>
         </div>
 
-        {/* Network Badge */}
         <div className="mb-4 bg-[#1f2d28] border border-[#2e423b] rounded-xl py-2 px-3 flex items-center justify-between text-xs">
           <span className="text-stone-400 font-bold">Selected Network:</span>
           <span className="font-black text-[#93b3a6]">
@@ -154,7 +190,6 @@ export const Withdraw: React.FC = () => {
           </span>
         </div>
 
-        {/* Wallet Address Input */}
         <div className="mb-4">
           <label className="text-xs font-extrabold text-stone-300 block mb-2">
             {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM Wallet Address'}
@@ -168,7 +203,6 @@ export const Withdraw: React.FC = () => {
           />
         </div>
 
-        {/* Amount Input */}
         <div className="mb-1">
           <label className="text-xs font-extrabold text-stone-300 block mb-2">
             Amount to withdraw
@@ -193,7 +227,6 @@ export const Withdraw: React.FC = () => {
           Minimum withdrawal is {minWithdrawal.toFixed(2)} USDT
         </div>
 
-        {/* WITHDRAW Primary Button */}
         <button
           type="submit"
           disabled={submitting}
@@ -203,13 +236,34 @@ export const Withdraw: React.FC = () => {
         </button>
       </form>
 
-      {/* BACK Outline Button */}
       <button
         onClick={() => navigate('/')}
         className="w-full py-4 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
       >
         BACK
       </button>
+
+      {/* Insufficient Funds Modal */}
+      <InsufficientFundsModal
+        isOpen={showInsufficientModal}
+        onClose={() => setShowInsufficientModal(false)}
+        onAddFunds={() => {
+          setShowInsufficientModal(false)
+          setShowDepositModal(true)
+        }}
+        title={insufficientDetails.title}
+        currentBalance={user?.honey_balance || 0}
+        requiredAmount={insufficientDetails.requiredAmount}
+        message={insufficientDetails.message}
+      />
+
+      {/* Deposit / Add GHS Modal */}
+      <DepositModal
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+        onSuccess={() => refreshUser()}
+        initialAmount="1"
+      />
     </div>
   )
 }
