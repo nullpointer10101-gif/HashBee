@@ -476,6 +476,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		HoneyBalance: user.HoneyBalance,
 		Hive:         hive,
 		StreakCount:   user.StreakCount,
+		Status:       user.Status,
 		LastCollectAt: user.LastCollectAt,
 		CreatedAt:     user.CreatedAt,
 	}

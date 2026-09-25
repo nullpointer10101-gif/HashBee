@@ -14,6 +14,7 @@ export interface User {
   last_streak_date: string
   ref_code: string
   referrer_id?: string
+  status?: string
   created_at: string
 }
 

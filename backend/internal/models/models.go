@@ -54,6 +54,7 @@ type UserProfile struct {
 	HoneyBalance float64    `json:"honey_balance"`
 	Hive         HiveStatus `json:"hive"`
 	StreakCount   int        `json:"streak_count"`
+	Status       string     `json:"status"`
 	LastCollectAt time.Time  `json:"last_collect_at"`
 	CreatedAt     time.Time  `json:"created_at"`
 }
