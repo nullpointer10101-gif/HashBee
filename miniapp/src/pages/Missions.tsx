@@ -215,7 +215,7 @@ export const Missions: React.FC = () => {
         target: target,
         title: target.replace(/^https?:\/\//, '').replace(/^t\.me\//, ''),
         total_completions: completions,
-        reward_bp: 0.1,
+        reward_bp: 0.5,
         pay_with_balance: true,
       })
       toast.success('🎉 Campaign Activated Instantly! Your project is now live on the Tasks board.')
@@ -269,7 +269,7 @@ export const Missions: React.FC = () => {
       title: target.replace(/^https?:\/\//, '').replace(/^t\.me\//, ''),
       total_completions: completions,
       done_completions: 0,
-      reward_bp: 0.1,
+      reward_bp: 0.5,
       cost: cost,
       status: 'waiting_for_payment',
       payment_memo: fallbackMemo,
@@ -282,7 +282,7 @@ export const Missions: React.FC = () => {
         target: target,
         title: target.replace(/^https?:\/\//, '').replace(/^t\.me\//, ''),
         total_completions: completions,
-        reward_bp: 0.1,
+        reward_bp: 0.5,
         pay_with_balance: false,
       })
       if (newCamp && newCamp.payment_memo) {
@@ -584,7 +584,7 @@ export const Missions: React.FC = () => {
             </div>
             <div className="flex justify-between items-center text-xs">
               <span className="text-stone-400 font-bold">Reward per User:</span>
-              <span className="font-bold text-[#93b3a6]">+0.1 GHS Power</span>
+              <span className="font-bold text-[#93b3a6]">+0.5 GHS Power</span>
             </div>
             <div className="flex justify-between items-center text-xs border-t border-[#23332d] pt-2">
               <span className="font-black text-stone-300 uppercase text-[11px]">Total Invoice Amount:</span>
