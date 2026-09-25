@@ -13,6 +13,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"hashbee/internal/bot"
 	"hashbee/internal/config"
 	"hashbee/internal/db"
