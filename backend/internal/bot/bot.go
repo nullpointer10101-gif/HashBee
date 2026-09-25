@@ -294,7 +294,9 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 
 👤 <b>%s</b> just joined HashBee using your invite link!
 
-✅ You've earned <b>+3 GHS</b> mining power bonus!
+⏳ <b>Status:</b> Pending
+⚡ <b>Reward:</b> You will receive <b>+3 GHS</b> Hash Power bonus as soon as they collect their first mining harvest!
+
 🤝 Keep sharing your link to grow your Swarm and earn more bonuses!
 
 Your invite link: https://t.me/%s?start=%d`, safeName, botName, referrerTelegramID)
@@ -307,9 +309,26 @@ Your invite link: https://t.me/%s?start=%d`, safeName, botName, referrerTelegram
 
 // SendReferralActivatedNotification notifies referrer of new active referral
 func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName string, rewardBP float64) {
-	text := fmt.Sprintf("🐝 *New active Swarm member!*\n\n%s has joined your Swarm and is now active.\nYou earned *+%.2f GHS*!", referredName, rewardBP)
+	if b == nil || b.api == nil || telegramID == 0 {
+		return
+	}
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	keyboard := newWebAppKeyboard("⚡ Check Mining Power", miniAppURL)
+
+	safeName := html.EscapeString(referredName)
+	text := fmt.Sprintf(`🎉 <b>Referral Activated!</b>
+
+👤 <b>%s</b> just collected their first mining harvest!
+
+⚡ You've unlocked <b>+%.2f GHS</b> Hash Power bonus!
+Your mining speed has increased automatically. 🚀`, safeName, rewardBP)
+
 	msg := tgbotapi.NewMessage(telegramID, text)
-	msg.ParseMode = "Markdown"
+	msg.ParseMode = "HTML"
+	msg.ReplyMarkup = keyboard
 	b.api.Send(msg)
 }
 

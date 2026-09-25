@@ -54,6 +54,8 @@ func main() {
 	if err != nil {
 		log.Printf("⚠️  Bot initialization failed: %v (continuing without bot)", err)
 		tgBot = nil
+	} else if tgBot != nil {
+		referralSvc.SetBot(tgBot)
 	}
 
 	// Deposit Watcher Service

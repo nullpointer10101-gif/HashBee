@@ -10,13 +10,22 @@ import (
 	"hashbee/internal/models"
 )
 
+type ReferralBotNotifier interface {
+	SendReferralActivatedNotification(telegramID int64, referredName string, rewardBP float64)
+}
+
 type ReferralService struct {
 	db       *pgxpool.Pool
 	settings *SettingsService
+	bot      ReferralBotNotifier
 }
 
 func NewReferralService(db *pgxpool.Pool, settings *SettingsService) *ReferralService {
 	return &ReferralService{db: db, settings: settings}
+}
+
+func (s *ReferralService) SetBot(bot ReferralBotNotifier) {
+	s.bot = bot
 }
 
 // SetReferrer links an existing user to a referrer and establishes level 1-3 referral records
@@ -44,15 +53,10 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 		return err
 	}
 
-	// Level 1: direct referrer (activate immediately & award +3 GHS)
-	refL1Reward := s.settings.GetFloat(ctx, "referral_l1_bp", 3.0)
-	_, _ = tx.Exec(ctx,
-		`UPDATE users SET bp = bp + $1, updated_at = NOW() WHERE id = $2`,
-		refL1Reward, referrerID)
-
+	// Level 1: direct referrer (created as pending, unlocked when friend collects mining harvest)
 	_, err = tx.Exec(ctx,
-		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, activated_at, created_at)
-		 VALUES ($1, $2, $3, 1, 'active', true, NOW(), NOW())
+		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, created_at)
+		 VALUES ($1, $2, $3, 1, 'pending', false, NOW())
 		 ON CONFLICT (referred_id) DO NOTHING`,
 		uuid.New(), referrerID, userID)
 	if err != nil {
@@ -188,7 +192,7 @@ type ReferralEntry struct {
 
 // TryActivateReferral checks if a referral should be activated and pays rewards
 func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.UUID) error {
-	requireCollect := s.settings.GetBool(ctx, "referral_qualifying_collect", false)
+	requireCollect := s.settings.GetBool(ctx, "referral_qualifying_collect", true)
 	requireMission := s.settings.GetBool(ctx, "referral_qualifying_mission", false)
 
 	// Get user's qualification status
@@ -285,7 +289,18 @@ func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.U
 			continue
 		}
 
-		tx.Commit(ctx)
+		if err := tx.Commit(ctx); err == nil {
+			// Notify referrer via Telegram bot
+			if s.bot != nil {
+				var referrerTgID int64
+				_ = s.db.QueryRow(ctx, `SELECT telegram_id FROM users WHERE id = $1`, ref.ReferrerID).Scan(&referrerTgID)
+				var referredName string
+				_ = s.db.QueryRow(ctx, `SELECT COALESCE(NULLIF(first_name, ''), username, 'Friend') FROM users WHERE id = $1`, userID).Scan(&referredName)
+				if referrerTgID != 0 {
+					go s.bot.SendReferralActivatedNotification(referrerTgID, referredName, rewardBP)
+				}
+			}
+		}
 	}
 
 	return nil
