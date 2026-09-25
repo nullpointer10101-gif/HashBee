@@ -75,7 +75,7 @@ export const fetchProfile = async (): Promise<User> => {
     bee_power: Number(profileData.bp || 10),
     max_hive_capacity: 5000,
     current_unclaimed_honey: Number(profileData.hive?.pending_honey || 0),
-    last_claimed_at: new Date().toISOString(),
+    last_claimed_at: profileData.last_collect_at || profileData.created_at || new Date().toISOString(),
     hive_full_at: profileData.hive?.cap_reached_at || new Date(Date.now() + 3600000 * 24).toISOString(),
     streak_count: profileData.streak_count || 1,
     last_streak_date: new Date().toISOString().split('T')[0],

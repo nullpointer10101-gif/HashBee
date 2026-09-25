@@ -121,14 +121,15 @@ export const Home: React.FC = () => {
           {user.honey_balance.toFixed(7)} USDT
         </div>
 
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mt-4">
-          PENDING BALANCE
+        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>PENDING BALANCE (LIVE)</span>
         </div>
-        <div className="text-2xl font-black text-stone-200 mt-1 font-mono tracking-tight">
+        <div className="text-2xl font-black text-stone-100 mt-1 font-mono tracking-tight">
           {pendingBalance.toFixed(8)} USDT
         </div>
         <div className="text-[11px] font-bold text-[#86a397] mt-0.5">
-          (Earnings accumulating 24/7)
+          ⚡ 24/7 Cloud Mining Active (+{earningsPerSecond.toFixed(8)} USDT/sec)
         </div>
 
         {/* CLAIM BALANCE Primary Button */}
