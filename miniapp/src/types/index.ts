@@ -54,14 +54,16 @@ export interface Withdrawal {
 
 export interface Campaign {
   id: string
-  advertiser_id: string
+  owner_user_id?: string
   title: string
-  description: string
-  target_url: string
-  budget_honey: number
-  reward_per_user: number
-  status: 'pending' | 'active' | 'completed' | 'cancelled'
-  completed_count: number
+  type: 'link' | 'channel' | 'group' | 'bot' | string
+  target: string
+  total_completions: number
+  done_completions: number
+  reward_bp: number
+  cost: number
+  status: 'waiting_for_payment' | 'active' | 'finished' | 'pending' | 'cancelled' | string
+  payment_memo?: string
   created_at: string
 }
 

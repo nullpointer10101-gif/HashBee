@@ -167,6 +167,7 @@ type Campaign struct {
 	Status           string    `json:"status" db:"status"`
 	VerificationType string    `json:"verification_type" db:"verification_type"` // api, timer
 	AdminNotes       *string   `json:"admin_notes,omitempty" db:"admin_notes"`
+	PaymentMemo      *string   `json:"payment_memo,omitempty" db:"payment_memo"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at" db:"updated_at"`
 }
