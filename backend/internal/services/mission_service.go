@@ -180,8 +180,8 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 	}
 
 	// Real-time Telegram verification: strictly enforced on official channel (AlphaDropDaily)
-	if (m.Type == models.MissionTypeChannel || m.Type == models.MissionTypeGroup) && s.verifier != nil {
-		channel := extractTelegramChat(m.Target)
+	if (m.Type == models.MissionTypeChannel || m.Type == models.MissionTypeGroup) && s.verifier != nil && m.Target != nil {
+		channel := extractTelegramChat(*m.Target)
 		if strings.EqualFold(channel, "AlphaDropDaily") {
 			var telegramID int64
 			_ = tx.QueryRow(ctx, `SELECT telegram_id FROM users WHERE id = $1`, userID).Scan(&telegramID)
