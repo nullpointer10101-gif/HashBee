@@ -156,7 +156,13 @@ func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (
 			userID, fmt.Sprintf("referral_l%d", lvl)).Scan(&totalReward)
 		ls := stats[lvl]
 		ls.TotalRewardBP = totalReward
-		ls.RewardPerReferral = s.settings.GetFloat(ctx, fmt.Sprintf("referral_l%d_bp", lvl), float64(6-lvl*2+2))
+		defLvl := 3.0
+		if lvl == 2 {
+			defLvl = 1.0
+		} else if lvl == 3 {
+			defLvl = 0.5
+		}
+		ls.RewardPerReferral = s.settings.GetFloat(ctx, fmt.Sprintf("referral_l%d_bp", lvl), defLvl)
 		stats[lvl] = ls
 	}
 
@@ -232,7 +238,13 @@ func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.U
 
 	for _, ref := range pending {
 		rewardKey := fmt.Sprintf("referral_l%d_bp", ref.Level)
-		rewardBP := s.settings.GetFloat(ctx, rewardKey, 1.0)
+		defReward := 3.0
+		if ref.Level == 2 {
+			defReward = 1.0
+		} else if ref.Level == 3 {
+			defReward = 0.5
+		}
+		rewardBP := s.settings.GetFloat(ctx, rewardKey, defReward)
 
 		tx, err := s.db.Begin(ctx)
 		if err != nil {

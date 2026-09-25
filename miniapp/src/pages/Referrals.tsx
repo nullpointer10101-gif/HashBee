@@ -184,7 +184,7 @@ export const Referrals: React.FC = () => {
           >
             <div className="text-[9px] uppercase tracking-wider opacity-80">Tier 2</div>
             <div className="text-base font-black mt-0.5">{summary?.tier2_count || 0}</div>
-            <div className="text-[9px] font-bold mt-0.5">+2 GHS</div>
+            <div className="text-[9px] font-bold mt-0.5">+0.5 GHS</div>
           </button>
 
           <button
@@ -204,8 +204,8 @@ export const Referrals: React.FC = () => {
         <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-3 text-center">
           <div className="text-xs font-black text-stone-200">
             {selectedLevel === 1 && '⭐ Tier 1: Direct invites — earn +3 GHS bonus per active friend who starts mining!'}
-            {selectedLevel === 2 && '⚡ Tier 2: Friends of friends — earn +2 GHS bonus!'}
-            {selectedLevel === 3 && '✨ Tier 3: Extended network — earn +1 GHS bonus!'}
+            {selectedLevel === 2 && '⚡ Tier 2: Friends of friends — earn +1 GHS bonus!'}
+            {selectedLevel === 3 && '✨ Tier 3: Extended network — earn +0.5 GHS bonus!'}
           </div>
         </div>
       </div>
