@@ -230,7 +230,7 @@ export const Home: React.FC = () => {
 
       {/* Card 3: HISTORY Outline Button */}
       <button
-        onClick={() => navigate('/withdraw')}
+        onClick={() => navigate('/withdraw?tab=history')}
         className="w-full py-4 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
       >
         <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
