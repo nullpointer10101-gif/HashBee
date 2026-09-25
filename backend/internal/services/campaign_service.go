@@ -213,3 +213,48 @@ func (s *CampaignService) CancelCampaign(ctx context.Context, campaignID, ownerI
 
 	return tx.Commit(ctx)
 }
+
+// AdminListCampaigns returns all campaigns with optional status filter, paginated
+func (s *CampaignService) AdminListCampaigns(ctx context.Context, status string, limit, offset int) ([]models.Campaign, int, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	var total int
+	if status != "" {
+		_ = s.db.QueryRow(ctx, "SELECT COUNT(*) FROM campaigns WHERE status = $1", status).Scan(&total)
+	} else {
+		_ = s.db.QueryRow(ctx, "SELECT COUNT(*) FROM campaigns").Scan(&total)
+	}
+
+	var pgxRows pgx.Rows
+	var err error
+	if status != "" {
+		pgxRows, err = s.db.Query(ctx,
+			`SELECT id, owner_user_id, type, target, title, total_completions, done_completions,
+			        reward_bp, cost, status, verification_type, admin_notes, payment_memo, created_at, updated_at
+			 FROM campaigns WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+			status, limit, offset)
+	} else {
+		pgxRows, err = s.db.Query(ctx,
+			`SELECT id, owner_user_id, type, target, title, total_completions, done_completions,
+			        reward_bp, cost, status, verification_type, admin_notes, payment_memo, created_at, updated_at
+			 FROM campaigns ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+			limit, offset)
+	}
+	if err != nil {
+		return nil, 0, err
+	}
+	defer pgxRows.Close()
+
+	var campaigns []models.Campaign
+	for pgxRows.Next() {
+		var c models.Campaign
+		if err := pgxRows.Scan(&c.ID, &c.OwnerUserID, &c.Type, &c.Target, &c.Title, &c.TotalCompletions,
+			&c.DoneCompletions, &c.RewardBP, &c.Cost, &c.Status, &c.VerificationType, &c.AdminNotes,
+			&c.PaymentMemo, &c.CreatedAt, &c.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		campaigns = append(campaigns, c)
+	}
+	return campaigns, total, nil
+}

@@ -16,9 +16,10 @@ import (
 )
 
 type UserHandler struct {
-	cfg        *config.Config
-	userSvc    *services.UserService
+	cfg         *config.Config
+	userSvc     *services.UserService
 	referralSvc *services.ReferralService
+	depositSvc  *services.DepositService
 }
 
 func NewUserHandler(cfg *config.Config, userSvc *services.UserService, referralSvc *services.ReferralService, depositSvc *services.DepositService) *UserHandler {
