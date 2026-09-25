@@ -179,10 +179,10 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 		return 0, fmt.Errorf("mission verification failed")
 	}
 
-	// Real-time Telegram Channel / Group membership verification
+	// Real-time Telegram verification: strictly enforced on official channel (AlphaDropDaily)
 	if (m.Type == models.MissionTypeChannel || m.Type == models.MissionTypeGroup) && s.verifier != nil {
 		channel := extractTelegramChat(m.Target)
-		if channel != "" {
+		if strings.EqualFold(channel, "AlphaDropDaily") {
 			var telegramID int64
 			_ = tx.QueryRow(ctx, `SELECT telegram_id FROM users WHERE id = $1`, userID).Scan(&telegramID)
 			if telegramID != 0 {
@@ -192,9 +192,10 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 				}
 				if err != nil {
 					errStr := strings.ToLower(err.Error())
-					if strings.Contains(errStr, "user not found") || strings.Contains(errStr, "participant") || strings.Contains(errStr, "member not found") || strings.Contains(errStr, "user_not_participant") {
+					if strings.Contains(errStr, "user not found") || strings.Contains(errStr, "user_not_participant") {
 						return 0, fmt.Errorf("you have not joined @%s yet. Please join the channel first!", channel)
 					}
+					// If bot is not admin or any other API error, allow reward directly
 				}
 			}
 		}
