@@ -22,6 +22,7 @@ import (
 
 type BotBroadcaster interface {
 	BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int)
+	BroadcastWithButtonProgress(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64, onProgress func(sent, failed, total int)) (int, int)
 }
 
 type AdminHandler struct {
@@ -720,8 +721,8 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 		defer cancel()
 
-		if botImpl, ok := h.bot.(*bot.Bot); ok && botImpl != nil {
-			sent, failed := botImpl.BroadcastWithButtonProgress(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs, func(s, f, t int) {
+		if h.bot != nil {
+			sent, failed := h.bot.BroadcastWithButtonProgress(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs, func(s, f, t int) {
 				broadcastMu.Lock()
 				done := s + f
 				pct := 0
@@ -735,17 +736,6 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 				broadcastMu.Unlock()
 			})
 
-			broadcastMu.Lock()
-			broadcastStatus.IsRunning = false
-			broadcastStatus.Sent = sent
-			broadcastStatus.Failed = failed
-			broadcastStatus.Done = sent + failed
-			broadcastStatus.Percent = 100
-			broadcastStatus.CompletedAt = time.Now()
-			broadcastStatus.Message = fmt.Sprintf("Completed: %d sent, %d failed out of %d", sent, failed, total)
-			broadcastMu.Unlock()
-		} else if h.bot != nil {
-			sent, failed := h.bot.BroadcastWithButton(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs)
 			broadcastMu.Lock()
 			broadcastStatus.IsRunning = false
 			broadcastStatus.Sent = sent
