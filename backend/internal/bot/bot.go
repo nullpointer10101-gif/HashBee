@@ -110,7 +110,18 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		go func(from tgbotapi.User, refID *int64) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			_, _, _ = b.userSvc.GetOrCreate(ctx, from.ID, from.UserName, from.FirstName, from.LanguageCode, refID)
+			newUser, isNew, _ := b.userSvc.GetOrCreate(ctx, from.ID, from.UserName, from.FirstName, from.LanguageCode, refID)
+			// Notify the referrer when a new user joins via their link
+			if isNew && refID != nil && newUser != nil {
+				joinerName := from.FirstName
+				if joinerName == "" {
+					joinerName = from.UserName
+				}
+				if joinerName == "" {
+					joinerName = "A new user"
+				}
+				b.SendReferralJoinNotification(*refID, joinerName)
+			}
 		}(*msg.From, referrerTelegramID)
 	}
 
@@ -245,6 +256,31 @@ func (b *Bot) SendWithdrawalNotification(telegramID int64, status, reason string
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	b.api.Send(msg)
+}
+
+// SendReferralJoinNotification notifies the referrer immediately when a new friend joins via their link
+func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName string) {
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	keyboard := newWebAppKeyboard("👥 View My Swarm", miniAppURL)
+
+	text := fmt.Sprintf(`🎉 *New Friend Joined!*
+
+👤 *%s* just joined HashBee using your invite link!
+
+✅ You've earned *+3 GHS* mining power bonus!
+🤝 Keep sharing your link to grow your Swarm and earn more bonuses!
+
+Your invite link: https://t.me/hashbee_bot?start=%d`, joinerName, referrerTelegramID)
+
+	msg := tgbotapi.NewMessage(referrerTelegramID, text)
+	msg.ParseMode = "Markdown"
+	msg.ReplyMarkup = keyboard
+	if b.api != nil {
+		b.api.Send(msg)
+	}
 }
 
 // SendReferralActivatedNotification notifies referrer of new active referral
