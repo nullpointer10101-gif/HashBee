@@ -29,8 +29,10 @@ func (s *MissionService) ListMissionsForUser(ctx context.Context, userID uuid.UU
 		        m.milestone_count, m.sort_order, m.status, m.is_official, m.icon_url, m.created_at, m.updated_at,
 		        mc.status as completion_status
 		 FROM missions m
+		 LEFT JOIN campaigns c ON c.id = m.campaign_id
 		 LEFT JOIN mission_completions mc ON mc.mission_id = m.id AND mc.user_id = $1
 		 WHERE m.status = 'active'
+		   AND (m.campaign_id IS NULL OR (c.status = 'active' AND c.done_completions < c.total_completions))
 		 ORDER BY m.is_official DESC, m.sort_order ASC, m.created_at DESC`,
 		userID)
 	if err != nil {
@@ -78,6 +80,16 @@ func (s *MissionService) StartMission(ctx context.Context, userID, missionID uui
 	}
 	if m.Status != models.MissionStatusActive {
 		return nil, fmt.Errorf("mission is not active")
+	}
+
+	if m.CampaignID != nil {
+		var campStatus string
+		var done, total int
+		err = s.db.QueryRow(ctx, `SELECT status, done_completions, total_completions FROM campaigns WHERE id = $1`, *m.CampaignID).
+			Scan(&campStatus, &done, &total)
+		if err == nil && (campStatus != "active" || done >= total) {
+			return nil, fmt.Errorf("this campaign has reached its completion limit and is now closed")
+		}
 	}
 
 	// Check if already completed/pending
@@ -201,10 +213,14 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 			return 0, err
 		}
 
-		// Auto-complete campaign if target reached
+		// Auto-complete campaign & mission if target reached
 		_, _ = tx.Exec(ctx,
 			`UPDATE campaigns SET status = 'completed', updated_at = NOW()
-			 WHERE id = $1 AND done_completions >= total_completions AND status = 'active'`,
+			 WHERE id = $1 AND done_completions >= total_completions`,
+			*m.CampaignID)
+		_, _ = tx.Exec(ctx,
+			`UPDATE missions SET status = 'completed', updated_at = NOW()
+			 WHERE campaign_id = $1 AND (SELECT done_completions >= total_completions FROM campaigns WHERE id = $1)`,
 			*m.CampaignID)
 	}
 

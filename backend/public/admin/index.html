@@ -560,6 +560,8 @@ async function loadCampaigns() {
                 <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 10px; font-size:11px;">
                   ⚡ Activate
                 </button>
+              ` : (c.status === 'completed' || c.status === 'finished' || (c.done_completions >= c.total_completions && c.total_completions > 0)) ? `
+                <span style="color:#6b7280; font-weight:800; font-size:11px; margin-right:4px;">COMPLETED</span>
               ` : `
                 <span style="color:#10b981; font-weight:800; font-size:11px; margin-right:4px;">✓ LIVE</span>
               `}
