@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -50,8 +52,9 @@ type tonEvent struct {
 }
 
 type tonAction struct {
-	Type        string           `json:"type"`
-	TonTransfer *tonTransferData `json:"TonTransfer,omitempty"`
+	Type           string              `json:"type"`
+	TonTransfer    *tonTransferData    `json:"TonTransfer,omitempty"`
+	JettonTransfer *jettonTransferData `json:"JettonTransfer,omitempty"`
 }
 
 type tonTransferData struct {
@@ -61,13 +64,52 @@ type tonTransferData struct {
 	Comment   string     `json:"comment"`
 }
 
+type jettonTransferData struct {
+	Sender           tonAccount  `json:"sender"`
+	Recipient        *tonAccount `json:"recipient,omitempty"`
+	SendersWallet    string      `json:"senders_wallet"`
+	RecipientsWallet string      `json:"recipients_wallet"`
+	Amount           string      `json:"amount"` // in nano units
+	Comment          string      `json:"comment"`
+}
+
 type tonAccount struct {
 	Address string `json:"address"`
 }
 
+// normalizeTonAddress converts any Ton address (base64 bounceable/non-bounceable or raw) to lowercase hex 0:...
+func normalizeTonAddress(addr string) string {
+	addr = strings.TrimSpace(addr)
+	if addr == "" {
+		return ""
+	}
+	if strings.HasPrefix(addr, "0:") || strings.HasPrefix(addr, "-1:") {
+		return strings.ToLower(addr)
+	}
+
+	clean := strings.ReplaceAll(strings.ReplaceAll(addr, "-", "+"), "_", "/")
+	for len(clean)%4 != 0 {
+		clean += "="
+	}
+
+	raw, err := base64.StdEncoding.DecodeString(clean)
+	if err == nil && len(raw) >= 34 {
+		workchain := int8(raw[1])
+		hexStr := hex.EncodeToString(raw[2:34])
+		return strings.ToLower(fmt.Sprintf("%d:%s", workchain, hexStr))
+	}
+
+	return strings.ToLower(addr)
+}
+
 // ProcessDeposits scans TonAPI and credits uncredited transfers
 func (s *DepositService) ProcessDeposits(ctx context.Context) (int, error) {
-	url := fmt.Sprintf("https://tonapi.io/v2/accounts/%s/events?limit=30", s.wallet)
+	return s.ProcessDepositsForUser(ctx, 0, "")
+}
+
+// ProcessDepositsForUser scans TonAPI and credits transfers, optionally matching a specific user by sender address if comment was omitted
+func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID int64, senderAddress string) (int, error) {
+	url := fmt.Sprintf("https://tonapi.io/v2/accounts/%s/events?limit=50", s.wallet)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -90,6 +132,7 @@ func (s *DepositService) ProcessDeposits(ctx context.Context) (int, error) {
 
 	creditedCount := 0
 	memoRegex := regexp.MustCompile(`(?i)(?:HB_)?(\d{6,15})`)
+	normalizedUserSender := normalizeTonAddress(senderAddress)
 
 	for _, ev := range data.Events {
 		eventId := ev.EventID
@@ -98,42 +141,64 @@ func (s *DepositService) ProcessDeposits(ctx context.Context) (int, error) {
 		}
 
 		for _, action := range ev.Actions {
-			if action.Type != "TonTransfer" || action.TonTransfer == nil {
+			var amountGram float64
+			var recipientAddr string
+			var senderAddr string
+			var comment string
+
+			if action.Type == "TonTransfer" && action.TonTransfer != nil {
+				transfer := action.TonTransfer
+				amountGram = float64(transfer.Amount) / 1e9
+				recipientAddr = strings.ToLower(transfer.Recipient.Address)
+				senderAddr = strings.ToLower(transfer.Sender.Address)
+				comment = strings.TrimSpace(transfer.Comment)
+			} else if action.Type == "JettonTransfer" && action.JettonTransfer != nil {
+				jt := action.JettonTransfer
+				amt, _ := strconv.ParseFloat(jt.Amount, 64)
+				amountGram = amt / 1e9
+				if jt.Recipient != nil {
+					recipientAddr = strings.ToLower(jt.Recipient.Address)
+				} else {
+					recipientAddr = strings.ToLower(jt.RecipientsWallet)
+				}
+				senderAddr = strings.ToLower(jt.Sender.Address)
+				comment = strings.TrimSpace(jt.Comment)
+			} else {
 				continue
 			}
-
-			transfer := action.TonTransfer
-			recipientAddr := strings.ToLower(transfer.Recipient.Address)
 
 			// Check recipient matches our wallet
 			if recipientAddr != strings.ToLower(s.wallet) && recipientAddr != strings.ToLower(s.rawWallet) {
 				continue
 			}
 
-			// Minimum deposit: 0.1 GRAM (100,000,000 nano)
-			amountNano := transfer.Amount
-			if amountNano < 100000000 { // 0.1 GRAM
+			// Minimum deposit: 0.10 GRAM
+			if amountGram < 0.10 {
 				continue
 			}
 
-			amountGram := float64(amountNano) / 1e9
-			comment := strings.TrimSpace(transfer.Comment)
-
-			// Extract Telegram ID from memo / comment
+			// Determine target user
+			var targetTelegramID int64
 			match := memoRegex.FindStringSubmatch(comment)
-			if len(match) < 2 {
-				continue
+			if len(match) >= 2 {
+				targetTelegramID, _ = strconv.ParseInt(match[1], 10, 64)
 			}
 
-			telegramID, err := strconv.ParseInt(match[1], 10, 64)
-			if err != nil || telegramID <= 0 {
+			// Fallback: If memo was omitted, check if sender matches current user's provided address
+			if targetTelegramID <= 0 && telegramID > 0 && normalizedUserSender != "" {
+				if senderAddr == normalizedUserSender {
+					targetTelegramID = telegramID
+				}
+			}
+
+			if targetTelegramID <= 0 {
 				continue
 			}
 
 			// Credit atomically
-			credited, err := s.creditUserDeposit(ctx, telegramID, amountGram, eventId)
+			credited, err := s.creditUserDeposit(ctx, targetTelegramID, amountGram, eventId)
 			if err != nil {
-				log.Printf("⚠️  [DepositService] Error crediting deposit %s for user %d: %v", eventId, telegramID, err)
+				log.Printf("⚠️  [DepositService] Error crediting deposit %s for user %d: %v", eventId, targetTelegramID, err)
 				continue
 			}
 
@@ -155,7 +220,7 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 
 	// 1. Idempotency check: verify this transaction was not already credited
 	var existingTx string
-	err = tx.QueryRow(ctx, `SELECT id FROM transactions WHERE idempotency_key = $1`, eventID).Scan(&existingTx)
+	err = tx.QueryRow(ctx, "SELECT id FROM transactions WHERE idempotency_key = $1", eventID).Scan(&existingTx)
 	if err == nil {
 		// Already processed
 		return false, nil
@@ -164,7 +229,7 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 	// 2. Lock user row
 	var userID uuid.UUID
 	var currentBP float64
-	err = tx.QueryRow(ctx, `SELECT id, bp FROM users WHERE telegram_id = $1 FOR UPDATE`, telegramID).Scan(&userID, &currentBP)
+	err = tx.QueryRow(ctx, "SELECT id, bp FROM users WHERE telegram_id = $1 FOR UPDATE", telegramID).Scan(&userID, &currentBP)
 	if err != nil {
 		// User does not exist yet
 		return false, fmt.Errorf("user %d not found in database", telegramID)
@@ -175,7 +240,7 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 
 	// 3. Update user BP
 	newBP := currentBP + powerGained
-	_, err = tx.Exec(ctx, `UPDATE users SET bp = $1, updated_at = NOW() WHERE id = $2`, newBP, userID)
+	_, err = tx.Exec(ctx, "UPDATE users SET bp = $1, updated_at = NOW() WHERE id = $2", newBP, userID)
 	if err != nil {
 		return false, fmt.Errorf("failed to update user bp: %w", err)
 	}
@@ -183,8 +248,7 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 	// 4. Record ledger transaction
 	desc := fmt.Sprintf("Blockchain deposit: +%.3f GRAM (+%.2f GHS)", amountGram, powerGained)
 	_, err = tx.Exec(ctx,
-		`INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at)
-		 VALUES ($1, $2, 'deposit', $3, 'GRAM', $4, $5, NOW())`,
+		"INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at) VALUES ($1, $2, 'deposit', $3, 'GRAM', $4, $5, NOW())",
 		uuid.New(), userID, amountGram, eventID, desc)
 	if err != nil {
 		return false, fmt.Errorf("failed to insert transaction: %w", err)

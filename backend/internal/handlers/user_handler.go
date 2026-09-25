@@ -104,11 +104,20 @@ func (h *UserHandler) Collect(c *gin.Context) {
 	})
 }
 
+type CheckDepositRequest struct {
+	SenderAddress string `json:"sender_address"`
+}
+
 // POST /api/check-deposit — Trigger instant blockchain deposit verification
 func (h *UserHandler) CheckDeposit(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
+	var req CheckDepositRequest
+	_ = c.ShouldBindJSON(&req)
+
+	creditedCount := 0
 	if h.depositSvc != nil {
-		creditedCount, _ := h.depositSvc.ProcessDeposits(c.Request.Context())
+		count, _ := h.depositSvc.ProcessDepositsForUser(c.Request.Context(), user.TelegramID, req.SenderAddress)
+		creditedCount = count
 		if creditedCount > 0 {
 			if updatedUser, err := h.userSvc.GetByID(c.Request.Context(), user.ID); err == nil && updatedUser != nil {
 				user = updatedUser
@@ -118,8 +127,9 @@ func (h *UserHandler) CheckDeposit(c *gin.Context) {
 
 	profile := h.userSvc.GetUserProfile(c.Request.Context(), user)
 	c.JSON(http.StatusOK, gin.H{
-		"profile": profile,
-		"status":  "checked",
+		"profile":  profile,
+		"status":   "checked",
+		"credited": creditedCount,
 	})
 }
 

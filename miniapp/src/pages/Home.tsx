@@ -15,6 +15,7 @@ export const Home: React.FC = () => {
   const [depositAmount, setDepositAmount] = useState<string>('1')
   const [copiedAddr, setCopiedAddr] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
+  const [senderAddress, setSenderAddress] = useState<string>('')
   const [verifying, setVerifying] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
@@ -54,14 +55,45 @@ export const Home: React.FC = () => {
     setTimeout(() => setCopiedAddr(false), 2500)
   }
 
+  const handleOpenTonkeeper = () => {
+    const nanoAmount = Math.round(numDeposit * 1e9)
+    const comment = encodeURIComponent(userMemo)
+    const tonkeeperUrl = `https://app.tonkeeper.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
+    const directUrl = `ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
+
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(tonkeeperUrl)
+    } else {
+      window.location.href = directUrl
+      setTimeout(() => {
+        window.open(tonkeeperUrl, '_blank')
+      }, 500)
+    }
+  }
+
+  const handleOpenAnyWallet = () => {
+    const nanoAmount = Math.round(numDeposit * 1e9)
+    const comment = encodeURIComponent(userMemo)
+    const tonhubUrl = `https://tonhub.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(tonhubUrl)
+    } else {
+      window.open(`ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`, '_blank')
+    }
+  }
+
   const handleVerifyDeposit = async () => {
     setVerifying(true)
     toast.loading('Checking blockchain for your deposit...', { id: 'verify-dep' })
     try {
-      await checkDeposit()
+      const res = await checkDeposit(senderAddress.trim())
       toast.dismiss('verify-dep')
       await refreshUser()
-      toast.success('🎉 Deposit check complete! Any detected transfers are credited.')
+      if (res?.credited && res.credited > 0) {
+        toast.success(`🎉 Detected & credited ${res.credited} deposit(s)! Mining power upgraded!`)
+      } else {
+        toast.success('Blockchain scan complete! Any detected transfers are credited.')
+      }
       setShowPayModal(false)
     } catch (err: any) {
       toast.dismiss('verify-dep')
@@ -404,13 +436,35 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            {/* Direct Tonkeeper / Wallet link button */}
-            <a
-              href={`ton://transfer/${depositAddress}?amount=${Math.round(numDeposit * 1e9)}&text=${encodeURIComponent(userMemo)}`}
-              className="w-full py-3 rounded-2xl bg-[#0088cc] hover:bg-[#0099e6] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all text-center block"
+            {/* Direct Tonkeeper Button */}
+            <button
+              onClick={handleOpenTonkeeper}
+              className="w-full py-3.5 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
             >
-              💎 PAY IN TONKEEPER / WALLET
-            </a>
+              <span>💎</span> PAY IN TONKEEPER (AUTO-FILL)
+            </button>
+
+            {/* Other Wallets Button */}
+            <button
+              onClick={handleOpenAnyWallet}
+              className="w-full py-2.5 rounded-2xl bg-[#182621] hover:bg-[#20332c] text-[#93b3a6] border border-[#2b4137] font-bold text-xs uppercase tracking-wider mb-3 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+            >
+              <span>⚡</span> OTHER WALLET (TONHUB / MYTONWALLET)
+            </button>
+
+            {/* Optional sender address for memo-less payments */}
+            <div className="mb-3 pt-2 border-t border-[#23332d]">
+              <label className="text-[10.5px] font-bold text-stone-400 block mb-1">
+                Sent without memo? (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="Paste your TON wallet address (UQ... or 0:...)"
+                value={senderAddress}
+                onChange={(e) => setSenderAddress(e.target.value)}
+                className="w-full zentorno-input p-2.5 text-xs font-mono text-stone-200 placeholder:text-stone-600 rounded-xl"
+              />
+            </div>
 
             {/* Instant verification button */}
             <button

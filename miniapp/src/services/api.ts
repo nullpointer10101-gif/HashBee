@@ -264,7 +264,7 @@ export const cancelCampaign = async (id: string): Promise<void> => {
   await api.delete(`/api/campaigns/${id}`)
 }
 
-export const checkDeposit = async (): Promise<any> => {
-  const res = await api.post('/api/check-deposit')
+export const checkDeposit = async (senderAddress?: string): Promise<any> => {
+  const res = await api.post('/api/check-deposit', { sender_address: senderAddress || '' })
   return res.data
 }
