@@ -683,8 +683,9 @@ export const Missions: React.FC = () => {
           <div className="flex flex-col gap-2.5 mb-4">
             {campaigns.map((camp) => {
               const isWaiting = camp.status === 'waiting_for_payment'
-              const isFinished = camp.status === 'finished' || camp.done_completions >= camp.total_completions
-              const percent = Math.min(100, Math.round(((camp.done_completions || 0) / (camp.total_completions || 50)) * 100))
+              const isFinished = camp.status === 'finished' || camp.status === 'completed' || camp.done_completions >= camp.total_completions
+              const displayDone = isFinished ? camp.total_completions : (camp.done_completions || 0)
+              const percent = isFinished ? 100 : Math.min(100, Math.round((displayDone / (camp.total_completions || 50)) * 100))
 
               return (
                 <div
@@ -716,7 +717,7 @@ export const Missions: React.FC = () => {
                         {isWaiting ? (
                           <span className="text-amber-300">Waiting for payment</span>
                         ) : isFinished ? (
-                          <span className="text-stone-400">Finished</span>
+                          <span className="text-emerald-400 font-extrabold">✓ Completed ({camp.total_completions}/{camp.total_completions})</span>
                         ) : (
                           <span>{camp.done_completions}/{camp.total_completions} completions</span>
                         )}
