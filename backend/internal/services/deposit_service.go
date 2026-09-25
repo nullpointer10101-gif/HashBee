@@ -35,7 +35,7 @@ func NewDepositService(db *pgxpool.Pool, bot BotNotifier, wallet string) *Deposi
 		db:        db,
 		bot:       bot,
 		wallet:    wallet,
-		rawWallet: "0:1e84166ab32e9c0464a6567daaaae3b96f8e1c9264e78664fd2b42ca71fb3280",
+		rawWallet: "0:c0a8d40eeb9234eae253e28c677d03c0428137aa7318612797b5ab7f7c5f898a",
 		client:    &http.Client{Timeout: 10 * time.Second},
 	}
 }
@@ -179,7 +179,7 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				var campType, campTarget, campTitle string
 				var campRewardBP float64
 				err := s.db.QueryRow(ctx,
-					"SELECT id, owner_user_id, type, target, title, reward_bp FROM campaigns WHERE payment_memo = $1 AND status = 'waiting_for_payment'",
+					"SELECT id, owner_user_id, type, target, title, reward_bp FROM campaigns WHERE (UPPER(TRIM(payment_memo)) = UPPER(TRIM($1)) OR UPPER(TRIM($1)) LIKE '%' || UPPER(TRIM(payment_memo)) || '%') AND status = 'waiting_for_payment' LIMIT 1",
 					comment).Scan(&campID, &campOwnerID, &campType, &campTarget, &campTitle, &campRewardBP)
 				if err == nil && campID != uuid.Nil {
 					tx, err := s.db.Begin(ctx)
