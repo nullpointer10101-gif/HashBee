@@ -172,60 +172,61 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// Check if this transfer is a payment for a Campaign (minimum campaign cost is 0.05 GRAM)
-			if comment != "" && amountGram >= 0.05 {
-				var campID uuid.UUID
-				var campOwnerID uuid.UUID
-				var campType, campTarget, campTitle string
-				var campRewardBP float64
-				err := s.db.QueryRow(ctx,
-					"SELECT id, owner_user_id, type, target, title, reward_bp FROM campaigns WHERE (UPPER(TRIM(payment_memo)) = UPPER(TRIM($1)) OR UPPER(TRIM($1)) LIKE '%' || UPPER(TRIM(payment_memo)) || '%') AND status = 'waiting_for_payment' LIMIT 1",
-					comment).Scan(&campID, &campOwnerID, &campType, &campTarget, &campTitle, &campRewardBP)
-				if err == nil && campID != uuid.Nil {
-					tx, err := s.db.Begin(ctx)
-					if err == nil {
-						_, _ = tx.Exec(ctx, "UPDATE campaigns SET status = 'active', updated_at = NOW() WHERE id = $1", campID)
-						icon := "link"
-						if campType == "channel" || campType == "group" {
-							icon = "users"
-						} else if campType == "bot" {
-							icon = "bot"
-						}
-						_, _ = tx.Exec(ctx,
-							"INSERT INTO missions (id, type, target, title, description, reward_bp, campaign_id, sort_order, status, is_official, icon_url, created_at, updated_at) VALUES ($1, $2, $3, $4, '+0.1 GHS', $5, $6, 30, 'active', false, $7, NOW(), NOW())",
-							uuid.New(), campType, campTarget, campTitle, campRewardBP, campID, icon)
+			// 1. Check if this transfer is a payment for a Campaign (identified by CMP memo or comment)
+			upperComment := strings.ToUpper(strings.TrimSpace(comment))
+			if strings.Contains(upperComment, "CMP") {
+				if amountGram >= 0.05 {
+					var campID uuid.UUID
+					var campOwnerID uuid.UUID
+					var campType, campTarget, campTitle string
+					var campRewardBP float64
+					err := s.db.QueryRow(ctx,
+						"SELECT id, owner_user_id, type, target, title, reward_bp FROM campaigns WHERE (UPPER(TRIM(payment_memo)) = UPPER(TRIM($1)) OR UPPER(TRIM($1)) LIKE '%' || UPPER(TRIM(payment_memo)) || '%') AND status = 'waiting_for_payment' LIMIT 1",
+						comment).Scan(&campID, &campOwnerID, &campType, &campTarget, &campTitle, &campRewardBP)
+					if err == nil && campID != uuid.Nil {
+						tx, err := s.db.Begin(ctx)
+						if err == nil {
+							_, _ = tx.Exec(ctx, "UPDATE campaigns SET status = 'active', updated_at = NOW() WHERE id = $1", campID)
+							icon := "link"
+							if campType == "channel" || campType == "group" {
+								icon = "users"
+							} else if campType == "bot" {
+								icon = "bot"
+							}
+							_, _ = tx.Exec(ctx,
+								"INSERT INTO missions (id, type, target, title, description, reward_bp, campaign_id, sort_order, status, is_official, icon_url, created_at, updated_at) VALUES ($1, $2, $3, $4, '+0.1 GHS', $5, $6, 30, 'active', false, $7, NOW(), NOW())",
+								uuid.New(), campType, campTarget, campTitle, campRewardBP, campID, icon)
 
-						idemp := fmt.Sprintf("campaign_dep_%s", eventId)
-						_, _ = tx.Exec(ctx,
-							"INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at) VALUES ($1, $2, 'campaign_payment', $3, 'GRAM', $4, 'campaign', $5, $6, NOW()) ON CONFLICT DO NOTHING",
-							uuid.New(), campOwnerID, amountGram, campID, idemp, fmt.Sprintf("Promote campaign: %s", campTitle))
+							idemp := fmt.Sprintf("campaign_dep_%s", eventId)
+							_, _ = tx.Exec(ctx,
+								"INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at) VALUES ($1, $2, 'campaign_payment', $3, 'GRAM', $4, 'campaign', $5, $6, NOW()) ON CONFLICT DO NOTHING",
+								uuid.New(), campOwnerID, amountGram, campID, idemp, fmt.Sprintf("Promote campaign: %s", campTitle))
 
-						if err := tx.Commit(ctx); err == nil {
-							log.Printf("📢 [DepositService] Activated campaign %s (%s) via deposit tx %s!", campID, campTitle, eventId)
-							creditedCount++
-							continue
+							if err := tx.Commit(ctx); err == nil {
+								log.Printf("📢 [DepositService] Activated campaign %s (%s) via deposit tx %s!", campID, campTitle, eventId)
+								creditedCount++
+								continue
+							}
 						}
 					}
 				}
+				// CRITICAL: A campaign payment must NEVER fall through to miner power deposit!
+				continue
 			}
 
-			// Minimum regular miner deposit for GHS power: 0.10 GRAM
+			// 2. Minimum regular miner deposit for GHS power: 0.10 GRAM
 			if amountGram < 0.10 {
 				continue
 			}
 
-			// Determine target user
+			// Determine target user strictly from Telegram ID in memo (e.g., HB_123456789 or 123456789)
 			var targetTelegramID int64
-			match := memoRegex.FindStringSubmatch(comment)
-			if len(match) >= 2 {
-				targetTelegramID, _ = strconv.ParseInt(match[1], 10, 64)
+			cleanComment := strings.TrimSpace(comment)
+			if strings.HasPrefix(strings.ToUpper(cleanComment), "HB_") {
+				cleanComment = cleanComment[3:]
 			}
-
-			// Fallback: If memo was omitted, check if sender matches current user's provided address
-			if targetTelegramID <= 0 && telegramID > 0 && normalizedUserSender != "" {
-				if senderAddr == normalizedUserSender {
-					targetTelegramID = telegramID
-				}
+			if tid, err := strconv.ParseInt(cleanComment, 10, 64); err == nil && tid > 10000 {
+				targetTelegramID = tid
 			}
 
 			if targetTelegramID <= 0 {

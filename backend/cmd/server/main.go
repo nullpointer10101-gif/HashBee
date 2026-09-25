@@ -91,6 +91,11 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "hashbee", "timestamp": time.Now()})
 	})
 
+	// Serve Admin Panel static frontend
+	r.StaticFile("/admin", "./public/admin/index.html")
+	r.StaticFile("/admin/", "./public/admin/index.html")
+	r.Static("/admin/assets", "./public/admin/assets")
+
 	// =====================================================
 	// Telegram Webhook
 	// =====================================================
