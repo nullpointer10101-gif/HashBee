@@ -104,20 +104,20 @@
         <h2 style="font-weight:900; font-size:22px; margin-bottom:4px;">Admin Portal</h2>
         <p style="font-size:13px; color:var(--text-muted);">Sign in to manage HashBee Platform</p>
       </div>
-      <form onsubmit="handleLogin(event)">
+      <form onsubmit="handleLogin(event); return false;">
         <div class="form-group">
           <label class="form-label">Email or Username</label>
-          <input type="text" id="loginId" class="form-input" required placeholder="Enter username or email" autocomplete="off">
+          <input type="text" id="loginId" class="form-input" required placeholder="Enter username or email" autocomplete="off" onkeydown="if(event.key==='Enter')handleLogin(event)">
         </div>
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input type="password" id="loginPw" class="form-input" required placeholder="Enter password" autocomplete="new-password">
+          <input type="password" id="loginPw" class="form-input" required placeholder="Enter password" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleLogin(event)">
         </div>
         <div class="form-group">
           <label class="form-label">Backend API URL</label>
           <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
         </div>
-        <button type="submit" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
+        <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
     </div>
   </div>
@@ -409,7 +409,7 @@
       <h3 style="font-size:18px; font-weight:900;">➕ Create Boost Campaign</h3>
       <button onclick="closeModal('createCampModal')" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
     </div>
-    <form onsubmit="handleCreateCampaign(event)">
+    <form onsubmit="handleCreateCampaign(event); return false;">
       <div class="form-group">
         <label class="form-label">Campaign Title / Name</label>
         <input type="text" id="newCampTitle" class="form-input" required placeholder="e.g. Join My Telegram Channel">
@@ -439,7 +439,7 @@
       </div>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
         <button type="button" onclick="closeModal('createCampModal')" class="btn btn-secondary">Cancel</button>
-        <button type="submit" id="createCampSubmitBtn" onclick="handleCreateCampaign(event)" class="btn btn-gold">Publish Live Now</button>
+        <button type="button" id="createCampSubmitBtn" onclick="handleCreateCampaign(event)" class="btn btn-gold">Publish Live Now</button>
       </div>
     </form>
   </div>
@@ -449,6 +449,7 @@
 
 <script>
 let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
@@ -533,10 +534,14 @@ function authHeaders() {
 };
 };
 };
+};
 }
 
 async function handleLogin(e) {
-  if (e && e.preventDefault) e.preventDefault();
+  if (e) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+  }
   const loginId = (document.getElementById('loginId')?.value || '').trim();
   const password = (document.getElementById('loginPw')?.value || '').trim();
   let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
@@ -545,7 +550,7 @@ async function handleLogin(e) {
 
   if (!loginId || !password) {
     showToast('Please enter both username/email and password', true);
-    return;
+    return false;
   }
 
   const btn = document.getElementById('loginBtn');
@@ -580,6 +585,7 @@ async function handleLogin(e) {
       btn.innerText = 'Login to Dashboard';
     }
   }
+  return false;
 }
 
 function initDashboard(admin) {
