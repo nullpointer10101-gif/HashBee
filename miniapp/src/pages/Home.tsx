@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
+import { LanguageModal } from '../components/LanguageModal'
 import { claimHoney, checkDeposit } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 
 export const Home: React.FC = () => {
   const { user, refreshUser, loading } = useAuth()
+  const { t, currentLanguage } = useLanguage()
+  const [showLangModal, setShowLangModal] = useState(false)
   const navigate = useNavigate()
 
   // ALL HOOKS DECLARED UNCONDITIONALLY AT THE VERY TOP
@@ -148,28 +152,38 @@ export const Home: React.FC = () => {
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      {/* Centered Page Header with Support Link */}
+      {/* Centered Page Header with Language Switcher & Support Link */}
       <div className="flex items-center justify-between mb-6">
-        <div className="w-16"></div>
-        <h1 className="text-xl font-extrabold text-stone-100 uppercase tracking-wider text-center">
-          MINING DASHBOARD
+        <h1 className="text-xl font-extrabold text-stone-100 uppercase tracking-wider">
+          {t('mining_dashboard', 'MINING DASHBOARD')}
         </h1>
-        <a
-          href="https://t.me/kiopajje"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20"
-        >
-          <span>🎧</span>
-          <span>Support</span>
-        </a>
+        <div className="flex items-center gap-1.5">
+          {/* Language Switcher Option Left to CS Support */}
+          <button
+            onClick={() => setShowLangModal(true)}
+            className="flex items-center gap-1 text-[11px] font-extrabold text-stone-200 bg-[#1e2d27] hover:bg-[#283d35] px-2.5 py-1.5 rounded-full border border-[#334d42] transition-all shadow-sm active:scale-95"
+            title="Change Language"
+          >
+            <span className="text-xs">{currentLanguage.flag}</span>
+            <span className="uppercase tracking-wider">{currentLanguage.code}</span>
+          </button>
+
+          {/* CS Support Button */}
+          <a
+            href="https://t.me/kiopajje"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2.5 py-1.5 rounded-full border border-emerald-400/20 transition-all active:scale-95"
+          >
+            <span>🎧</span>
+            <span>{t('support', 'Support')}</span>
+          </a>
+        </div>
       </div>
 
       {/* Card 1: TOTAL GHS POWER */}
       <div className="zentorno-card p-5 mb-4 text-center">
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
-          TOTAL GHS POWER
-        </div>
+        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">{t('total_ghs_power', 'TOTAL GHS POWER')}</div>
         <div className="text-3xl font-black text-stone-100 mt-1">
           {ghs.toLocaleString()} GHS
         </div>
@@ -494,7 +508,9 @@ export const Home: React.FC = () => {
           </div>
         </div>
       )}
+      <LanguageModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
     </div>
   )
 }
+
 export default Home

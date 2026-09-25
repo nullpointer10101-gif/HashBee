@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { LanguageProvider } from './context/LanguageContext'
 import { Navbar } from './components/Navbar'
 import { Home } from './pages/Home'
 import { Referrals } from './pages/Referrals'
@@ -55,9 +56,11 @@ export const App: React.FC = () => {
   }, [])
 
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }
 
