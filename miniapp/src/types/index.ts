@@ -81,6 +81,7 @@ export interface ReferralSummary {
     first_name: string
     joined_at: string
     honey_earned_for_referrer: number
+    status?: 'pending' | 'active' | string
   }[]
 }
 

@@ -210,10 +210,28 @@ export const Referrals: React.FC = () => {
         </div>
       </div>
 
+      {/* Referral Activation Rule Info Card */}
+      <div className="bg-[#14201c] border border-[#263a33] rounded-2xl p-3.5 mb-4 flex items-start gap-3 shadow-sm">
+        <div className="text-xl shrink-0 mt-0.5">ℹ️</div>
+        <div className="flex-1 text-xs">
+          <div className="font-black text-stone-100 uppercase tracking-wide mb-1">
+            Referral Activation Rule
+          </div>
+          <div className="text-stone-300 leading-relaxed text-[11px]">
+            New invites join as <span className="text-amber-400 font-bold bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">Pending</span>. You will unlock <span className="text-emerald-400 font-black bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">+3 GHS</span> mining power bonus automatically once your friend completes their first mining claim!
+          </div>
+        </div>
+      </div>
+
       {/* Card 4: Invited Friends List */}
       <div className="zentorno-card p-4">
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mb-3">
-          INVITED FRIENDS ({summary?.referrals?.length || 0})
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
+            INVITED FRIENDS ({summary?.referrals?.length || 0})
+          </div>
+          <div className="text-[10px] text-stone-500 font-bold">
+            ⚡ +3 GHS PER ACTIVE
+          </div>
         </div>
 
         {loading ? (
@@ -230,30 +248,49 @@ export const Referrals: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {summary.referrals.map((r, i) => (
-              <div
-                key={r.id || i}
-                className="bg-[#131d1a] border border-[#273a33] rounded-2xl p-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#1e2d28] border border-[#2e423b] flex items-center justify-center font-black text-xs text-[#93b3a6]">
-                    {r.first_name ? r.first_name.charAt(0).toUpperCase() : 'M'}
-                  </div>
-                  <div>
-                    <div className="text-xs font-extrabold text-stone-200">
-                      {r.first_name || r.username || 'Miner'}
+            {summary.referrals.map((r, i) => {
+              const isActive = r.status === 'active'
+              return (
+                <div
+                  key={r.id || i}
+                  className="bg-[#131d1a] border border-[#273a33] rounded-2xl p-3 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-[#1e2d28] border border-[#2e423b] flex items-center justify-center font-black text-xs text-[#93b3a6]">
+                      {r.first_name ? r.first_name.charAt(0).toUpperCase() : 'M'}
                     </div>
-                    <div className="text-[10px] text-stone-500">
-                      Joined {new Date(r.joined_at).toLocaleDateString()}
+                    <div>
+                      <div className="text-xs font-extrabold text-stone-200">
+                        {r.first_name || r.username || 'Miner'}
+                      </div>
+                      <div className="text-[10px] text-stone-500">
+                        Joined {new Date(r.joined_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-[#1f2d28] border border-[#2e423b] text-[#93b3a6] px-2.5 py-1 rounded-xl text-xs font-black">
-                  +{r.honey_earned_for_referrer || 3} GHS
+                  {isActive ? (
+                    <div className="flex flex-col items-end">
+                      <div className="bg-emerald-950/80 border border-emerald-800/60 text-emerald-400 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1">
+                        <span>✅</span> +3 GHS
+                      </div>
+                      <span className="text-[9px] text-emerald-500 font-black mt-0.5 uppercase tracking-wider">
+                        ACTIVE
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-end">
+                      <div className="bg-amber-950/80 border border-amber-800/60 text-amber-400 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1">
+                        <span>⏳</span> PENDING
+                      </div>
+                      <span className="text-[9px] text-stone-400 font-medium mt-0.5">
+                        +3 GHS on 1st claim
+                      </span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

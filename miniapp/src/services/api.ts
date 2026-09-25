@@ -218,8 +218,9 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
       id: r.id || String(Math.random()),
       username: r.username || 'Miner',
       first_name: r.first_name || '',
-      joined_at: r.created_at || new Date().toISOString(),
-      honey_earned_for_referrer: r.reward_bp || 5,
+      joined_at: r.created_at || r.joined_at || new Date().toISOString(),
+      honey_earned_for_referrer: r.reward_bp || 3,
+      status: r.status || 'pending',
     })),
   }
 }
