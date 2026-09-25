@@ -148,11 +148,21 @@ export const Home: React.FC = () => {
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      {/* Centered Page Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-xl font-extrabold text-stone-100 uppercase tracking-wider">
+      {/* Centered Page Header with Support Link */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="w-16"></div>
+        <h1 className="text-xl font-extrabold text-stone-100 uppercase tracking-wider text-center">
           MINING DASHBOARD
         </h1>
+        <a
+          href="https://t.me/kiopajje"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full border border-emerald-400/20"
+        >
+          <span>🎧</span>
+          <span>Support</span>
+        </a>
       </div>
 
       {/* Card 1: TOTAL GHS POWER */}
