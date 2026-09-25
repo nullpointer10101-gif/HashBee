@@ -150,6 +150,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 func (h *AdminHandler) ListUsers(c *gin.Context) {
 	search := c.Query("search")
 	status := c.Query("status")
+	sort := c.Query("sort")
 	limit := 50
 	offset := 0
 	if l := c.Query("limit"); l != "" {
@@ -163,7 +164,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 		}
 	}
 
-	users, total, err := h.userSvc.AdminGetUsers(c.Request.Context(), search, status, limit, offset)
+	users, total, err := h.userSvc.AdminGetUsers(c.Request.Context(), search, status, sort, limit, offset)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

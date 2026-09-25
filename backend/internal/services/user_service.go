@@ -504,35 +504,53 @@ func (s *UserService) GetTransactionHistory(ctx context.Context, userID uuid.UUI
 	return txs, nil
 }
 
-// AdminGetUsers returns paginated users for admin panel
-func (s *UserService) AdminGetUsers(ctx context.Context, search string, status string, limit, offset int) ([]models.User, int, error) {
+// AdminGetUsers returns paginated users for admin panel with dynamic sorting
+func (s *UserService) AdminGetUsers(ctx context.Context, search string, status string, sortBy string, limit, offset int) ([]models.User, int, error) {
 	whereClause := "WHERE 1=1"
 	args := []interface{}{}
 	argIdx := 1
 
 	if search != "" {
-		whereClause += fmt.Sprintf(" AND (username ILIKE $%d OR first_name ILIKE $%d OR CAST(telegram_id AS TEXT) LIKE $%d)", argIdx, argIdx, argIdx)
+		whereClause += fmt.Sprintf(" AND (u.username ILIKE $%d OR u.first_name ILIKE $%d OR CAST(u.telegram_id AS TEXT) LIKE $%d)", argIdx, argIdx, argIdx)
 		args = append(args, "%"+search+"%")
 		argIdx++
 	}
 	if status != "" {
-		whereClause += fmt.Sprintf(" AND status = $%d", argIdx)
+		whereClause += fmt.Sprintf(" AND u.status = $%d", argIdx)
 		args = append(args, status)
 		argIdx++
 	}
 
 	var total int
-	err := s.db.QueryRow(ctx, fmt.Sprintf("SELECT COUNT(*) FROM users %s", whereClause), args...).Scan(&total)
+	err := s.db.QueryRow(ctx, fmt.Sprintf("SELECT COUNT(*) FROM users u %s", whereClause), args...).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
+	orderClause := "u.created_at DESC"
+	switch sortBy {
+	case "created_asc":
+		orderClause = "u.created_at ASC"
+	case "ghs_desc":
+		orderClause = "u.bp DESC, u.created_at DESC"
+	case "ghs_asc":
+		orderClause = "u.bp ASC, u.created_at DESC"
+	case "balance_desc":
+		orderClause = "u.honey_balance DESC, u.created_at DESC"
+	case "referrals_desc":
+		orderClause = "referral_count DESC, u.created_at DESC"
+	default:
+		orderClause = "u.created_at DESC"
+	}
+
 	args = append(args, limit, offset)
-	rows, err := s.db.Query(ctx,
-		fmt.Sprintf(`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance,
-		        last_collect_at, streak_count, last_checkin_at, status, has_collected,
-		        has_completed_mission, last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
-		 FROM users %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, whereClause, argIdx, argIdx+1), args...)
+	query := fmt.Sprintf(`SELECT u.id, u.telegram_id, u.username, u.first_name, u.language, u.referrer_id, u.bp, u.honey_balance,
+		        u.last_collect_at, u.streak_count, u.last_checkin_at, u.status, u.has_collected,
+		        u.has_completed_mission, u.last_hive_full_notified_at, u.opted_out_notifications, u.created_at, u.updated_at,
+		        COALESCE((SELECT COUNT(*) FROM users r WHERE r.referrer_id = u.id), 0) AS referral_count
+		 FROM users u %s ORDER BY %s LIMIT $%d OFFSET $%d`, whereClause, orderClause, argIdx, argIdx+1)
+
+	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -544,7 +562,7 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 		if err := rows.Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
 			&u.BP, &u.HoneyBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
-			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt, &u.ReferralCount); err != nil {
 			return nil, 0, err
 		}
 		users = append(users, u)

@@ -310,6 +310,7 @@
               <th>Telegram ID</th>
               <th>Name & Username</th>
               <th>GHS Power</th>
+              <th>Referrals</th>
               <th>Honey Balance</th>
               <th>Status</th>
               <th>Joined Date</th>
@@ -317,7 +318,7 @@
             </tr>
           </thead>
           <tbody id="usersBody">
-            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -735,7 +736,7 @@ async function sendBroadcast() {
 async function loadUsers() {
   const search = document.getElementById('userSearch').value.trim();
   const tbody = document.getElementById('usersBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>';
 
   try {
     const res = await fetch(API_URL + '/api/admin/users?search=' + encodeURIComponent(search), { headers: authHeaders() });
@@ -826,7 +827,7 @@ async function loadWithdrawals() {
       </tr>
     `).join('');
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
   }
 }
 

@@ -20,6 +20,7 @@ type User struct {
 	FirstName             string     `json:"first_name" db:"first_name"`
 	Language              string     `json:"language" db:"language"`
 	ReferrerID            *uuid.UUID `json:"referrer_id,omitempty" db:"referrer_id"`
+	ReferralCount         int        `json:"referral_count"`
 	BP                    float64    `json:"bp" db:"bp"`
 	HoneyBalance          float64    `json:"honey_balance" db:"honey_balance"`
 	LastCollectAt         time.Time  `json:"last_collect_at" db:"last_collect_at"`
