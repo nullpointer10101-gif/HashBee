@@ -43,6 +43,15 @@ export const App: React.FC = () => {
       window.Telegram.WebApp.ready()
       window.Telegram.WebApp.expand()
     }
+
+    // Trigger ad when opening the mini app
+    const timer = setTimeout(() => {
+      if (typeof (window as any).showAdexiumOpenAd === 'function') {
+        (window as any).showAdexiumOpenAd()
+      }
+    }, 1200)
+
+    return () => clearTimeout(timer)
   }, [])
 
   return (
