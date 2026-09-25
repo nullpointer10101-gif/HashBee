@@ -504,7 +504,7 @@ func (s *UserService) GetTransactionHistory(ctx context.Context, userID uuid.UUI
 	return txs, nil
 }
 
-// AdminGetUsers returns paginated users for admin panel with dynamic sorting
+// AdminGetUsers returns paginated users for admin panel with dynamic sorting across entire database
 func (s *UserService) AdminGetUsers(ctx context.Context, search string, status string, sortBy string, limit, offset int) ([]models.User, int, error) {
 	whereClause := "WHERE 1=1"
 	args := []interface{}{}
@@ -538,7 +538,7 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 	case "balance_desc":
 		orderClause = "u.honey_balance DESC, u.created_at DESC"
 	case "referrals_desc":
-		orderClause = "referral_count DESC, u.created_at DESC"
+		orderClause = "referral_count DESC, u.bp DESC, u.created_at DESC"
 	default:
 		orderClause = "u.created_at DESC"
 	}
@@ -547,7 +547,10 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 	query := fmt.Sprintf(`SELECT u.id, u.telegram_id, u.username, u.first_name, u.language, u.referrer_id, u.bp, u.honey_balance,
 		        u.last_collect_at, u.streak_count, u.last_checkin_at, u.status, u.has_collected,
 		        u.has_completed_mission, u.last_hive_full_notified_at, u.opted_out_notifications, u.created_at, u.updated_at,
-		        COALESCE((SELECT COUNT(*) FROM users r WHERE r.referrer_id = u.id), 0) AS referral_count
+		        COALESCE(GREATEST(
+		            (SELECT COUNT(*) FROM referrals r WHERE r.referrer_id = u.id AND r.level = 1),
+		            (SELECT COUNT(*) FROM users r2 WHERE r2.referrer_id = u.id)
+		        ), 0) AS referral_count
 		 FROM users u %s ORDER BY %s LIMIT $%d OFFSET $%d`, whereClause, orderClause, argIdx, argIdx+1)
 
 	rows, err := s.db.Query(ctx, query, args...)
