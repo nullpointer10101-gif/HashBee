@@ -82,7 +82,7 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 // SetReferrerByTelegramID resolves referrer by Telegram ID and links user
 func (s *ReferralService) SetReferrerByTelegramID(ctx context.Context, userID uuid.UUID, referrerTelegramID int64) error {
 	var referrerID uuid.UUID
-	err := s.db.QueryRow(ctx, SELECT id FROM users WHERE telegram_id = , referrerTelegramID).Scan(&referrerID)
+	err := s.db.QueryRow(ctx, "SELECT id FROM users WHERE telegram_id = $1", referrerTelegramID).Scan(&referrerID)
 	if err != nil {
 		return err
 	}
