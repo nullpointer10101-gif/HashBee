@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HashBee Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0d0c;
+    --bg-card: #121816;
+    --bg-card-hover: #18221f;
+    --border: #1e2d27;
+    --accent-gold: #f59e0b;
+    --accent-emerald: #10b981;
+    --accent-cyan: #06b6d4;
+    --accent-red: #ef4444;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+  body { background: var(--bg-primary); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  
+  /* Container & Grid */
+  .container { max-width: 1300px; margin: 0 auto; padding: 24px; width: 100%; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  
+  /* Header */
+  header { background: #0f1513; border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 20px; letter-spacing: 1px; }
+  .brand-badge { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; }
+  
+  /* Tabs */
+  .nav-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .tab-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 10px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .tab-btn:hover { color: #fff; background: #16201c; }
+  .tab-btn.active { color: #000; background: #f59e0b; border-color: #f59e0b; font-weight: 800; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+  th { background: #0e1412; padding: 14px 16px; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 16px; border-bottom: 1px solid #151f1b; vertical-align: middle; }
+  tr:hover td { background: var(--bg-card-hover); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  .badge-active { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+  .badge-waiting { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+  .badge-completed { background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); }
+  .badge-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Buttons */
+  .btn { padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+  .btn-primary { background: #10b981; color: #000; }
+  .btn-primary:hover { background: #059669; }
+  .btn-gold { background: #f59e0b; color: #000; }
+  .btn-gold:hover { background: #d97706; }
+  .btn-danger { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+  .btn-danger:hover { background: #ef4444; color: #fff; }
+  .btn-secondary { background: #1f2d27; color: #e5e7eb; border: 1px solid #2e423b; }
+  .btn-secondary:hover { background: #283a33; }
+
+  /* Login Card */
+  .login-box { max-width: 420px; width: 100%; margin: 80px auto; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+  .form-input { width: 100%; background: #0c100f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 14px; outline: none; }
+  .form-input:focus { border-color: var(--accent-gold); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+  .stat-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-val { font-size: 26px; font-weight: 900; margin-top: 6px; color: #fff; }
+
+  /* Alert Toast */
+  #toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .toast-success { background: #10b981; color: #000; }
+  .toast-error { background: #ef4444; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>🐝 HASHBEE</span>
+    <span class="brand-badge">ADMIN</span>
+  </div>
+  <div id="authControls" style="display:none; align-items:center; gap:16px;">
+    <span id="adminEmail" class="font-mono text-muted" style="font-size:12px;"></span>
+    <button onclick="logout()" class="btn btn-secondary" style="padding:6px 12px;">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- LOGIN VIEW -->
+  <div id="loginView" class="login-box">
+    <div class="card" style="box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+      <div style="text-align:center; margin-bottom:24px;">
+        <h2 style="font-weight:900; font-size:22px; margin-bottom:4px;">Admin Portal</h2>
+        <p style="font-size:13px; color:var(--text-muted);">Sign in to manage HashBee</p>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email or Username</label>
+          <input type="text" id="loginId" class="form-input" value="admin@hashbee.io" required placeholder="admin@hashbee.io">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPw" class="form-input" value="admin123" required placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Backend API URL</label>
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">
+          Login to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboardView" style="display:none;">
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('campaigns')">📢 Boost Campaigns</button>
+      <button class="tab-btn" onclick="switchTab('users')">👥 Users</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals')">💸 Withdrawals</button>
+      <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+    </div>
+
+    <!-- TAB: CAMPAIGNS -->
+    <div id="tab-campaigns">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:900;">User Boost Campaigns</h2>
+          <p style="font-size:13px; color:var(--text-muted);">One-click activate paid or pending campaigns</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <select id="campStatusFilter" class="form-input" style="width:180px; padding:8px 12px; font-size:12px;" onchange="loadCampaigns()">
+            <option value="">All Statuses</option>
+            <option value="waiting_for_payment">Waiting for Payment</option>
+            <option value="active">Active (Live)</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button onclick="loadCampaigns()" class="btn btn-secondary">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title / Target</th>
+              <th>Type</th>
+              <th>Memo</th>
+              <th>Cost</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="campaignsBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Loading campaigns...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: USERS -->
+    <div id="tab-users" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-size:20px; font-weight:900;">Platform Users</h2>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="userSearch" class="form-input" placeholder="Search ID, username..." style="width:220px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers()">
+          <button onclick="loadUsers()" class="btn btn-secondary">🔍 Search</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Telegram ID</th>
+              <th>Name / Username</th>
+              <th>GHS Power</th>
+              <th>Honey Balance</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: WITHDRAWALS -->
+    <div id="tab-withdrawals" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-size:20px; font-weight:900;">Withdrawal Requests</h2>
+        <button onclick="loadWithdrawals()" class="btn btn-secondary">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Address</th>
+              <th>Amount (GRAM)</th>
+              <th>Honey</th>
+              <th>Status</th>
+              <th>Requested At</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawalsBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading withdrawals...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: SETTINGS -->
+    <div id="tab-settings" style="display:none;">
+      <div style="max-width:600px;">
+        <h2 style="font-size:20px; font-weight:900; margin-bottom:16px;">System Configuration</h2>
+        <div class="card" id="settingsForm">
+          <p style="color:var(--text-muted);">Loading settings...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+let token = localStorage.getItem('hb_admin_token') || '';
+
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.className = isErr ? 'toast-error' : 'toast-success';
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + token
+  };
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const loginId = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPw').value.trim();
+  API_URL = document.getElementById('apiBase').value.trim().replace(/\/$/, '');
+  localStorage.setItem('hb_api_url', API_URL);
+
+  document.getElementById('loginBtn').innerText = 'Signing in...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: loginId, password: password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.token) {
+      throw new Error(data.error || 'Login failed');
+    }
+    token = data.token;
+    localStorage.setItem('hb_admin_token', token);
+    showToast('Login successful!');
+    initDashboard(data.admin);
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    document.getElementById('loginBtn').innerText = 'Login to Dashboard';
+  }
+}
+
+function initDashboard(admin) {
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashboardView').style.display = 'block';
+  document.getElementById('authControls').style.display = 'flex';
+  document.getElementById('adminEmail').innerText = admin?.email || 'admin';
+  loadCampaigns();
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('hb_admin_token');
+  document.getElementById('loginView').style.display = 'block';
+  document.getElementById('dashboardView').style.display = 'none';
+  document.getElementById('authControls').style.display = 'none';
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+  ['campaigns', 'users', 'withdrawals', 'settings'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = (t === tabId) ? 'block' : 'none';
+  });
+  event.target.classList.add('active');
+
+  if (tabId === 'campaigns') loadCampaigns();
+  if (tabId === 'users') loadUsers();
+  if (tabId === 'withdrawals') loadWithdrawals();
+  if (tabId === 'settings') loadSettings();
+}
+
+// 1. CAMPAIGNS
+async function loadCampaigns() {
+  const status = document.getElementById('campStatusFilter').value;
+  const tbody = document.getElementById('campaignsBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Loading campaigns...</td></tr>';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns?status=' + encodeURIComponent(status), { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.campaigns || [];
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No campaigns found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(c => {
+      const isWaiting = c.status === 'waiting_for_payment';
+      const badgeClass = c.status === 'active' ? 'badge-active' : (c.status === 'waiting_for_payment' ? 'badge-waiting' : 'badge-completed');
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:800; color:#fff;">${escapeHtml(c.title || 'Untitled')}</div>
+            <a href="${escapeHtml(c.target)}" target="_blank" class="font-mono text-muted" style="font-size:11px; color:#06b6d4; text-decoration:none;">${escapeHtml(c.target)}</a>
+          </td>
+          <td><span class="badge" style="background:#1e2d27;">${escapeHtml(c.type)}</span></td>
+          <td class="font-mono" style="color:#f59e0b; font-weight:700;">${escapeHtml(c.payment_memo || '-')}</td>
+          <td>${(c.cost || 0).toFixed(3)} GRAM</td>
+          <td>${c.done_completions || 0} / ${c.total_completions}</td>
+          <td><span class="badge ${badgeClass}">${c.status}</span></td>
+          <td class="font-mono text-muted" style="font-size:11px;">${new Date(c.created_at).toLocaleString()}</td>
+          <td>
+            ${isWaiting ? `
+              <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 12px; font-size:11px;">
+                ⚡ Activate Now
+              </button>
+            ` : `
+              <span style="color:#10b981; font-weight:800; font-size:11px;">✓ LIVE</span>
+            `}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading: ' + err.message + '</td></tr>';
+  }
+}
+
+async function activateCampaign(id) {
+  if (!confirm('Activate this campaign and publish it to the Missions board immediately?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: 'active', admin_notes: 'Manual instant activation by admin' })
+    });
+    if (!res.ok) throw new Error('Failed to activate campaign');
+    showToast('🎉 Campaign activated & published to missions!');
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 2. USERS
+async function loadUsers() {
+  const search = document.getElementById('userSearch').value.trim();
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users?search=' + encodeURIComponent(search), { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.users || [];
+    tbody.innerHTML = list.map(u => `
+      <tr>
+        <td class="font-mono" style="font-weight:700;">${u.telegram_id}</td>
+        <td>
+          <div style="font-weight:700;">${escapeHtml(u.first_name || '')}</div>
+          <div class="text-muted" style="font-size:11px;">@${escapeHtml(u.username || 'none')}</div>
+        </td>
+        <td style="color:#10b981; font-weight:800;">${(u.bp || 0).toFixed(2)} GHS</td>
+        <td style="color:#f59e0b; font-weight:800;">${(u.honey_balance || 0).toFixed(4)}</td>
+        <td><span class="badge badge-active">${u.status}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(u.created_at).toLocaleDateString()}</td>
+        <td>
+          <button onclick="adjustUser('${u.id}')" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;">Adjust</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+  }
+}
+
+async function adjustUser(id) {
+  const type = prompt('Adjust type: "bp" (GHS Power) or "honey" (Balance):', 'bp');
+  if (!type) return;
+  const amount = parseFloat(prompt('Enter amount to ADD (or negative to subtract):', '50'));
+  if (isNaN(amount)) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + id + '/balance', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ type: type, amount: amount, reason: 'Admin panel adjust' })
+    });
+    if (!res.ok) throw new Error('Adjust failed');
+    showToast('Balance updated!');
+    loadUsers();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 3. WITHDRAWALS
+async function loadWithdrawals() {
+  const tbody = document.getElementById('withdrawalsBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>';
+  try {
+    const res = await fetch(API_URL + '/api/admin/withdrawals', { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.withdrawals || [];
+    tbody.innerHTML = list.map(w => `
+      <tr>
+        <td>${escapeHtml(w.first_name || '')} (@${escapeHtml(w.username || '')})</td>
+        <td class="font-mono" style="font-size:11px; max-width:180px; overflow:hidden; text-overflow:ellipsis;">${w.address}</td>
+        <td style="font-weight:800; color:#10b981;">${w.amount} GRAM</td>
+        <td>${w.honey_amount}</td>
+        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : 'badge-waiting'}">${w.status}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(w.created_at).toLocaleString()}</td>
+        <td>
+          ${w.status === 'pending' ? `
+            <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:6px 10px; font-size:10px;">Mark Paid</button>
+            <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:6px 10px; font-size:10px;">Reject</button>
+          ` : `<span>-</span>`}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+  }
+}
+
+async function updateWithdrawal(id, status) {
+  if (!confirm('Mark withdrawal as ' + status + '?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/withdrawals/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: status, reason: 'Admin processed' })
+    });
+    if (!res.ok) throw new Error('Update failed');
+    showToast('Withdrawal status updated!');
+    loadWithdrawals();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 4. SETTINGS
+async function loadSettings() {
+  const form = document.getElementById('settingsForm');
+  form.innerHTML = '<p style="color:var(--text-muted);">Loading settings...</p>';
+  try {
+    const res = await fetch(API_URL + '/api/admin/settings', { headers: authHeaders() });
+    const data = await res.json();
+    const settings = data.settings || {};
+    let html = '';
+    for (const [k, v] of Object.entries(settings)) {
+      html += `
+        <div class="form-group">
+          <label class="form-label">${k}</label>
+          <input type="text" id="setting_${k}" class="form-input font-mono" value="${escapeHtml(v)}">
+        </div>
+      `;
+    }
+    html += '<button onclick="saveSettings()" class="btn btn-gold" style="width:100%; justify-content:center; padding:12px; margin-top:12px;">Save Settings</button>';
+    form.innerHTML = html;
+  } catch (err) {
+    form.innerHTML = '<p style="color:#ef4444;">Error: ' + err.message + '</p>';
+  }
+}
+
+async function saveSettings() {
+  const inputs = document.querySelectorAll('#settingsForm input');
+  const payload = {};
+  inputs.forEach(i => {
+    const key = i.id.replace('setting_', '');
+    payload[key] = i.value;
+  });
+  try {
+    const res = await fetch(API_URL + '/api/admin/settings', {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ settings: payload })
+    });
+    if (!res.ok) throw new Error('Failed to save settings');
+    showToast('Settings saved successfully!');
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Auto-login check
+if (token) {
+  initDashboard({ email: 'admin@hashbee.io' });
+}
+</script>
+</body>
+</html>
