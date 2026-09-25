@@ -172,13 +172,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// Minimum deposit: 0.10 GRAM
-			if amountGram < 0.10 {
-				continue
-			}
-
-						// Check if this transfer is a payment for a Campaign
-			if comment != "" {
+			// Check if this transfer is a payment for a Campaign (minimum campaign cost is 0.05 GRAM)
+			if comment != "" && amountGram >= 0.05 {
 				var campID uuid.UUID
 				var campOwnerID uuid.UUID
 				var campType, campTarget, campTitle string
@@ -212,6 +207,11 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						}
 					}
 				}
+			}
+
+			// Minimum regular miner deposit for GHS power: 0.10 GRAM
+			if amountGram < 0.10 {
+				continue
 			}
 
 			// Determine target user

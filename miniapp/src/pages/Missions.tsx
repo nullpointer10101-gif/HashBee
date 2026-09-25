@@ -165,6 +165,44 @@ export const Missions: React.FC = () => {
     }
   }
 
+  // Pay directly with in-app balance
+  const handlePayWithBalance = async () => {
+    const target = promoTarget.trim()
+    if (!target) {
+      toast.error('Please enter your link or @channel')
+      return
+    }
+
+    const completions = Math.max(50, Number(promoCompletions) || 50)
+    const cost = completions * 0.001
+
+    if (!user || user.honey_balance < cost) {
+      toast.error(`Insufficient balance (${user ? user.honey_balance.toFixed(4) : 0} GRAM). Need ${cost.toFixed(4)} GRAM. Please pay via Tonkeeper!`)
+      return
+    }
+
+    setPublishing(true)
+    try {
+      await createCampaign({
+        type: promoType,
+        target: target,
+        title: target.replace(/^https?:\/\//, '').replace(/^t\.me\//, ''),
+        total_completions: completions,
+        reward_bp: 0.1,
+        pay_with_balance: true,
+      })
+      toast.success('🎉 Campaign Activated Instantly! Your project is now live on the Tasks board.')
+      await refreshUser()
+      await loadMissions()
+      await loadCampaigns()
+      setView('campaigns')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Failed to activate with balance')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
   // Create Campaign & Go To Payment
   const handlePublishCampaign = async () => {
     const target = promoTarget.trim()
@@ -444,32 +482,82 @@ export const Missions: React.FC = () => {
           </div>
 
           {/* How many completions */}
-          <div className="mb-4">
+          <div className="mb-3">
             <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1.5">
-              How many completions
+              How many completions (Min 50)
             </label>
-            <input
-              type="number"
-              min={50}
-              step={10}
-              value={promoCompletions}
-              onChange={(e) => setPromoCompletions(Number(e.target.value))}
-              className="w-full zentorno-input p-3.5 text-xs text-stone-200 rounded-2xl"
-            />
+            <div className="grid grid-cols-3 gap-2 mb-2.5">
+              {[50, 100, 250, 500, 1000].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setPromoCompletions(num)}
+                  className={'py-2 px-1 rounded-xl text-xs transition-all border ' + (
+                    promoCompletions === num
+                      ? 'bg-[#93b3a6] text-[#0f1614] border-[#93b3a6] font-black shadow-sm'
+                      : 'bg-[#15221e] text-stone-300 border-[#2b3d37] hover:border-[#38534a]'
+                  )}
+                >
+                  {num} Users
+                  <div className="text-[9px] opacity-75">{(num * 0.001).toFixed(2)} GRAM</div>
+                </button>
+              ))}
+              <div className="flex items-center justify-center bg-[#15221e] border border-[#2b3d37] rounded-xl px-2">
+                <input
+                  type="number"
+                  min={50}
+                  step={10}
+                  value={promoCompletions}
+                  onChange={(e) => setPromoCompletions(Number(e.target.value))}
+                  placeholder="Custom"
+                  className="w-full bg-transparent text-xs text-center font-black text-stone-200 focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Cost Preview */}
-          <div className="text-xs font-extrabold text-stone-300 mb-5">
-            Cost: <span className="text-emerald-400">{calculatedCost} GRAM</span>
+          {/* Live Invoice Summary */}
+          <div className="border border-[#2e423b] bg-[#16231f] rounded-2xl p-4 mb-5 space-y-2">
+            <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center mb-1">
+              ⚡ CAMPAIGN INVOICE BREAKDOWN
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-stone-400 font-bold">Target Completions:</span>
+              <span className="font-black text-stone-200">{promoCompletions} Users</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-stone-400 font-bold">Reward per User:</span>
+              <span className="font-bold text-[#93b3a6]">+0.1 GHS Power</span>
+            </div>
+            <div className="flex justify-between items-center text-xs border-t border-[#23332d] pt-2">
+              <span className="font-black text-stone-300 uppercase text-[11px]">Total Invoice Amount:</span>
+              <span className="font-black text-base text-emerald-400 font-mono">{calculatedCost} GRAM</span>
+            </div>
           </div>
 
-          {/* Actions */}
+          {/* Direct Payment Channel 1: In-App Balance */}
+          {user && user.honey_balance >= Number(calculatedCost) ? (
+            <button
+              onClick={handlePayWithBalance}
+              disabled={publishing}
+              className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-stone-900 font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all"
+            >
+              <span>⚡</span> PAY WITH BALANCE ({user.honey_balance.toFixed(4)} GRAM)
+            </button>
+          ) : (
+            <div className="mb-3 p-3 bg-[#182320] border border-[#2b3d37] rounded-xl text-xs flex justify-between items-center">
+              <span className="text-stone-400">Balance: <strong className="text-stone-200">{user ? user.honey_balance.toFixed(4) : '0.0000'} GRAM</strong></span>
+              <span className="text-amber-400 font-bold text-[11px]">Need {calculatedCost} GRAM</span>
+            </div>
+          )}
+
+          {/* Direct Payment Channel 2: Tonkeeper Invoice */}
           <button
             onClick={handlePublishCampaign}
             disabled={publishing}
-            className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-md flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-md flex items-center justify-center gap-2 transition-all"
           >
-            {publishing ? 'CREATING...' : 'PUBLISH'}
+            <span>💎</span> GET INVOICE & PAY VIA TONKEEPER
           </button>
 
           <button

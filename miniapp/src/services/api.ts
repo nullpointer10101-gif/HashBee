@@ -271,7 +271,7 @@ export const reinvestHoney = async (amount: number): Promise<{ power_gained: num
   return { power_gained: res.data?.bp_gained || amount * 50 }
 }
 
-export const createCampaign = async (campaignData: Partial<Campaign>): Promise<Campaign> => {
+export const createCampaign = async (campaignData: Partial<Campaign> & { pay_with_balance?: boolean }): Promise<Campaign> => {
   const res = await api.post('/api/campaigns', campaignData)
   return res.data?.campaign
 }
