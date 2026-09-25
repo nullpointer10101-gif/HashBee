@@ -1,0 +1,333 @@
+import React, { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { checkDeposit } from '../services/api'
+import toast from 'react-hot-toast'
+
+interface DepositModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess?: () => void
+  initialStep?: 'calculate' | 'pay'
+  initialAmount?: string
+}
+
+export const DepositModal: React.FC<DepositModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialStep = 'calculate',
+  initialAmount = '1',
+}) => {
+  const { user, refreshUser } = useAuth()
+  const [step, setStep] = useState<'calculate' | 'pay'>(initialStep)
+  const [depositAmount, setDepositAmount] = useState<string>(initialAmount)
+  const [copiedMemo, setCopiedMemo] = useState(false)
+  const [copiedAddr, setCopiedAddr] = useState(false)
+  const [senderAddress, setSenderAddress] = useState('')
+  const [verifying, setVerifying] = useState(false)
+
+  if (!isOpen) return null
+
+  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
+  const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
+
+  const copyMemo = () => {
+    navigator.clipboard.writeText(userMemo)
+    setCopiedMemo(true)
+    toast.success('Memo copied! Paste this in your transfer comment.')
+    setTimeout(() => setCopiedMemo(false), 2500)
+  }
+
+  const copyDepositAddress = () => {
+    navigator.clipboard.writeText(depositAddress)
+    setCopiedAddr(true)
+    toast.success('Official deposit address copied!')
+    setTimeout(() => setCopiedAddr(false), 2500)
+  }
+
+  const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
+  const totalGhsPower = numDeposit * 50 * 1.05
+  const modalEarningsPerDay = totalGhsPower * 0.0009
+  const modalEarningsPerSecond = modalEarningsPerDay / 86400
+  const modalEarningsPerWeek = modalEarningsPerDay * 7
+  const modalEarningsPerMonth = modalEarningsPerDay * 30
+
+  const handleOpenTonkeeper = () => {
+    const nanoAmount = Math.round(numDeposit * 1e9)
+    const comment = encodeURIComponent(userMemo)
+    const tonkeeperUrl = `https://app.tonkeeper.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
+    const directUrl = `ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
+
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(tonkeeperUrl)
+    } else {
+      window.location.href = directUrl
+      setTimeout(() => {
+        window.open(tonkeeperUrl, '_blank')
+      }, 500)
+    }
+  }
+
+  const handleOpenAnyWallet = () => {
+    const nanoAmount = Math.round(numDeposit * 1e9)
+    const comment = encodeURIComponent(userMemo)
+    const tonhubUrl = `https://tonhub.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(tonhubUrl)
+    } else {
+      window.open(`ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`, '_blank')
+    }
+  }
+
+  const handleVerifyDeposit = async () => {
+    setVerifying(true)
+    toast.loading('Checking blockchain for your deposit...', { id: 'verify-dep' })
+    try {
+      const res = await checkDeposit(senderAddress.trim())
+      toast.dismiss('verify-dep')
+      await refreshUser()
+      if (res?.credited && res.credited > 0) {
+        toast.success(`🎉 Detected & credited ${res.credited} deposit(s)! Mining power upgraded!`)
+        onSuccess?.()
+        onClose()
+      } else {
+        toast.success('Blockchain scan complete! Any detected transfers are credited.')
+      }
+    } catch (err: any) {
+      toast.dismiss('verify-dep')
+      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 animate-in fade-in duration-200">
+      <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
+        {step === 'calculate' ? (
+          <div>
+            <div className="text-center mb-5 relative">
+              <button
+                onClick={onClose}
+                className="absolute left-0 top-0 text-stone-400 hover:text-white p-1"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS / DEPOSIT</h2>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
+                Amount to deposit (GRAM)
+              </label>
+              <div className="zentorno-input p-3.5 flex items-center justify-between">
+                <input
+                  type="number"
+                  min="0.1"
+                  step="0.1"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full bg-transparent text-xl font-black text-stone-100 focus:outline-none"
+                />
+                <span className="text-xs font-black text-stone-400 ml-2 whitespace-nowrap">
+                  GRAM
+                </span>
+              </div>
+              <div className="text-[10px] text-stone-400 font-semibold mt-1">
+                Minimum deposit: 0.10 GRAM
+              </div>
+            </div>
+
+            <div className="bg-[#8ba89c] text-[#0f1614] rounded-2xl py-3 px-4 text-center mb-4 font-black text-xs uppercase tracking-wide shadow-sm">
+              +5% first deposit bonus!
+            </div>
+
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 text-center mb-4">
+              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
+                YOU WILL GET
+              </div>
+              <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider mt-1">
+                TOTAL GHS POWER
+              </div>
+              <div className="text-3xl font-black text-stone-100 mt-1">
+                {totalGhsPower.toFixed(1)} GHS
+              </div>
+              <div className="text-[11px] font-bold text-[#86a397] mt-1 flex items-center justify-center gap-1">
+                🎁 +5% first deposit bonus applied!
+              </div>
+            </div>
+
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
+              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest text-center mb-3">
+                POTENTIAL EARNINGS
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER SECOND
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
+                    {modalEarningsPerSecond.toFixed(8)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
+                </div>
+
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER DAY
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerDay.toFixed(4)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
+                </div>
+
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER WEEK
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerWeek.toFixed(4)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
+                </div>
+
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER MONTH
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerMonth.toFixed(2)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
+                </div>
+              </div>
+
+              <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
+                These GHS last 30 days. Earnings: 0.9000 GRAM per day per 1,000 GHS. Rate: 20.00 GRAM = 1,000 GHS.
+              </div>
+            </div>
+
+            <button
+              onClick={() => setStep('pay')}
+              className="w-full py-4 rounded-2xl bg-[#8ba89c] hover:bg-[#9cb8ac] text-[#0f1614] font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95 transition-all"
+            >
+              PAY ORDER
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+            >
+              BACK
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div className="text-center mb-3">
+              <h2 className="text-lg font-black uppercase tracking-wider">PAYMENT ORDER</h2>
+              <p className="text-xs text-stone-400 mt-0.5">Send exact GRAM on TON Blockchain</p>
+            </div>
+
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-3.5 mb-3 space-y-2.5">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-stone-400">Network</span>
+                <span className="text-xs font-black text-[#93b3a6] bg-[#1f2d28] px-2 py-0.5 rounded-lg border border-[#2e423b]">
+                  TON / GRAM
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-stone-400">Amount</span>
+                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} GRAM</span>
+              </div>
+
+              <div className="border-t border-[#253530] pt-2.5">
+                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1">
+                  Official Deposit Address
+                </div>
+                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5">
+                  <span className="text-[10px] font-mono text-stone-200 truncate flex-1">
+                    {depositAddress}
+                  </span>
+                  <button
+                    onClick={copyDepositAddress}
+                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-[11px] shrink-0"
+                  >
+                    {copiedAddr ? 'COPIED!' : 'COPY'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#241c10] border border-[#543b18] rounded-xl p-2.5">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                    REQUIRED MEMO / COMMENT
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-400">MUST INCLUDE</span>
+                </div>
+                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5 border-amber-500/40">
+                  <span className="text-xs font-mono font-black text-amber-300">
+                    {userMemo}
+                  </span>
+                  <button
+                    onClick={copyMemo}
+                    className="p-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-lg font-black text-[11px] shrink-0"
+                  >
+                    {copiedMemo ? 'COPIED!' : 'COPY MEMO'}
+                  </button>
+                </div>
+                <div className="text-[9.5px] text-amber-200/80 font-medium mt-1 leading-tight">
+                  ⚠️ Paste this in your wallet comment so power is credited automatically!
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleOpenTonkeeper}
+              className="w-full py-3.5 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+            >
+              <span>💎</span> PAY IN TONKEEPER (AUTO-FILL)
+            </button>
+
+            <button
+              onClick={handleOpenAnyWallet}
+              className="w-full py-2.5 rounded-2xl bg-[#182621] hover:bg-[#20332c] text-[#93b3a6] border border-[#2b4137] font-bold text-xs uppercase tracking-wider mb-3 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+            >
+              <span>⚡</span> OTHER WALLET (TONHUB / MYTONWALLET)
+            </button>
+
+            <div className="mb-3 pt-2 border-t border-[#23332d]">
+              <label className="text-[10.5px] font-bold text-stone-400 block mb-1">
+                Sent without memo? (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="Paste your TON wallet address (UQ... or 0:...)"
+                value={senderAddress}
+                onChange={(e) => setSenderAddress(e.target.value)}
+                className="w-full zentorno-input p-2.5 text-xs font-mono text-stone-200 placeholder:text-stone-600 rounded-xl"
+              />
+            </div>
+
+            <button
+              onClick={handleVerifyDeposit}
+              disabled={verifying}
+              className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2 active:scale-95 shadow-md"
+            >
+              {verifying ? 'CHECKING BLOCKCHAIN...' : '✅ I HAVE SENT PAYMENT (VERIFY NOW)'}
+            </button>
+
+            <button
+              onClick={() => setStep('calculate')}
+              className="w-full py-2.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+            >
+              BACK TO CALCULATOR
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
