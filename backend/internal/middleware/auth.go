@@ -25,6 +25,7 @@ type TelegramUser struct {
 	LastName     string `json:"last_name"`
 	Username     string `json:"username"`
 	LanguageCode string `json:"language_code"`
+	StartParam   string `json:"-"`
 }
 
 type Claims struct {
@@ -75,6 +76,7 @@ func TelegramAuth(cfg *config.Config, userSvc *services.UserService) gin.Handler
 
 		c.Set("user_id", user.ID.String())
 		c.Set("telegram_id", tgUser.ID)
+		c.Set("start_param", tgUser.StartParam)
 		c.Set("user", user)
 		c.Next()
 	}
@@ -264,6 +266,7 @@ func validateInitData(initData, botToken string) (*TelegramUser, error) {
 		return nil, fmt.Errorf("invalid user JSON")
 	}
 
+	tgUser.StartParam = params.Get("start_param")
 	return &tgUser, nil
 }
 
@@ -286,6 +289,7 @@ func parseInitDataUnsafe(initData string) (*TelegramUser, error) {
 	if err := json.Unmarshal([]byte(userStr), &u); err != nil {
 		return nil, err
 	}
+	u.StartParam = params.Get("start_param")
 	return &u, nil
 }
 

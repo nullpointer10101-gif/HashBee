@@ -62,7 +62,7 @@ func main() {
 	depositSvc.StartWatcher(ctx, 15*time.Second)
 
 	// Handlers
-	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc)
+	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc, tgBot)
 	missionHandler := handlers.NewMissionHandler(missionSvc, referralSvc)
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)

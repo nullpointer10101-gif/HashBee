@@ -15,15 +15,20 @@ import (
 	"hashbee/internal/services"
 )
 
+type UserBotNotifier interface {
+	SendReferralJoinNotification(referrerTelegramID int64, joinerName string)
+}
+
 type UserHandler struct {
 	cfg         *config.Config
 	userSvc     *services.UserService
 	referralSvc *services.ReferralService
 	depositSvc  *services.DepositService
+	bot         UserBotNotifier
 }
 
-func NewUserHandler(cfg *config.Config, userSvc *services.UserService, referralSvc *services.ReferralService, depositSvc *services.DepositService) *UserHandler {
-	return &UserHandler{cfg: cfg, userSvc: userSvc, referralSvc: referralSvc, depositSvc: depositSvc}
+func NewUserHandler(cfg *config.Config, userSvc *services.UserService, referralSvc *services.ReferralService, depositSvc *services.DepositService, bot UserBotNotifier) *UserHandler {
+	return &UserHandler{cfg: cfg, userSvc: userSvc, referralSvc: referralSvc, depositSvc: depositSvc, bot: bot}
 }
 
 // POST /api/auth — Validate initData, create/get user, return JWT + profile
@@ -36,7 +41,7 @@ func (h *UserHandler) Auth(c *gin.Context) {
 
 	u := user.(*models.User)
 
-	// Handle referrer from query param (for first open)
+		// Handle referrer from query param or start_param
 	refParam := c.Query("referrer_id")
 	if refParam == "" {
 		refParam = c.Query("ref")
@@ -44,9 +49,26 @@ func (h *UserHandler) Auth(c *gin.Context) {
 	if refParam == "" {
 		refParam = c.Query("start_param")
 	}
+	if refParam == "" {
+		if sp, ok := c.Get("start_param"); ok && sp != nil {
+			refParam = sp.(string)
+		}
+	}
 	if refParam != "" && u.ReferrerID == nil {
+		joinerName := u.FirstName
+		if joinerName == "" {
+			joinerName = u.Username
+		}
+		if joinerName == "" {
+			joinerName = "A new friend"
+		}
 		if tgID, err := strconv.ParseInt(refParam, 10, 64); err == nil && tgID != u.TelegramID {
-			_ = h.referralSvc.SetReferrerByTelegramID(c.Request.Context(), u.ID, tgID)
+			if err := h.referralSvc.SetReferrerByTelegramID(c.Request.Context(), u.ID, tgID); err == nil {
+				// Send Telegram notification message to the referrer
+				if h.bot != nil {
+					go h.bot.SendReferralJoinNotification(tgID, joinerName)
+				}
+			}
 		} else if refUUID, err := uuid.Parse(refParam); err == nil && refUUID != u.ID {
 			_ = h.referralSvc.SetReferrer(c.Request.Context(), u.ID, refUUID)
 		}
