@@ -26,7 +26,7 @@ export const Missions: React.FC = () => {
   // New Campaign Form State
   const [promoType, setPromoType] = useState<'link' | 'channel' | 'group' | 'bot'>('link')
   const [promoTarget, setPromoTarget] = useState('')
-  const [promoCompletions, setPromoCompletions] = useState<number>(50)
+  const [promoCompletions, setPromoCompletions] = useState<number>(100)
 
   // Selected Campaign to Pay
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
@@ -200,7 +200,7 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(50, Number(promoCompletions) || 50)
+    const completions = Math.max(100, Number(promoCompletions) || 100)
     const cost = completions * 0.001
 
     if (!user || user.honey_balance < cost) {
@@ -232,7 +232,7 @@ export const Missions: React.FC = () => {
 
   // Open Tonkeeper for campaign payment
   const handlePayInTonkeeper = (camp: Campaign) => {
-    const cost = camp.cost || 0.05
+    const cost = camp.cost || 0.10
     const nanoAmount = Math.round(cost * 1e9)
     const memo = encodeURIComponent(camp.payment_memo || '')
     const tonkeeperUrl = 'https://app.tonkeeper.com/transfer/' + depositAddress + '?amount=' + nanoAmount + '&text=' + memo
@@ -256,7 +256,7 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(50, Number(promoCompletions) || 50)
+    const completions = Math.max(100, Number(promoCompletions) || 100)
     const cost = completions * 0.001
     setPublishing(true)
 
@@ -318,7 +318,7 @@ export const Missions: React.FC = () => {
         toast.success('🎉 Payment received! Your campaign is now LIVE!', { duration: 4500 })
         setView('campaigns')
       } else {
-        toast.error(`⏳ Payment not detected yet. Please ensure you sent ${(camp.cost || 0.05).toFixed(2)} GRAM with memo "${camp.payment_memo || ''}". If you just sent it, please wait 15-30 seconds.`, { duration: 5500 })
+        toast.error(`⏳ Payment not detected yet. Please ensure you sent ${(camp.cost || 0.10).toFixed(2)} GRAM with memo "${camp.payment_memo || ''}". If you just sent it, please wait 15-30 seconds.`, { duration: 5500 })
       }
     } catch (err) {
       toast.dismiss('camp-verify')
@@ -331,15 +331,15 @@ export const Missions: React.FC = () => {
   const milestones = missions.filter((m) => m.type === 'milestone')
   const sponsored = missions.filter((m) => m.type !== 'milestone')
 
-  const calculatedCost = ((Math.max(50, Number(promoCompletions) || 50)) * 0.001).toFixed(4)
+  const calculatedCost = ((Math.max(100, Number(promoCompletions) || 100)) * 0.001).toFixed(4)
 
   // =========================================================================
   // VIEW 4: PAY TO PUBLISH (SCREENSHOT 4)
   // =========================================================================
   if (view === 'pay_campaign' && selectedCampaign) {
-    const campCost = (selectedCampaign.cost || 0.05).toFixed(2) + ' GRAM'
+    const campCost = (selectedCampaign.cost || 0.10).toFixed(2) + ' GRAM'
     const campMemo = selectedCampaign.payment_memo || 'CMP123'
-    const qrData = 'ton://transfer/' + depositAddress + '?amount=' + Math.round((selectedCampaign.cost || 0.05) * 1e9) + '&text=' + encodeURIComponent(campMemo)
+    const qrData = 'ton://transfer/' + depositAddress + '?amount=' + Math.round((selectedCampaign.cost || 0.10) * 1e9) + '&text=' + encodeURIComponent(campMemo)
     const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(qrData)
 
     return (
@@ -541,10 +541,10 @@ export const Missions: React.FC = () => {
           {/* How many completions */}
           <div className="mb-3">
             <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1.5">
-              How many completions (Min 50)
+              How many completions (Min 100)
             </label>
             <div className="grid grid-cols-3 gap-2 mb-2.5">
-              {[50, 100, 250, 500, 1000].map((num) => (
+              {[100, 250, 500, 1000, 2500].map((num) => (
                 <button
                   key={num}
                   type="button"
@@ -562,11 +562,11 @@ export const Missions: React.FC = () => {
               <div className="flex items-center justify-center bg-[#15221e] border border-[#2b3d37] rounded-xl px-2">
                 <input
                   type="number"
-                  min={50}
-                  step={10}
+                  min={100}
+                  step={50}
                   value={promoCompletions}
                   onChange={(e) => setPromoCompletions(Number(e.target.value))}
-                  placeholder="Custom"
+                  placeholder="100"
                   className="w-full bg-transparent text-xs text-center font-black text-stone-200 focus:outline-none"
                 />
               </div>
