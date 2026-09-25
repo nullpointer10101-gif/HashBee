@@ -17,6 +17,10 @@ import (
 	"hashbee/internal/services"
 )
 
+type BotBroadcaster interface {
+	BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int)
+}
+
 type AdminHandler struct {
 	cfg         *config.Config
 	db          *pgxpool.Pool
@@ -24,10 +28,11 @@ type AdminHandler struct {
 	settings    *services.SettingsService
 	campaignSvc *services.CampaignService
 	withdrawSvc *services.WithdrawalService
+	bot         BotBroadcaster
 }
 
-func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.UserService, settings *services.SettingsService, campaignSvc *services.CampaignService, withdrawSvc *services.WithdrawalService) *AdminHandler {
-	return &AdminHandler{cfg: cfg, db: db, userSvc: userSvc, settings: settings, campaignSvc: campaignSvc, withdrawSvc: withdrawSvc}
+func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.UserService, settings *services.SettingsService, campaignSvc *services.CampaignService, withdrawSvc *services.WithdrawalService, bot BotBroadcaster) *AdminHandler {
+	return &AdminHandler{cfg: cfg, db: db, userSvc: userSvc, settings: settings, campaignSvc: campaignSvc, withdrawSvc: withdrawSvc, bot: bot}
 }
 
 // POST /api/admin/login
@@ -616,4 +621,66 @@ func (h *AdminHandler) DeleteCampaign(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Campaign and mission deleted successfully"})
+}
+
+// POST /api/admin/broadcast - Send rich template broadcast with inline WebApp button
+func (h *AdminHandler) Broadcast(c *gin.Context) {
+	var req struct {
+		Message          string `json:"message" binding:"required"`
+		ButtonText       string `json:"button_text"`
+		ButtonURL        string `json:"button_url"`
+		TargetTelegramID int64  `json:"target_telegram_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.ButtonText == "" {
+		req.ButtonText = "🐝 Open HashBee App"
+	}
+	if req.ButtonURL == "" {
+		req.ButtonURL = "https://miniapp-five-topaz.vercel.app"
+	}
+
+	var tgIDs []int64
+	if req.TargetTelegramID > 0 {
+		tgIDs = append(tgIDs, req.TargetTelegramID)
+	} else {
+		rows, err := h.db.Query(c.Request.Context(), `SELECT telegram_id FROM users WHERE status = 'active'`)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query users: " + err.Error()})
+			return
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err == nil && id > 0 {
+				tgIDs = append(tgIDs, id)
+			}
+		}
+	}
+
+	if len(tgIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No active users found to broadcast"})
+		return
+	}
+
+	if h.bot != nil {
+		sent, failed := h.bot.BroadcastWithButton(c.Request.Context(), req.Message, req.ButtonText, req.ButtonURL, tgIDs)
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Broadcast sent to %d users (%d failed)", sent, failed),
+			"sent":    sent,
+			"failed":  failed,
+			"total":   len(tgIDs),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Target users found: %d (Bot offline)", len(tgIDs)),
+		"total":   len(tgIDs),
+		"sent":    0,
+		"failed":  0,
+	})
 }

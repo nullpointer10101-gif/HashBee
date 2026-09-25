@@ -66,7 +66,7 @@ func main() {
 	missionHandler := handlers.NewMissionHandler(missionSvc, referralSvc)
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)
-	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc)
+	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc, tgBot)
 
 	// Gin router
 	r := gin.New()
@@ -189,6 +189,7 @@ func main() {
 			adminProtected.PATCH("/campaigns/:id", adminHandler.UpdateCampaign)
 			adminProtected.DELETE("/campaigns/:id", adminHandler.DeleteCampaign)
 			adminProtected.GET("/fraud", adminHandler.ListFraudFlags)
+			adminProtected.POST("/broadcast", adminHandler.Broadcast)
 		}
 	}
 

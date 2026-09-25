@@ -301,6 +301,40 @@ func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower flo
 	}
 }
 
+// BroadcastWithButton sends a message with an inline WebApp button to a list of telegram IDs, throttled to prevent rate limits
+func (b *Bot) BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int) {
+	if b == nil || b.api == nil || len(telegramIDs) == 0 {
+		return 0, 0
+	}
+
+	keyboard := newWebAppKeyboard(buttonText, buttonURL)
+	sentCount := 0
+	failedCount := 0
+
+	for _, id := range telegramIDs {
+		select {
+		case <-ctx.Done():
+			return sentCount, failedCount
+		default:
+		}
+
+		msg := tgbotapi.NewMessage(id, text)
+		msg.ParseMode = "Markdown"
+		msg.ReplyMarkup = keyboard
+
+		if _, err := b.api.Send(msg); err != nil {
+			failedCount++
+		} else {
+			sentCount++
+		}
+
+		// Throttle ~28 messages/sec
+		time.Sleep(35 * time.Millisecond)
+	}
+
+	return sentCount, failedCount
+}
+
 // Broadcast sends a message to all opted-in users
 func (b *Bot) Broadcast(text string, telegramIDs []int64) {
 	for _, id := range telegramIDs {
