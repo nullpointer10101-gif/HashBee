@@ -42,7 +42,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	}
 
 	// Validate network
-	validNetworks := map[string]bool{"USDT_TRC20": true, "USDT_ERC20": true, "TON": true}
+	validNetworks := map[string]bool{"USDT_BSC": true, "USDT_BEP20": true, "GRAM": true, "USDT": true}
 	if !validNetworks[req.Network] {
 		return nil, fmt.Errorf("invalid network: %s", req.Network)
 	}
@@ -172,7 +172,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 func (s *WithdrawalService) Reinvest(ctx context.Context, userID uuid.UUID, honeyAmount float64) (float64, error) {
 	reinvestRate := s.settings.GetFloat(ctx, "reinvest_rate", 100)
 
-	bpGained := honeyAmount / reinvestRate
+	bpGained := honeyAmount * 50.0 // 20 USDT = 1000 GHS
 	if bpGained <= 0 {
 		return 0, fmt.Errorf("insufficient honey amount")
 	}

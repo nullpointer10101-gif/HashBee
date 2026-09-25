@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { claimHoney } from '../services/api'
 import toast from 'react-hot-toast'
@@ -7,12 +7,38 @@ import { useNavigate } from 'react-router-dom'
 export const Home: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const [claiming, setClaiming] = useState(false)
+  const [showAddGhsModal, setShowAddGhsModal] = useState(false)
+  const [showPayModal, setShowPayModal] = useState(false)
+  const [depositAmount, setDepositAmount] = useState<string>('1')
+  const [copiedAddr, setCopiedAddr] = useState(false)
   const navigate = useNavigate()
+
+  // Real-time ticking pending balance
+  const [pendingBalance, setPendingBalance] = useState<number>(0)
+
+  const ghs = user?.bee_power || 10
+  // Zentorno formula: 0.9000 USDT per day per 1,000 GHS
+  const earningsPerDay = ghs * 0.0009
+  const earningsPerSecond = earningsPerDay / 86400
+
+  useEffect(() => {
+    if (user) {
+      setPendingBalance(user.current_unclaimed_honey || 0)
+    }
+  }, [user?.current_unclaimed_honey])
+
+  useEffect(() => {
+    // Tick up every 100ms
+    const interval = setInterval(() => {
+      setPendingBalance((prev) => prev + earningsPerSecond / 10)
+    }, 100)
+    return () => clearInterval(interval)
+  }, [earningsPerSecond])
 
   if (!user) return null
 
   const handleClaim = async () => {
-    if (user.current_unclaimed_honey <= 0 || claiming) return
+    if (pendingBalance <= 0 || claiming) return
 
     setClaiming(true)
     try {
@@ -20,7 +46,8 @@ export const Home: React.FC = () => {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
       }
       const res = await claimHoney()
-      toast.success(`Claimed +${res.claimed.toLocaleString()} Honey!`)
+      toast.success(`🎉 Claimed +${res.claimed.toFixed(7)} USDT!`)
+      setPendingBalance(0)
       await refreshUser()
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Failed to claim balance')
@@ -29,7 +56,23 @@ export const Home: React.FC = () => {
     }
   }
 
-  const usdEarnedPerSecond = ((user.bee_power * 0.0001) / 3600).toFixed(8)
+  // Add GHS calculations
+  const numDeposit = Math.max(1, parseFloat(depositAmount) || 1)
+  // Rate: 20 USDT = 1000 GHS => 1 USDT = 50 GHS, +5% bonus = 52.5 GHS per 1 USDT
+  const totalGhsPower = numDeposit * 50 * 1.05
+  const modalEarningsPerDay = totalGhsPower * 0.0009
+  const modalEarningsPerSecond = modalEarningsPerDay / 86400
+  const modalEarningsPerWeek = modalEarningsPerDay * 7
+  const modalEarningsPerMonth = modalEarningsPerDay * 30
+
+  const depositAddress = '0x71C8A6e20C8d684f47F359aB08920C80c98e10b2'
+
+  const copyDepositAddress = () => {
+    navigator.clipboard.writeText(depositAddress)
+    setCopiedAddr(true)
+    toast.success('USDT (BSC) address copied!')
+    setTimeout(() => setCopiedAddr(false), 2500)
+  }
 
   return (
     <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
@@ -46,16 +89,16 @@ export const Home: React.FC = () => {
           TOTAL GHS POWER
         </div>
         <div className="text-3xl font-black text-stone-100 mt-1">
-          {user.bee_power} GHS
+          {ghs.toLocaleString()} GHS
         </div>
         <div className="text-xs font-semibold text-stone-400 mt-1">
-          +{usdEarnedPerSecond} USDT/second
+          +{earningsPerSecond.toFixed(8)} USDT/second
         </div>
 
         {/* Side-by-Side Buttons */}
         <div className="flex gap-2.5 mt-5">
           <button
-            onClick={() => navigate('/tasks')}
+            onClick={() => setShowAddGhsModal(true)}
             className="flex-1 py-3 rounded-2xl zentorno-btn-primary font-extrabold text-xs uppercase tracking-wider shadow-md"
           >
             ADD GHS
@@ -75,25 +118,25 @@ export const Home: React.FC = () => {
           YOUR BALANCE
         </div>
         <div className="text-3xl font-black text-stone-100 mt-1">
-          {(user.honey_balance / 10000).toFixed(7)} USDT
+          {user.honey_balance.toFixed(7)} USDT
         </div>
 
         <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mt-4">
           PENDING BALANCE
         </div>
-        <div className="text-2xl font-extrabold text-stone-300 mt-1">
-          {(user.current_unclaimed_honey / 10000).toFixed(8)} USDT
+        <div className="text-2xl font-black text-stone-200 mt-1 font-mono tracking-tight">
+          {pendingBalance.toFixed(8)} USDT
         </div>
         <div className="text-[11px] font-bold text-[#86a397] mt-0.5">
-          ({user.current_unclaimed_honey.toLocaleString()} Honey)
+          (Earnings accumulating 24/7)
         </div>
 
         {/* CLAIM BALANCE Primary Button */}
         <button
           onClick={handleClaim}
-          disabled={user.current_unclaimed_honey <= 0 || claiming}
+          disabled={pendingBalance <= 0 || claiming}
           className={`w-full mt-5 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-md ${
-            user.current_unclaimed_honey > 0
+            pendingBalance > 0
               ? 'zentorno-btn-primary active:scale-95'
               : 'bg-[#1b2623] text-stone-600 border border-[#253530] cursor-not-allowed'
           }`}
@@ -112,6 +155,215 @@ export const Home: React.FC = () => {
         </svg>
         HISTORY
       </button>
+
+      {/* ======================================================== */}
+      {/* 🚀 EXACT ADD GHS MODAL (ZENTORNO CLONE)                  */}
+      {/* ======================================================== */}
+      {showAddGhsModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3">
+          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
+            {/* Header */}
+            <div className="text-center mb-5 relative">
+              <button
+                onClick={() => setShowAddGhsModal(false)}
+                className="absolute left-0 top-0 text-stone-400 hover:text-white p-1"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS</h2>
+            </div>
+
+            {/* Input: Amount to deposit (USDT) */}
+            <div className="mb-4">
+              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
+                Amount to deposit (USDT)
+              </label>
+              <div className="zentorno-input p-3.5 flex items-center justify-between">
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full bg-transparent text-xl font-black text-stone-100 focus:outline-none"
+                />
+                <span className="text-xs font-black text-stone-400 ml-2 whitespace-nowrap">
+                  USDT
+                </span>
+              </div>
+              <div className="text-[10px] text-stone-400 font-semibold mt-1">
+                Minimum deposit: 1.00 USDT
+              </div>
+            </div>
+
+            {/* +5% First Deposit Bonus Banner */}
+            <div className="bg-[#1f2d28] border border-[#2e423b] rounded-2xl py-2.5 px-4 text-center mb-4">
+              <span className="text-xs font-black text-[#93b3a6] tracking-wide">
+                +5% first deposit bonus!
+              </span>
+            </div>
+
+            {/* Card: YOU WILL GET */}
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 text-center mb-4">
+              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
+                YOU WILL GET
+              </div>
+              <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider mt-1">
+                TOTAL GHS POWER
+              </div>
+              <div className="text-3xl font-black text-stone-100 mt-1">
+                {totalGhsPower.toFixed(1)} GHS
+              </div>
+              <div className="text-[11px] font-bold text-[#86a397] mt-1 flex items-center justify-center gap-1">
+                🎁 +5% first deposit bonus applied!
+              </div>
+            </div>
+
+            {/* Card: POTENTIAL EARNINGS (2x2 Grid) */}
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
+              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest text-center mb-3">
+                POTENTIAL EARNINGS
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* PER SECOND */}
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER SECOND
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
+                    {modalEarningsPerSecond.toFixed(8)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                </div>
+
+                {/* PER DAY */}
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER DAY
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerDay.toFixed(4)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                </div>
+
+                {/* PER WEEK */}
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER WEEK
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerWeek.toFixed(4)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                </div>
+
+                {/* PER MONTH */}
+                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
+                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
+                    PER MONTH
+                  </div>
+                  <div className="text-xs font-black text-stone-100 mt-0.5">
+                    {modalEarningsPerMonth.toFixed(2)}
+                  </div>
+                  <div className="text-[9px] font-bold text-stone-500">USDT</div>
+                </div>
+              </div>
+
+              {/* Footnote */}
+              <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
+                These GHS last 30 days. Earnings: 0.9000 USDT per day per 1,000 GHS. Rate: 20.00 USDT = 1,000 GHS.
+              </div>
+            </div>
+
+            {/* Buttons: PAY ORDER & BACK */}
+            <button
+              onClick={() => {
+                setShowAddGhsModal(false)
+                setShowPayModal(true)
+              }}
+              className="w-full py-4 rounded-2xl zentorno-btn-primary font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95"
+            >
+              PAY ORDER
+            </button>
+
+            <button
+              onClick={() => setShowAddGhsModal(false)}
+              className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+            >
+              BACK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 💳 PAY ORDER MODAL (BSC BEP-20 USDT)                      */}
+      {/* ======================================================== */}
+      {showPayModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
+          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm p-5 text-stone-100 shadow-2xl relative">
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-black uppercase tracking-wider">PAYMENT ORDER</h2>
+              <p className="text-xs text-stone-400 mt-1">Send exact USDT via BSC (BEP-20)</p>
+            </div>
+
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-bold text-stone-400">Network</span>
+                <span className="text-xs font-black text-[#93b3a6] bg-[#1f2d28] px-2 py-0.5 rounded-lg border border-[#2e423b]">
+                  BSC (BEP-20)
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-bold text-stone-400">Amount</span>
+                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} USDT</span>
+              </div>
+
+              <div className="border-t border-[#253530] pt-3">
+                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1.5">
+                  Official Deposit Address
+                </div>
+                <div className="zentorno-input p-2.5 flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-stone-200 truncate flex-1">
+                    {depositAddress}
+                  </span>
+                  <button
+                    onClick={copyDepositAddress}
+                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-xs shrink-0"
+                  >
+                    {copiedAddr ? 'COPIED!' : 'COPY'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-stone-400 mb-4 text-center leading-relaxed">
+              ⚠️ Send only USDT (BEP-20) on Binance Smart Chain. Power activates automatically upon 1 network confirmation.
+            </div>
+
+            <button
+              onClick={() => {
+                setShowPayModal(false)
+                toast.success('Order recorded! Awaiting network transfer.')
+              }}
+              className="w-full py-4 rounded-2xl zentorno-btn-primary font-black text-sm uppercase tracking-wider mb-2.5 active:scale-95 shadow-md"
+            >
+              I HAVE SENT PAYMENT
+            </button>
+
+            <button
+              onClick={() => setShowPayModal(false)}
+              className="w-full py-3 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+export default Home

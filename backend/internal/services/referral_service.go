@@ -79,6 +79,19 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 	return tx.Commit(ctx)
 }
 
+// SetReferrerByTelegramID resolves referrer by Telegram ID and links user
+func (s *ReferralService) SetReferrerByTelegramID(ctx context.Context, userID uuid.UUID, referrerTelegramID int64) error {
+	var referrerID uuid.UUID
+	err := s.db.QueryRow(ctx, SELECT id FROM users WHERE telegram_id = , referrerTelegramID).Scan(&referrerID)
+	if err != nil {
+		return err
+	}
+	if referrerID == userID {
+		return nil
+	}
+	return s.SetReferrer(ctx, userID, referrerID)
+}
+
 // GetSwarmStats returns referral stats for all 3 levels
 func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (map[int]SwarmLevelStats, error) {
 	rows, err := s.db.Query(ctx,

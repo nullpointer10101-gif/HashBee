@@ -33,13 +33,18 @@ func (h *UserHandler) Auth(c *gin.Context) {
 	u := user.(*models.User)
 
 	// Handle referrer from query param (for first open)
-	referrerIDStr := c.Query("referrer_id")
-	if referrerIDStr != "" && u.ReferrerID == nil {
-		// Update referrer if not set (race-safe: DB has UNIQUE constraint on referred_id)
-		refID, err := uuid.Parse(referrerIDStr)
-		if err == nil && refID != u.ID {
-			// Try to set referrer — ignore error if already set
-			h.referralSvc.SetReferrer(c.Request.Context(), u.ID, refID)
+	refParam := c.Query("referrer_id")
+	if refParam == "" {
+		refParam = c.Query("ref")
+	}
+	if refParam == "" {
+		refParam = c.Query("start_param")
+	}
+	if refParam != "" && u.ReferrerID == nil {
+		if tgID, err := strconv.ParseInt(refParam, 10, 64); err == nil && tgID != u.TelegramID {
+			_ = h.referralSvc.SetReferrerByTelegramID(c.Request.Context(), u.ID, tgID)
+		} else if refUUID, err := uuid.Parse(refParam); err == nil && refUUID != u.ID {
+			_ = h.referralSvc.SetReferrer(c.Request.Context(), u.ID, refUUID)
 		}
 	}
 
@@ -139,7 +144,10 @@ func (h *UserHandler) GetSwarm(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 
 	botUsername := h.cfg.BotUsername
-	referralLink := "https://t.me/" + botUsername + "?start=" + user.ID.String()
+	if botUsername == "" {
+		botUsername = "hashbee_bot"
+	}
+	referralLink := fmt.Sprintf("https://t.me/%s?start=%d", botUsername, user.TelegramID)
 
 	stats, err := h.referralSvc.GetSwarmStats(c.Request.Context(), user.ID)
 	if err != nil {
@@ -147,8 +155,27 @@ func (h *UserHandler) GetSwarm(c *gin.Context) {
 		return
 	}
 
+	level1 := stats[1]
+	level2 := stats[2]
+	level3 := stats[3]
+
+	var allRefs []services.ReferralEntry
+	allRefs = append(allRefs, level1.RecentReferrals...)
+	allRefs = append(allRefs, level2.RecentReferrals...)
+
 	c.JSON(http.StatusOK, gin.H{
+		"referral_code": strconv.FormatInt(user.TelegramID, 10),
 		"referral_link": referralLink,
-		"swarm":         stats,
+		"telegram_id":   user.TelegramID,
+		"swarm": gin.H{
+			"level1_count":        level1.TotalCount,
+			"level2_count":        level2.TotalCount,
+			"level3_count":        level3.TotalCount,
+			"level1_honey_earned": level1.TotalBPGenerated,
+			"level2_honey_earned": level2.TotalBPGenerated,
+			"level3_honey_earned": level3.TotalBPGenerated,
+			"referrals":           allRefs,
+			"stats":               stats,
+		},
 	})
 }

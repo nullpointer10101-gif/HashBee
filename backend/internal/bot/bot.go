@@ -5,12 +5,47 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"hashbee/internal/config"
 	"hashbee/internal/services"
 )
+
+// WebApp structures for Telegram Bot API compatible with all tgbotapi versions
+type WebAppInfo struct {
+	URL string `json:"url"`
+}
+
+type InlineKeyboardButtonWithWebApp struct {
+	Text   string      `json:"text"`
+	URL    string      `json:"url,omitempty"`
+	WebApp *WebAppInfo `json:"web_app,omitempty"`
+}
+
+type InlineKeyboardMarkupCustom struct {
+	InlineKeyboard [][]InlineKeyboardButtonWithWebApp `json:"inline_keyboard"`
+}
+
+func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
+	return InlineKeyboardMarkupCustom{
+		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
+			{
+				{
+					Text:   text,
+					WebApp: &WebAppInfo{URL: url},
+				},
+			},
+			{
+				{
+					Text: "🌐 Open WebApp Directly",
+					URL:  url,
+				},
+			},
+		},
+	}
+}
 
 type Bot struct {
 	api     *tgbotapi.BotAPI
@@ -23,7 +58,7 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
-	api.Debug = cfg.Env == "development"
+
 	log.Printf("🐝 HashBee Bot authorized as @%s", api.Self.UserName)
 	return &Bot{api: api, cfg: cfg, userSvc: userSvc}, nil
 }
@@ -34,11 +69,13 @@ func (b *Bot) SetWebhook(webhookURL string) error {
 	if err != nil {
 		return err
 	}
+	if b.cfg.WebhookSecret != "" {
+		wh.SecretToken = b.cfg.WebhookSecret
+	}
 	_, err = b.api.Request(wh)
 	return err
 }
 
-// HandleUpdate processes a single update from Telegram
 func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 	if update.Message == nil {
 		return
@@ -60,10 +97,16 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 }
 
 func (b *Bot) handleStart(msg *tgbotapi.Message) {
-	args := msg.CommandArguments()
+	args := strings.TrimSpace(msg.CommandArguments())
 	var referrerTelegramID *int64
 	if args != "" {
-		_ = args
+		if refID, err := strconv.ParseInt(args, 10, 64); err == nil && refID != msg.From.ID {
+			referrerTelegramID = &refID
+		}
+	}
+
+	if b.userSvc != nil {
+		_, _, _ = b.userSvc.GetOrCreate(context.Background(), msg.From.ID, msg.From.UserName, msg.From.FirstName, msg.From.LanguageCode, referrerTelegramID)
 	}
 
 	miniAppURL := b.cfg.MiniAppURL
@@ -71,36 +114,36 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
 
+	appURLWithRef := miniAppURL
+	if args != "" {
+		if strings.Contains(miniAppURL, "?") {
+			appURLWithRef = fmt.Sprintf("%s&ref=%s", miniAppURL, args)
+		} else {
+			appURLWithRef = fmt.Sprintf("%s?ref=%s", miniAppURL, args)
+		}
+	}
+
 	// Auto-set the chat menu button for this user to open the Mini App
 	go func(chatID int64, appURL string) {
 		reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setChatMenuButton", b.cfg.BotToken)
 		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"⛏️ Open Miner","web_app":{"url":"%s"}}}`, chatID, appURL)
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
-	}(msg.Chat.ID, miniAppURL)
+	}(msg.Chat.ID, appURLWithRef)
 
-	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.InlineKeyboardButton{
-				Text:   "🍯 Open HashBee Miner",
-				WebApp: &webApp,
-			},
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("🌐 Open WebApp Directly", miniAppURL),
-		),
-	)
+	keyboard := newWebAppKeyboard("🍯 Open Miner", appURLWithRef)
 
 	welcomeText := `🐝 *Welcome to HashBee!*
 
-Earn *Honey* passively using your *Bee Power*, invite friends to your *Swarm*, complete *Missions*, and *Cash Out* your rewards!
+Earn *USDT* passively using your *GHS Mining Power*, invite friends to earn bonuses, complete missions, and cash out!
 
-🍯 Your Hive fills up automatically — come back regularly to collect.
+⛏️ Your miner works 24/7 — come back regularly to claim your USDT.
 
 Tap the button below to start earning:`
 
 	if referrerTelegramID != nil {
-		welcomeText += "\n\n🤝 You were invited! You'll get a *+2 BP* welcome bonus."
+		welcomeText += fmt.Sprintf("
+
+🤝 You were invited by `%d`! You get a *+2.5 GHS* welcome bonus.", *referrerTelegramID)
 	}
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
@@ -113,26 +156,18 @@ Tap the button below to start earning:`
 func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 	text := `🐝 *HashBee Help*
 
-*Bee Power (BP)* — Your earning rate. More BP = more Honey per hour.
-*Honey* — The currency you collect and can cash out.
-*Hive* — Pending honey that fills up (max 8 hours). Collect regularly!
-*Swarm* — Your referral network. Invite friends for more BP.
-*Missions* — Complete tasks to earn BP rewards.
-*Cash Out* — Withdraw your Honey balance to crypto.`
+*Bee Power (BP / GHS)* — Your earning rate. More GHS = more USDT per day.
+*USDT* — The currency you collect and cash out directly via BSC (BEP-20) or GRAM.
+*Mining* — Generates USDT continuously 24/7. Collect regularly!
+*Referrals* — Invite friends using your Telegram ID link for bonus GHS.
+*Missions* — Complete tasks to earn free GHS.
+*Cash Out* — Fast withdrawal to USDT (BSC) or GRAM.`
 
 	miniAppURL := b.cfg.MiniAppURL
 	if miniAppURL == "" {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
-	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.InlineKeyboardButton{
-				Text:   "🍯 Open HashBee Miner",
-				WebApp: &webApp,
-			},
-		),
-	)
+	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -145,15 +180,7 @@ func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 	if miniAppURL == "" {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
-	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.InlineKeyboardButton{
-				Text:   "🍯 Open HashBee Miner",
-				WebApp: &webApp,
-			},
-		),
-	)
+	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
 
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
@@ -165,11 +192,11 @@ func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 
 	text := fmt.Sprintf(`🐝 *Your HashBee Balance*
 
-🍯 Honey: *%.4f*
-⚡ Bee Power: *%.2f BP*
+🍯 Balance: *%.7f USDT*
+⚡ Mining Power: *%.1f GHS*
 🔥 Streak: *%d days*
 
-Open the miner to collect your pending Honey!`, user.HoneyBalance, user.BP, user.StreakCount)
+Open the miner to collect your pending USDT!`, user.HoneyBalance, user.BP, user.StreakCount)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -183,17 +210,11 @@ func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	if miniAppURL == "" {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
-	webApp := tgbotapi.WebAppInfo{URL: miniAppURL}
-	keyboard := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.InlineKeyboardButton{
-				Text:   "🍯 Collect Now",
-				WebApp: &webApp,
-			},
-		),
-	)
+	keyboard := newWebAppKeyboard("🍯 Collect Now", miniAppURL)
 
-	text := "🍯 *Your Hive is full!*\n\nYour Hive has reached its capacity. Collect your Honey now before it stops growing!"
+	text := "🍯 *Your Miner is full!*
+
+Your accumulated balance has reached maximum capacity. Claim your USDT now so your mining continues at full speed!"
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	msg.ReplyMarkup = keyboard
@@ -205,11 +226,14 @@ func (b *Bot) SendWithdrawalNotification(telegramID int64, status, reason string
 	var text string
 	switch status {
 	case "processing":
-		text = "💸 Your Cash Out request is now *Processing*. We'll notify you when it's paid!"
+		text = "💸 Your Withdrawal request is now *Processing*. We'll notify you when it's paid!"
 	case "paid":
-		text = "✅ Your Cash Out has been *Paid*! Check your wallet."
+		text = "✅ Your Withdrawal has been *Paid*! Check your wallet."
 	case "rejected":
-		text = fmt.Sprintf("❌ Your Cash Out was *Rejected*.\nReason: %s\n\nYour Honey has been refunded.", reason)
+		text = fmt.Sprintf("❌ Your Withdrawal was *Rejected*.
+Reason: %s
+
+Your balance has been refunded.", reason)
 	default:
 		return
 	}
@@ -221,7 +245,7 @@ func (b *Bot) SendWithdrawalNotification(telegramID int64, status, reason string
 
 // SendReferralActivatedNotification notifies referrer of new active referral
 func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName string, rewardBP float64) {
-	text := fmt.Sprintf("🐝 *New active Swarm member!*\n\n%s has joined your Swarm and is now active.\nYou earned *+%.2f BP*!", referredName, rewardBP)
+	text := fmt.Sprintf("🐝 *New active Swarm member!*\n\n%s has joined your Swarm and is now active.\nYou earned *+%.2f GHS*!", referredName, rewardBP)
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	b.api.Send(msg)

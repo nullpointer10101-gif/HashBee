@@ -6,8 +6,7 @@ const getInitData = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
     return window.Telegram.WebApp.initData
   }
-  // Mock data for browser testing
-  return 'query_id=STUB&user=%7B%22id%22%3A12345678%2C%22first_name%22%3A%22BeeKeeper%22%2C%22username%22%3A%22honeymaster%22%7D&auth_date=1600000000&hash=stub'
+  return 'query_id=STUB&user=%7B%22id%22%3A6446145632%2C%22first_name%22%3A%22BeeKeeper%22%2C%22username%22%3A%22miner%22%7D&auth_date=1600000000&hash=stub'
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
@@ -32,12 +31,24 @@ api.interceptors.request.use((config) => {
 })
 
 export const fetchProfile = async (): Promise<User> => {
+  let refParam: string | null = null
+  if (typeof window !== 'undefined') {
+    if (window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+      refParam = window.Telegram.WebApp.initDataUnsafe.start_param
+    }
+    if (!refParam) {
+      const urlParams = new URLSearchParams(window.location.search)
+      refParam = urlParams.get('tgWebAppStartParam') || urlParams.get('ref') || urlParams.get('start') || null
+    }
+  }
+
   const token = localStorage.getItem('hashbee_token')
   let profileData: any = null
 
   if (!token) {
     try {
-      const res = await api.post('/api/auth')
+      const authUrl = refParam ? `/api/auth?ref=${encodeURIComponent(refParam)}` : '/api/auth'
+      const res = await api.post(authUrl)
       if (res.data?.token) {
         localStorage.setItem('hashbee_token', res.data.token)
       }
@@ -52,21 +63,23 @@ export const fetchProfile = async (): Promise<User> => {
     profileData = res.data
   }
 
+  const tgId = profileData.telegram_id || 6446145632
+
   return {
     id: profileData.id,
-    telegram_id: profileData.telegram_id,
+    telegram_id: tgId,
     username: profileData.username || 'miner',
     first_name: profileData.first_name || 'BeeKeeper',
     last_name: '',
-    honey_balance: profileData.honey_balance || 0,
-    bee_power: profileData.bp || 10,
+    honey_balance: Number(profileData.honey_balance || 0),
+    bee_power: Number(profileData.bp || 10),
     max_hive_capacity: 5000,
-    current_unclaimed_honey: profileData.hive?.pending_honey || 0,
+    current_unclaimed_honey: Number(profileData.hive?.pending_honey || 0),
     last_claimed_at: new Date().toISOString(),
-    hive_full_at: profileData.hive?.cap_reached_at || new Date(Date.now() + 3600000 * 4).toISOString(),
+    hive_full_at: profileData.hive?.cap_reached_at || new Date(Date.now() + 3600000 * 24).toISOString(),
     streak_count: profileData.streak_count || 1,
     last_streak_date: new Date().toISOString().split('T')[0],
-    ref_code: profileData.id,
+    ref_code: String(tgId),
     created_at: profileData.created_at || new Date().toISOString(),
   }
 }
@@ -76,8 +89,8 @@ export const claimHoney = async (): Promise<{ claimed: number; new_balance: numb
   const res = await api.post('/api/collect', {}, {
     headers: { 'X-Idempotency-Key': idempKey }
   })
-  const claimed = res.data?.collected || 0
-  const new_balance = res.data?.profile?.honey_balance || 0
+  const claimed = Number(res.data?.collected || 0)
+  const new_balance = Number(res.data?.profile?.honey_balance || 0)
   return { claimed, new_balance }
 }
 
@@ -163,19 +176,22 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
   const res = await api.get('/api/swarm')
   const swarm = res.data?.swarm || {}
   const referralLink = res.data?.referral_link || ''
+  const refCode = res.data?.referral_code || referralLink.split('=').pop() || ''
+  const rawList = swarm.referrals || []
+
   return {
-    ref_code: referralLink.split('=').pop() || '',
-    invite_link: referralLink || `https://t.me/hashbe_bot`,
+    ref_code: refCode,
+    invite_link: referralLink || `https://t.me/hashbee_bot?start=${refCode}`,
     tier1_count: swarm.level1_count || 0,
     tier2_count: swarm.level2_count || 0,
     tier1_earnings: swarm.level1_honey_earned || 0,
     tier2_earnings: swarm.level2_honey_earned || 0,
-    referrals: (swarm.referrals || []).map((r: any) => ({
-      id: r.id,
+    referrals: rawList.map((r: any) => ({
+      id: r.id || String(Math.random()),
       username: r.username || 'Miner',
       first_name: r.first_name || '',
       joined_at: r.created_at || new Date().toISOString(),
-      honey_earned_for_referrer: r.honey_earned || 0,
+      honey_earned_for_referrer: r.reward_bp || 5,
     })),
   }
 }
@@ -188,19 +204,19 @@ export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {
   ]
 }
 
-export const requestWithdrawal = async (amount_honey: number, wallet_address: string, payout_method: string): Promise<Withdrawal> => {
+export const requestWithdrawal = async (amount: number, wallet_address: string, payout_method: string): Promise<Withdrawal> => {
   const res = await api.post('/api/withdraw', {
-    amount: amount_honey,
+    amount: amount,
     address: wallet_address,
-    network: payout_method === 'TON' ? 'TON' : 'USDT_TRC20',
+    network: payout_method === 'GRAM' ? 'GRAM' : 'USDT_BSC',
   })
   const w = res.data?.withdrawal || {}
   return {
     id: w.id || `w-${Date.now()}`,
-    amount_honey: w.amount || amount_honey,
-    amount_usd: (w.amount || amount_honey) * 0.0001,
+    amount_honey: w.amount || amount,
+    amount_usd: w.amount || amount,
     wallet_address: w.address || wallet_address,
-    payout_method: payout_method as any,
+    payout_method: (w.network || payout_method) as any,
     status: w.status || 'pending',
     reinvested: false,
     created_at: w.created_at || new Date().toISOString(),
@@ -213,7 +229,7 @@ export const fetchWithdrawals = async (): Promise<Withdrawal[]> => {
   return list.map((w: any) => ({
     id: w.id,
     amount_honey: w.amount,
-    amount_usd: w.amount * 0.0001,
+    amount_usd: w.amount,
     wallet_address: w.address,
     payout_method: w.network as any,
     status: w.status,
@@ -222,20 +238,21 @@ export const fetchWithdrawals = async (): Promise<Withdrawal[]> => {
   }))
 }
 
-export const reinvestHoney = async (amount_honey: number): Promise<{ power_gained: number }> => {
-  const res = await api.post('/api/reinvest', { honey_amount: amount_honey })
-  return { power_gained: res.data?.bp_gained || amount_honey / 100 }
+export const reinvestHoney = async (amount: number): Promise<{ power_gained: number }> => {
+  const res = await api.post('/api/reinvest', { honey_amount: amount })
+  return { power_gained: res.data?.bp_gained || amount * 50 }
 }
 
-export const createCampaign = async (title: string, description: string, target_url: string, budget_honey: number, reward_per_user: number): Promise<Campaign> => {
-  const res = await api.post('/api/campaigns', {
-    title,
-    description,
-    target_url,
-    budget_honey,
-    reward_per_user,
-  })
-  return res.data.data
+export const createCampaign = async (campaignData: Partial<Campaign>): Promise<Campaign> => {
+  const res = await api.post('/api/campaigns', campaignData)
+  return res.data?.campaign
 }
 
-export default api
+export const fetchMyCampaigns = async (): Promise<Campaign[]> => {
+  const res = await api.get('/api/campaigns')
+  return res.data?.campaigns || []
+}
+
+export const cancelCampaign = async (id: string): Promise<void> => {
+  await api.delete(`/api/campaigns/${id}`)
+}
