@@ -40,6 +40,15 @@ func main() {
 	}
 	defer pool.Close()
 	log.Println("✅ Database connected")
+	// Seed exclusive admin credentials (username: meela / password: meela)
+	meelaHash, _ := bcrypt.GenerateFromPassword([]byte("meela"), bcrypt.DefaultCost)
+	_, _ = pool.Exec(ctx, "DELETE FROM admin_users WHERE email != 'meela'")
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO admin_users (id, email, password_hash, role, status, created_at, updated_at)
+		VALUES ($1, 'meela', $2, 'super_admin', 'active', NOW(), NOW())
+		ON CONFLICT (email) DO UPDATE SET password_hash = $2, status = 'active', updated_at = NOW()
+	`, uuid.New(), string(meelaHash))
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `

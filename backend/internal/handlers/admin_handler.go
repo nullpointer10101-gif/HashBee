@@ -44,36 +44,40 @@ func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.Use
 // POST /api/admin/login
 func (h *AdminHandler) Login(c *gin.Context) {
 	var req struct {
-		Email    string `json:"email"`
-		Username string `json:"username"`
-		Password string `json:"password" binding:"required"`
+		Email      string `json:"email"`
+		Username   string `json:"username"`
+		Identifier string `json:"identifier"`
+		Password   string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	identifier := req.Email
+	identifier := strings.TrimSpace(req.Identifier)
 	if identifier == "" {
-		identifier = req.Username
+		identifier = strings.TrimSpace(req.Username)
 	}
 	if identifier == "" {
-		identifier = "admin@hashbee.io"
+		identifier = strings.TrimSpace(req.Email)
+	}
+	if identifier == "" {
+		identifier = "meela"
 	}
 
-	// Auto-seed default admin if no admin users exist yet
+	// Auto-seed meela admin if no admin users exist yet
 	var count int
 	_ = h.db.QueryRow(c.Request.Context(), `SELECT COUNT(*) FROM admin_users`).Scan(&count)
 	if count == 0 {
-		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+		hash, _ := bcrypt.GenerateFromPassword([]byte("meela"), bcrypt.DefaultCost)
 		_, _ = h.db.Exec(c.Request.Context(),
-			`INSERT INTO admin_users (email, password_hash, role, status) VALUES ('admin@hashbee.io', $1, 'super_admin', 'active') ON CONFLICT DO NOTHING`,
-			string(hash))
+			`INSERT INTO admin_users (id, email, password_hash, role, status, created_at, updated_at) VALUES ($1, 'meela', $2, 'super_admin', 'active', NOW(), NOW()) ON CONFLICT DO NOTHING`,
+			uuid.New(), string(hash))
 	}
 
 	var admin models.AdminUser
 	err := h.db.QueryRow(c.Request.Context(),
-		`SELECT id, email, password_hash, role, status FROM admin_users WHERE (email = $1 OR (email = 'admin@hashbee.io' AND ($1 = 'admin' OR $1 = 'admin@hashbee.io'))) AND status = 'active' LIMIT 1`,
+		`SELECT id, email, password_hash, role, status FROM admin_users WHERE (LOWER(email) = LOWER($1)) AND status = 'active' LIMIT 1`,
 		identifier).Scan(&admin.ID, &admin.Email, &admin.PasswordHash, &admin.Role, &admin.Status)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
