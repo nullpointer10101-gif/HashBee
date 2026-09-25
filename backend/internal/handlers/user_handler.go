@@ -19,8 +19,8 @@ type UserHandler struct {
 	referralSvc *services.ReferralService
 }
 
-func NewUserHandler(cfg *config.Config, userSvc *services.UserService, referralSvc *services.ReferralService) *UserHandler {
-	return &UserHandler{cfg: cfg, userSvc: userSvc, referralSvc: referralSvc}
+func NewUserHandler(cfg *config.Config, userSvc *services.UserService, referralSvc *services.ReferralService, depositSvc *services.DepositService) *UserHandler {
+	return &UserHandler{cfg: cfg, userSvc: userSvc, referralSvc: referralSvc, depositSvc: depositSvc}
 }
 
 // POST /api/auth — Validate initData, create/get user, return JWT + profile
@@ -95,6 +95,25 @@ func (h *UserHandler) Collect(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"collected": collected,
 		"profile":   profile,
+	})
+}
+
+// POST /api/check-deposit — Trigger instant blockchain deposit verification
+func (h *UserHandler) CheckDeposit(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	if h.depositSvc != nil {
+		creditedCount, _ := h.depositSvc.ProcessDeposits(c.Request.Context())
+		if creditedCount > 0 {
+			if updatedUser, err := h.userSvc.GetByID(c.Request.Context(), user.ID); err == nil && updatedUser != nil {
+				user = updatedUser
+			}
+		}
+	}
+
+	profile := h.userSvc.GetUserProfile(c.Request.Context(), user)
+	c.JSON(http.StatusOK, gin.H{
+		"profile": profile,
+		"status":  "checked",
 	})
 }
 

@@ -56,8 +56,13 @@ func main() {
 		tgBot = nil
 	}
 
+	// Deposit Watcher Service
+	depositWallet := "UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO"
+	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
+	depositSvc.StartWatcher(ctx, 15*time.Second)
+
 	// Handlers
-	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc)
+	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc)
 	missionHandler := handlers.NewMissionHandler(missionSvc, referralSvc)
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)
@@ -137,6 +142,7 @@ func main() {
 	{
 		protected.GET("/me", userHandler.GetMe)
 		protected.POST("/collect", userHandler.Collect)
+		protected.POST("/check-deposit", userHandler.CheckDeposit)
 		protected.POST("/checkin", userHandler.Checkin)
 		protected.GET("/history", userHandler.GetHistory)
 		protected.GET("/swarm", userHandler.GetSwarm)

@@ -9,7 +9,7 @@ export const Withdraw: React.FC = () => {
   const [amount, setAmount] = useState<string>('')
   const [wallet, setWallet] = useState<string>('')
   // ONLY TWO WITHDRAW OPTIONS: USDT (BSC) and GRAM
-  const [selectedCrypto, setSelectedCrypto] = useState<'USDT_BSC' | 'GRAM'>('USDT_BSC')
+  const [selectedCrypto, setSelectedCrypto] = useState<'GRAM' | 'USDT_BSC'>('GRAM')
   const [submitting, setSubmitting] = useState(false)
   const [reinvesting, setReinvesting] = useState(false)
   const navigate = useNavigate()
@@ -21,7 +21,7 @@ export const Withdraw: React.FC = () => {
     const numAmount = parseFloat(amount)
 
     if (!numAmount || numAmount < minWithdrawal) {
-      toast.error(`Minimum withdrawal is ${minWithdrawal.toFixed(2)} USDT`)
+      toast.error(`Minimum withdrawal is ${minWithdrawal.toFixed(2)} GRAM`)
       return
     }
 

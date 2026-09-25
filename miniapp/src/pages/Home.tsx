@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { claimHoney } from '../services/api'
+import { claimHoney, checkDeposit } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 
@@ -38,7 +38,10 @@ export const Home: React.FC = () => {
   if (!user) return null
 
   const handleClaim = async () => {
-    if (pendingBalance <= 0 || claiming) return
+    if (pendingBalance < 0.01 || claiming) {
+      toast.error('Minimum claim amount is 0.01')
+      return
+    }
 
     setClaiming(true)
     try {
@@ -57,7 +60,7 @@ export const Home: React.FC = () => {
   }
 
   // Add GHS calculations
-  const numDeposit = Math.max(1, parseFloat(depositAmount) || 1)
+  const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
   // Rate: 20 USDT = 1000 GHS => 1 USDT = 50 GHS, +5% bonus = 52.5 GHS per 1 USDT
   const totalGhsPower = numDeposit * 50 * 1.05
   const modalEarningsPerDay = totalGhsPower * 0.0009
@@ -65,7 +68,35 @@ export const Home: React.FC = () => {
   const modalEarningsPerWeek = modalEarningsPerDay * 7
   const modalEarningsPerMonth = modalEarningsPerDay * 30
 
-  const depositAddress = '0x71C8A6e20C8d684f47F359aB08920C80c98e10b2'
+  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
+  const [copiedMemo, setCopiedMemo] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+
+  const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
+
+  const copyMemo = () => {
+    navigator.clipboard.writeText(userMemo)
+    setCopiedMemo(true)
+    toast.success('Memo copied! Paste this in your transfer comment.')
+    setTimeout(() => setCopiedMemo(false), 2500)
+  }
+
+  const handleVerifyDeposit = async () => {
+    setVerifying(true)
+    toast.loading('Checking blockchain for your deposit...', { id: 'verify-dep' })
+    try {
+      const res = await checkDeposit()
+      toast.dismiss('verify-dep')
+      await refreshUser()
+      toast.success('🎉 Deposit check complete! Any detected transfers are credited.')
+      setShowPayModal(false)
+    } catch (err: any) {
+      toast.dismiss('verify-dep')
+      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const copyDepositAddress = () => {
     navigator.clipboard.writeText(depositAddress)
@@ -135,14 +166,14 @@ export const Home: React.FC = () => {
         {/* CLAIM BALANCE Primary Button */}
         <button
           onClick={handleClaim}
-          disabled={pendingBalance <= 0 || claiming}
+          disabled={pendingBalance < 0.01 || claiming}
           className={`w-full mt-5 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-md ${
-            pendingBalance > 0
+            pendingBalance >= 0.01
               ? 'zentorno-btn-primary active:scale-95'
               : 'bg-[#1b2623] text-stone-600 border border-[#253530] cursor-not-allowed'
           }`}
         >
-          {claiming ? 'CLAIMING...' : 'CLAIM BALANCE'}
+          {claiming ? 'CLAIMING...' : pendingBalance >= 0.01 ? 'CLAIM BALANCE' : 'CLAIM (MIN 0.01)'}
         </button>
       </div>
 
@@ -176,26 +207,26 @@ export const Home: React.FC = () => {
               <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS</h2>
             </div>
 
-            {/* Input: Amount to deposit (USD₮) */}
+            {/* Input: Amount to deposit (GRAM) */}
             <div className="mb-4">
               <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
-                Amount to deposit (USDT)
+                Amount to deposit (GRAM)
               </label>
               <div className="zentorno-input p-3.5 flex items-center justify-between">
                 <input
                   type="number"
-                  min="1"
-                  step="1"
+                  min="0.1"
+                  step="0.1"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   className="w-full bg-transparent text-xl font-black text-stone-100 focus:outline-none"
                 />
                 <span className="text-xs font-black text-stone-400 ml-2 whitespace-nowrap">
-                  USDT
+                  GRAM
                 </span>
               </div>
               <div className="text-[10px] text-stone-400 font-semibold mt-1">
-                Minimum deposit: 1.00 USD₮
+                Minimum deposit: 0.10 GRAM
               </div>
             </div>
 
@@ -234,7 +265,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
                     {modalEarningsPerSecond.toFixed(8)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
 
                 {/* PER DAY */}
@@ -245,7 +276,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerDay.toFixed(4)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
 
                 {/* PER WEEK */}
@@ -256,7 +287,7 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerWeek.toFixed(4)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
 
                 {/* PER MONTH */}
@@ -267,13 +298,13 @@ export const Home: React.FC = () => {
                   <div className="text-xs font-black text-stone-100 mt-0.5">
                     {modalEarningsPerMonth.toFixed(2)}
                   </div>
-                  <div className="text-[9px] font-bold text-stone-500">USD₮</div>
+                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
               </div>
 
               {/* Footnote */}
               <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
-                These GHS last 30 days. Earnings: 0.9000 USD₮ per day per 1,000 GHS. Rate: 20.00 USD₮ = 1,000 GHS.
+                These GHS last 30 days. Earnings: 0.9000 GRAM per day per 1,000 GHS. Rate: 20.00 GRAM = 1,000 GHS.
               </div>
             </div>
 
@@ -299,63 +330,91 @@ export const Home: React.FC = () => {
       )}
 
       {/* ======================================================== */}
-      {/* 💳 PAY ORDER MODAL (BSC BEP-20 USDT)                      */}
+      {/* 💳 PAY ORDER MODAL (TON / GRAM AUTOMATIC)                 */}
       {/* ======================================================== */}
       {showPayModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
-          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm p-5 text-stone-100 shadow-2xl relative">
-            <div className="text-center mb-4">
+          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
+            <div className="text-center mb-3">
               <h2 className="text-lg font-black uppercase tracking-wider">PAYMENT ORDER</h2>
-              <p className="text-xs text-stone-400 mt-1">Send exact USDT via BSC (BEP-20)</p>
+              <p className="text-xs text-stone-400 mt-0.5">Send exact GRAM on TON Blockchain</p>
             </div>
 
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
-              <div className="flex justify-between items-center mb-2">
+            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-3.5 mb-3 space-y-2.5">
+              <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-stone-400">Network</span>
                 <span className="text-xs font-black text-[#93b3a6] bg-[#1f2d28] px-2 py-0.5 rounded-lg border border-[#2e423b]">
-                  BSC (BEP-20)
+                  TON / GRAM
                 </span>
               </div>
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-stone-400">Amount</span>
-                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} USDT</span>
+                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} GRAM</span>
               </div>
 
-              <div className="border-t border-[#253530] pt-3">
-                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1.5">
+              {/* Deposit Address */}
+              <div className="border-t border-[#253530] pt-2.5">
+                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1">
                   Official Deposit Address
                 </div>
-                <div className="zentorno-input p-2.5 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-stone-200 truncate flex-1">
+                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5">
+                  <span className="text-[10px] font-mono text-stone-200 truncate flex-1">
                     {depositAddress}
                   </span>
                   <button
                     onClick={copyDepositAddress}
-                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-xs shrink-0"
+                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-[11px] shrink-0"
                   >
                     {copiedAddr ? 'COPIED!' : 'COPY'}
                   </button>
                 </div>
               </div>
+
+              {/* REQUIRED COMMENT / MEMO */}
+              <div className="bg-[#241c10] border border-[#543b18] rounded-xl p-2.5">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
+                    REQUIRED MEMO / COMMENT
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-400">MUST INCLUDE</span>
+                </div>
+                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5 border-amber-500/40">
+                  <span className="text-xs font-mono font-black text-amber-300">
+                    {userMemo}
+                  </span>
+                  <button
+                    onClick={copyMemo}
+                    className="p-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-lg font-black text-[11px] shrink-0"
+                  >
+                    {copiedMemo ? 'COPIED!' : 'COPY MEMO'}
+                  </button>
+                </div>
+                <div className="text-[9.5px] text-amber-200/80 font-medium mt-1 leading-tight">
+                  ⚠️ Paste this in your wallet comment so power is credited automatically!
+                </div>
+              </div>
             </div>
 
-            <div className="text-[10px] text-stone-400 mb-4 text-center leading-relaxed">
-              ⚠️ Send only USDT (BEP-20) on Binance Smart Chain. Power activates automatically upon 1 network confirmation.
-            </div>
-
-            <button
-              onClick={() => {
-                setShowPayModal(false)
-                toast.success('Order recorded! Awaiting network transfer.')
-              }}
-              className="w-full py-4 rounded-2xl zentorno-btn-primary font-black text-sm uppercase tracking-wider mb-2.5 active:scale-95 shadow-md"
+            {/* Direct Tonkeeper / Wallet link button */}
+            <a
+              href={`ton://transfer/${depositAddress}?amount=${Math.round(numDeposit * 1e9)}&text=${encodeURIComponent(userMemo)}`}
+              className="w-full py-3 rounded-2xl bg-[#0088cc] hover:bg-[#0099e6] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all text-center block"
             >
-              I HAVE SENT PAYMENT
+              💎 PAY IN TONKEEPER / WALLET
+            </a>
+
+            {/* Instant verification button */}
+            <button
+              onClick={handleVerifyDeposit}
+              disabled={verifying}
+              className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2 active:scale-95 shadow-md"
+            >
+              {verifying ? 'CHECKING BLOCKCHAIN...' : '✅ I HAVE SENT PAYMENT (VERIFY NOW)'}
             </button>
 
             <button
               onClick={() => setShowPayModal(false)}
-              className="w-full py-3 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+              className="w-full py-2.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
             >
               CLOSE
             </button>

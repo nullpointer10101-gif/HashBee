@@ -255,6 +255,16 @@ func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName s
 	b.api.Send(msg)
 }
 
+// SendDepositNotification notifies user of credited blockchain deposit
+func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower float64) {
+	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+%.3f GRAM*\n⚡ Mining Power Added: *+%.2f GHS*!\n\nYour miner is accumulating at the upgraded rate 24/7!", amountGram, ghsPower)
+	msg := tgbotapi.NewMessage(telegramID, text)
+	msg.ParseMode = "Markdown"
+	if b.api != nil {
+		b.api.Send(msg)
+	}
+}
+
 // Broadcast sends a message to all opted-in users
 func (b *Bot) Broadcast(text string, telegramIDs []int64) {
 	for _, id := range telegramIDs {

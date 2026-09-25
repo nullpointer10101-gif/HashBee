@@ -256,3 +256,8 @@ export const fetchMyCampaigns = async (): Promise<Campaign[]> => {
 export const cancelCampaign = async (id: string): Promise<void> => {
   await api.delete(`/api/campaigns/${id}`)
 }
+
+export const checkDeposit = async (): Promise<any> => {
+  const res = await api.post('/api/check-deposit')
+  return res.data
+}

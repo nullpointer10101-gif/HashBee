@@ -334,10 +334,9 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 	earningPerSecond := (u.BP * 0.0009) / 86400.0
 	pendingHoney := math.Round(earningPerSecond*elapsed*1e8) / 1e8
 
-	if pendingHoney <= 0 {
+	if pendingHoney < 0.01 {
 		tx.Rollback(ctx)
-		user, _ := s.GetByID(ctx, userID)
-		return user, 0, nil
+		return nil, 0, fmt.Errorf("minimum claim amount is 0.01")
 	}
 
 	newBalance := u.HoneyBalance + pendingHoney

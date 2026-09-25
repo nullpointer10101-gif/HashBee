@@ -55,11 +55,11 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	minReferrals := s.settings.GetInt(ctx, "withdrawal_min_referrals", 3)
 	minMissions := s.settings.GetInt(ctx, "withdrawal_min_missions", 5)
 
-	// Convert honey amount to USDT
-	usdtAmount := req.Amount / honeyToUSDT
+	// Direct 1:1 currency amount
+	usdtAmount := req.Amount
 
-	// Check minimum
-	if usdtAmount < minUSDT {
+	// Check minimum: 0.05
+	if usdtAmount < 0.05 {
 		return nil, fmt.Errorf("minimum withdrawal is %.4f USDT (%.0f Honey)", minUSDT, minUSDT*honeyToUSDT)
 	}
 
@@ -100,7 +100,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		`SELECT COALESCE(SUM(amount), 0) FROM withdrawals
 		 WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '24 hours' AND status != 'rejected'`,
 		userID).Scan(&todayTotal)
-	todayTotalUSDT := todayTotal / honeyToUSDT
+	todayTotalUSDT := todayTotal
 	if todayTotalUSDT+usdtAmount > maxPerDay {
 		return nil, fmt.Errorf("daily withdrawal limit exceeded (max %.2f USDT/day)", maxPerDay)
 	}
