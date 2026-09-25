@@ -26,7 +26,7 @@ export const Missions: React.FC = () => {
   // New Campaign Form State
   const [promoType, setPromoType] = useState<'link' | 'channel' | 'group' | 'bot'>('link')
   const [promoTarget, setPromoTarget] = useState('')
-  const [promoCompletions, setPromoCompletions] = useState<number>(100)
+  const [promoCompletions, setPromoCompletions] = useState<number>(500)
 
   // Selected Campaign to Pay
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
@@ -200,7 +200,12 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(500, Number(promoCompletions) || 500)
+    const completions = Number(promoCompletions) || 0
+    if (completions < 500) {
+      toast.error('Minimum order is 500 completions (0.50 GRAM)')
+      setPromoCompletions(500)
+      return
+    }
     const cost = completions * 0.001
 
     if (!user || user.honey_balance < cost) {
@@ -256,7 +261,12 @@ export const Missions: React.FC = () => {
       return
     }
 
-    const completions = Math.max(500, Number(promoCompletions) || 500)
+    const completions = Number(promoCompletions) || 0
+    if (completions < 500) {
+      toast.error('Minimum order is 500 completions (0.50 GRAM)')
+      setPromoCompletions(500)
+      return
+    }
     const cost = completions * 0.001
     setPublishing(true)
 
@@ -564,9 +574,14 @@ export const Missions: React.FC = () => {
                   type="number"
                   min={500}
                   step={100}
-                  value={promoCompletions}
-                  onChange={(e) => setPromoCompletions(Number(e.target.value))}
-                  placeholder="500"
+                  value={promoCompletions || ''}
+                  onChange={(e) => setPromoCompletions(e.target.value === '' ? ('' as any) : Number(e.target.value))}
+                  onBlur={() => {
+                    if (!promoCompletions || Number(promoCompletions) < 500) {
+                      setPromoCompletions(500)
+                    }
+                  }}
+                  placeholder="Min 500"
                   className="w-full bg-transparent text-xs text-center font-black text-stone-200 focus:outline-none"
                 />
               </div>
