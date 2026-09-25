@@ -57,7 +57,7 @@ func main() {
 	}
 
 	// Deposit Watcher Service
-	depositWallet := "UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO"
+	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
 	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
 	depositSvc.StartWatcher(ctx, 15*time.Second)
 

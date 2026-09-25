@@ -37,7 +37,7 @@ export const Missions: React.FC = () => {
   const [copiedMemo, setCopiedMemo] = useState(false)
 
   const { user, refreshUser } = useAuth()
-  const depositAddress = 'EQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygDeL'
+  const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || '6446145632'

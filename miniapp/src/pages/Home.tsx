@@ -38,7 +38,7 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval)
   }, [earningsPerSecond])
 
-  const depositAddress = 'EQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygDeL'
+  const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
   const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
 
   const copyMemo = () => {
