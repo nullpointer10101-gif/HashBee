@@ -252,7 +252,7 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 
 // ComputeHiveStatus calculates current pending honey (server-side only)
 func (s *UserService) ComputeHiveStatus(ctx context.Context, user *models.User) models.HiveStatus {
-	capHours := s.settings.GetFloat(ctx, "hive_cap_hours", 8.0)
+	capHours := s.settings.GetFloat(ctx, "hive_cap_hours", 87600.0)
 
 	now := time.Now()
 	elapsed := now.Sub(user.LastCollectAt).Seconds()
@@ -321,8 +321,7 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 	}
 
 	// Compute pending honey
-	capHours := s.settings.GetFloat(ctx, "hive_cap_hours", 8.0)
-	honeyPerBPPerHour := s.settings.GetFloat(ctx, "honey_per_bp_per_hour", 0.001)
+	capHours := s.settings.GetFloat(ctx, "hive_cap_hours", 87600.0)
 
 	now := time.Now()
 	elapsed := now.Sub(u.LastCollectAt).Seconds()
@@ -331,7 +330,8 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 		elapsed = capSeconds
 	}
 
-	earningPerSecond := (u.BP * honeyPerBPPerHour) / 3600.0
+	// Zentorno rate: 0.9000 USDT per day per 1,000 GHS => 0.0009 / 86400 per GHS per second
+	earningPerSecond := (u.BP * 0.0009) / 86400.0
 	pendingHoney := math.Round(earningPerSecond*elapsed*1e8) / 1e8
 
 	if pendingHoney <= 0 {
@@ -476,8 +476,9 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		BP:           user.BP,
 		HoneyBalance: user.HoneyBalance,
 		Hive:         hive,
-		StreakCount:  user.StreakCount,
-		CreatedAt:    user.CreatedAt,
+		StreakCount:   user.StreakCount,
+		LastCollectAt: user.LastCollectAt,
+		CreatedAt:     user.CreatedAt,
 	}
 }
 

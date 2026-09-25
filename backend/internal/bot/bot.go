@@ -119,13 +119,17 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		miniAppURL = "https://miniapp-five-topaz.vercel.app"
 	}
 
+	// Append version query param to force Telegram to clear cached bundle
+	versionQuery := "v=5.0"
+	if strings.Contains(miniAppURL, "?") {
+		miniAppURL = miniAppURL + "&" + versionQuery
+	} else {
+		miniAppURL = miniAppURL + "?" + versionQuery
+	}
+
 	appURLWithRef := miniAppURL
 	if args != "" {
-		if strings.Contains(miniAppURL, "?") {
-			appURLWithRef = fmt.Sprintf("%s&ref=%s", miniAppURL, args)
-		} else {
-			appURLWithRef = fmt.Sprintf("%s?ref=%s", miniAppURL, args)
-		}
+		appURLWithRef = fmt.Sprintf("%s&ref=%s", miniAppURL, args)
 	}
 
 	// Auto-set the chat menu button for this user to open the Mini App

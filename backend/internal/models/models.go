@@ -53,8 +53,9 @@ type UserProfile struct {
 	BP           float64    `json:"bp"`
 	HoneyBalance float64    `json:"honey_balance"`
 	Hive         HiveStatus `json:"hive"`
-	StreakCount  int        `json:"streak_count"`
-	CreatedAt    time.Time  `json:"created_at"`
+	StreakCount   int        `json:"streak_count"`
+	LastCollectAt time.Time  `json:"last_collect_at"`
+	CreatedAt     time.Time  `json:"created_at"`
 }
 
 // Referral statuses
