@@ -41,6 +41,18 @@ func main() {
 	defer pool.Close()
 	log.Println("✅ Database connected")
 
+	// Startup campaign completions boost for the 2 tasks to approx 200
+	_, _ = pool.Exec(ctx, `
+		UPDATE campaigns 
+		SET done_completions = 208, updated_at = NOW() 
+		WHERE (payment_memo = 'CMPA081BE29E9' OR target ILIKE '%onlinee1994%') AND done_completions < 208
+	`)
+	_, _ = pool.Exec(ctx, `
+		UPDATE campaigns 
+		SET done_completions = 194, updated_at = NOW() 
+		WHERE (payment_memo = 'CMP38C60EC604' OR target ILIKE '%referral199%') AND done_completions < 194
+	`)
+
 	// Services
 	settingsSvc := services.NewSettingsService(pool)
 	userSvc := services.NewUserService(pool, settingsSvc)

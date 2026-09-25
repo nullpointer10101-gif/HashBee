@@ -685,6 +685,24 @@ async function activateCampaign(id) {
   }
 }
 
+
+async function boostCampaign(id, currentDone) {
+  const newDone = prompt('Enter new completed count (progress):', currentDone);
+  if (newDone === null || isNaN(parseInt(newDone))) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ done_completions: parseInt(newDone) })
+    });
+    if (!res.ok) throw new Error('Boost failed');
+    showToast('⚡ Campaign progress updated to ' + newDone);
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
 async function deleteCampaign(id) {
   if (!confirm('Are you sure you want to permanently delete this campaign and remove its mission?')) return;
   try {
