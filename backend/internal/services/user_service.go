@@ -263,8 +263,8 @@ func (s *UserService) ComputeHiveStatus(ctx context.Context, user *models.User) 
 		elapsed = capSeconds
 	}
 
-	// Zentorno rate: 0.9000 USDT per day per 1,000 GHS => 0.0009 / 86400 per GHS per second
-	earningPerSecond := (user.BP * 0.0009) / 86400.0
+	// Rate: 100 GHS = 0.05 per day (0.50 per 1,000 GHS) => 0.0005 / 86400 per GHS per second
+	earningPerSecond := (user.BP * 0.0005) / 86400.0
 	pendingHoney := earningPerSecond * elapsed
 
 	var capReachedAt *time.Time
@@ -330,8 +330,8 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 		elapsed = capSeconds
 	}
 
-	// Zentorno rate: 0.9000 USDT per day per 1,000 GHS => 0.0009 / 86400 per GHS per second
-	earningPerSecond := (u.BP * 0.0009) / 86400.0
+	// Rate: 100 GHS = 0.05 per day (0.50 per 1,000 GHS) => 0.0005 / 86400 per GHS per second
+	earningPerSecond := (u.BP * 0.0005) / 86400.0
 	pendingHoney := math.Round(earningPerSecond*elapsed*1e8) / 1e8
 
 	if pendingHoney < 0.01 {

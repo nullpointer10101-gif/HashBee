@@ -47,7 +47,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
   const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
   const totalGhsPower = numDeposit * 50 * 1.05
-  const modalEarningsPerDay = totalGhsPower * 0.0009
+  const modalEarningsPerDay = totalGhsPower * 0.0005
   const modalEarningsPerSecond = modalEarningsPerDay / 86400
   const modalEarningsPerWeek = modalEarningsPerDay * 7
   const modalEarningsPerMonth = modalEarningsPerDay * 30
@@ -206,7 +206,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               </div>
 
               <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
-                These GHS last 30 days. Earnings: 0.9000 GRAM per day per 1,000 GHS. Rate: 20.00 GRAM = 1,000 GHS.
+                These GHS last 30 days. Earnings: 0.0500 GRAM per day per 100 GHS (0.50 GRAM / 1,000 GHS).
               </div>
             </div>
 
