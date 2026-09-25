@@ -485,9 +485,7 @@ func (h *AdminHandler) UpdateCampaign(c *gin.Context) {
 			`UPDATE campaigns SET status = $1, admin_notes = COALESCE(NULLIF($2,''), admin_notes), updated_at = NOW() WHERE id = $3`,
 			req.Status, req.AdminNotes, cID)
 
-		if req.Status == "completed" || req.Status == "finished" {
-			// Auto set done_completions = total_completions so user sees 100% full package delivered
-			h.db.Exec(ctx, `UPDATE campaigns SET done_completions = total_completions, updated_at = NOW() WHERE id = $1`, cID)
+		if req.Status == "completed" || req.Status == "finished" || req.Status == "cancelled" {
 			h.db.Exec(ctx, `UPDATE missions SET status = 'completed', updated_at = NOW() WHERE campaign_id = $1`, cID)
 		} else if req.Status == "cancelled" {
 			h.db.Exec(ctx, `UPDATE missions SET status = 'completed', updated_at = NOW() WHERE campaign_id = $1`, cID)
