@@ -17,91 +17,90 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- AdExium Widget Monetization (Pure AdExium Only) -->
-    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+    <!-- AdExium Widget Monetization -->
+    <script id="adexium-widget-sdk" type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
-      (function() {
-        const WID_NEW = '8e21d2a6-6c80-4b16-baf9-990e07ff2f00';
-        const WID_ACTIVE = 'e93d690f-bdc3-4ed5-8d9f-8f208afa3774';
+      window.__adexiumWID = 'e93d690f-bdc3-4ed5-8d9f-8f208afa3774';
+      window.__adexiumNewWID = '8e21d2a6-6c80-4b16-baf9-990e07ff2f00';
 
-        function initWidget(wid) {
-          if (!window.AdexiumWidget && !window.TGAdsWidget) return null;
-          const Cls = window.AdexiumWidget || window.TGAdsWidget;
-          try {
-            return new Cls({ wid: wid, adFormat: 'interstitial', debug: false });
-          } catch(e) {
-            console.error('[AdExium] Error creating instance:', e);
-            return null;
-          }
+      function getAdexiumWidget(wid) {
+        const targetWid = wid || window.__adexiumWID;
+        const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
+        if (typeof WidgetClass !== 'function') return null;
+        try {
+          return new WidgetClass({ wid: targetWid, adFormat: 'interstitial', debug: false });
+        } catch(e) {
+          console.warn('[AdExium] Error creating instance:', e);
+          return null;
+        }
+      }
+
+      window.triggerAdexiumAd = function() {
+        console.log('[AdExium] 🎬 triggerAdexiumAd called');
+        const widget = getAdexiumWidget(window.__adexiumWID);
+        if (!widget) {
+          console.warn('[AdExium] Widget class not ready');
+          return;
         }
 
-        window.showAdexiumAdNow = function() {
-          console.log('[AdExium] 🚀 showAdexiumAdNow requested');
-          let w = window.adexiumWidget || initWidget(WID_NEW);
-          if (!w) {
-            console.warn('[AdExium] SDK not ready yet');
-            return;
+        try {
+          widget.on('adReceived', function(ad) {
+            console.log('[AdExium] 🎯 Ad received! Calling displayAd...');
+            try {
+              if (typeof widget.displayAd === 'function') {
+                widget.displayAd(ad);
+              }
+            } catch(e) {
+              console.error('[AdExium] Error displaying ad:', e);
+            }
+          });
+
+          widget.on('adClosed', function() {
+            console.log('[AdExium] ✅ Ad closed by user');
+          });
+
+          widget.on('requestAdError', function(err) {
+            console.warn('[AdExium] requestAdError:', err);
+          });
+
+          widget.on('noAdFound', function() {
+            console.log('[AdExium] noAdFound on primary, pinging new WID...');
+            const newW = getAdexiumWidget(window.__adexiumNewWID);
+            if (newW) {
+              try { newW.requestAd('interstitial'); } catch(e) {}
+            }
+          });
+
+          console.log('[AdExium] 🚀 Requesting interstitial ad...');
+          widget.requestAd('interstitial');
+        } catch(err) {
+          console.warn('[AdExium] Exception requesting ad:', err);
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', function() {
+        try {
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
           }
+        } catch(e) {}
 
-          let showed = false;
-          
-          w.on('adReceived', function(ad) {
-            console.log('[AdExium] 🎯 adReceived -> displayAd');
-            showed = true;
-            try { w.displayAd(ad); } catch(e) { console.error('[AdExium] displayAd error:', e); }
-          });
-
-          w.on('noAdFound', function() {
-            if (showed) return;
-            console.log('[AdExium] noAdFound for new WID, trying active WID fallback...');
-            let wFallback = initWidget(WID_ACTIVE);
-            if (wFallback) {
-              wFallback.on('adReceived', function(ad2) {
-                showed = true;
-                try { wFallback.displayAd(ad2); } catch(e) {}
-              });
-              try { wFallback.requestAd('interstitial'); } catch(e) {}
-            }
-          });
-
-          w.on('requestAdError', function() {
-            if (showed) return;
-            console.log('[AdExium] requestAdError for new WID, trying active WID fallback...');
-            let wFallback = initWidget(WID_ACTIVE);
-            if (wFallback) {
-              wFallback.on('adReceived', function(ad2) {
-                showed = true;
-                try { wFallback.displayAd(ad2); } catch(e) {}
-              });
-              try { wFallback.requestAd('interstitial'); } catch(e) {}
-            }
-          });
-
+        // Enable autoMode on both WIDs
+        setTimeout(function() {
           try {
-            w.requestAd('interstitial');
-          } catch(e) {
-            console.warn('[AdExium] requestAd failed:', e);
-          }
-        };
+            const w1 = getAdexiumWidget(window.__adexiumWID);
+            if (w1 && typeof w1.autoMode === 'function') w1.autoMode();
+            const w2 = getAdexiumWidget(window.__adexiumNewWID);
+            if (w2 && typeof w2.autoMode === 'function') w2.autoMode();
+          } catch(e) {}
+        }, 500);
 
-        document.addEventListener('DOMContentLoaded', function() {
-          try {
-            const adexiumWidget = initWidget(WID_NEW);
-            if (adexiumWidget) {
-              adexiumWidget.autoMode();
-              window.adexiumWidget = adexiumWidget;
-              console.log('[AdExium] autoMode active for WID:', WID_NEW);
-            }
-          } catch (e) {
-            console.error('[AdExium] init error:', e);
-          }
-
-          // Trigger ad display 1 second after open
-          setTimeout(function() {
-            window.showAdexiumAdNow();
-          }, 1000);
-        });
-      })();
+        // Auto trigger open ad 1.5s after DOM load
+        setTimeout(function() {
+          window.triggerAdexiumAd();
+        }, 1500);
+      });
     </script>
   </head>
   <body>

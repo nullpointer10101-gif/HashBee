@@ -47,8 +47,8 @@ export const App: React.FC = () => {
 
     // Trigger AdExium ad on opening the mini app
     const timer = setTimeout(() => {
-      if (typeof (window as any).showAdexiumAdNow === 'function') {
-        (window as any).showAdexiumAdNow()
+      if (typeof (window as any).triggerAdexiumAd === 'function') {
+        (window as any).triggerAdexiumAd()
       }
     }, 1200)
 
