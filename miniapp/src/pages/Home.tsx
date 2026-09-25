@@ -5,18 +5,20 @@ import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 
 export const Home: React.FC = () => {
-  const { user, refreshUser } = useAuth()
+  const { user, refreshUser, loading } = useAuth()
+  const navigate = useNavigate()
+
+  // ALL HOOKS DECLARED UNCONDITIONALLY AT THE VERY TOP
   const [claiming, setClaiming] = useState(false)
   const [showAddGhsModal, setShowAddGhsModal] = useState(false)
   const [showPayModal, setShowPayModal] = useState(false)
   const [depositAmount, setDepositAmount] = useState<string>('1')
   const [copiedAddr, setCopiedAddr] = useState(false)
-  const navigate = useNavigate()
-
-  // Real-time ticking pending balance
+  const [copiedMemo, setCopiedMemo] = useState(false)
+  const [verifying, setVerifying] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
-  const ghs = user?.bee_power || 10
+  const ghs = user?.bee_power || 1000
   // Zentorno formula: 0.9000 USDT per day per 1,000 GHS
   const earningsPerDay = ghs * 0.0009
   const earningsPerSecond = earningsPerDay / 86400
@@ -35,7 +37,39 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval)
   }, [earningsPerSecond])
 
-  if (!user) return null
+  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
+  const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
+
+  const copyMemo = () => {
+    navigator.clipboard.writeText(userMemo)
+    setCopiedMemo(true)
+    toast.success('Memo copied! Paste this in your transfer comment.')
+    setTimeout(() => setCopiedMemo(false), 2500)
+  }
+
+  const copyDepositAddress = () => {
+    navigator.clipboard.writeText(depositAddress)
+    setCopiedAddr(true)
+    toast.success('Official deposit address copied!')
+    setTimeout(() => setCopiedAddr(false), 2500)
+  }
+
+  const handleVerifyDeposit = async () => {
+    setVerifying(true)
+    toast.loading('Checking blockchain for your deposit...', { id: 'verify-dep' })
+    try {
+      await checkDeposit()
+      toast.dismiss('verify-dep')
+      await refreshUser()
+      toast.success('🎉 Deposit check complete! Any detected transfers are credited.')
+      setShowPayModal(false)
+    } catch (err: any) {
+      toast.dismiss('verify-dep')
+      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
+    } finally {
+      setVerifying(false)
+    }
+  }
 
   const handleClaim = async () => {
     if (pendingBalance < 0.01 || claiming) {
@@ -61,48 +95,23 @@ export const Home: React.FC = () => {
 
   // Add GHS calculations
   const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
-  // Rate: 20 USDT = 1000 GHS => 1 USDT = 50 GHS, +5% bonus = 52.5 GHS per 1 USDT
+  // Rate: 1 GRAM = 50 GHS, +5% bonus = 52.5 GHS per 1 GRAM
   const totalGhsPower = numDeposit * 50 * 1.05
   const modalEarningsPerDay = totalGhsPower * 0.0009
   const modalEarningsPerSecond = modalEarningsPerDay / 86400
   const modalEarningsPerWeek = modalEarningsPerDay * 7
   const modalEarningsPerMonth = modalEarningsPerDay * 30
 
-  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
-  const [copiedMemo, setCopiedMemo] = useState(false)
-  const [verifying, setVerifying] = useState(false)
-
-  const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
-
-  const copyMemo = () => {
-    navigator.clipboard.writeText(userMemo)
-    setCopiedMemo(true)
-    toast.success('Memo copied! Paste this in your transfer comment.')
-    setTimeout(() => setCopiedMemo(false), 2500)
-  }
-
-  const handleVerifyDeposit = async () => {
-    setVerifying(true)
-    toast.loading('Checking blockchain for your deposit...', { id: 'verify-dep' })
-    try {
-      const res = await checkDeposit()
-      toast.dismiss('verify-dep')
-      await refreshUser()
-      toast.success('🎉 Deposit check complete! Any detected transfers are credited.')
-      setShowPayModal(false)
-    } catch (err: any) {
-      toast.dismiss('verify-dep')
-      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
-    } finally {
-      setVerifying(false)
-    }
-  }
-
-  const copyDepositAddress = () => {
-    navigator.clipboard.writeText(depositAddress)
-    setCopiedAddr(true)
-    toast.success('USDT (BSC) address copied!')
-    setTimeout(() => setCopiedAddr(false), 2500)
+  // IF LOADING, SHOW BEAUTIFUL LOADING SPINNER INSTEAD OF BLANK SCREEN
+  if (loading || !user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
+        <div className="w-12 h-12 border-4 border-[#93b3a6] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-extrabold text-[#93b3a6] uppercase tracking-wider animate-pulse">
+          Starting Cloud Miner...
+        </p>
+      </div>
+    )
   }
 
   return (
