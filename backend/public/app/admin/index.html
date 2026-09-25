@@ -78,7 +78,7 @@
   .tg-preview-bubble { background: #212d27; border: 1px solid #2e423b; border-radius: 16px; padding: 16px; max-width: 400px; color: #fff; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
   .tg-preview-btn { margin-top: 12px; background: #0088cc; color: #fff; border-radius: 10px; padding: 10px 14px; text-align: center; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,0.15); }
 
-  #toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  #toast { position: fixed; top: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 800; display: none; z-index: 99999; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); }
   .toast-success { background: #10b981; color: #000; }
   .toast-error { background: #ef4444; color: #fff; }
 </style>
@@ -441,7 +441,7 @@
       </div>
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
         <button type="button" onclick="closeModal('createCampModal')" class="btn btn-secondary">Cancel</button>
-        <button type="submit" id="createCampSubmitBtn" class="btn btn-gold">Publish Live Now</button>
+        <button type="submit" id="createCampSubmitBtn" onclick="handleCreateCampaign(event)" class="btn btn-gold">Publish Live Now</button>
       </div>
     </form>
   </div>
@@ -451,6 +451,8 @@
 
 <script>
 let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
+if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -524,10 +526,13 @@ function showToast(msg, isErr=false) {
 }
 
 function authHeaders() {
+  const currentToken = token || localStorage.getItem('hb_admin_token') || '';
   return {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ' + token
+    'Authorization': 'Bearer ' + currentToken
   };
+};
+};
 }
 
 async function handleLogin(e) {
@@ -680,30 +685,55 @@ function closeModal(id) {
 }
 
 async function handleCreateCampaign(e) {
-  e.preventDefault();
-  const title = document.getElementById('newCampTitle').value.trim();
-  const target = document.getElementById('newCampTarget').value.trim();
-  const type = document.getElementById('newCampType').value;
-  const total_completions = parseInt(document.getElementById('newCampCompletions').value) || 100;
-  const reward_bp = parseFloat(document.getElementById('newCampReward').value) || 0.1;
+  if (e && e.preventDefault) e.preventDefault();
+  const title = (document.getElementById('newCampTitle')?.value || '').trim();
+  const target = (document.getElementById('newCampTarget')?.value || '').trim();
+  const type = document.getElementById('newCampType')?.value || 'channel';
+  const total_completions = parseInt(document.getElementById('newCampCompletions')?.value) || 100;
+  const reward_bp = parseFloat(document.getElementById('newCampReward')?.value) || 0.1;
 
-  document.getElementById('createCampSubmitBtn').innerText = 'Creating...';
+  if (!title || !target) {
+    showToast('Please enter both Title and Target URL', true);
+    return;
+  }
+
+  const btn = document.getElementById('createCampSubmitBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Publishing...';
+  }
 
   try {
-    const res = await fetch(API_URL + '/api/admin/campaigns', {
+    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
+    const res = await fetch(activeUrl + '/api/admin/campaigns', {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({ title, target, type, total_completions, reward_bp })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to create campaign');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) {
+        showToast('Session expired. Please log in again.', true);
+        logout();
+        return;
+      }
+      throw new Error(data.error || 'Server error ' + res.status);
+    }
     showToast('🎉 Campaign created and published live!');
     closeModal('createCampModal');
+    // Reset form
+    document.getElementById('newCampTitle').value = '';
+    document.getElementById('newCampTarget').value = '';
     loadCampaigns();
   } catch (err) {
-    showToast(err.message, true);
+    console.error('Create campaign error:', err);
+    showToast('Error: ' + (err.message || 'Network error'), true);
   } finally {
-    document.getElementById('createCampSubmitBtn').innerText = 'Publish Live Now';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Publish Live Now';
+    }
   }
 }
 
