@@ -17,67 +17,9 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- AdExium Widget Monetization -->
-    <script id="adexium-widget-sdk" type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+    <!-- AdExium Official Monetization Script (HashBee TMA Only) -->
+    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
-      window.__adexiumWID = 'e93d690f-bdc3-4ed5-8d9f-8f208afa3774';
-      window.__adexiumNewWID = '8e21d2a6-6c80-4b16-baf9-990e07ff2f00';
-
-      function getAdexiumWidget(wid) {
-        const targetWid = wid || window.__adexiumWID;
-        const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
-        if (typeof WidgetClass !== 'function') return null;
-        try {
-          return new WidgetClass({ wid: targetWid, adFormat: 'interstitial', debug: false });
-        } catch(e) {
-          console.warn('[AdExium] Error creating instance:', e);
-          return null;
-        }
-      }
-
-      window.triggerAdexiumAd = function() {
-        console.log('[AdExium] 🎬 triggerAdexiumAd called');
-        const widget = getAdexiumWidget(window.__adexiumWID);
-        if (!widget) {
-          console.warn('[AdExium] Widget class not ready');
-          return;
-        }
-
-        try {
-          widget.on('adReceived', function(ad) {
-            console.log('[AdExium] 🎯 Ad received! Calling displayAd...');
-            try {
-              if (typeof widget.displayAd === 'function') {
-                widget.displayAd(ad);
-              }
-            } catch(e) {
-              console.error('[AdExium] Error displaying ad:', e);
-            }
-          });
-
-          widget.on('adClosed', function() {
-            console.log('[AdExium] ✅ Ad closed by user');
-          });
-
-          widget.on('requestAdError', function(err) {
-            console.warn('[AdExium] requestAdError:', err);
-          });
-
-          widget.on('noAdFound', function() {
-            console.log('[AdExium] noAdFound on primary, pinging new WID...');
-            const newW = getAdexiumWidget(window.__adexiumNewWID);
-            if (newW) {
-              try { newW.requestAd('interstitial'); } catch(e) {}
-            }
-          });
-
-          console.log('[AdExium] 🚀 Requesting interstitial ad...');
-          widget.requestAd('interstitial');
-        } catch(err) {
-          console.warn('[AdExium] Exception requesting ad:', err);
-        }
-      };
-
       document.addEventListener('DOMContentLoaded', function() {
         try {
           if (window.Telegram?.WebApp) {
@@ -86,23 +28,56 @@
           }
         } catch(e) {}
 
-        // Enable autoMode on both WIDs
-        setTimeout(function() {
-          try {
-            const w1 = getAdexiumWidget(window.__adexiumWID);
-            if (w1 && typeof w1.autoMode === 'function') w1.autoMode();
-            const w2 = getAdexiumWidget(window.__adexiumNewWID);
-            if (w2 && typeof w2.autoMode === 'function') w2.autoMode();
-          } catch(e) {}
-        }, 500);
+        try {
+          const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
+          if (WidgetClass) {
+            const adexiumWidget = new WidgetClass({
+              wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
+              adFormat: 'interstitial'
+            });
+            adexiumWidget.autoMode();
+            window.adexiumWidget = adexiumWidget;
+            console.log('[AdExium] Initialized autoMode with HashBee WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
 
-        // Auto trigger open ad 1.5s after DOM load
-        setTimeout(function() {
-          window.triggerAdexiumAd();
-        }, 1500);
+            adexiumWidget.on('adReceived', function(ad) {
+              console.log('[AdExium] Ad received, displaying...');
+              try {
+                if (typeof adexiumWidget.displayAd === 'function') {
+                  adexiumWidget.displayAd(ad);
+                }
+              } catch(err) {
+                console.error('[AdExium] displayAd error:', err);
+              }
+            });
+
+            adexiumWidget.on('adClosed', function() {
+              console.log('[AdExium] Ad closed');
+            });
+
+            adexiumWidget.on('noAdFound', function() {
+              console.warn('[AdExium] noAdFound for HashBee placement');
+            });
+
+            adexiumWidget.on('requestAdError', function(e) {
+              console.warn('[AdExium] requestAdError:', e);
+            });
+
+            // Trigger open ad after brief render delay
+            setTimeout(function() {
+              try {
+                console.log('[AdExium] Requesting initial interstitial ad for HashBee...');
+                adexiumWidget.requestAd('interstitial');
+              } catch(e) {
+                console.warn('[AdExium] requestAd error:', e);
+              }
+            }, 800);
+          }
+        } catch(e) {
+          console.error('[AdExium] Initialization error:', e);
+        }
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-BxVKRWOg.js"></script>
+    <script type="module" crossorigin src="/assets/index-CLh1t_6w.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-BEHGjEIr.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-ELO5M-Ho.js">
     <link rel="stylesheet" crossorigin href="/assets/index-SdwlJ5P3.css">

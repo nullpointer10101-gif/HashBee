@@ -45,14 +45,10 @@ export const App: React.FC = () => {
       window.Telegram.WebApp.expand()
     }
 
-    // Trigger AdExium ad on opening the mini app
-    const timer = setTimeout(() => {
-      if (typeof (window as any).triggerAdexiumAd === 'function') {
-        (window as any).triggerAdexiumAd()
-      }
-    }, 1200)
-
-    return () => clearTimeout(timer)
+    // Telegram WebApp init handled cleanly
+    if (typeof (window as any).adexiumWidget?.requestAd === 'function') {
+      (window as any).adexiumWidget.requestAd('interstitial')
+    }
   }, [])
 
   return (
