@@ -135,6 +135,14 @@
         <div class="stat-accent" style="background:#f59e0b;"></div>
       </div>
       <div class="stat-card">
+        <div class="stat-title" style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+          Online Users
+        </div>
+        <div class="stat-val font-mono" id="statOnlineUsers" style="color:#10b981;">-</div>
+        <div class="stat-accent" style="background:#10b981;"></div>
+      </div>
+      <div class="stat-card">
         <div class="stat-title">Total GHS Mining Power</div>
         <div class="stat-val" id="statBP" style="color:#10b981;">-</div>
         <div class="stat-accent" style="background:#10b981;"></div>
@@ -502,6 +510,7 @@ function initDashboard(admin) {
   document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
   applyTemplate('mining_boost');
   loadStats();
+  setInterval(() => { if (token) loadStats(); }, 15000);
   loadCampaigns();
 }
 
@@ -532,6 +541,9 @@ async function loadStats() {
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById('statUsers').innerText = data.total_users || 0;
+    if (document.getElementById('statOnlineUsers')) {
+      document.getElementById('statOnlineUsers').innerText = data.online_users !== undefined ? data.online_users : (data.dau || 0);
+    }
     document.getElementById('statBP').innerText = (data.total_bp || 0).toFixed(1) + ' GHS';
     document.getElementById('statWithdrawals').innerText = data.pending_withdrawals || 0;
   } catch (e) {}

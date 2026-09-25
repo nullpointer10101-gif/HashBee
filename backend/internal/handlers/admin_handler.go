@@ -122,6 +122,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 
 	var stats struct {
 		TotalUsers       int     `json:"total_users"`
+		OnlineUsers      int     `json:"online_users"`
 		DAU              int     `json:"dau"`
 		MAU              int     `json:"mau"`
 		NewUsersToday    int     `json:"new_users_today"`
@@ -134,6 +135,7 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 	}
 
 	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&stats.TotalUsers)
+	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE updated_at >= NOW() - INTERVAL '15 minutes'`).Scan(&stats.OnlineUsers)
 	h.db.QueryRow(ctx, `SELECT COUNT(DISTINCT user_id) FROM analytics_events WHERE created_at >= NOW() - INTERVAL '1 day'`).Scan(&stats.DAU)
 	h.db.QueryRow(ctx, `SELECT COUNT(DISTINCT user_id) FROM analytics_events WHERE created_at >= NOW() - INTERVAL '30 days'`).Scan(&stats.MAU)
 	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '1 day'`).Scan(&stats.NewUsersToday)
