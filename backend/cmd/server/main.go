@@ -56,6 +56,7 @@ func main() {
 		tgBot = nil
 	} else if tgBot != nil {
 		referralSvc.SetBot(tgBot)
+		missionSvc.SetBot(tgBot)
 	}
 
 	// Deposit Watcher Service

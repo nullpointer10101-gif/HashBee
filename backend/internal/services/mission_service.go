@@ -1,6 +1,7 @@
 package services
 
 import (
+	"strings"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -12,10 +13,19 @@ import (
 	"hashbee/internal/models"
 )
 
+type MissionChatVerifier interface {
+	CheckChatMember(chatUsername string, telegramID int64) (bool, error)
+}
+
 type MissionService struct {
 	db       *pgxpool.Pool
 	settings *SettingsService
 	referral *ReferralService
+	verifier MissionChatVerifier
+}
+
+func (s *MissionService) SetBot(verifier MissionChatVerifier) {
+	s.verifier = verifier
 }
 
 func NewMissionService(db *pgxpool.Pool, settings *SettingsService, referral *ReferralService) *MissionService {
@@ -149,14 +159,14 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 	var m models.Mission
 	var mc models.MissionCompletion
 	err = tx.QueryRow(ctx,
-		`SELECT m.id, m.type, m.reward_bp, m.campaign_id, m.status,
+		`SELECT m.id, m.type, m.target, m.reward_bp, m.campaign_id, m.status,
 		        mc.id, mc.status, mc.created_at
 		 FROM missions m
 		 JOIN mission_completions mc ON mc.mission_id = m.id
 		 WHERE mc.user_id = $1 AND mc.mission_id = $2
 		 FOR UPDATE OF mc`,
 		userID, missionID).Scan(
-		&m.ID, &m.Type, &m.RewardBP, &m.CampaignID, &m.Status,
+		&m.ID, &m.Type, &m.Target, &m.RewardBP, &m.CampaignID, &m.Status,
 		&mc.ID, &mc.Status, &mc.CreatedAt)
 	if err != nil {
 		return 0, fmt.Errorf("completion not found")
@@ -167,6 +177,27 @@ func (s *MissionService) VerifyMission(ctx context.Context, userID, missionID uu
 	}
 	if mc.Status == models.CompletionStatusFailed {
 		return 0, fmt.Errorf("mission verification failed")
+	}
+
+	// Real-time Telegram Channel / Group membership verification
+	if (m.Type == models.MissionTypeChannel || m.Type == models.MissionTypeGroup) && s.verifier != nil {
+		channel := extractTelegramChat(m.Target)
+		if channel != "" {
+			var telegramID int64
+			_ = tx.QueryRow(ctx, `SELECT telegram_id FROM users WHERE id = $1`, userID).Scan(&telegramID)
+			if telegramID != 0 {
+				isMember, err := s.verifier.CheckChatMember(channel, telegramID)
+				if err == nil && !isMember {
+					return 0, fmt.Errorf("you have not joined @%s yet. Please join the channel first!", channel)
+				}
+				if err != nil {
+					errStr := strings.ToLower(err.Error())
+					if strings.Contains(errStr, "user not found") || strings.Contains(errStr, "participant") || strings.Contains(errStr, "member not found") || strings.Contains(errStr, "user_not_participant") {
+						return 0, fmt.Errorf("you have not joined @%s yet. Please join the channel first!", channel)
+					}
+				}
+			}
+		}
 	}
 
 	// Timer-based: ensure minimum time has passed
@@ -308,4 +339,20 @@ func (s *MissionService) ClaimMilestoneMission(ctx context.Context, userID, miss
 	}
 
 	return m.RewardBP, tx.Commit(ctx)
+}
+
+func extractTelegramChat(target string) string {
+	target = strings.TrimSpace(target)
+	target = strings.TrimPrefix(target, "https://")
+	target = strings.TrimPrefix(target, "http://")
+	target = strings.TrimPrefix(target, "t.me/")
+	target = strings.TrimPrefix(target, "telegram.me/")
+	target = strings.TrimPrefix(target, "@")
+	if idx := strings.Index(target, "?"); idx != -1 {
+		target = target[:idx]
+	}
+	if idx := strings.Index(target, "/"); idx != -1 {
+		target = target[:idx]
+	}
+	return strings.TrimSpace(target)
 }

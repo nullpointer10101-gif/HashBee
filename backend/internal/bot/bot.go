@@ -426,3 +426,38 @@ func (b *Bot) Broadcast(text string, telegramIDs []int64) {
 func (b *Bot) GetAPI() *tgbotapi.BotAPI {
 	return b.api
 }
+
+// CheckChatMember checks if a user is currently a member of a channel/group
+func (b *Bot) CheckChatMember(chatUsername string, telegramID int64) (bool, error) {
+	if b == nil || b.api == nil {
+		return true, nil
+	}
+
+	chatUsername = strings.TrimSpace(chatUsername)
+	if chatUsername == "" {
+		return true, nil
+	}
+
+	if !strings.HasPrefix(chatUsername, "@") && !strings.HasPrefix(chatUsername, "-") {
+		chatUsername = "@" + chatUsername
+	}
+
+	conf := tgbotapi.GetChatMemberConfig{
+		ChatConfigWithUser: tgbotapi.ChatConfigWithUser{
+			SuperGroupUsername: chatUsername,
+			UserID:             telegramID,
+		},
+	}
+
+	member, err := b.api.GetChatMember(conf)
+	if err != nil {
+		return false, err
+	}
+
+	status := strings.ToLower(member.Status)
+	if status == "member" || status == "administrator" || status == "creator" || status == "restricted" {
+		return true, nil
+	}
+
+	return false, nil
+}
