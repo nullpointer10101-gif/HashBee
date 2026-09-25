@@ -37,7 +37,7 @@ export const Missions: React.FC = () => {
   const [copiedMemo, setCopiedMemo] = useState(false)
 
   const { user, refreshUser } = useAuth()
-  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
+  const depositAddress = 'EQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygDeL'
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || '6446145632'
@@ -200,7 +200,7 @@ export const Missions: React.FC = () => {
     const cost = camp.cost || 0.05
     const nanoAmount = Math.round(cost * 1e9)
     const memo = encodeURIComponent(camp.payment_memo || '')
-    const url = 'https://app.tonkeeper.com/transfer/' + depositAddress + '?amount=' + nanoAmount + '&text=' + memo + '&comment=' + memo
+    const url = 'https://app.tonkeeper.com/transfer/' + depositAddress + '?amount=' + nanoAmount + '&text=' + memo
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
       window.Telegram.WebApp.openLink(url)

@@ -28,7 +28,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
   if (!isOpen) return null
 
-  const depositAddress = 'UQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygGpO'
+  const depositAddress = 'EQAehBZqsy6cBGSmVn2qquO5b44ckmTnhmT9K0LKcfsygDeL'
   const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
 
   const copyMemo = () => {
@@ -55,8 +55,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const handleOpenTonkeeper = () => {
     const nanoAmount = Math.round(numDeposit * 1e9)
     const comment = encodeURIComponent(userMemo)
-    const tonkeeperUrl = `https://app.tonkeeper.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
-    const directUrl = `ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}&comment=${comment}`
+    const tonkeeperUrl = `https://app.tonkeeper.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`
+    const directUrl = `ton://transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
       window.Telegram.WebApp.openLink(tonkeeperUrl)

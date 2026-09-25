@@ -44,10 +44,15 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 		return err
 	}
 
-	// Level 1: direct referrer
+	// Level 1: direct referrer (activate immediately & award +3 GHS)
+	refL1Reward := s.settings.GetFloat(ctx, "referral_l1_bp", 3.0)
+	_, _ = tx.Exec(ctx,
+		`UPDATE users SET bp = bp + $1, updated_at = NOW() WHERE id = $2`,
+		refL1Reward, referrerID)
+
 	_, err = tx.Exec(ctx,
-		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
-		 VALUES ($1, $2, $3, 1, 'pending', NOW())
+		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, activated_at, created_at)
+		 VALUES ($1, $2, $3, 1, 'active', true, NOW(), NOW())
 		 ON CONFLICT (referred_id) DO NOTHING`,
 		uuid.New(), referrerID, userID)
 	if err != nil {
@@ -177,8 +182,8 @@ type ReferralEntry struct {
 
 // TryActivateReferral checks if a referral should be activated and pays rewards
 func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.UUID) error {
-	requireCollect := s.settings.GetBool(ctx, "referral_qualifying_collect", true)
-	requireMission := s.settings.GetBool(ctx, "referral_qualifying_mission", true)
+	requireCollect := s.settings.GetBool(ctx, "referral_qualifying_collect", false)
+	requireMission := s.settings.GetBool(ctx, "referral_qualifying_mission", false)
 
 	// Get user's qualification status
 	var hasCollected, hasCompletedMission bool
@@ -278,7 +283,7 @@ func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.U
 func (s *ReferralService) CountActiveReferrals(ctx context.Context, userID uuid.UUID) (int, error) {
 	var count int
 	err := s.db.QueryRow(ctx,
-		`SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1 AND status = 'active'`,
+		`SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1`,
 		userID).Scan(&count)
 	return count, err
 }
