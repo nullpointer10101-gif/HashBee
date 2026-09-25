@@ -185,7 +185,9 @@ func main() {
 			adminProtected.GET("/settings", adminHandler.GetSettings)
 			adminProtected.PUT("/settings", adminHandler.UpdateSettings)
 			adminProtected.GET("/campaigns", adminHandler.ListCampaigns)
+			adminProtected.POST("/campaigns", adminHandler.CreateCampaign)
 			adminProtected.PATCH("/campaigns/:id", adminHandler.UpdateCampaign)
+			adminProtected.DELETE("/campaigns/:id", adminHandler.DeleteCampaign)
 			adminProtected.GET("/fraud", adminHandler.ListFraudFlags)
 		}
 	}

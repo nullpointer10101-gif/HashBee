@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/hex"
+	"strings"
 	"net/http"
 	"strconv"
 	"time"
@@ -507,4 +509,111 @@ func (h *AdminHandler) ListFraudFlags(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"flags": flags})
+}
+
+// POST /api/admin/campaigns - Create a campaign directly from Admin (active immediately)
+func (h *AdminHandler) CreateCampaign(c *gin.Context) {
+	var req struct {
+		Type             string  `json:"type" binding:"required"`
+		Target           string  `json:"target" binding:"required"`
+		Title            string  `json:"title"`
+		TotalCompletions int     `json:"total_completions"`
+		RewardBP         float64 `json:"reward_bp"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.TotalCompletions <= 0 {
+		req.TotalCompletions = 100
+	}
+	if req.RewardBP <= 0 {
+		req.RewardBP = 0.1
+	}
+	title := strings.TrimSpace(req.Title)
+	if title == "" {
+		title = req.Target
+	}
+
+	ctx := c.Request.Context()
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	var ownerID uuid.UUID
+	_ = tx.QueryRow(ctx, `SELECT id FROM users LIMIT 1`).Scan(&ownerID)
+	if ownerID == uuid.Nil {
+		ownerID = uuid.New()
+	}
+
+	campID := uuid.New()
+	cost := float64(req.TotalCompletions) * 0.001
+	memo := "ADMIN_" + hex.EncodeToString(campID[:4])
+
+	_, err = tx.Exec(ctx,
+		`INSERT INTO campaigns (id, owner_user_id, type, target, title, total_completions, done_completions, reward_bp, cost, status, verification_type, payment_memo, admin_notes, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, 0, $7, $8, 'active', 'timer', $9, 'Created via Admin Panel', NOW(), NOW())`,
+		campID, ownerID, req.Type, req.Target, title, req.TotalCompletions, req.RewardBP, cost, memo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create campaign: " + err.Error()})
+		return
+	}
+
+	icon := "link"
+	if req.Type == "channel" || req.Type == "group" {
+		icon = "users"
+	} else if req.Type == "bot" {
+		icon = "bot"
+	}
+
+	_, err = tx.Exec(ctx,
+		`INSERT INTO missions (id, type, target, title, description, reward_bp, campaign_id, sort_order, status, is_official, icon_url, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, '+0.1 GHS', $5, $6, 20, 'active', true, $7, NOW(), NOW())`,
+		uuid.New(), req.Type, req.Target, title, req.RewardBP, campID, icon)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create mission: " + err.Error()})
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Campaign created and published to missions!", "id": campID})
+}
+
+// DELETE /api/admin/campaigns/:id - Delete a campaign and remove from missions
+func (h *AdminHandler) DeleteCampaign(c *gin.Context) {
+	cID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid campaign id"})
+		return
+	}
+
+	ctx := c.Request.Context()
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	_, _ = tx.Exec(ctx, `DELETE FROM mission_completions WHERE mission_id IN (SELECT id FROM missions WHERE campaign_id = $1)`, cID)
+	_, _ = tx.Exec(ctx, `DELETE FROM missions WHERE campaign_id = $1`, cID)
+	_, err = tx.Exec(ctx, `DELETE FROM campaigns WHERE id = $1`, cID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete: " + err.Error()})
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Campaign and mission deleted successfully"})
 }

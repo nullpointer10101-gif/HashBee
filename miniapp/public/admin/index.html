@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>HashBee Admin Dashboard</title>
+<title>HashBee Admin Control Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg-primary: #0a0d0c;
     --bg-card: #121816;
-    --bg-card-hover: #18221f;
+    --bg-card-hover: #17211e;
     --border: #1e2d27;
     --accent-gold: #f59e0b;
     --accent-emerald: #10b981;
@@ -25,11 +25,11 @@
   .font-mono { font-family: 'JetBrains Mono', monospace; }
   
   /* Container & Grid */
-  .container { max-width: 1300px; margin: 0 auto; padding: 24px; width: 100%; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; width: 100%; }
   .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
   
   /* Header */
-  header { background: #0f1513; border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  header { background: #0e1412; border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
   .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 20px; letter-spacing: 1px; }
   .brand-badge { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; }
   
@@ -39,46 +39,49 @@
   .tab-btn:hover { color: #fff; background: #16201c; }
   .tab-btn.active { color: #000; background: #f59e0b; border-color: #f59e0b; font-weight: 800; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
 
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; position: relative; overflow: hidden; }
+  .stat-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-val { font-size: 24px; font-weight: 900; margin-top: 4px; color: #fff; }
+  .stat-accent { height: 3px; position: absolute; bottom: 0; left: 0; right: 0; }
+
   /* Tables */
-  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 12px; border: 1px solid var(--border); }
+  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 14px; border: 1px solid var(--border); background: #0c110f; }
   table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-  th { background: #0e1412; padding: 14px 16px; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
-  td { padding: 14px 16px; border-bottom: 1px solid #151f1b; vertical-align: middle; }
+  th { background: #0e1513; padding: 14px 16px; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 14px 16px; border-bottom: 1px solid #141e1a; vertical-align: middle; }
   tr:hover td { background: var(--bg-card-hover); }
 
   /* Badges */
-  .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
   .badge-active { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
   .badge-waiting { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
   .badge-completed { background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); }
   .badge-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
 
   /* Buttons */
-  .btn { padding: 8px 16px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+  .btn { padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; text-decoration: none; }
   .btn-primary { background: #10b981; color: #000; }
   .btn-primary:hover { background: #059669; }
   .btn-gold { background: #f59e0b; color: #000; }
   .btn-gold:hover { background: #d97706; }
-  .btn-danger { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
   .btn-danger:hover { background: #ef4444; color: #fff; }
-  .btn-secondary { background: #1f2d27; color: #e5e7eb; border: 1px solid #2e423b; }
-  .btn-secondary:hover { background: #283a33; }
+  .btn-secondary { background: #1a2521; color: #e5e7eb; border: 1px solid #283a33; }
+  .btn-secondary:hover { background: #24352f; color: #fff; }
 
-  /* Login Card */
-  .login-box { max-width: 420px; width: 100%; margin: 80px auto; }
+  /* Forms & Modals */
   .form-group { margin-bottom: 16px; }
-  .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
-  .form-input { width: 100%; background: #0c100f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 14px; outline: none; }
+  .form-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input { width: 100%; background: #0c100f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
   .form-input:focus { border-color: var(--accent-gold); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
 
-  /* Stats Grid */
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
-  .stat-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-val { font-size: 26px; font-weight: 900; margin-top: 6px; color: #fff; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .modal-card { background: #111715; border: 1px solid var(--border); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
 
-  /* Alert Toast */
-  #toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  /* Toast */
+  #toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 700; display: none; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
   .toast-success { background: #10b981; color: #000; }
   .toast-error { background: #ef4444; color: #fff; }
 </style>
@@ -88,21 +91,21 @@
 <header>
   <div class="brand">
     <span>🐝 HASHBEE</span>
-    <span class="brand-badge">ADMIN</span>
+    <span class="brand-badge">ADMIN CONTROL</span>
   </div>
   <div id="authControls" style="display:none; align-items:center; gap:16px;">
-    <span id="adminEmail" class="font-mono text-muted" style="font-size:12px;"></span>
+    <span id="adminEmail" class="font-mono" style="font-size:12px; color:#10b981; background:#12201b; padding:4px 10px; border-radius:6px; border:1px solid #1d332b;"></span>
     <button onclick="logout()" class="btn btn-secondary" style="padding:6px 12px;">Logout</button>
   </div>
 </header>
 
 <div class="container">
   <!-- LOGIN VIEW -->
-  <div id="loginView" class="login-box">
+  <div id="loginView" style="max-width:420px; margin:80px auto;">
     <div class="card" style="box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
       <div style="text-align:center; margin-bottom:24px;">
         <h2 style="font-weight:900; font-size:22px; margin-bottom:4px;">Admin Portal</h2>
-        <p style="font-size:13px; color:var(--text-muted);">Sign in to manage HashBee</p>
+        <p style="font-size:13px; color:var(--text-muted);">Sign in to manage HashBee Platform</p>
       </div>
       <form onsubmit="handleLogin(event)">
         <div class="form-group">
@@ -126,6 +129,32 @@
 
   <!-- MAIN DASHBOARD -->
   <div id="dashboardView" style="display:none;">
+
+    <!-- TOP STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Users</div>
+        <div class="stat-val" id="statUsers">-</div>
+        <div class="stat-accent" style="background:#f59e0b;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total GHS Mining Power</div>
+        <div class="stat-val" id="statBP" style="color:#10b981;">-</div>
+        <div class="stat-accent" style="background:#10b981;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Active Boost Campaigns</div>
+        <div class="stat-val" id="statActiveCamps" style="color:#06b6d4;">-</div>
+        <div class="stat-accent" style="background:#06b6d4;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Pending Withdrawals</div>
+        <div class="stat-val" id="statWithdrawals" style="color:#ef4444;">-</div>
+        <div class="stat-accent" style="background:#ef4444;"></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('campaigns')">📢 Boost Campaigns</button>
       <button class="tab-btn" onclick="switchTab('users')">👥 Users</button>
@@ -135,13 +164,14 @@
 
     <!-- TAB: CAMPAIGNS -->
     <div id="tab-campaigns">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
         <div>
-          <h2 style="font-size:20px; font-weight:900;">User Boost Campaigns</h2>
-          <p style="font-size:13px; color:var(--text-muted);">One-click activate paid or pending campaigns</p>
+          <h2 style="font-size:20px; font-weight:900;">Boost Campaigns Manager</h2>
+          <p style="font-size:13px; color:var(--text-muted);">Manage, activate, or instantly add/delete advertiser campaigns</p>
         </div>
-        <div style="display:flex; gap:8px;">
-          <select id="campStatusFilter" class="form-input" style="width:180px; padding:8px 12px; font-size:12px;" onchange="loadCampaigns()">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="openCreateCampaignModal()" class="btn btn-gold">➕ Create New Campaign</button>
+          <select id="campStatusFilter" class="form-input" style="width:170px; padding:8px 12px; font-size:12px;" onchange="loadCampaigns()">
             <option value="">All Statuses</option>
             <option value="waiting_for_payment">Waiting for Payment</option>
             <option value="active">Active (Live)</option>
@@ -155,18 +185,18 @@
         <table>
           <thead>
             <tr>
-              <th>Title / Target</th>
+              <th>Title & Target URL</th>
               <th>Type</th>
-              <th>Memo</th>
+              <th>Payment Memo</th>
               <th>Cost</th>
               <th>Progress</th>
               <th>Status</th>
               <th>Created</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="campaignsBody">
-            <tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Loading campaigns...</td></tr>
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>
           </tbody>
         </table>
       </div>
@@ -177,7 +207,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h2 style="font-size:20px; font-weight:900;">Platform Users</h2>
         <div style="display:flex; gap:8px;">
-          <input type="text" id="userSearch" class="form-input" placeholder="Search ID, username..." style="width:220px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers()">
+          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username..." style="width:240px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers()">
           <button onclick="loadUsers()" class="btn btn-secondary">🔍 Search</button>
         </div>
       </div>
@@ -186,16 +216,16 @@
           <thead>
             <tr>
               <th>Telegram ID</th>
-              <th>Name / Username</th>
+              <th>Name & Username</th>
               <th>GHS Power</th>
               <th>Honey Balance</th>
               <th>Status</th>
-              <th>Joined</th>
-              <th>Action</th>
+              <th>Joined Date</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="usersBody">
-            <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>
           </tbody>
         </table>
       </div>
@@ -212,16 +242,16 @@
           <thead>
             <tr>
               <th>User</th>
-              <th>Address</th>
+              <th>Destination Address</th>
               <th>Amount (GRAM)</th>
-              <th>Honey</th>
+              <th>Honey Mined</th>
               <th>Status</th>
               <th>Requested At</th>
-              <th>Action</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="withdrawalsBody">
-            <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading withdrawals...</td></tr>
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>
           </tbody>
         </table>
       </div>
@@ -229,7 +259,7 @@
 
     <!-- TAB: SETTINGS -->
     <div id="tab-settings" style="display:none;">
-      <div style="max-width:600px;">
+      <div style="max-width:650px;">
         <h2 style="font-size:20px; font-weight:900; margin-bottom:16px;">System Configuration</h2>
         <div class="card" id="settingsForm">
           <p style="color:var(--text-muted);">Loading settings...</p>
@@ -237,6 +267,49 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL: CREATE CAMPAIGN -->
+<div id="createCampModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="font-size:18px; font-weight:900;">➕ Create Boost Campaign</h3>
+      <button onclick="closeModal('createCampModal')" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <form onsubmit="handleCreateCampaign(event)">
+      <div class="form-group">
+        <label class="form-label">Campaign Title / Name</label>
+        <input type="text" id="newCampTitle" class="form-input" required placeholder="e.g. Join My Telegram Channel">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Link / Handle</label>
+        <input type="text" id="newCampTarget" class="form-input font-mono" required placeholder="https://t.me/MyChannel or @MyBot">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Campaign Type</label>
+        <select id="newCampType" class="form-input">
+          <option value="channel">Telegram Channel</option>
+          <option value="group">Telegram Group</option>
+          <option value="bot">Telegram Bot</option>
+          <option value="link">Website Link</option>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Total Completions</label>
+          <input type="number" id="newCampCompletions" class="form-input" value="100" min="10" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">User Reward (GHS)</label>
+          <input type="number" id="newCampReward" class="form-input" value="0.1" step="0.05" min="0.01" required>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+        <button type="button" onclick="closeModal('createCampModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="createCampSubmitBtn" class="btn btn-gold">Publish Live Now</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -295,7 +368,8 @@ function initDashboard(admin) {
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('dashboardView').style.display = 'block';
   document.getElementById('authControls').style.display = 'flex';
-  document.getElementById('adminEmail').innerText = admin?.email || 'admin';
+  document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
+  loadStats();
   loadCampaigns();
 }
 
@@ -320,16 +394,32 @@ function switchTab(tabId) {
   if (tabId === 'settings') loadSettings();
 }
 
+async function loadStats() {
+  try {
+    const res = await fetch(API_URL + '/api/admin/dashboard', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('statUsers').innerText = data.total_users || 0;
+    document.getElementById('statBP').innerText = (data.total_bp || 0).toFixed(1) + ' GHS';
+    document.getElementById('statWithdrawals').innerText = data.pending_withdrawals || 0;
+  } catch (e) {}
+}
+
 // 1. CAMPAIGNS
 async function loadCampaigns() {
   const status = document.getElementById('campStatusFilter').value;
   const tbody = document.getElementById('campaignsBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">Loading campaigns...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
 
   try {
     const res = await fetch(API_URL + '/api/admin/campaigns?status=' + encodeURIComponent(status), { headers: authHeaders() });
     const data = await res.json();
     const list = data.campaigns || [];
+    
+    // Count active
+    const activeCount = list.filter(c => c.status === 'active').length;
+    document.getElementById('statActiveCamps').innerText = activeCount;
+
     if (list.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No campaigns found.</td></tr>';
       return;
@@ -342,7 +432,7 @@ async function loadCampaigns() {
         <tr>
           <td>
             <div style="font-weight:800; color:#fff;">${escapeHtml(c.title || 'Untitled')}</div>
-            <a href="${escapeHtml(c.target)}" target="_blank" class="font-mono text-muted" style="font-size:11px; color:#06b6d4; text-decoration:none;">${escapeHtml(c.target)}</a>
+            <a href="${escapeHtml(c.target)}" target="_blank" class="font-mono" style="font-size:11px; color:#06b6d4; text-decoration:none;">${escapeHtml(c.target)}</a>
           </td>
           <td><span class="badge" style="background:#1e2d27;">${escapeHtml(c.type)}</span></td>
           <td class="font-mono" style="color:#f59e0b; font-weight:700;">${escapeHtml(c.payment_memo || '-')}</td>
@@ -351,19 +441,60 @@ async function loadCampaigns() {
           <td><span class="badge ${badgeClass}">${c.status}</span></td>
           <td class="font-mono text-muted" style="font-size:11px;">${new Date(c.created_at).toLocaleString()}</td>
           <td>
-            ${isWaiting ? `
-              <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 12px; font-size:11px;">
-                ⚡ Activate Now
+            <div style="display:flex; gap:6px; align-items:center;">
+              ${isWaiting ? `
+                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:6px 10px; font-size:11px;">
+                  ⚡ Activate
+                </button>
+              ` : `
+                <span style="color:#10b981; font-weight:800; font-size:11px; margin-right:4px;">✓ LIVE</span>
+              `}
+              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:6px 10px; font-size:11px;">
+                🗑️ Delete
               </button>
-            ` : `
-              <span style="color:#10b981; font-weight:800; font-size:11px;">✓ LIVE</span>
-            `}
+            </div>
           </td>
         </tr>
       `;
     }).join('');
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading: ' + err.message + '</td></tr>';
+  }
+}
+
+function openCreateCampaignModal() {
+  document.getElementById('createCampModal').style.display = 'flex';
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+async function handleCreateCampaign(e) {
+  e.preventDefault();
+  const title = document.getElementById('newCampTitle').value.trim();
+  const target = document.getElementById('newCampTarget').value.trim();
+  const type = document.getElementById('newCampType').value;
+  const total_completions = parseInt(document.getElementById('newCampCompletions').value) || 100;
+  const reward_bp = parseFloat(document.getElementById('newCampReward').value) || 0.1;
+
+  document.getElementById('createCampSubmitBtn').innerText = 'Creating...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ title, target, type, total_completions, reward_bp })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create campaign');
+    showToast('🎉 Campaign created and published live!');
+    closeModal('createCampModal');
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    document.getElementById('createCampSubmitBtn').innerText = 'Publish Live Now';
   }
 }
 
@@ -383,11 +514,26 @@ async function activateCampaign(id) {
   }
 }
 
+async function deleteCampaign(id) {
+  if (!confirm('Are you sure you want to permanently delete this campaign and remove its mission?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete campaign');
+    showToast('🗑️ Campaign deleted successfully');
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
 // 2. USERS
 async function loadUsers() {
   const search = document.getElementById('userSearch').value.trim();
   const tbody = document.getElementById('usersBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>';
 
   try {
     const res = await fetch(API_URL + '/api/admin/users?search=' + encodeURIComponent(search), { headers: authHeaders() });
@@ -405,7 +551,10 @@ async function loadUsers() {
         <td><span class="badge badge-active">${u.status}</span></td>
         <td class="font-mono text-muted" style="font-size:11px;">${new Date(u.created_at).toLocaleDateString()}</td>
         <td>
-          <button onclick="adjustUser('${u.id}')" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;">Adjust</button>
+          <div style="display:flex; gap:6px;">
+            <button onclick="adjustUser('${u.id}')" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;">⚡ Adjust</button>
+            <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn btn-danger" style="padding:6px 10px; font-size:11px;">${u.status === 'banned' ? 'Unban' : 'Ban'}</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -433,10 +582,27 @@ async function adjustUser(id) {
   }
 }
 
+async function toggleUserStatus(id, currentStatus) {
+  const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
+  if (!confirm('Change user status to ' + newStatus + '?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + id + '/status', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: newStatus, reason: 'Admin action' })
+    });
+    if (!res.ok) throw new Error('Status update failed');
+    showToast('User status updated to ' + newStatus);
+    loadUsers();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
 // 3. WITHDRAWALS
 async function loadWithdrawals() {
   const tbody = document.getElementById('withdrawalsBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading...</td></tr>';
   try {
     const res = await fetch(API_URL + '/api/admin/withdrawals', { headers: authHeaders() });
     const data = await res.json();
