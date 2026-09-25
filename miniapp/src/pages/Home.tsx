@@ -196,36 +196,30 @@ export const Home: React.FC = () => {
           <button
             onClick={() => setShowAddGhsModal(true)}
             className="flex-1 py-3 rounded-2xl zentorno-btn-primary font-extrabold text-xs uppercase tracking-wider shadow-md"
-          >
-            ADD GHS
-          </button>
+          >{t('add_ghs', 'ADD GHS')}</button>
           <button
             onClick={() => navigate('/tasks')}
             className="flex-1 py-3 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
-          >
-            FREE GHS
-          </button>
+          >{t('free_ghs', 'FREE GHS')}</button>
         </div>
       </div>
 
       {/* Card 2: YOUR BALANCE & PENDING BALANCE */}
       <div className="zentorno-card p-5 mb-4 text-center">
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
-          YOUR BALANCE
-        </div>
+        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">{t('your_balance', 'YOUR BALANCE')}</div>
         <div className="text-3xl font-black text-stone-100 mt-1">
           {user.honey_balance.toFixed(7)} USDT
         </div>
 
         <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>PENDING BALANCE (LIVE)</span>
+          <span>{t('pending_balance_live', 'PENDING BALANCE (LIVE)')}</span>
         </div>
         <div className="text-2xl font-black text-stone-100 mt-1 font-mono tracking-tight">
           {pendingBalance.toFixed(8)} USDT
         </div>
         <div className="text-[11px] font-bold text-[#86a397] mt-0.5">
-          ⚡ 24/7 Cloud Mining Active (+{earningsPerSecond.toFixed(8)} USDT/sec)
+          ⚡ {t('cloud_active', '24/7 Cloud Mining Active')} (+{earningsPerSecond.toFixed(8)} USDT/sec)
         </div>
 
         {/* CLAIM BALANCE Primary Button */}
@@ -238,7 +232,7 @@ export const Home: React.FC = () => {
               : 'bg-[#1b2623] text-stone-600 border border-[#253530] cursor-not-allowed'
           }`}
         >
-          {claiming ? 'CLAIMING...' : pendingBalance >= 0.01 ? 'CLAIM BALANCE' : 'CLAIM (MIN 0.01)'}
+          {claiming ? t('claiming', 'CLAIMING...') : pendingBalance >= 0.01 ? t('claim_balance', 'CLAIM BALANCE') : t('claim_min', 'CLAIM (MIN 0.01)')}
         </button>
       </div>
 
@@ -249,9 +243,7 @@ export const Home: React.FC = () => {
       >
         <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        HISTORY
-      </button>
+        </svg>{t('history', 'HISTORY')}</button>
 
       {/* ======================================================== */}
       {/* 🚀 EXACT ADD GHS MODAL (ZENTORNO CLONE)                  */}
@@ -274,9 +266,7 @@ export const Home: React.FC = () => {
 
             {/* Input: Amount to deposit (GRAM) */}
             <div className="mb-4">
-              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
-                Amount to deposit (GRAM)
-              </label>
+              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">{t('amount_to_deposit', 'Amount to deposit (GRAM)')}</label>
               <div className="zentorno-input p-3.5 flex items-center justify-between">
                 <input
                   type="number"
@@ -291,13 +281,13 @@ export const Home: React.FC = () => {
                 </span>
               </div>
               <div className="text-[10px] text-stone-400 font-semibold mt-1">
-                Minimum deposit: 0.10 GRAM
+                {t('min_deposit', 'Minimum deposit: 0.10 GRAM')}
               </div>
             </div>
 
             {/* +5% First Deposit Bonus Banner */}
             <div className="bg-[#8ba89c] text-[#0f1614] rounded-2xl py-3 px-4 text-center mb-4 font-black text-xs uppercase tracking-wide shadow-sm">
-              +5% first deposit bonus!
+              {t('first_deposit_bonus', '+5% first deposit bonus!')}
             </div>
 
             {/* Card: YOU WILL GET */}

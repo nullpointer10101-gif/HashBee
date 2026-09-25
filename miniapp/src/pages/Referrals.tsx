@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { fetchReferrals } from '../services/api'
 import { ReferralSummary } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import toast from 'react-hot-toast'
 
 export const Referrals: React.FC = () => {
+  const { t } = useLanguage()
   const { user } = useAuth()
   const [summary, setSummary] = useState<ReferralSummary | null>(null)
   const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3>(1)
@@ -65,14 +67,14 @@ export const Referrals: React.FC = () => {
       {/* Centered Page Header */}
       <div className="text-center mb-6">
         <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider">
-          INVITE FRIENDS & EARN GHS
+          {t('invite_friends_title', 'INVITE FRIENDS & EARN GHS')}
         </h1>
         <p className="text-xs font-semibold text-stone-400 mt-1">
           Get <span className="text-emerald-400 font-extrabold">+3 GHS</span> for every active referral who starts mining!
         </p>
       </div>
 
-      {/* Card 1: Your referral link & SHARE LINK */}
+      {/* Card 1: {t('your_referral_link', 'Your referral link')} & SHARE LINK */}
       <div className="zentorno-card p-4 mb-4">
         <div className="flex items-center justify-between mb-2">
           <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider">
@@ -92,7 +94,7 @@ export const Referrals: React.FC = () => {
             onClick={copyInviteLink}
             className="px-3 py-1.5 bg-[#93b3a6] text-[#0f1614] rounded-xl font-black text-xs uppercase tracking-wider shrink-0 transition-transform active:scale-95 shadow-sm"
           >
-            {copied ? 'COPIED!' : 'COPY'}
+            {copied ? t('copied', 'COPIED!') : t('copy', 'COPY')}
           </button>
         </div>
 

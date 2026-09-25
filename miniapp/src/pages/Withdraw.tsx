@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import { requestWithdrawal, reinvestHoney, fetchWithdrawals } from '../services/api'
 import { InsufficientFundsModal } from '../components/InsufficientFundsModal'
 import { DepositModal } from '../components/DepositModal'
@@ -8,6 +9,7 @@ import toast from 'react-hot-toast'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export const Withdraw: React.FC = () => {
+  const { t } = useLanguage()
   const { user, refreshUser } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
@@ -210,7 +212,7 @@ export const Withdraw: React.FC = () => {
         <>
           <div className="zentorno-card p-5 mb-4 text-center">
             <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
-              YOUR AVAILABLE BALANCE
+              YOUR {t('balance_available', 'AVAILABLE BALANCE')}
             </div>
             <div className="text-3xl font-black text-stone-100 mt-1 mb-4">
               {userUsdtBalance} USDT
@@ -271,7 +273,7 @@ export const Withdraw: React.FC = () => {
 
             <div className="mb-4">
               <label className="text-xs font-extrabold text-stone-300 block mb-2">
-                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM Wallet Address'}
+                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM ' + t('destination_wallet', 'Wallet Address')}
               </label>
               <input
                 type="text"

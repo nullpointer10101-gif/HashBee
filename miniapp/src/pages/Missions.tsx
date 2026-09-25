@@ -9,11 +9,13 @@ import {
 } from '../services/api'
 import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import toast from 'react-hot-toast'
 
 type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
 export const Missions: React.FC = () => {
+  const { t } = useLanguage()
   const [view, setView] = useState<ViewMode>('tasks')
   const [missions, setMissions] = useState<Mission[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
