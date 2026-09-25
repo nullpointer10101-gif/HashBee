@@ -148,7 +148,7 @@ export const Missions: React.FC = () => {
       const res = await claimMilestone(mission.id)
       toast.success('🎉 Milestone Claimed! +' + (res.reward_power || mission.reward_power) + ' GHS POWER')
       setMissions((prev) =>
-        prev.map((m) => (m.id === mission.id ? { ...m, is_completed: true } : m))
+        prev.filter((m) => m.id !== mission.id)
       )
       await refreshUser()
     } catch (err: any) {
@@ -329,7 +329,7 @@ export const Missions: React.FC = () => {
   }
 
   const milestones = missions.filter((m) => m.type === 'milestone')
-  const sponsored = missions.filter((m) => m.type !== 'milestone')
+  const sponsored = missions.filter((m) => m.type !== 'milestone' && !m.is_completed)
 
   const calculatedCost = ((Math.max(100, Number(promoCompletions) || 100)) * 0.001).toFixed(4)
 
@@ -862,6 +862,10 @@ export const Missions: React.FC = () => {
 
         {loading ? (
           <div className="text-center py-6 text-stone-400 text-xs animate-pulse">Loading tasks...</div>
+        ) : sponsored.length === 0 ? (
+          <div className="text-center py-6 text-stone-500 text-xs font-bold">
+            ✨ All available tasks completed! Check back soon for new tasks.
+          </div>
         ) : (
           <div className="flex flex-col gap-2.5">
             {sponsored.map((mission) => (

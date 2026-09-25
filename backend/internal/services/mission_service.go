@@ -33,6 +33,7 @@ func (s *MissionService) ListMissionsForUser(ctx context.Context, userID uuid.UU
 		 LEFT JOIN mission_completions mc ON mc.mission_id = m.id AND mc.user_id = $1
 		 WHERE m.status = 'active'
 		   AND (m.campaign_id IS NULL OR (c.status = 'active' AND c.done_completions < c.total_completions))
+		   AND (m.type = 'milestone' OR mc.status IS NULL OR mc.status != 'reward_paid')
 		 ORDER BY m.is_official DESC, m.sort_order ASC, m.created_at DESC`,
 		userID)
 	if err != nil {
