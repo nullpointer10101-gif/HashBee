@@ -192,6 +192,7 @@ func main() {
 			adminProtected.DELETE("/campaigns/:id", adminHandler.DeleteCampaign)
 			adminProtected.GET("/fraud", adminHandler.ListFraudFlags)
 			adminProtected.POST("/broadcast", adminHandler.Broadcast)
+			adminProtected.GET("/broadcast/status", adminHandler.GetBroadcastStatus)
 		}
 	}
 

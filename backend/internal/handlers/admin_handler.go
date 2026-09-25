@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"sync"
 	"context"
 	"encoding/hex"
 	"fmt"
@@ -625,8 +626,40 @@ func (h *AdminHandler) DeleteCampaign(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Campaign and mission deleted successfully"})
 }
 
-// POST /api/admin/broadcast - Send rich template broadcast with inline WebApp button
+type BroadcastJobStatus struct {
+	IsRunning   bool      `json:"is_running"`
+	Total       int       `json:"total"`
+	Sent        int       `json:"sent"`
+	Failed      int       `json:"failed"`
+	Done        int       `json:"done"`
+	Percent     int       `json:"percent"`
+	Message     string    `json:"message"`
+	StartedAt   time.Time `json:"started_at"`
+	CompletedAt time.Time `json:"completed_at,omitempty"`
+}
+
+var (
+	broadcastMu     sync.RWMutex
+	broadcastStatus = BroadcastJobStatus{}
+)
+
+// GET /api/admin/broadcast/status - Check real-time progress of running broadcast
+func (h *AdminHandler) GetBroadcastStatus(c *gin.Context) {
+	broadcastMu.RLock()
+	defer broadcastMu.RUnlock()
+	c.JSON(http.StatusOK, broadcastStatus)
+}
+
+// POST /api/admin/broadcast - Send rich template broadcast with inline WebApp button in background
 func (h *AdminHandler) Broadcast(c *gin.Context) {
+	broadcastMu.Lock()
+	if broadcastStatus.IsRunning {
+		broadcastMu.Unlock()
+		c.JSON(http.StatusConflict, gin.H{"error": "A broadcast is already running. Please wait for it to complete."})
+		return
+	}
+	broadcastMu.Unlock()
+
 	var req struct {
 		Message          string `json:"message" binding:"required"`
 		ButtonText       string `json:"button_text"`
@@ -663,26 +696,76 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		}
 	}
 
-	if len(tgIDs) == 0 {
+	total := len(tgIDs)
+	if total == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No active users found to broadcast"})
 		return
 	}
 
-	if h.bot != nil {
-		sent, failed := h.bot.BroadcastWithButton(c.Request.Context(), req.Message, req.ButtonText, req.ButtonURL, tgIDs)
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Broadcast sent to %d users (%d failed)", sent, failed),
-			"sent":    sent,
-			"failed":  failed,
-			"total":   len(tgIDs),
-		})
-		return
+	broadcastMu.Lock()
+	broadcastStatus = BroadcastJobStatus{
+		IsRunning: true,
+		Total:     total,
+		Sent:      0,
+		Failed:    0,
+		Done:      0,
+		Percent:   0,
+		Message:   "Broadcast in progress...",
+		StartedAt: time.Now(),
 	}
+	broadcastMu.Unlock()
+
+	// Launch background broadcast
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		defer cancel()
+
+		if botImpl, ok := h.bot.(*bot.Bot); ok && botImpl != nil {
+			sent, failed := botImpl.BroadcastWithButtonProgress(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs, func(s, f, t int) {
+				broadcastMu.Lock()
+				done := s + f
+				pct := 0
+				if t > 0 {
+					pct = (done * 100) / t
+				}
+				broadcastStatus.Sent = s
+				broadcastStatus.Failed = f
+				broadcastStatus.Done = done
+				broadcastStatus.Percent = pct
+				broadcastMu.Unlock()
+			})
+
+			broadcastMu.Lock()
+			broadcastStatus.IsRunning = false
+			broadcastStatus.Sent = sent
+			broadcastStatus.Failed = failed
+			broadcastStatus.Done = sent + failed
+			broadcastStatus.Percent = 100
+			broadcastStatus.CompletedAt = time.Now()
+			broadcastStatus.Message = fmt.Sprintf("Completed: %d sent, %d failed out of %d", sent, failed, total)
+			broadcastMu.Unlock()
+		} else if h.bot != nil {
+			sent, failed := h.bot.BroadcastWithButton(ctx, req.Message, req.ButtonText, req.ButtonURL, tgIDs)
+			broadcastMu.Lock()
+			broadcastStatus.IsRunning = false
+			broadcastStatus.Sent = sent
+			broadcastStatus.Failed = failed
+			broadcastStatus.Done = sent + failed
+			broadcastStatus.Percent = 100
+			broadcastStatus.CompletedAt = time.Now()
+			broadcastStatus.Message = fmt.Sprintf("Completed: %d sent, %d failed out of %d", sent, failed, total)
+			broadcastMu.Unlock()
+		} else {
+			broadcastMu.Lock()
+			broadcastStatus.IsRunning = false
+			broadcastStatus.Message = "Bot is offline"
+			broadcastMu.Unlock()
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Target users found: %d (Bot offline)", len(tgIDs)),
-		"total":   len(tgIDs),
-		"sent":    0,
-		"failed":  0,
+		"message": fmt.Sprintf("🚀 Broadcast started for %d users in background!", total),
+		"total":   total,
+		"status":  "running",
 	})
 }

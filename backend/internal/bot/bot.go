@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"sync"
+	"sync/atomic"
 	"html"
 	"time"
 	"context"
@@ -342,38 +344,69 @@ func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower flo
 	}
 }
 
-// BroadcastWithButton sends a message with an inline WebApp button to a list of telegram IDs, throttled to prevent rate limits
-func (b *Bot) BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int) {
+// BroadcastWithButtonProgress sends messages concurrently with rate limiting and progress callback
+func (b *Bot) BroadcastWithButtonProgress(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64, onProgress func(sent, failed, total int)) (int, int) {
 	if b == nil || b.api == nil || len(telegramIDs) == 0 {
 		return 0, 0
 	}
 
 	keyboard := newWebAppKeyboard(buttonText, buttonURL)
-	sentCount := 0
-	failedCount := 0
+	total := len(telegramIDs)
+	var sentCount int64
+	var failedCount int64
 
+	jobs := make(chan int64, total)
 	for _, id := range telegramIDs {
-		select {
-		case <-ctx.Done():
-			return sentCount, failedCount
-		default:
-		}
+		jobs <- id
+	}
+	close(jobs)
 
-		msg := tgbotapi.NewMessage(id, text)
-		msg.ParseMode = "Markdown"
-		msg.ReplyMarkup = keyboard
+	limiter := time.NewTicker(33 * time.Millisecond)
+	defer limiter.Stop()
 
-		if _, err := b.api.Send(msg); err != nil {
-			failedCount++
-		} else {
-			sentCount++
-		}
-
-		// Throttle ~28 messages/sec
-		time.Sleep(35 * time.Millisecond)
+	var wg sync.WaitGroup
+	workers := 5
+	if total < workers {
+		workers = total
 	}
 
-	return sentCount, failedCount
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for id := range jobs {
+				select {
+				case <-ctx.Done():
+					return
+				case <-limiter.C:
+				}
+
+				msg := tgbotapi.NewMessage(id, text)
+				msg.ParseMode = "Markdown"
+				msg.ReplyMarkup = keyboard
+
+				if _, err := b.api.Send(msg); err != nil {
+					atomic.AddInt64(&failedCount, 1)
+				} else {
+					atomic.AddInt64(&sentCount, 1)
+				}
+
+				if onProgress != nil {
+					s := int(atomic.LoadInt64(&sentCount))
+					f := int(atomic.LoadInt64(&failedCount))
+					onProgress(s, f, total)
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+	return int(sentCount), int(failedCount)
+}
+
+// BroadcastWithButton sends a message with an inline WebApp button to a list of telegram IDs
+func (b *Bot) BroadcastWithButton(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64) (int, int) {
+	return b.BroadcastWithButtonProgress(ctx, text, buttonText, buttonURL, telegramIDs, nil)
 }
 
 // Broadcast sends a message to all opted-in users
