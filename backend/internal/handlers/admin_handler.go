@@ -898,150 +898,87 @@ type AutoBroadcastTemplate struct {
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
 		Key: "crate_mega_jackpot",
-		Message: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
-    🎁 *MYSTERY LOOT CRATES ARE LIVE!* 🎁
-✨ ━━━━━━━━━━━━━━━━━━━ ✨
+		Message: `🎁 *MYSTERY CRATES ARE LIVE!* 🐝💎
 
-👋 *Hey {name}!* Your secret treasure awaits in the Hive! 🐝💎
+Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
+• 🥉 *Bronze (0.5 G)* ➔ Win up to 2.5 GRAM
+• 🥈 *Silver (1.5 G)* ➔ Win up to 7.5 GRAM
+• 🥇 *Gold (3.0 G)* ➔ Win up to 15.0 GRAM
+• 💎 *Diamond (5.0 G)* ➔ *25 GRAM Jackpot + $20 USDT!*
 
-⚡ *UNBOX MASSIVE FORTUNES INSTANTLY:*
-━━━━━━━━━━━━━━━━━━━━
-🥉 *Bronze Crate (0.50 GRAM)*
-   ↳ 💰 Win up to *2.50 GRAM* + *USDT* + *+5 HASH*
-
-🥈 *Silver Crate (1.50 GRAM)*
-   ↳ 💰 Win up to *7.50 GRAM* + *$5.00 USDT* + *+10 HASH*
-
-🥇 *Gold Crate (3.00 GRAM)*
-   ↳ 💰 Win up to *15.00 GRAM* + *$10.00 USDT* + *+15 HASH*
-
-👑 *Diamond Crate (5.00 GRAM)*
-   ↳ 💎 Win *25.00 GRAM JACKPOT* + *$20.00 USDT* + *+20 HASH*
-━━━━━━━━━━━━━━━━━━━━
-
-🔥 *100% Guaranteed Rewards* (USDT, GRAM & Permanent Mining Power!)
-🎲 *Provably Fair & Instant Payouts*
-
-👇 *Tap below to unbox your first crate right now:*`,
+👇 Open your crate now:`,
 		ButtonText: "📦 Unlock Mystery Crates 🎁",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "crate_bronze_starter",
-		Message: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
-    📦 *STARTER BRONZE CRATE: ONLY 0.5 GRAM!* 📦
-✨ ━━━━━━━━━━━━━━━━━━━ ✨
+		Message: `📦 *0.5 GRAM STARTER CRATE!* ⚡
 
-👋 *Hey {name}!* Test your luck with our lowest-entry mystery box! 🐝⚡
+Test your luck for just 0.5 GRAM!
+💵 *Real USDT* • 🪙 *Up to 2.5 GRAM* • ⚡ *+5 HASH*
 
-🎁 *WHAT'S INSIDE THE BRONZE CRATE:*
-━━━━━━━━━━━━━━━━━━━━
-💵 *Real USDT Cash Drops*
-🪙 *Up to 2.50 GRAM Instant Win*
-⚡ *+5 HASH Permanent 24/7 Mining Speed*
-━━━━━━━━━━━━━━━━━━━━
+100% instant unboxing with guaranteed rewards!
 
-🔥 Start with just *0.5 GRAM* and multiply your balance in 1 click!
-
-👇 *Tap below to open your Bronze Crate now:*`,
-		ButtonText: "📦 Open 0.5 GRAM Crate 🚀",
+👇 Tap below to unbox:`,
+		ButtonText: "📦 Open 0.5 G Crate 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "crate_vip_dopamine",
-		Message: `👑 ━━━━━━━━━━━━━━━━━━━ 👑
-    💎 *VIP HIGH-ROLLER CRATE JACKPOT!* 💎
-👑 ━━━━━━━━━━━━━━━━━━━ 👑
+		Message: `👑 *25 GRAM CRATE JACKPOT ALERT!* 💎🔥
 
-🔥 *ATTENTION {name}!* 🐝
-The Diamond & Gold Mystery Vaults have just been re-stocked!
+Hey {name}, High-Roller Crates are loaded!
+🏆 *25.0 GRAM Single Drop Jackpot*
+💵 *$20.00 Instant USDT Cash*
+⚡ *+20 HASH Permanent Mining Speed*
 
-🏆 *TOP VAULT JACKPOTS:*
-━━━━━━━━━━━━━━━━━━━━
-👑 *25.0 GRAM Single Drop Jackpot*
-💵 *$20.00 Instant USDT Cash Drop*
-⚡ *+20 HASH Power (Permanent 24/7 Speed)*
-━━━━━━━━━━━━━━━━━━━━
-
-✨ Will YOU trigger the 25 GRAM Mega Win today?
-
-👇 *Tap below to enter the High Roller Arena:*`,
+👇 Test your luck today:`,
 		ButtonText: "💎 Play High Roller Crates 👑",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "spin_dopamine_jackpot",
-		Message: `🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
-    🎡 *LUCKY HONEY WHEEL IS SPINNING!* 🎡
-🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
+		Message: `🎡 *LUCKY WHEEL: SPIN & WIN USDT!* 🎁⚡
 
-👋 *Hey {name}!* Your lucky turn is waiting right now! 🐝⚡
+Hey {name}, your Lucky Wheel turn is ready!
+👑 *1.0 GRAM Jackpot* • 💵 *Real USDT* • ⚡ *Mining Boosts*
 
-🎁 *PRIZES YOU CAN HIT ON THE WHEEL:*
-━━━━━━━━━━━━━━━━━━━━
-👑 *1.00 GRAM Mega Jackpot*
-💵 *Real USDT Cash Drops*
-⚡ *Permanent Mining Speed Boosts*
-🔄 *Free Re-Spins & Token Drops*
-━━━━━━━━━━━━━━━━━━━━
+🎁 *Invite Friends = +1 Free Spin every time!*
 
-🔥 *EARN FREE SPINS:*
-• Every friend who joins ➔ *Instant +1 Free Spin!* (Unlimited)
-• Daily Starter Turns!
-
-👇 *Tap below to spin the wheel right now:*`,
-		ButtonText: "🎡 Spin The Lucky Wheel Now 🎰",
+👇 Spin the wheel now:`,
+		ButtonText: "🎡 Spin The Lucky Wheel 🎰",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "spin_viral_referrals",
-		Message: `🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
-    👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🎡
-🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
+		Message: `👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🚀
 
-👋 *Hey {name}!* Want unlimited chances at the Mega Jackpot? 🐝💰
+Want free USDT, GRAM & mining speed?
+Every friend you invite gives you *+1 Free Spin instantly!*
 
-Every single friend who joins through your link gives you:
-✅ *Instant +1 FREE SPIN on the Lucky Wheel!*
-✅ *Free Lifetime Referral Mining Commissions!*
-
-👑 *Wheel Jackpots:* 1.0 GRAM • Real USDT • +2 HASH Boosts
-
-👇 *Grab your link & invite friends to spin:*`,
-		ButtonText: "🎡 Open Wheel & Get Free Spins 🚀",
+👇 Grab your link & spin:`,
+		ButtonText: "🎡 Get Free Spins 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "personalized_buzz",
-		Message: `🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
-    ⚡ *HEY {name}, YOUR HIVE IS FULL!* 🍯
-🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
+		Message: `🐝 *HEY {name}, YOUR HIVE IS FULL!* 🍯
 
-⛏️ Your miner has produced unclaimed Honey! Don't let your honeycomb capacity go to waste.
+Your mining rig has unclaimed Honey waiting.
+Collect your earnings now before your honeycomb capacity caps out!
 
-💰 *TODAY'S OPPORTUNITIES:*
-━━━━━━━━━━━━━━━━━━━━
-🍯 *Harvest* your accumulated passive Honey earnings
-📦 *Unbox* the new Mystery Loot Crates (Win up to 25 GRAM!)
-🎡 *Spin* the Lucky Wheel for USDT & Free Bonuses
-━━━━━━━━━━━━━━━━━━━━
-
-👇 *Tap below to collect your harvest & play:*`,
-		ButtonText: "🐝 Open HashBee & Collect Now 🚀",
+👇 Collect your harvest:`,
+		ButtonText: "🐝 Collect Honey Now 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "mining_boost",
-		Message: `⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
-    ⛏️ *DOUBLE MINING POWER ACTIVE!* ⛏️
-⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
+		Message: `⛏️ *DOUBLE MINING SPEED ACTIVE!* ⚡
 
-🐝 Extraction rates have been supercharged across the entire Hive network!
+Extraction rates are supercharged across all hives!
+Your bees are mining Honey at maximum speed.
 
-🍯 Your bees are generating Honey at peak speed.
-Don't let your honeycombs stay full & idle.
-
-👇 *Tap below to harvest & accelerate your mining:*`,
+👇 Collect & boost your power:`,
 		ButtonText: "🐝 Open HashBee & Mine ⚡",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
