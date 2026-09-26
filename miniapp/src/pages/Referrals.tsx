@@ -126,33 +126,33 @@ export const Referrals: React.FC = () => {
 
         <div className="grid grid-cols-3 gap-1.5 text-center text-xs mb-3">
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">10 Refers</div>
+            <div className="font-extrabold text-stone-200">10 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+10 GHS</div>
           </div>
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">20 Refers</div>
+            <div className="font-extrabold text-stone-200">20 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+20 GHS</div>
           </div>
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">50 Refers</div>
+            <div className="font-extrabold text-stone-200">50 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+50 GHS</div>
           </div>
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">100 Refers</div>
+            <div className="font-extrabold text-stone-200">100 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+100 GHS</div>
           </div>
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">250 Refers</div>
+            <div className="font-extrabold text-stone-200">250 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+250 GHS</div>
           </div>
           <div className="bg-[#192420] border border-[#2d4239] rounded-xl p-2">
-            <div className="font-extrabold text-stone-200">500 Refers</div>
+            <div className="font-extrabold text-stone-200">500 Active</div>
             <div className="text-emerald-400 font-black text-[11px] mt-0.5">+500 GHS</div>
           </div>
         </div>
 
         <div className="text-[10px] text-stone-400 text-center">
-          ⚡ <i>Active refers means friends who start mining & collect rewards. Check the Tasks tab to claim!</i>
+          ⚡ <i>Active refers means friends who perform their 1st honey claim! Claim milestone bonuses in the Tasks tab.</i>
         </div>
       </div>
 
