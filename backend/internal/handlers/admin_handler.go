@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"sync"
 	"context"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
