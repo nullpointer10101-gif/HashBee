@@ -64,7 +64,7 @@ export const Spin: React.FC = () => {
     }
   }, [lastFreeDate])
 
-  // Real-time Immediate Referral Credit Check (+2 spins per friend)
+  // Real-time Immediate Referral Credit Check (+2 spins per friend signup from now on)
   useEffect(() => {
     if (!user) return
 
@@ -72,23 +72,38 @@ export const Spin: React.FC = () => {
       try {
         const data = await fetchReferrals()
         const currentRefCount = data?.tier1_count || 0
-        const savedCreditedRefs = parseInt(localStorage.getItem('hb_credited_refs') || '0', 10)
+        const savedBaseline = localStorage.getItem('hb_spin_baseline_refs_v3')
 
-        if (currentRefCount > savedCreditedRefs) {
-          const newJoined = currentRefCount - savedCreditedRefs
+        // First time loading this feature: lock in current count as baseline so past/yesterday signups are not retroactively awarded
+        if (savedBaseline === null) {
+          localStorage.setItem('hb_spin_baseline_refs_v3', currentRefCount.toString())
+          localStorage.setItem('hb_credited_refs_v3', currentRefCount.toString())
+          return
+        }
+
+        const lastCredited = parseInt(localStorage.getItem('hb_credited_refs_v3') || savedBaseline, 10)
+
+        if (currentRefCount > lastCredited) {
+          const newJoined = currentRefCount - lastCredited
           const bonusSpins = newJoined * 2
           setSpinsLeft((prev) => prev + bonusSpins)
-          localStorage.setItem('hb_credited_refs', currentRefCount.toString())
-          toast.success(`🎉 +${bonusSpins} Free Spins credited from ${newJoined} new friend(s)!`)
+          localStorage.setItem('hb_credited_refs_v3', currentRefCount.toString())
+          toast.success(`🎉 +${bonusSpins} Free Spins credited! (${newJoined} new friend signup!)`, {
+            duration: 4000,
+            icon: '🎁',
+          })
+          if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
+          }
         }
       } catch (err) {
-        // Silently catch if offline
+        // Silently catch if network blip
       }
     }
 
     checkNewReferrals()
-    // Periodic check every 15s in background while on spin screen
-    const interval = setInterval(checkNewReferrals, 15000)
+    // Background polling every 10 seconds while on spin screen so friend signup reflects instantly
+    const interval = setInterval(checkNewReferrals, 10000)
     return () => clearInterval(interval)
   }, [user])
 
