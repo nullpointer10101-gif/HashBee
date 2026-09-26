@@ -93,7 +93,7 @@ export const fetchProfile = async (): Promise<User> => {
     first_name: profileData.first_name || currentTgUser?.first_name || 'BeeKeeper',
     last_name: '',
     honey_balance: Number(profileData.honey_balance || 0),
-    bee_power: Number(profileData.bp || 5),
+    bee_power: Number(profileData.bp || 50),
     max_hive_capacity: 5000,
     current_unclaimed_honey: Number(profileData.hive?.pending_honey || 0),
     last_claimed_at: profileData.last_collect_at || profileData.created_at || new Date().toISOString(),

@@ -122,8 +122,8 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 	}
 
 	// Create new user
-	baseBP := s.settings.GetFloat(ctx, "base_bp", 1.0)
-	welcomeBonus := s.settings.GetFloat(ctx, "welcome_bonus_bp", 2.0)
+	baseBP := s.settings.GetFloat(ctx, "base_bp", 50.0)
+	welcomeBonus := s.settings.GetFloat(ctx, "welcome_bonus_bp", 5.0)
 
 	bp := baseBP
 	var referrerID *uuid.UUID
@@ -342,7 +342,7 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 	earningPerSecond := (u.BP * 0.0005) / 86400.0
 	pendingHoney := math.Round(earningPerSecond*elapsed*1e8) / 1e8
 
-	if pendingHoney < 0.01 {
+	if pendingHoney < 0.0099 {
 		tx.Rollback(ctx)
 		return nil, 0, fmt.Errorf("minimum claim amount is 0.01")
 	}

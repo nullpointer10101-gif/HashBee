@@ -23,24 +23,30 @@ export const Home: React.FC = () => {
   const [verifying, setVerifying] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
-  const ghs = user?.bee_power || 5
+  const ghs = user?.bee_power || 50
   // Earning formula: 100 GHS = 0.05 GRAM/USDT per day (0.0005 per GHS)
   const earningsPerDay = ghs * 0.0005
   const earningsPerSecond = earningsPerDay / 86400
 
+  // Calculate live pending balance dynamically from last collection time
   useEffect(() => {
-    if (user) {
-      setPendingBalance(user.current_unclaimed_honey || 0)
-    }
-  }, [user?.current_unclaimed_honey])
+    if (!user) return
 
-  useEffect(() => {
-    // Tick up every 100ms
+    const calculateCurrent = () => {
+      const lastCollectTime = user.last_claimed_at ? new Date(user.last_claimed_at).getTime() : Date.now()
+      const elapsedSeconds = Math.max(0, (Date.now() - lastCollectTime) / 1000)
+      const earned = elapsedSeconds * earningsPerSecond
+      return Math.max(user.current_unclaimed_honey || 0, earned)
+    }
+
+    setPendingBalance(calculateCurrent())
+
     const interval = setInterval(() => {
-      setPendingBalance((prev) => prev + earningsPerSecond / 10)
+      setPendingBalance(calculateCurrent())
     }, 100)
+
     return () => clearInterval(interval)
-  }, [earningsPerSecond])
+  }, [user?.last_claimed_at, user?.current_unclaimed_honey, earningsPerSecond])
 
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
   const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
