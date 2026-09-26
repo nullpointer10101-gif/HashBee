@@ -18,7 +18,72 @@
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
     <!-- Monetag Telegram Mini App SDK (Zone 11894371) -->
-    <script src="//libtl.com/sdk.js" data-zone="11894371" data-sdk="show_11894371"></script>
+    <script src="https://libtl.com/sdk.js" data-zone="11894371" data-sdk="show_11894371"></script>
+    <script>
+      (function() {
+        var attempts = 0;
+        function setupMonetag() {
+          attempts++;
+          if (typeof window.show_11894371 === 'function') {
+            console.log('[Monetag] show_11894371 is ready!');
+            
+            // 1. In-App settings
+            try {
+              window.show_11894371({
+                type: 'inApp',
+                inAppSettings: {
+                  frequency: 2,
+                  capping: 0.1,
+                  interval: 120,
+                  timeout: 3,
+                  everyPage: false
+                }
+              });
+            } catch(e) {
+              console.warn('[Monetag] inApp init error:', e);
+            }
+
+            // 2. Trigger on-open ad after 2 seconds
+            setTimeout(function() {
+              try {
+                console.log('[Monetag] Launching on-open ad...');
+                window.show_11894371().then(function() {
+                  console.log('[Monetag] Ad viewed successfully');
+                }).catch(function(err) {
+                  console.warn('[Monetag] Interstitial error, trying pop format:', err);
+                  try {
+                    window.show_11894371('pop').catch(function(e) {
+                      console.warn('[Monetag] pop format error:', e);
+                    });
+                  } catch(e) {}
+                });
+              } catch(e) {
+                console.error('[Monetag] Ad trigger exception:', e);
+              }
+            }, 2000);
+
+            // 3. Trigger recurring ad every 2 minutes (120 seconds)
+            setInterval(function() {
+              try {
+                console.log('[Monetag] Launching 2-minute interval ad...');
+                window.show_11894371().catch(function() {});
+              } catch(e) {}
+            }, 120000);
+
+          } else if (attempts < 20) {
+            setTimeout(setupMonetag, 600);
+          } else {
+            console.warn('[Monetag] SDK failed to load after 20 attempts. Check ad-blocker or zone status.');
+          }
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupMonetag);
+        } else {
+          setupMonetag();
+        }
+      })();
+    </script>
 
     <!-- AdExium Official Monetization Script (HashBee TMA Only) -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
