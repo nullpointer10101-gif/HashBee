@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { requestWithdrawal, reinvestHoney, fetchWithdrawals } from '../services/api'
-import { InsufficientFundsModal } from '../components/InsufficientFundsModal'
-import { DepositModal } from '../components/DepositModal'
 import { Withdrawal } from '../types'
 import toast from 'react-hot-toast'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -20,22 +18,16 @@ export const Withdraw: React.FC = () => {
   const [selectedCrypto, setSelectedCrypto] = useState<'GRAM' | 'USDT_BSC'>('GRAM')
   const [submitting, setSubmitting] = useState(false)
   const [reinvesting, setReinvesting] = useState(false)
-  const [showInsufficientModal, setShowInsufficientModal] = useState(false)
-  const [showDepositModal, setShowDepositModal] = useState(false)
   const [history, setHistory] = useState<Withdrawal[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-
-  const [insufficientDetails, setInsufficientDetails] = useState<{
-    title?: string
-    message?: string
-    requiredAmount?: number
-  }>({
-    title: 'INSUFFICIENT FUNDS',
-    requiredAmount: 1.0,
-  })
   const navigate = useNavigate()
 
   const minWithdrawal = 0.05
+
+  // Refresh user profile on mount to ensure fresh balance
+  useEffect(() => {
+    refreshUser()
+  }, [])
 
   // Sync tab with URL
   useEffect(() => {
@@ -78,13 +70,13 @@ export const Withdraw: React.FC = () => {
     e.preventDefault()
     const numAmount = parseFloat(amount)
 
-    if (!numAmount || numAmount < minWithdrawal) {
-      toast.error(`Minimum withdrawal is ${minWithdrawal.toFixed(2)} GRAM`)
+    if (!numAmount || isNaN(numAmount) || numAmount < minWithdrawal) {
+      toast.error(`Minimum withdrawal is ${minWithdrawal.toFixed(2)} ${selectedCrypto === 'GRAM' ? 'GRAM' : 'USDT'}`)
       return
     }
 
     if (!wallet.trim()) {
-      toast.error('Please enter your wallet address')
+      toast.error('Please enter your destination wallet address')
       return
     }
 
@@ -96,12 +88,8 @@ export const Withdraw: React.FC = () => {
     }
 
     if (user && numAmount > user.honey_balance) {
-      setInsufficientDetails({
-        title: 'INSUFFICIENT BALANCE FOR WITHDRAWAL',
-        requiredAmount: numAmount,
-        message: `You requested ${numAmount.toFixed(2)} USDT, but your available balance is ${user.honey_balance.toFixed(4)} USDT. Deposit GRAM or add funds to increase your earnings!`
-      })
-      setShowInsufficientModal(true)
+      toast.error(`Insufficient Balance: Available is ${user.honey_balance.toFixed(4)} ${selectedCrypto === 'GRAM' ? 'GRAM' : 'USDT'} (Requested: ${numAmount.toFixed(4)}). Collect from your Miner to earn more!`)
+      await refreshUser()
       return
     }
 
@@ -115,17 +103,9 @@ export const Withdraw: React.FC = () => {
       // Switch to history tab to view pending payout
       switchTab('history')
     } catch (err: any) {
+      await refreshUser()
       const errMsg = err?.response?.data?.error || 'Withdrawal failed'
-      if (errMsg.toLowerCase().includes('insufficient')) {
-        setInsufficientDetails({
-          title: 'INSUFFICIENT BALANCE FOR WITHDRAWAL',
-          requiredAmount: numAmount,
-          message: errMsg
-        })
-        setShowInsufficientModal(true)
-      } else {
-        toast.error(errMsg)
-      }
+      toast.error(errMsg)
     } finally {
       setSubmitting(false)
     }
@@ -133,12 +113,7 @@ export const Withdraw: React.FC = () => {
 
   const handleReinvest = async () => {
     if (!user || user.honey_balance < 1.0) {
-      setInsufficientDetails({
-        title: 'INSUFFICIENT FUNDS TO REINVEST',
-        requiredAmount: 1.0,
-        message: `Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Your current balance is ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT. Please add funds to increase your mining power!`
-      })
-      setShowInsufficientModal(true)
+      toast.error(`Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Your current balance is ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT. Collect honey from your miner!`)
       return
     }
 
@@ -148,17 +123,9 @@ export const Withdraw: React.FC = () => {
       toast.success(`🎉 Reinvested! +${res.power_gained} GHS Mining Power Added!`)
       await refreshUser()
     } catch (err: any) {
-      const errMsg = err?.response?.data?.error || ''
-      if (errMsg.toLowerCase().includes('insufficient') || errMsg.toLowerCase().includes('minimum') || user.honey_balance < 1.0) {
-        setInsufficientDetails({
-          title: 'INSUFFICIENT FUNDS TO REINVEST',
-          requiredAmount: 1.0,
-          message: errMsg || 'Minimum reinvest amount is 1.00 USDT. Please add funds to continue.'
-        })
-        setShowInsufficientModal(true)
-      } else {
-        toast.error(errMsg || 'Reinvestment failed')
-      }
+      await refreshUser()
+      const errMsg = err?.response?.data?.error || 'Reinvestment failed'
+      toast.error(errMsg)
     } finally {
       setReinvesting(false)
     }
@@ -420,28 +387,6 @@ export const Withdraw: React.FC = () => {
       >
         BACK TO MINER
       </button>
-
-      {/* Insufficient Funds Modal */}
-      <InsufficientFundsModal
-        isOpen={showInsufficientModal}
-        onClose={() => setShowInsufficientModal(false)}
-        onAddFunds={() => {
-          setShowInsufficientModal(false)
-          setShowDepositModal(true)
-        }}
-        title={insufficientDetails.title}
-        currentBalance={user?.honey_balance || 0}
-        requiredAmount={insufficientDetails.requiredAmount}
-        message={insufficientDetails.message}
-      />
-
-      {/* Deposit / Add GHS Modal */}
-      <DepositModal
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-        onSuccess={() => refreshUser()}
-        initialAmount="1"
-      />
     </div>
   )
 }
