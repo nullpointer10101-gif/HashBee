@@ -43,7 +43,8 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 		return nil
 	}
 
-	welcomeBonus := s.settings.GetFloat(ctx, "welcome_bonus_bp", 2.0)
+	welcomeBonus := s.settings.GetFloat(ctx, "welcome_bonus_bp", 10.0)
+	referralBP := s.settings.GetFloat(ctx, "referral_l1_bp", 10.0)
 
 	// Update user with referrer and welcome bonus
 	_, err = tx.Exec(ctx,
@@ -53,8 +54,8 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 		return err
 	}
 
-	// Award 1 free spin to referrer immediately upon referral signup
-	_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`, referrerID)
+	// Award 1 free spin + 10 GHS to referrer immediately upon referral signup
+	_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, bp = bp + $1, updated_at = NOW() WHERE id = $2`, referralBP, referrerID)
 
 	// Level 1: direct referrer (created as pending, unlocked when friend collects mining harvest)
 	_, err = tx.Exec(ctx,

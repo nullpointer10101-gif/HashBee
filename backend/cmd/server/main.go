@@ -78,6 +78,18 @@ func main() {
 		ON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();
 	`)
 
+	// Set 10 GHS per referral invite and 10 GHS welcome bonus
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('referral_l1_bp', '10', 'GHS reward for each referral invite', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = '10', updated_at = NOW();
+	`)
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('welcome_bonus_bp', '10', 'GHS welcome bonus for users who join via referral', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = '10', updated_at = NOW();
+	`)
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `
