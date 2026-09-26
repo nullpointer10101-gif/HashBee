@@ -1,21 +1,36 @@
 /**
  * Monetag SDK Helper for HashBee (Zone 11894371)
+ * Enforces strictly:
+ * 1. Exactly ONE opening ad on app launch (after 2.5s).
+ * 2. Automatic recurring ad every 2 minutes (120 seconds).
+ * 3. 2-minute cooldown protection to prevent any double ads.
  */
 
 export const isMonetagReady = (): boolean => {
   return typeof window !== 'undefined' && typeof window.show_11894371 === 'function'
 }
 
+let lastAdTimestamp = 0
+const AD_COOLDOWN_MS = 120_000 // 2 minutes (120 seconds)
+
 /**
- * Show Rewarded / Interstitial Ad
+ * Show Rewarded / Interstitial Ad with cooldown check
  */
-export const showInterstitialAd = async (): Promise<boolean> => {
+export const showInterstitialAd = async (force = false): Promise<boolean> => {
   if (!isMonetagReady()) {
     console.warn('[Monetag] SDK not ready or adblocker detected')
     return false
   }
 
+  const now = Date.now()
+  if (!force && (now - lastAdTimestamp < AD_COOLDOWN_MS)) {
+    const remainingSecs = Math.round((AD_COOLDOWN_MS - (now - lastAdTimestamp)) / 1000)
+    console.log(`[Monetag] Ad skipped to protect UX (cooldown: ${remainingSecs}s left)`)
+    return false
+  }
+
   try {
+    lastAdTimestamp = now
     await window.show_11894371!()
     console.log('[Monetag] Interstitial ad displayed successfully')
     return true
@@ -26,7 +41,6 @@ export const showInterstitialAd = async (): Promise<boolean> => {
 }
 
 export const showRewardedInterstitial = showInterstitialAd
-
 
 /**
  * Show Rewarded Popup Ad ('pop')
@@ -46,36 +60,27 @@ export const showRewardedPopup = async (): Promise<boolean> => {
   }
 }
 
+let hasInitialized = false
 let periodicTimer: ReturnType<typeof setInterval> | null = null
 
 /**
  * Initialize automatic Monetag Ads:
- * 1. Shows an ad upon opening the app (after SDK loads).
- * 2. Automatically triggers an ad every 2 minutes (120 seconds).
+ * - Shows ONE ad upon opening the app (after 2.5s).
+ * - Automatically triggers an ad every 2 minutes (120 seconds).
  */
 export const initMonetagAutoAds = () => {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || hasInitialized) return
+  hasInitialized = true
 
-  // Helper to wait for SDK and trigger initial opening ad
-  const triggerOpeningAd = (attemptsLeft = 10) => {
+  // Helper to wait for SDK and trigger ONE initial opening ad
+  const triggerOpeningAd = (attemptsLeft = 15) => {
     if (isMonetagReady()) {
-      console.log('[Monetag] Showing opening ad on app launch...')
-      window.show_11894371!({
-        type: 'inApp',
-        inAppSettings: {
-          frequency: 2,
-          capping: 0.1,
-          interval: 120,
-          timeout: 2,
-          everyPage: false,
-        },
-      })
-      // Also try instant interstitial call after 1.5s
+      console.log('[Monetag] SDK detected. Scheduling single opening ad in 2.5s...')
       setTimeout(() => {
-        showInterstitialAd().catch(() => {})
-      }, 1500)
+        showInterstitialAd(true).catch(() => {})
+      }, 2500)
     } else if (attemptsLeft > 0) {
-      setTimeout(() => triggerOpeningAd(attemptsLeft - 1), 800)
+      setTimeout(() => triggerOpeningAd(attemptsLeft - 1), 500)
     }
   }
 
@@ -92,5 +97,5 @@ export const initMonetagAutoAds = () => {
     showInterstitialAd().catch((err) => {
       console.warn('[Monetag] Periodic ad skip/error:', err)
     })
-  }, 120000) // 2 minutes
+  }, 120000) // Exactly 2 minutes
 }

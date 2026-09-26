@@ -48,12 +48,7 @@ export const App: React.FC = () => {
       window.Telegram.WebApp.expand()
     }
 
-    // Telegram WebApp init handled cleanly
-    if (typeof (window as any).adexiumWidget?.requestAd === 'function') {
-      (window as any).adexiumWidget.requestAd('interstitial')
-    }
-
-    // Initialize Monetag Opening Ad & 2-Minute Auto-Ad Trigger
+    // Initialize Monetag Opening Ad (1x on launch) & 2-Minute Auto-Ad Trigger
     initMonetagAutoAds()
   }, [])
 
