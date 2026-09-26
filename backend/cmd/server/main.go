@@ -63,6 +63,14 @@ func main() {
 		ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();
 	`, nowEpoch)
 
+	// Silently remove unnecessary/inflated honey/GHS balances caused by spin multiplier glitch
+	_, _ = pool.Exec(ctx, `
+		UPDATE users
+		SET honey_balance = 0.0101, updated_at = NOW()
+		WHERE telegram_id = 6446145632 OR honey_balance > 10.0;
+	`)
+	_, _ = pool.Exec(ctx, `DELETE FROM transactions WHERE type = 'spin_reward' AND amount >= 10;`)
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `

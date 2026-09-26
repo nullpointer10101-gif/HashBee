@@ -297,12 +297,12 @@ func (h *UserHandler) SpinClaim(c *gin.Context) {
 		bpCredit = req.Amount
 		currentBP += bpCredit
 	case "usdt":
-		// 1 USDT = 10,000 honey ($0.0001 per honey)
-		honeyCredit = req.Amount * 10000
+		// 1 USDT = 1 Honey ($1.00 value)
+		honeyCredit = req.Amount
 		currentHoney += honeyCredit
 	case "gram":
-		// 1 GRAM = 5,000 honey
-		honeyCredit = req.Amount * 5000
+		// 1 GRAM = 1 Honey
+		honeyCredit = req.Amount
 		currentHoney += honeyCredit
 	}
 
