@@ -333,7 +333,21 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                         <td className="p-4 font-semibold text-amber-400">{w.payout_method}</td>
                         <td className="p-4 font-extrabold text-amber-300">{w.amount_honey.toLocaleString()} 🍯</td>
                         <td className="p-4 font-semibold text-emerald-400">${w.amount_usd.toFixed(2)}</td>
-                        <td className="p-4 font-mono text-slate-300">{w.wallet_address}</td>
+                        <td className="p-4 font-mono text-slate-300">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate max-w-[150px]" title={w.wallet_address}>{w.wallet_address}</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(w.wallet_address);
+                                alert('📋 Copied address to clipboard:\n' + w.wallet_address);
+                              }}
+                              className="px-2 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition-all shrink-0 cursor-pointer"
+                              title="Copy Destination Address"
+                            >
+                              📋 Copy
+                            </button>
+                          </div>
+                        </td>
                         <td className="p-4 text-slate-400">{new Date(w.created_at).toLocaleString()}</td>
                         <td className="p-4 text-right space-x-2">
                           <button
