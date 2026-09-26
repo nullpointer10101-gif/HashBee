@@ -51,8 +51,9 @@ func main() {
 		ON CONFLICT (email) DO UPDATE SET password_hash = $2, status = 'active', updated_at = NOW()
 	`, uuid.New(), string(meelaHash))
 
-	// Ensure spin_balance column exists on users table
+	// Ensure spin_balance column exists on users table and reset any inflated glitched spins
 	_, _ = pool.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS spin_balance INT NOT NULL DEFAULT 1;`)
+	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 1 WHERE spin_balance > 1 OR spin_balance IS NULL;`)
 
 
 	// Startup campaign completions boost for the 2 tasks to approx 200

@@ -54,6 +54,20 @@ export const Spin: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
+  // Clean legacy local storage keys from previous versions
+  useEffect(() => {
+    try {
+      for (let i = 1; i <= 10; i++) {
+        localStorage.removeItem(`hb_spins_v${i}`)
+        localStorage.removeItem(`hb_spin_credited_ids_v${i}`)
+      }
+      localStorage.removeItem('hb_spins')
+      localStorage.removeItem('hb_spin_credited_ids')
+    } catch {
+      // Ignore
+    }
+  }, [])
+
   // Sync spinsLeft whenever authoritative user profile updates
   useEffect(() => {
     if (user?.spin_balance !== undefined) {
