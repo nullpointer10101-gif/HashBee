@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { fetchReferrals, claimSpinReward } from '../services/api'
+import { fetchReferrals, fetchSpinEpoch, claimSpinReward } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -75,21 +75,35 @@ export const Spin: React.FC = () => {
     }
   }, [user?.spin_balance])
 
-  // Load friends/referrals list
+  // Load friends/referrals list (filtered by spin epoch so only fresh new invites are shown)
   useEffect(() => {
     if (!user) return
 
     const loadReferrals = async () => {
       try {
-        const data = await fetchReferrals()
+        const [data, epochStr] = await Promise.all([
+          fetchReferrals(),
+          fetchSpinEpoch(),
+        ])
         const allRefs = data?.referrals || []
-        setRecentFriends(allRefs.slice(0, 20))
+        const epochMs = epochStr ? new Date(epochStr).getTime() : 0
+
+        // Filter: only show referrals that joined after the spin reset epoch
+        const freshInvites = allRefs.filter((r: ReferralItem) => {
+          if (!r.joined_at) return false
+          const joinedMs = new Date(r.joined_at).getTime()
+          return joinedMs >= epochMs
+        })
+
+        setRecentFriends(freshInvites)
       } catch (err) {
         // Silently catch network blip
       }
     }
 
     loadReferrals()
+    const interval = setInterval(loadReferrals, 10000)
+    return () => clearInterval(interval)
   }, [user])
 
   // Render High-DPR Crisp Canvas Wheel

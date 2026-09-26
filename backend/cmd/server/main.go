@@ -55,6 +55,14 @@ func main() {
 	_, _ = pool.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS spin_balance INT NOT NULL DEFAULT 1;`)
 	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 1 WHERE spin_balance > 1 OR spin_balance IS NULL;`)
 
+	// Set/Update spin_epoch to current reset timestamp so old referrals are not displayed in the fresh spin log
+	nowEpoch := time.Now().UTC().Format(time.RFC3339)
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('spin_epoch', $1, 'Spin reset epoch timestamp', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW();
+	`, nowEpoch)
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `
