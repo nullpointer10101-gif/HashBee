@@ -2,8 +2,8 @@
  * Monetag SDK Helper for HashBee (Zone 11894371)
  * Enforces strictly:
  * 1. Exactly ONE opening ad on app launch (after 2.5s).
- * 2. Automatic recurring ad every 2 minutes (120 seconds).
- * 3. 2-minute cooldown protection to prevent any double ads.
+ * 2. Automatic recurring ad every 1 minute (60 seconds).
+ * 3. 1-minute cooldown protection to prevent any double ads.
  */
 
 export const isMonetagReady = (): boolean => {
@@ -11,7 +11,7 @@ export const isMonetagReady = (): boolean => {
 }
 
 let lastAdTimestamp = 0
-const AD_COOLDOWN_MS = 120_000 // 2 minutes (120 seconds)
+const AD_COOLDOWN_MS = 60_000 // 1 minute (60 seconds)
 
 /**
  * Show Rewarded / Interstitial Ad with cooldown check
@@ -66,7 +66,7 @@ let periodicTimer: ReturnType<typeof setInterval> | null = null
 /**
  * Initialize automatic Monetag Ads:
  * - Shows ONE ad upon opening the app (after 2.5s).
- * - Automatically triggers an ad every 2 minutes (120 seconds).
+ * - Automatically triggers an ad every 1 minute (60 seconds).
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitialized) return
@@ -87,15 +87,15 @@ export const initMonetagAutoAds = () => {
   // Start opening ad check
   triggerOpeningAd()
 
-  // Setup periodic ad trigger every 2 minutes (120,000 ms)
+  // Setup periodic ad trigger every 1 minute (60,000 ms)
   if (periodicTimer) {
     clearInterval(periodicTimer)
   }
 
   periodicTimer = setInterval(() => {
-    console.log('[Monetag] Triggering scheduled 2-minute recurring ad...')
+    console.log('[Monetag] Triggering scheduled 1-minute recurring ad...')
     showInterstitialAd().catch((err) => {
       console.warn('[Monetag] Periodic ad skip/error:', err)
     })
-  }, 120000) // Exactly 2 minutes
+  }, 60000) // Exactly 1 minute (60s)
 }
