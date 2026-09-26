@@ -361,26 +361,45 @@ func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
 	ctx := c.Request.Context()
 	adminUUID, _ := uuid.Parse(adminID)
 
+	// Fetch withdrawal and user details before updating
+	var (
+		targetUserID     uuid.UUID
+		targetTelegramID int64
+		targetFirstName  string
+		targetAmount     float64
+		targetNetwork    string
+		targetAddress    string
+		honeyAmount      float64
+		currentStatus    string
+	)
+
+	err = h.db.QueryRow(ctx,
+		`SELECT w.user_id, u.telegram_id, u.first_name, w.amount, w.network, w.address, w.honey_amount, w.status
+		 FROM withdrawals w
+		 JOIN users u ON u.id = w.user_id
+		 WHERE w.id = $1`, wID).
+		Scan(&targetUserID, &targetTelegramID, &targetFirstName, &targetAmount, &targetNetwork, &targetAddress, &honeyAmount, &currentStatus)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "withdrawal not found"})
+		return
+	}
+
 	// If rejecting, refund the honey
 	if req.Status == "rejected" {
 		tx, _ := h.db.Begin(ctx)
 		defer tx.Rollback(ctx)
 
-		var w models.Withdrawal
-		err = tx.QueryRow(ctx,
-			`SELECT user_id, honey_amount, status FROM withdrawals WHERE id = $1 FOR UPDATE`, wID).
-			Scan(&w.UserID, &w.HoneyAmount, &w.Status)
-		if err != nil || w.Status != "pending" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "withdrawal not in pending state"})
+		if currentStatus != "pending" && currentStatus != "processing" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "withdrawal not in pending/processing state"})
 			return
 		}
 
 		// Refund honey
-		tx.Exec(ctx, `UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`, w.HoneyAmount, w.UserID)
+		tx.Exec(ctx, `UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`, honeyAmount, targetUserID)
 		tx.Exec(ctx,
 			`INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, description, created_at)
 			 VALUES ($1, $2, 'adjustment', $3, 'HONEY', $4, 'Withdrawal rejected - refund', NOW())`,
-			uuid.New(), w.UserID, w.HoneyAmount, wID)
+			uuid.New(), targetUserID, honeyAmount, wID)
 		tx.Exec(ctx,
 			`UPDATE withdrawals SET status = $1, reason = $2, processed_by = $3, updated_at = NOW() WHERE id = $4`,
 			req.Status, req.Reason, adminUUID, wID)
@@ -391,7 +410,55 @@ func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
 			req.Status, req.TxHash, req.Reason, adminUUID, wID)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Withdrawal updated"})
+	// Send instant Telegram notification to the user
+	if h.bot != nil && targetTelegramID != 0 {
+		go func(tgID int64, name, status, network, address, txHash, reason string, amount float64) {
+			appURL := h.cfg.MiniAppURL
+			if appURL == "" {
+				appURL = "https://miniapp-five-topaz.vercel.app"
+			}
+
+			var notifyText string
+			var btnText string
+			if status == "paid" || status == "approved" {
+				txInfo := ""
+				if txHash != "" {
+					txInfo = fmt.Sprintf("\n🔗 *Tx Hash:* `%s`\n", txHash)
+				}
+				btnText = "🐝 Open HashBee Miner"
+				notifyText = fmt.Sprintf(`🎉 *CONGRATULATIONS! WITHDRAWAL APPROVED & PAID!* 💸
+
+💰 *Amount Sent:* *%.4f %s*
+💼 *Destination Wallet:*
+`+"`%s`"+`
+%s
+⚡ *Status:* *COMPLETED & PAID* ✅
+
+🚀 *Your funds have been transferred successfully!* Thank you for mining with HashBee. Keep your hive active, boost your GHS speed, and invite friends to multiply your earnings! 🐝`,
+					amount, network, address, txInfo)
+			} else if status == "rejected" {
+				btnText = "🐝 Open HashBee Miner"
+				refReason := reason
+				if refReason == "" {
+					refReason = "Admin review declined"
+				}
+				notifyText = fmt.Sprintf(`⚠️ *Withdrawal Request Declined*
+
+Your withdrawal request for *%.4f %s* was not approved and the honey has been *refunded back to your balance*.
+
+📝 *Reason:* %s
+
+🐝 Open HashBee to check your balance and continue mining.`,
+					amount, network, refReason)
+			}
+
+			if notifyText != "" {
+				h.bot.BroadcastWithButton(context.Background(), notifyText, btnText, appURL, []int64{tgID})
+			}
+		}(targetTelegramID, targetFirstName, req.Status, targetNetwork, targetAddress, req.TxHash, req.Reason, targetAmount)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Withdrawal updated and user notified"})
 }
 
 // GET /api/admin/settings
