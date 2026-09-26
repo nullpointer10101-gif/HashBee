@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { fetchReferrals } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -33,12 +34,13 @@ export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
+  // Daily Free 10 Spins
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
-    const saved = localStorage.getItem('hb_spins_count')
-    return saved !== null ? parseInt(saved, 10) : 1
+    const saved = localStorage.getItem('hb_spins_count_v2')
+    return saved !== null ? parseInt(saved, 10) : 10
   })
   const [lastFreeDate, setLastFreeDate] = useState<string>(() => {
-    return localStorage.getItem('hb_last_free_spin') || ''
+    return localStorage.getItem('hb_last_free_spin_v2') || ''
   })
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -49,18 +51,46 @@ export const Spin: React.FC = () => {
 
   // Persist spins count
   useEffect(() => {
-    localStorage.setItem('hb_spins_count', spinsLeft.toString())
+    localStorage.setItem('hb_spins_count_v2', spinsLeft.toString())
   }, [spinsLeft])
 
-  // Daily free spin check
+  // Daily 10 Free Spins Check
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
     if (lastFreeDate !== today) {
-      setSpinsLeft((prev) => prev + 1)
+      setSpinsLeft((prev) => Math.max(10, prev + 10))
       setLastFreeDate(today)
-      localStorage.setItem('hb_last_free_spin', today)
+      localStorage.setItem('hb_last_free_spin_v2', today)
     }
   }, [lastFreeDate])
+
+  // Real-time Immediate Referral Credit Check (+2 spins per friend)
+  useEffect(() => {
+    if (!user) return
+
+    const checkNewReferrals = async () => {
+      try {
+        const data = await fetchReferrals()
+        const currentRefCount = data?.tier1_count || 0
+        const savedCreditedRefs = parseInt(localStorage.getItem('hb_credited_refs') || '0', 10)
+
+        if (currentRefCount > savedCreditedRefs) {
+          const newJoined = currentRefCount - savedCreditedRefs
+          const bonusSpins = newJoined * 2
+          setSpinsLeft((prev) => prev + bonusSpins)
+          localStorage.setItem('hb_credited_refs', currentRefCount.toString())
+          toast.success(`🎉 +${bonusSpins} Free Spins credited from ${newJoined} new friend(s)!`)
+        }
+      } catch (err) {
+        // Silently catch if offline
+      }
+    }
+
+    checkNewReferrals()
+    // Periodic check every 15s in background while on spin screen
+    const interval = setInterval(checkNewReferrals, 15000)
+    return () => clearInterval(interval)
+  }, [user])
 
   // Render High-DPR Crisp Canvas Wheel
   useEffect(() => {
@@ -186,7 +216,7 @@ export const Spin: React.FC = () => {
   const handleSpin = () => {
     if (isSpinning) return
     if (spinsLeft <= 0) {
-      toast.error('No spins left! Invite friends or check in tomorrow for more.')
+      toast.error('No spins left! Invite friends for +2 spins each or wait for daily refill.')
       return
     }
 
@@ -232,7 +262,7 @@ export const Spin: React.FC = () => {
     }, 2200)
   }
 
-  // Share referral link to get +3 spins
+  // Share referral link to get +2 spins
   const handleShareReferral = () => {
     const botUser = 'hashbee_bot'
     const refCode = user?.telegram_id || ''
@@ -244,7 +274,7 @@ export const Spin: React.FC = () => {
       window.Telegram.WebApp.openTelegramLink(tgUrl)
     } else {
       navigator.clipboard.writeText(refUrl)
-      toast.success('Invite link copied! Send to friends for +3 spins.')
+      toast.success('Invite link copied! Send to friends for +2 spins each.')
     }
   }
 
@@ -258,7 +288,7 @@ export const Spin: React.FC = () => {
           <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">Instant Drops & Permanent Hashrate</p>
+            <p className="text-[11px] text-[#78a591]">10 Free Daily Spins + 2 Spins / Friend</p>
           </div>
         </div>
         <div className="bg-[#0f1c16] border border-[#234535] px-3.5 py-1.5 rounded-xl text-center shadow-inner">
@@ -328,11 +358,11 @@ export const Spin: React.FC = () => {
             <span className="text-2xl p-2 bg-[#10241b] rounded-xl border border-[#234535]">👥</span>
             <div className="text-left">
               <span className="text-sm font-black text-[#e6f0ec] block">Invite 1 Friend</span>
-              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +3 Free Spins!</span>
+              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +2 Free Spins!</span>
             </div>
           </div>
           <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3.5 py-1.5 rounded-xl shadow">
-            +3 SPINS
+            +2 SPINS
           </span>
         </button>
       </div>
