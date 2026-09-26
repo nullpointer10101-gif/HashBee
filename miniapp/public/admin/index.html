@@ -222,6 +222,9 @@
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
               <option value="custom">✍️ Custom Message</option>
+              <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
+              <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
+              <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
               <option value="personalized_buzz">👤 Personalized VIP (Hey {name})</option>
               <option value="viral_20k">🚀 20,000+ Users Record Celebration</option>
               <option value="mining_boost">⛏️ Double Mining Rate Hype</option>
@@ -457,6 +460,50 @@ if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; local
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
+  spin_dopamine_jackpot: {
+    msg: `🎡 *LUCKY HONEY WHEEL IS LIVE! SPIN & WIN REAL USDT & GRAM!* 🎁⚡
+
+Hey {name}! The most exciting game is officially HERE! 🐝🎰
+
+💰 *WHAT YOU CAN WIN ON THE WHEEL:*
+👑 *1.0 GRAM Mega Jackpot*
+💵 *Real USDT Cash Drops*
+⚡ *Permanent Hashrate (GHS) Boosts*
+🔄 *Free Re-Spins & Token Drops*
+
+🎁 *HOW TO GET FREE SPINS:*
+• Every friend who signs up ➔ *Instant +1 Free Spin!* (Unlimited)
+• Daily Free Starter Spins!
+
+👇 *Tap below to spin the wheel right now!*`,
+    btn: '🎡 Spin The Lucky Wheel Now 🎰'
+  },
+  spin_viral_referrals: {
+    msg: `🔥 *SPIN FEVER: 1 INVITE = 1 FREE SPIN!* 🎡🚀
+
+Want to win free USDT, GRAM & Permanent Mining Power? 🐝💰
+
+Every time a friend clicks your invite link & signs up:
+✅ *You instantly receive +1 FREE SPIN!* (No limits!)
+
+👑 *Jackpot Prizes on the Wheel:*
+💵 Real USDT & GRAM tokens
+⚡ Permanent Hash Power Boosts (+1 & +2 HASH)
+
+👇 *Open the Wheel & Invite Friends to Spin!*`,
+    btn: '🎡 Open Wheel & Get Free Spins 🚀'
+  },
+  spin_vip_drop: {
+    msg: `⚡ *VIP REWARD: YOUR FREE SPIN IS WAITING!* 🎡🎁
+
+Hey {name}! 🐝
+Your Lucky Honey Wheel turn is ready to spin right now!
+
+🎲 Will you hit the *1 GRAM Jackpot* or *Real USDT*? Test your luck today!
+
+👇 *Tap below to spin immediately:*`,
+    btn: '🎰 Claim Free Spin & Play ⚡'
+  },
   personalized_buzz: {
     msg: `👋 Hey {name}, your Hive is buzzing! 🐝⚡
 
