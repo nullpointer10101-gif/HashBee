@@ -885,3 +885,156 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		"status":  "running",
 	})
 }
+
+// GET /api/admin/auto-broadcast - Get automated broadcast configuration
+func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
+	ctx := c.Request.Context()
+	enabled := h.settings.GetBool(ctx, "auto_broadcast_enabled", false)
+	interval := h.settings.GetInt(ctx, "auto_broadcast_interval_minutes", 60)
+	msg, _ := h.settings.Get(ctx, "auto_broadcast_message")
+	btnText, _ := h.settings.Get(ctx, "auto_broadcast_button_text")
+	btnURL, _ := h.settings.Get(ctx, "auto_broadcast_button_url")
+	templateKey, _ := h.settings.Get(ctx, "auto_broadcast_template_key")
+	lastRun, _ := h.settings.Get(ctx, "auto_broadcast_last_run_at")
+
+	if btnText == "" {
+		btnText = "🐝 Open HashBee App"
+	}
+	if btnURL == "" {
+		btnURL = "https://miniapp-five-topaz.vercel.app"
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"enabled":          enabled,
+		"interval_minutes": interval,
+		"template_key":     templateKey,
+		"message":          msg,
+		"button_text":      btnText,
+		"button_url":       btnURL,
+		"last_run_at":      lastRun,
+	})
+}
+
+// POST /api/admin/auto-broadcast - Update automated broadcast configuration
+func (h *AdminHandler) SetAutoBroadcast(c *gin.Context) {
+	ctx := c.Request.Context()
+	var req struct {
+		Enabled         bool   `json:"enabled"`
+		IntervalMinutes int    `json:"interval_minutes"`
+		TemplateKey     string `json:"template_key"`
+		Message         string `json:"message"`
+		ButtonText      string `json:"button_text"`
+		ButtonURL       string `json:"button_url"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.IntervalMinutes <= 0 {
+		req.IntervalMinutes = 60
+	}
+
+	_ = h.settings.Set(ctx, "auto_broadcast_enabled", strconv.FormatBool(req.Enabled))
+	_ = h.settings.Set(ctx, "auto_broadcast_interval_minutes", strconv.Itoa(req.IntervalMinutes))
+	_ = h.settings.Set(ctx, "auto_broadcast_template_key", req.TemplateKey)
+	_ = h.settings.Set(ctx, "auto_broadcast_message", req.Message)
+	_ = h.settings.Set(ctx, "auto_broadcast_button_text", req.ButtonText)
+	_ = h.settings.Set(ctx, "auto_broadcast_button_url", req.ButtonURL)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "✅ Automated broadcast settings saved!",
+		"enabled": req.Enabled,
+	})
+}
+
+// StartAutoBroadcastWorker runs background loop to trigger scheduled broadcasts
+func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				func() {
+					cctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+					defer cancel()
+
+					enabled := h.settings.GetBool(cctx, "auto_broadcast_enabled", false)
+					if !enabled || h.bot == nil {
+						return
+					}
+
+					intervalMin := h.settings.GetInt(cctx, "auto_broadcast_interval_minutes", 60)
+					if intervalMin <= 0 {
+						intervalMin = 60
+					}
+
+					lastRunStr, _ := h.settings.Get(cctx, "auto_broadcast_last_run_at")
+					if lastRunStr != "" {
+						if lastRunTime, err := time.Parse(time.RFC3339, lastRunStr); err == nil {
+							if time.Since(lastRunTime) < time.Duration(intervalMin)*time.Minute {
+								return // Not due yet
+							}
+						}
+					}
+
+					// Check if a broadcast is already in flight
+					broadcastMu.Lock()
+					if broadcastStatus.IsRunning {
+						broadcastMu.Unlock()
+						return
+					}
+					broadcastMu.Unlock()
+
+					msg, _ := h.settings.Get(cctx, "auto_broadcast_message")
+					btnText, _ := h.settings.Get(cctx, "auto_broadcast_button_text")
+					btnURL, _ := h.settings.Get(cctx, "auto_broadcast_button_url")
+					if msg == "" {
+						return
+					}
+					if btnText == "" {
+						btnText = "🐝 Open HashBee App"
+					}
+					if btnURL == "" {
+						btnURL = "https://miniapp-five-topaz.vercel.app"
+					}
+
+					// Query recipients
+					rows, err := h.db.Query(cctx, `SELECT DISTINCT telegram_id, COALESCE(first_name, username, '') FROM users WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned')`)
+					if err != nil {
+						return
+					}
+					defer rows.Close()
+
+					var recipients []bot.BroadcastRecipient
+					for rows.Next() {
+						var id int64
+						var fn string
+						if err := rows.Scan(&id, &fn); err == nil && id > 0 {
+							recipients = append(recipients, bot.BroadcastRecipient{TelegramID: id, FirstName: fn})
+						}
+					}
+
+					if len(recipients) == 0 {
+						return
+					}
+
+					// Update last run timestamp immediately
+					_ = h.settings.Set(cctx, "auto_broadcast_last_run_at", time.Now().UTC().Format(time.RFC3339))
+
+					log.Printf("⏱️ [AutoBroadcast] Triggering scheduled broadcast for %d users...", len(recipients))
+					go func(recs []bot.BroadcastRecipient, message, bt, bu string) {
+						bctx, bcancel := context.WithTimeout(context.Background(), 20*time.Minute)
+						defer bcancel()
+						h.bot.BroadcastRecipientsProgress(bctx, message, bt, bu, recs, nil)
+					}(recipients, msg, btnText, btnURL)
+				}()
+			}
+		}
+	}()
+}
+

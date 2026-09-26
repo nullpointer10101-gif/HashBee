@@ -222,6 +222,9 @@
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
               <option value="custom">✍️ Custom Message</option>
+              <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
+              <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
+              <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
               <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
               <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
               <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
@@ -301,6 +304,91 @@
             <div>• Use <b>*bold*</b> for headlines and emojis to boost open rates.</div>
             <div>• Telegram WebApp buttons open directly inside Telegram without asking to switch browsers!</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Automated Hourly Broadcast Control Card -->
+      <div class="card" style="margin-top:24px; border:1px solid #d97706; background: linear-gradient(180deg, #161a15 0%, #0d120f 100%);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:22px;">⏱️</span>
+              <h3 style="font-size:17px; font-weight:900; color:#fbbf24;">Automated Scheduled Broadcast (Auto-Pilot)</h3>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Automatically broadcast selected announcements to all active users every hour or at custom intervals in the background.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="autoBroadcastStatusBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:12px; font-weight:800; padding:6px 12px;">⏸️ Disabled</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">⚙️ Auto-Pilot Switch</label>
+            <select id="autoBroadcastEnabled" class="form-input" style="font-weight:700;">
+              <option value="false">🔴 Disabled (Don't send automatically)</option>
+              <option value="true">🟢 ENABLED (Send automatically in background)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">⏱️ Broadcast Interval</label>
+            <select id="autoBroadcastInterval" class="form-input font-mono" style="font-weight:700;">
+              <option value="60">⏰ Every 1 Hour (Recommended)</option>
+              <option value="120">⏰ Every 2 Hours</option>
+              <option value="180">⏰ Every 3 Hours</option>
+              <option value="240">⏰ Every 4 Hours</option>
+              <option value="360">⏰ Every 6 Hours</option>
+              <option value="720">⏰ Every 12 Hours (Twice Daily)</option>
+              <option value="1440">⏰ Every 24 Hours (Once Daily)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Auto-Broadcast Template Preset</label>
+          <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
+            <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
+            <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
+            <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
+            <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
+            <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
+            <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
+            <option value="personalized_buzz">👤 Personalized VIP (Hey {name})</option>
+            <option value="viral_20k">🚀 20,000+ Users Record Celebration</option>
+            <option value="mining_boost">⛏️ Double Mining Rate Hype</option>
+            <option value="ghs_drop">🎁 Free 10 GHS Power Gift</option>
+            <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
+            <option value="withdraw_alert">💸 Instant GRAM Withdrawals Live</option>
+            <option value="custom">✍️ Custom Message Below</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Automated Broadcast Message (Markdown Supported)</label>
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour..."></textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Button Text</label>
+            <input type="text" id="autoBroadcastBtnText" class="form-input" value="📦 Unlock Mystery Crates 🎁">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Button WebApp URL</label>
+            <input type="text" id="autoBroadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:12px; color:#9ca3af;">
+            <span>🕒 Last Sent: <b id="autoBroadcastLastRun" style="color:#fbbf24;">Never</b></span>
+          </div>
+          <button onclick="saveAutoBroadcast()" id="saveAutoBroadcastBtn" class="btn btn-primary" style="padding:12px 24px; font-size:13px; font-weight:800;">
+            💾 Save Automated Broadcast Settings
+          </button>
         </div>
       </div>
     </div>
@@ -460,6 +548,53 @@ if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; local
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
+  crate_mega_jackpot: {
+    msg: `📦 *NEW FEATURE: MYSTERY LOOT CRATES ARE LIVE!* 🎁💎
+
+Hey {name}! 🐝
+Unbox instant high-value fortunes in the brand new *HashBee Mystery Crates*!
+
+💰 *AVAILABLE CRATES:*
+🥉 *Bronze Crate* (0.5 GRAM) ➔ Win up to 2.5 GRAM + USDT + HASH!
+🥈 *Silver Crate* (1.5 GRAM) ➔ Win up to 7.5 GRAM + $5 USDT!
+🥇 *Gold Crate* (3.0 GRAM) ➔ Win up to 15.0 GRAM + $10 USDT!
+💎 *Diamond Crate* (5.0 GRAM) ➔ Win up to *25.0 GRAM Mega Jackpot* + $20 USDT!
+
+✨ *Pure Value:* Win real USDT, instant GRAM cash, or massive HASH mining speeds!
+
+👇 *Tap below to open your first crate right now:*`,
+    btn: '📦 Unlock Mystery Crates 🎁'
+  },
+  crate_bronze_starter: {
+    msg: `🥉 *STARTER CRATE UNLOCKED: ONLY 0.5 GRAM!* 📦⚡
+
+Hey {name}! Test your luck with our lowest-entry mystery box:
+
+🎁 *Bronze Crate (0.5 GRAM Entry):*
+💵 Win real USDT direct to balance
+🪙 Win up to 2.5 GRAM instant cash
+⚡ Win permanent +5 HASH mining power
+
+🔥 100% instant unboxing with provably fair rewards!
+
+👇 *Tap below to open your Bronze Crate:*`,
+    btn: '📦 Open 0.5 GRAM Crate 🚀'
+  },
+  crate_vip_dopamine: {
+    msg: `👑 *VIP HIGH-ROLLER ALERT: 25 GRAM CRATE JACKPOT!* 💎🔥
+
+{name}, the Diamond & Gold Mystery Crates have just been stocked with massive rewards!
+
+💎 *Diamond Crate Highlights:*
+• 🏆 *25.0 GRAM Single Drop Jackpot*
+• 💵 *$20.00 USDT Instant Cash*
+• ⚡ *+20 HASH Power (Permanent 24/7 Mining)*
+
+Your next unboxing could trigger the ultimate jackpot!
+
+👇 *Tap below to enter the Mystery Crates arena:*`,
+    btn: '💎 Play High Roller Crates 👑'
+  },
   spin_dopamine_jackpot: {
     msg: `🎡 *LUCKY HONEY WHEEL IS LIVE! SPIN & WIN REAL USDT & GRAM!* 🎁⚡
 
@@ -705,6 +840,7 @@ function switchTab(tabId, el) {
   if (tabId === 'users') loadUsers();
   if (tabId === 'withdrawals') loadWithdrawals();
   if (tabId === 'settings') loadSettings();
+  if (tabId === 'broadcast') loadAutoBroadcast();
 }
 
 async function loadStats() {
@@ -1019,6 +1155,112 @@ async function sendBroadcast() {
     showToast(err.message, true);
     btn.innerText = '🚀 Send Hype Broadcast Now';
     btn.disabled = false;
+  }
+}
+
+// Automated Hourly Broadcast Handlers
+function applyAutoTemplate(key) {
+  if (HYPE_TEMPLATES[key]) {
+    document.getElementById('autoBroadcastMsg').value = HYPE_TEMPLATES[key].msg;
+    document.getElementById('autoBroadcastBtnText').value = HYPE_TEMPLATES[key].btn;
+  }
+}
+
+async function loadAutoBroadcast() {
+  try {
+    const res = await fetch(API_URL + '/api/admin/auto-broadcast', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const enabledSel = document.getElementById('autoBroadcastEnabled');
+    if (enabledSel) enabledSel.value = data.enabled ? 'true' : 'false';
+
+    const intSel = document.getElementById('autoBroadcastInterval');
+    if (intSel) intSel.value = (data.interval_minutes || 60).toString();
+
+    const tplSel = document.getElementById('autoBroadcastTemplateSelect');
+    if (tplSel && data.template_key) tplSel.value = data.template_key;
+
+    const msgEl = document.getElementById('autoBroadcastMsg');
+    if (msgEl) {
+      if (data.message) {
+        msgEl.value = data.message;
+      } else if (HYPE_TEMPLATES.crate_mega_jackpot) {
+        msgEl.value = HYPE_TEMPLATES.crate_mega_jackpot.msg;
+      }
+    }
+
+    const btnTextEl = document.getElementById('autoBroadcastBtnText');
+    if (btnTextEl) btnTextEl.value = data.button_text || '📦 Unlock Mystery Crates 🎁';
+
+    const btnUrlEl = document.getElementById('autoBroadcastBtnUrl');
+    if (btnUrlEl) btnUrlEl.value = data.button_url || 'https://miniapp-five-topaz.vercel.app';
+
+    const lastRunEl = document.getElementById('autoBroadcastLastRun');
+    if (lastRunEl) {
+      lastRunEl.innerText = data.last_run_at ? new Date(data.last_run_at).toLocaleString() : 'Never (Waiting for next cycle)';
+    }
+
+    const badge = document.getElementById('autoBroadcastStatusBadge');
+    if (badge) {
+      if (data.enabled) {
+        badge.innerHTML = '🟢 Active (Every ' + (data.interval_minutes || 60) + ' min)';
+        badge.style.background = '#064e3b';
+        badge.style.color = '#34d399';
+      } else {
+        badge.innerHTML = '⏸️ Disabled';
+        badge.style.background = '#1e2d27';
+        badge.style.color = '#9ca3af';
+      }
+    }
+  } catch (err) {
+    console.error('loadAutoBroadcast error:', err);
+  }
+}
+
+async function saveAutoBroadcast() {
+  const enabled = document.getElementById('autoBroadcastEnabled').value === 'true';
+  const interval = parseInt(document.getElementById('autoBroadcastInterval').value) || 60;
+  const templateKey = document.getElementById('autoBroadcastTemplateSelect').value;
+  const message = document.getElementById('autoBroadcastMsg').value.trim();
+  const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
+  const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
+
+  if (enabled && !message) {
+    showToast('Please enter a message for automated broadcast', true);
+    return;
+  }
+
+  const btn = document.getElementById('saveAutoBroadcastBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Saving settings...';
+  }
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/auto-broadcast', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        enabled: enabled,
+        interval_minutes: interval,
+        template_key: templateKey,
+        message: message,
+        button_text: buttonText,
+        button_url: buttonUrl
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save auto broadcast');
+    showToast(data.message || '✅ Automated broadcast configuration saved!');
+    loadAutoBroadcast();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '💾 Save Automated Broadcast Settings';
+    }
   }
 }
 

@@ -276,9 +276,14 @@ func main() {
 			adminProtected.GET("/fraud", adminHandler.ListFraudFlags)
 			adminProtected.POST("/broadcast", adminHandler.Broadcast)
 			adminProtected.GET("/broadcast/status", adminHandler.GetBroadcastStatus)
+			adminProtected.GET("/auto-broadcast", adminHandler.GetAutoBroadcast)
+			adminProtected.POST("/auto-broadcast", adminHandler.SetAutoBroadcast)
 			adminProtected.POST("/spin-reset", adminHandler.SpinReset)
 		}
 	}
+
+	// Start Automated Broadcast Worker
+	adminHandler.StartAutoBroadcastWorker(ctx)
 
 	// =====================================================
 	// Start server
