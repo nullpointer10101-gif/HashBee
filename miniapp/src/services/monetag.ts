@@ -25,6 +25,9 @@ export const showInterstitialAd = async (): Promise<boolean> => {
   }
 }
 
+export const showRewardedInterstitial = showInterstitialAd
+
+
 /**
  * Show Rewarded Popup Ad ('pop')
  */

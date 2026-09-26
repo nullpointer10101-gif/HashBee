@@ -7,6 +7,7 @@ import { Home } from './pages/Home'
 import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
+import { Spin } from './pages/Spin'
 import { BannedScreen } from './components/BannedScreen'
 import { initMonetagAutoAds } from './services/monetag'
 
@@ -30,6 +31,7 @@ const AppContent: React.FC = () => {
     <div className="min-h-screen bg-[#101715] text-[#e6f0ec] font-sans antialiased selection:bg-[#93b3a6] selection:text-[#0f1614]">
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/spin" element={<Spin />} />
         <Route path="/earn" element={<Referrals />} />
         <Route path="/tasks" element={<Missions />} />
         <Route path="/withdraw" element={<Withdraw />} />

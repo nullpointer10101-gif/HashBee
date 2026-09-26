@@ -204,6 +204,26 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* 🎡 LUCKY WHEEL CALLOUT BANNER */}
+      <div
+        onClick={() => navigate('/spin')}
+        className="cursor-pointer mb-4 p-4 rounded-3xl bg-gradient-to-r from-[#1b382b] via-[#244b3a] to-[#1b382b] border border-[#346b53] shadow-xl flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-amber-400/60"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-3xl animate-bounce">🎡</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-amber-300 uppercase tracking-wider">Lucky Wheel</span>
+              <span className="text-[9px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">FREE SPINS</span>
+            </div>
+            <p className="text-[11px] text-stone-300 font-medium mt-0.5">Spin for USDT, GRAM & Hashrate!</p>
+          </div>
+        </div>
+        <button className="bg-amber-400 text-stone-950 px-3.5 py-1.5 rounded-xl font-black text-xs uppercase shadow-md hover:bg-amber-300">
+          SPIN ➔
+        </button>
+      </div>
+
       {/* Card 2: YOUR BALANCE & PENDING BALANCE */}
       <div className="zentorno-card p-5 mb-4 text-center">
         <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">{t('your_balance', 'YOUR BALANCE')}</div>
