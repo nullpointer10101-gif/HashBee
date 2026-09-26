@@ -36,5 +36,7 @@ declare global {
         }
       }
     }
+    show_11894371?: (options?: any) => Promise<void>
   }
 }
+
