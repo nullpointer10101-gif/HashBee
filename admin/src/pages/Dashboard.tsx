@@ -57,9 +57,12 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
   // Broadcast state
   const SPIN_TEMPLATES = [
+    { id: 'crate_launch', label: '🎁 Mystery Crates Launch', message: '🎁 NEW: Mystery Loot Crates are LIVE on HashBee! 🐝\n\nUnlock crates starting at just 0.5 GRAM to win instant rewards:\n💵 Instant USDT Cash\n💎 Direct GRAM Drops\n⚡ Massive Mining Power (Up to +1,000 GHS!)\n\nOpen your first crate now and boost your daily earnings!', button: '🎁 Open Mystery Crates' },
+    { id: 'crate_jackpot', label: '👑 Crate Jackpot Alert', message: '🔥 MASSIVE CRATE JACKPOT ALERT! 👑\n\nMiners are winning up to +8.00 USDT and +1,000 GHS Hash Power from Golden Mystery Crates!\n\n⚡ Guaranteed rewards on EVERY unboxing: USDT, GRAM & Hash Power!\n\nTap below to test your luck before today\'s prize pool fills up!', button: '👑 Claim Crate Jackpot' },
+    { id: 'crate_bronze', label: '📦 0.5 GRAM Special Crate', message: '💎 LOW-COST MYSTERY CRATE (Only 0.5 GRAM)!\n\nReady to supercharge your miner? For just 0.5 GRAM, unlock guaranteed rewards:\n• +40 GHS to +100 GHS Hashrate\n• Instant USDT & GRAM cashback drops\n\nUnlock your Bronze Crate now!', button: '📦 Unlock 0.5 GRAM Crate' },
     { id: 'spin_daily', label: 'Daily Spin Reminder', message: 'Lucky Honey Wheel is waiting! Every invite = +1 free spin. Open HashBee and spin now!', button: 'Spin Now' },
     { id: 'spin_invite', label: 'Invite for Free Spins', message: 'Get FREE spins by inviting friends! For every friend who signs up, you get +1 free spin on the Lucky Wheel. Win USDT, GRAM, HASH!', button: 'Open HashBee' },
-    { id: 'spin_jackpot', label: 'Jackpot Alert', message: 'JACKPOT ALERT on HashBee Lucky Wheel! Spin for a chance to win 1 GRAM today! All users get 1 free spin per invite.', button: 'Spin for Jackpot' },
+    { id: 'spin_jackpot', label: 'Spin Jackpot Alert', message: 'JACKPOT ALERT on HashBee Lucky Wheel! Spin for a chance to win 1 GRAM today! All users get 1 free spin per invite.', button: 'Spin for Jackpot' },
   ]
   const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
   const [broadcastMsg, setBroadcastMsg] = useState(SPIN_TEMPLATES[0].message)
