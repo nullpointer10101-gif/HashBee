@@ -324,7 +324,7 @@
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
           <div class="form-group">
             <label class="form-label" style="color:#fbbf24; font-weight:800;">⚙️ Auto-Pilot Switch</label>
             <select id="autoBroadcastEnabled" class="form-input" style="font-weight:700;">
@@ -345,7 +345,23 @@
               <option value="1440">⏰ Every 24 Hours (Once Daily)</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">🎲 Message Rotation Mode</label>
+            <select id="autoBroadcastMode" class="form-input" style="font-weight:700;" onchange="toggleAutoBroadcastMode(this.value)">
+              <option value="rotate" selected>🎲 Smart Random Auto-Rotation (Recommended)</option>
+              <option value="fixed">📌 Fixed Custom Message</option>
+            </select>
+          </div>
         </div>
+
+        <!-- Info box when Smart Random Rotation is active -->
+        <div id="autoBroadcastRotationInfo" style="margin-bottom:16px; padding:12px 16px; border-radius:12px; background:#10221a; border:1px solid #059669; font-size:12px; color:#6ee7b7;">
+          <div style="font-weight:800; color:#34d399; margin-bottom:4px;">🎲 Smart Random Rotation Active:</div>
+          <div>Every hour, the bot automatically selects a <b>different, fresh high-converting message</b> from your top campaigns (Mystery Crates, Mega Wheel Jackpot, Viral Free Spins, Full Hive Alert, Power Multipliers) with dynamic personalized names. Users will never receive the same repetitive message!</div>
+        </div>
+
+        <div id="autoBroadcastFixedOptions" style="display:none;">
 
         <div class="form-group">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -410,6 +426,7 @@
             <input type="text" id="autoBroadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
           </div>
         </div>
+        </div> <!-- End of autoBroadcastFixedOptions -->
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
           <div style="font-size:12px; color:#9ca3af;">
@@ -1240,6 +1257,14 @@ async function sendBroadcast() {
 }
 
 // Automated Hourly Broadcast Handlers
+function toggleAutoBroadcastMode(mode) {
+  const isRotate = mode === 'rotate' || mode === 'random';
+  const infoEl = document.getElementById('autoBroadcastRotationInfo');
+  const fixedEl = document.getElementById('autoBroadcastFixedOptions');
+  if (infoEl) infoEl.style.display = isRotate ? 'block' : 'none';
+  if (fixedEl) fixedEl.style.display = isRotate ? 'none' : 'block';
+}
+
 function applyAutoTemplate(key) {
   if (HYPE_TEMPLATES[key]) {
     document.getElementById('autoBroadcastMsg').value = HYPE_TEMPLATES[key].msg;
@@ -1258,6 +1283,12 @@ async function loadAutoBroadcast() {
 
     const intSel = document.getElementById('autoBroadcastInterval');
     if (intSel) intSel.value = (data.interval_minutes || 60).toString();
+
+    const modeSel = document.getElementById('autoBroadcastMode');
+    if (modeSel) {
+      modeSel.value = (data.mode === 'fixed') ? 'fixed' : 'rotate';
+      toggleAutoBroadcastMode(modeSel.value);
+    }
 
     const tplSel = document.getElementById('autoBroadcastTemplateSelect');
     if (tplSel && data.template_key) tplSel.value = data.template_key;
@@ -1285,7 +1316,8 @@ async function loadAutoBroadcast() {
     const badge = document.getElementById('autoBroadcastStatusBadge');
     if (badge) {
       if (data.enabled) {
-        badge.innerHTML = '🟢 Active (Every ' + (data.interval_minutes || 60) + ' min)';
+        const modeLabel = (data.mode === 'fixed') ? 'Fixed' : '🎲 Random Rotation';
+        badge.innerHTML = '🟢 Active (Every ' + (data.interval_minutes || 60) + ' min • ' + modeLabel + ')';
         badge.style.background = '#064e3b';
         badge.style.color = '#34d399';
       } else {
@@ -1302,12 +1334,13 @@ async function loadAutoBroadcast() {
 async function saveAutoBroadcast() {
   const enabled = document.getElementById('autoBroadcastEnabled').value === 'true';
   const interval = parseInt(document.getElementById('autoBroadcastInterval').value) || 60;
+  const mode = document.getElementById('autoBroadcastMode')?.value || 'rotate';
   const templateKey = document.getElementById('autoBroadcastTemplateSelect').value;
   const message = document.getElementById('autoBroadcastMsg').value.trim();
   const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
   const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
 
-  if (enabled && !message) {
+  if (enabled && mode === 'fixed' && !message) {
     showToast('Please enter a message for automated broadcast', true);
     return;
   }
@@ -1325,6 +1358,7 @@ async function saveAutoBroadcast() {
       body: JSON.stringify({
         enabled: enabled,
         interval_minutes: interval,
+        mode: mode,
         template_key: templateKey,
         message: message,
         button_text: buttonText,

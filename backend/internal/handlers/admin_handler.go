@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -887,11 +888,174 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 	})
 }
 
+type AutoBroadcastTemplate struct {
+	Key        string `json:"key"`
+	Message    string `json:"message"`
+	ButtonText string `json:"button_text"`
+	ButtonURL  string `json:"button_url"`
+}
+
+var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
+	{
+		Key: "crate_mega_jackpot",
+		Message: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
+    🎁 *MYSTERY LOOT CRATES ARE LIVE!* 🎁
+✨ ━━━━━━━━━━━━━━━━━━━ ✨
+
+👋 *Hey {name}!* Your secret treasure awaits in the Hive! 🐝💎
+
+⚡ *UNBOX MASSIVE FORTUNES INSTANTLY:*
+━━━━━━━━━━━━━━━━━━━━
+🥉 *Bronze Crate (0.50 GRAM)*
+   ↳ 💰 Win up to *2.50 GRAM* + *USDT* + *+5 HASH*
+
+🥈 *Silver Crate (1.50 GRAM)*
+   ↳ 💰 Win up to *7.50 GRAM* + *$5.00 USDT* + *+10 HASH*
+
+🥇 *Gold Crate (3.00 GRAM)*
+   ↳ 💰 Win up to *15.00 GRAM* + *$10.00 USDT* + *+15 HASH*
+
+👑 *Diamond Crate (5.00 GRAM)*
+   ↳ 💎 Win *25.00 GRAM JACKPOT* + *$20.00 USDT* + *+20 HASH*
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *100% Guaranteed Rewards* (USDT, GRAM & Permanent Mining Power!)
+🎲 *Provably Fair & Instant Payouts*
+
+👇 *Tap below to unbox your first crate right now:*`,
+		ButtonText: "📦 Unlock Mystery Crates 🎁",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "crate_bronze_starter",
+		Message: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
+    📦 *STARTER BRONZE CRATE: ONLY 0.5 GRAM!* 📦
+✨ ━━━━━━━━━━━━━━━━━━━ ✨
+
+👋 *Hey {name}!* Test your luck with our lowest-entry mystery box! 🐝⚡
+
+🎁 *WHAT'S INSIDE THE BRONZE CRATE:*
+━━━━━━━━━━━━━━━━━━━━
+💵 *Real USDT Cash Drops*
+🪙 *Up to 2.50 GRAM Instant Win*
+⚡ *+5 HASH Permanent 24/7 Mining Speed*
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 Start with just *0.5 GRAM* and multiply your balance in 1 click!
+
+👇 *Tap below to open your Bronze Crate now:*`,
+		ButtonText: "📦 Open 0.5 GRAM Crate 🚀",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "crate_vip_dopamine",
+		Message: `👑 ━━━━━━━━━━━━━━━━━━━ 👑
+    💎 *VIP HIGH-ROLLER CRATE JACKPOT!* 💎
+👑 ━━━━━━━━━━━━━━━━━━━ 👑
+
+🔥 *ATTENTION {name}!* 🐝
+The Diamond & Gold Mystery Vaults have just been re-stocked!
+
+🏆 *TOP VAULT JACKPOTS:*
+━━━━━━━━━━━━━━━━━━━━
+👑 *25.0 GRAM Single Drop Jackpot*
+💵 *$20.00 Instant USDT Cash Drop*
+⚡ *+20 HASH Power (Permanent 24/7 Speed)*
+━━━━━━━━━━━━━━━━━━━━
+
+✨ Will YOU trigger the 25 GRAM Mega Win today?
+
+👇 *Tap below to enter the High Roller Arena:*`,
+		ButtonText: "💎 Play High Roller Crates 👑",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "spin_dopamine_jackpot",
+		Message: `🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
+    🎡 *LUCKY HONEY WHEEL IS SPINNING!* 🎡
+🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
+
+👋 *Hey {name}!* Your lucky turn is waiting right now! 🐝⚡
+
+🎁 *PRIZES YOU CAN HIT ON THE WHEEL:*
+━━━━━━━━━━━━━━━━━━━━
+👑 *1.00 GRAM Mega Jackpot*
+💵 *Real USDT Cash Drops*
+⚡ *Permanent Mining Speed Boosts*
+🔄 *Free Re-Spins & Token Drops*
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *EARN FREE SPINS:*
+• Every friend who joins ➔ *Instant +1 Free Spin!* (Unlimited)
+• Daily Starter Turns!
+
+👇 *Tap below to spin the wheel right now:*`,
+		ButtonText: "🎡 Spin The Lucky Wheel Now 🎰",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "spin_viral_referrals",
+		Message: `🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
+    👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🎡
+🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
+
+👋 *Hey {name}!* Want unlimited chances at the Mega Jackpot? 🐝💰
+
+Every single friend who joins through your link gives you:
+✅ *Instant +1 FREE SPIN on the Lucky Wheel!*
+✅ *Free Lifetime Referral Mining Commissions!*
+
+👑 *Wheel Jackpots:* 1.0 GRAM • Real USDT • +2 HASH Boosts
+
+👇 *Grab your link & invite friends to spin:*`,
+		ButtonText: "🎡 Open Wheel & Get Free Spins 🚀",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "personalized_buzz",
+		Message: `🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
+    ⚡ *HEY {name}, YOUR HIVE IS FULL!* 🍯
+🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
+
+⛏️ Your miner has produced unclaimed Honey! Don't let your honeycomb capacity go to waste.
+
+💰 *TODAY'S OPPORTUNITIES:*
+━━━━━━━━━━━━━━━━━━━━
+🍯 *Harvest* your accumulated passive Honey earnings
+📦 *Unbox* the new Mystery Loot Crates (Win up to 25 GRAM!)
+🎡 *Spin* the Lucky Wheel for USDT & Free Bonuses
+━━━━━━━━━━━━━━━━━━━━
+
+👇 *Tap below to collect your harvest & play:*`,
+		ButtonText: "🐝 Open HashBee & Collect Now 🚀",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "mining_boost",
+		Message: `⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
+    ⛏️ *DOUBLE MINING POWER ACTIVE!* ⛏️
+⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
+
+🐝 Extraction rates have been supercharged across the entire Hive network!
+
+🍯 Your bees are generating Honey at peak speed.
+Don't let your honeycombs stay full & idle.
+
+👇 *Tap below to harvest & accelerate your mining:*`,
+		ButtonText: "🐝 Open HashBee & Mine ⚡",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+}
+
 // GET /api/admin/auto-broadcast - Get automated broadcast configuration
 func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
 	ctx := c.Request.Context()
 	enabled := h.settings.GetBool(ctx, "auto_broadcast_enabled", false)
 	interval := h.settings.GetInt(ctx, "auto_broadcast_interval_minutes", 60)
+	mode, _ := h.settings.Get(ctx, "auto_broadcast_mode")
+	if mode == "" {
+		mode = "rotate"
+	}
 	msg, _ := h.settings.Get(ctx, "auto_broadcast_message")
 	btnText, _ := h.settings.Get(ctx, "auto_broadcast_button_text")
 	btnURL, _ := h.settings.Get(ctx, "auto_broadcast_button_url")
@@ -899,7 +1063,7 @@ func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
 	lastRun, _ := h.settings.Get(ctx, "auto_broadcast_last_run_at")
 
 	if btnText == "" {
-		btnText = "🐝 Open HashBee App"
+		btnText = "📦 Unlock Mystery Crates 🎁"
 	}
 	if btnURL == "" {
 		btnURL = "https://miniapp-five-topaz.vercel.app"
@@ -908,6 +1072,7 @@ func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"enabled":          enabled,
 		"interval_minutes": interval,
+		"mode":             mode,
 		"template_key":     templateKey,
 		"message":          msg,
 		"button_text":      btnText,
@@ -922,6 +1087,7 @@ func (h *AdminHandler) SetAutoBroadcast(c *gin.Context) {
 	var req struct {
 		Enabled         bool   `json:"enabled"`
 		IntervalMinutes int    `json:"interval_minutes"`
+		Mode            string `json:"mode"`
 		TemplateKey     string `json:"template_key"`
 		Message         string `json:"message"`
 		ButtonText      string `json:"button_text"`
@@ -935,9 +1101,13 @@ func (h *AdminHandler) SetAutoBroadcast(c *gin.Context) {
 	if req.IntervalMinutes <= 0 {
 		req.IntervalMinutes = 60
 	}
+	if req.Mode == "" {
+		req.Mode = "rotate"
+	}
 
 	_ = h.settings.Set(ctx, "auto_broadcast_enabled", strconv.FormatBool(req.Enabled))
 	_ = h.settings.Set(ctx, "auto_broadcast_interval_minutes", strconv.Itoa(req.IntervalMinutes))
+	_ = h.settings.Set(ctx, "auto_broadcast_mode", req.Mode)
 	_ = h.settings.Set(ctx, "auto_broadcast_template_key", req.TemplateKey)
 	_ = h.settings.Set(ctx, "auto_broadcast_message", req.Message)
 	_ = h.settings.Set(ctx, "auto_broadcast_button_text", req.ButtonText)
@@ -946,6 +1116,7 @@ func (h *AdminHandler) SetAutoBroadcast(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "✅ Automated broadcast settings saved!",
 		"enabled": req.Enabled,
+		"mode":    req.Mode,
 	})
 }
 
@@ -991,9 +1162,27 @@ func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
 					}
 					broadcastMu.Unlock()
 
-					msg, _ := h.settings.Get(cctx, "auto_broadcast_message")
-					btnText, _ := h.settings.Get(cctx, "auto_broadcast_button_text")
-					btnURL, _ := h.settings.Get(cctx, "auto_broadcast_button_url")
+					mode, _ := h.settings.Get(cctx, "auto_broadcast_mode")
+					if mode == "" {
+						mode = "rotate"
+					}
+
+					var msg, btnText, btnURL string
+
+					if mode == "rotate" || mode == "random" {
+						// Pick random template from the curated pool
+						randIdx := rand.Intn(len(RotatingBroadcastTemplates))
+						tpl := RotatingBroadcastTemplates[randIdx]
+						msg = tpl.Message
+						btnText = tpl.ButtonText
+						btnURL = tpl.ButtonURL
+						_ = h.settings.Set(cctx, "auto_broadcast_last_template_key", tpl.Key)
+					} else {
+						msg, _ = h.settings.Get(cctx, "auto_broadcast_message")
+						btnText, _ = h.settings.Get(cctx, "auto_broadcast_button_text")
+						btnURL, _ = h.settings.Get(cctx, "auto_broadcast_button_url")
+					}
+
 					if msg == "" {
 						return
 					}
@@ -1027,7 +1216,7 @@ func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
 					// Update last run timestamp immediately
 					_ = h.settings.Set(cctx, "auto_broadcast_last_run_at", time.Now().UTC().Format(time.RFC3339))
 
-					log.Printf("⏱️ [AutoBroadcast] Triggering scheduled broadcast for %d users...", len(recipients))
+					log.Printf("⏱️ [AutoBroadcast] Triggering scheduled broadcast (mode: %s) for %d users...", mode, len(recipients))
 					go func(recs []bot.BroadcastRecipient, message, bt, bu string) {
 						bctx, bcancel := context.WithTimeout(context.Background(), 20*time.Minute)
 						defer bcancel()
