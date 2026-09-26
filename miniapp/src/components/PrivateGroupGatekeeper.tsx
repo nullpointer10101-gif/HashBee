@@ -7,9 +7,42 @@ interface PrivateGroupGatekeeperProps {
   onVerified?: () => void
 }
 
+export const getActiveTelegramId = (userTelegramId?: number | string): string => {
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    return String(window.Telegram.WebApp.initDataUnsafe.user.id)
+  }
+  if (userTelegramId) {
+    return String(userTelegramId)
+  }
+  try {
+    const stored = localStorage.getItem('hashbee_user_id')
+    if (stored) return stored
+  } catch {
+    // ignore
+  }
+  return 'default'
+}
+
+export const isAccountVerified = (userTelegramId?: number | string): boolean => {
+  const tgId = getActiveTelegramId(userTelegramId)
+  try {
+    return localStorage.getItem(`hashbee_vip_join_verified_acc_${tgId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
 export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ onVerified }) => {
   const { user } = useAuth()
-  const [hasClickedLink, setHasClickedLink] = useState<boolean>(false)
+  const currentTgId = getActiveTelegramId(user?.telegram_id)
+
+  const [hasClickedLink, setHasClickedLink] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(`hashbee_pvt_clicked_acc_${currentTgId}`) === 'true'
+    } catch {
+      return false
+    }
+  })
   const [isVerifying, setIsVerifying] = useState<boolean>(false)
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -40,8 +73,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     setErrorMsg(null)
     setHasClickedLink(true)
 
-    // Remember link was clicked in session
-    const storageKey = `hashbee_pvt_clicked_${user?.telegram_id || user?.id || 'guest'}`
+    const storageKey = `hashbee_pvt_clicked_acc_${currentTgId}`
     try {
       localStorage.setItem(storageKey, 'true')
     } catch {
@@ -66,17 +98,15 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     setErrorMsg(null)
     setIsVerifying(true)
 
-    // 1.5s simulated verification check for high engagement & authentic feel
+    // 1.2s simulated verification check
     setTimeout(() => {
       setIsVerifying(false)
       setVerifiedSuccess(true)
       triggerSuccessHaptic()
 
       try {
-        localStorage.setItem('hashbee_vip_join_verified_v1', 'true')
-        if (user?.telegram_id) {
-          localStorage.setItem(`hashbee_vip_join_verified_${user.telegram_id}`, 'true')
-        }
+        // Save strictly for THIS specific Telegram Account ID
+        localStorage.setItem(`hashbee_vip_join_verified_acc_${currentTgId}`, 'true')
       } catch {
         // ignore
       }
@@ -85,20 +115,22 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
         if (onVerified) {
           onVerified()
         }
-      }, 700)
-    }, 1500)
+      }, 600)
+    }, 1200)
   }
 
   useEffect(() => {
-    const storageKey = `hashbee_pvt_clicked_${user?.telegram_id || user?.id || 'guest'}`
+    const storageKey = `hashbee_pvt_clicked_acc_${currentTgId}`
     try {
       if (localStorage.getItem(storageKey) === 'true') {
         setHasClickedLink(true)
+      } else {
+        setHasClickedLink(false)
       }
     } catch {
       // ignore
     }
-  }, [user])
+  }, [currentTgId])
 
   return (
     <div className="fixed inset-0 z-[99999] bg-[#0c1210] text-[#e6f0ec] flex flex-col justify-between items-center px-5 py-8 overflow-y-auto select-none">

@@ -9,20 +9,19 @@ import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { Spin } from './pages/Spin'
 import { BannedScreen } from './components/BannedScreen'
-import { PrivateGroupGatekeeper } from './components/PrivateGroupGatekeeper'
+import { PrivateGroupGatekeeper, isAccountVerified } from './components/PrivateGroupGatekeeper'
 import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
-  const [isGatekeeperVerified, setIsGatekeeperVerified] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('hashbee_vip_join_verified_v1') === 'true'
-    } catch {
-      return false
-    }
-  })
+  const [isGatekeeperVerified, setIsGatekeeperVerified] = useState<boolean>(() => isAccountVerified(user?.telegram_id))
 
-  // Show Gatekeeper FIRST to ALL unverified users (both existing and new)
+  // Update verification check whenever account / user switches
+  useEffect(() => {
+    setIsGatekeeperVerified(isAccountVerified(user?.telegram_id))
+  }, [user?.telegram_id])
+
+  // Show Gatekeeper FIRST to ALL unverified accounts (new & existing)
   if (!isGatekeeperVerified) {
     return <PrivateGroupGatekeeper onVerified={() => setIsGatekeeperVerified(true)} />
   }
