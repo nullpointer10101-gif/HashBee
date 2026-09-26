@@ -373,20 +373,31 @@
 
         <div class="form-group">
           <label class="form-label">Automated Broadcast Message (Markdown Supported)</label>
-          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="8" style="resize:vertical;" placeholder="Message to automatically send every hour...">📦 *NEW FEATURE: MYSTERY LOOT CRATES ARE LIVE!* 🎁💎
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="10" style="resize:vertical;" placeholder="Message to automatically send every hour...">✨ ━━━━━━━━━━━━━━━━━━━ ✨
+    🎁 *MYSTERY LOOT CRATES ARE LIVE!* 🎁
+✨ ━━━━━━━━━━━━━━━━━━━ ✨
 
-Hey {name}! 🐝
-Unbox instant high-value fortunes in the brand new *HashBee Mystery Crates*!
+👋 *Hey {name}!* Your secret treasure awaits in the Hive! 🐝💎
 
-💰 *AVAILABLE CRATES:*
-🥉 *Bronze Crate* (0.5 GRAM) ➔ Win up to 2.5 GRAM + USDT + HASH!
-🥈 *Silver Crate* (1.5 GRAM) ➔ Win up to 7.5 GRAM + $5 USDT!
-🥇 *Gold Crate* (3.0 GRAM) ➔ Win up to 15.0 GRAM + $10 USDT!
-💎 *Diamond Crate* (5.0 GRAM) ➔ Win up to *25.0 GRAM Mega Jackpot* + $20 USDT!
+⚡ *UNBOX MASSIVE FORTUNES INSTANTLY:*
+━━━━━━━━━━━━━━━━━━━━
+🥉 *Bronze Crate (0.50 GRAM)*
+   ↳ 💰 Win up to *2.50 GRAM* + *USDT* + *+5 HASH*
 
-✨ *Pure Value:* Win real USDT, instant GRAM cash, or massive HASH mining speeds!
+🥈 *Silver Crate (1.50 GRAM)*
+   ↳ 💰 Win up to *7.50 GRAM* + *$5.00 USDT* + *+10 HASH*
 
-👇 *Tap below to open your first crate right now:*</textarea>
+🥇 *Gold Crate (3.00 GRAM)*
+   ↳ 💰 Win up to *15.00 GRAM* + *$10.00 USDT* + *+15 HASH*
+
+👑 *Diamond Crate (5.00 GRAM)*
+   ↳ 💎 Win *25.00 GRAM JACKPOT* + *$20.00 USDT* + *+20 HASH*
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *100% Guaranteed Rewards* (USDT, GRAM & Permanent Mining Power!)
+🎲 *Provably Fair & Instant Payouts*
+
+👇 *Tap below to unbox your first crate right now:*</textarea>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
@@ -563,162 +574,209 @@ Unbox instant high-value fortunes in the brand new *HashBee Mystery Crates*!
 
 <script>
 let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
-if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
-if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
-if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
-if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
-if (API_URL.includes('tasky')) { API_URL = 'https://hashbee.onrender.com'; localStorage.setItem('hb_api_url', API_URL); }
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
   crate_mega_jackpot: {
-    msg: `📦 *NEW FEATURE: MYSTERY LOOT CRATES ARE LIVE!* 🎁💎
+    msg: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
+    🎁 *MYSTERY LOOT CRATES ARE LIVE!* 🎁
+✨ ━━━━━━━━━━━━━━━━━━━ ✨
 
-Hey {name}! 🐝
-Unbox instant high-value fortunes in the brand new *HashBee Mystery Crates*!
+👋 *Hey {name}!* Your secret treasure awaits in the Hive! 🐝💎
 
-💰 *AVAILABLE CRATES:*
-🥉 *Bronze Crate* (0.5 GRAM) ➔ Win up to 2.5 GRAM + USDT + HASH!
-🥈 *Silver Crate* (1.5 GRAM) ➔ Win up to 7.5 GRAM + $5 USDT!
-🥇 *Gold Crate* (3.0 GRAM) ➔ Win up to 15.0 GRAM + $10 USDT!
-💎 *Diamond Crate* (5.0 GRAM) ➔ Win up to *25.0 GRAM Mega Jackpot* + $20 USDT!
+⚡ *UNBOX MASSIVE FORTUNES INSTANTLY:*
+━━━━━━━━━━━━━━━━━━━━
+🥉 *Bronze Crate (0.50 GRAM)*
+   ↳ 💰 Win up to *2.50 GRAM* + *USDT* + *+5 HASH*
 
-✨ *Pure Value:* Win real USDT, instant GRAM cash, or massive HASH mining speeds!
+🥈 *Silver Crate (1.50 GRAM)*
+   ↳ 💰 Win up to *7.50 GRAM* + *$5.00 USDT* + *+10 HASH*
 
-👇 *Tap below to open your first crate right now:*`,
+🥇 *Gold Crate (3.00 GRAM)*
+   ↳ 💰 Win up to *15.00 GRAM* + *$10.00 USDT* + *+15 HASH*
+
+👑 *Diamond Crate (5.00 GRAM)*
+   ↳ 💎 Win *25.00 GRAM JACKPOT* + *$20.00 USDT* + *+20 HASH*
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *100% Guaranteed Rewards* (USDT, GRAM & Permanent Mining Power!)
+🎲 *Provably Fair & Instant Payouts*
+
+👇 *Tap below to unbox your first crate right now:*`,
     btn: '📦 Unlock Mystery Crates 🎁'
   },
   crate_bronze_starter: {
-    msg: `🥉 *STARTER CRATE UNLOCKED: ONLY 0.5 GRAM!* 📦⚡
+    msg: `✨ ━━━━━━━━━━━━━━━━━━━ ✨
+    📦 *STARTER BRONZE CRATE: ONLY 0.5 GRAM!* 📦
+✨ ━━━━━━━━━━━━━━━━━━━ ✨
 
-Hey {name}! Test your luck with our lowest-entry mystery box:
+👋 *Hey {name}!* Test your luck with our lowest-entry mystery box! 🐝⚡
 
-🎁 *Bronze Crate (0.5 GRAM Entry):*
-💵 Win real USDT direct to balance
-🪙 Win up to 2.5 GRAM instant cash
-⚡ Win permanent +5 HASH mining power
+🎁 *WHAT'S INSIDE THE BRONZE CRATE:*
+━━━━━━━━━━━━━━━━━━━━
+💵 *Real USDT Cash Drops*
+🪙 *Up to 2.50 GRAM Instant Win*
+⚡ *+5 HASH Permanent 24/7 Mining Speed*
+━━━━━━━━━━━━━━━━━━━━
 
-🔥 100% instant unboxing with provably fair rewards!
+🔥 Start with just *0.5 GRAM* and multiply your balance in 1 click!
 
-👇 *Tap below to open your Bronze Crate:*`,
+👇 *Tap below to open your Bronze Crate now:*`,
     btn: '📦 Open 0.5 GRAM Crate 🚀'
   },
   crate_vip_dopamine: {
-    msg: `👑 *VIP HIGH-ROLLER ALERT: 25 GRAM CRATE JACKPOT!* 💎🔥
+    msg: `👑 ━━━━━━━━━━━━━━━━━━━ 👑
+    💎 *VIP HIGH-ROLLER CRATE JACKPOT!* 💎
+👑 ━━━━━━━━━━━━━━━━━━━ 👑
 
-{name}, the Diamond & Gold Mystery Crates have just been stocked with massive rewards!
+🔥 *ATTENTION {name}!* 🐝
+The Diamond & Gold Mystery Vaults have just been re-stocked!
 
-💎 *Diamond Crate Highlights:*
-• 🏆 *25.0 GRAM Single Drop Jackpot*
-• 💵 *$20.00 USDT Instant Cash*
-• ⚡ *+20 HASH Power (Permanent 24/7 Mining)*
+🏆 *TOP VAULT JACKPOTS:*
+━━━━━━━━━━━━━━━━━━━━
+👑 *25.0 GRAM Single Drop Jackpot*
+💵 *$20.00 Instant USDT Cash Drop*
+⚡ *+20 HASH Power (Permanent 24/7 Speed)*
+━━━━━━━━━━━━━━━━━━━━
 
-Your next unboxing could trigger the ultimate jackpot!
+✨ Will YOU trigger the 25 GRAM Mega Win today?
 
-👇 *Tap below to enter the Mystery Crates arena:*`,
+👇 *Tap below to enter the High Roller Arena:*`,
     btn: '💎 Play High Roller Crates 👑'
   },
   spin_dopamine_jackpot: {
-    msg: `🎡 *LUCKY HONEY WHEEL IS LIVE! SPIN & WIN REAL USDT & GRAM!* 🎁⚡
+    msg: `🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
+    🎡 *LUCKY HONEY WHEEL IS SPINNING!* 🎡
+🎰 ━━━━━━━━━━━━━━━━━━━ 🎰
 
-Hey {name}! The most exciting game is officially HERE! 🐝🎰
+👋 *Hey {name}!* Your lucky turn is waiting right now! 🐝⚡
 
-💰 *WHAT YOU CAN WIN ON THE WHEEL:*
-👑 *1.0 GRAM Mega Jackpot*
+🎁 *PRIZES YOU CAN HIT ON THE WHEEL:*
+━━━━━━━━━━━━━━━━━━━━
+👑 *1.00 GRAM Mega Jackpot*
 💵 *Real USDT Cash Drops*
-⚡ *Permanent Hashrate (GHS) Boosts*
+⚡ *Permanent Mining Speed Boosts*
 🔄 *Free Re-Spins & Token Drops*
+━━━━━━━━━━━━━━━━━━━━
 
-🎁 *HOW TO GET FREE SPINS:*
-• Every friend who signs up ➔ *Instant +1 Free Spin!* (Unlimited)
-• Daily Free Starter Spins!
+🔥 *EARN FREE SPINS:*
+• Every friend who joins ➔ *Instant +1 Free Spin!* (Unlimited)
+• Daily Starter Turns!
 
-👇 *Tap below to spin the wheel right now!*`,
+👇 *Tap below to spin the wheel right now:*`,
     btn: '🎡 Spin The Lucky Wheel Now 🎰'
   },
   spin_viral_referrals: {
-    msg: `🔥 *SPIN FEVER: 1 INVITE = 1 FREE SPIN!* 🎡🚀
+    msg: `🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
+    👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🎡
+🚀 ━━━━━━━━━━━━━━━━━━━ 🚀
 
-Want to win free USDT, GRAM & Permanent Mining Power? 🐝💰
+👋 *Hey {name}!* Want unlimited chances at the Mega Jackpot? 🐝💰
 
-Every time a friend clicks your invite link & signs up:
-✅ *You instantly receive +1 FREE SPIN!* (No limits!)
+Every single friend who joins through your link gives you:
+✅ *Instant +1 FREE SPIN on the Lucky Wheel!*
+✅ *Free Lifetime Referral Mining Commissions!*
 
-👑 *Jackpot Prizes on the Wheel:*
-💵 Real USDT & GRAM tokens
-⚡ Permanent Hash Power Boosts (+1 & +2 HASH)
+👑 *Wheel Jackpots:* 1.0 GRAM • Real USDT • +2 HASH Boosts
 
-👇 *Open the Wheel & Invite Friends to Spin!*`,
+👇 *Grab your link & invite friends to spin:*`,
     btn: '🎡 Open Wheel & Get Free Spins 🚀'
   },
   spin_vip_drop: {
-    msg: `⚡ *VIP REWARD: YOUR FREE SPIN IS WAITING!* 🎡🎁
+    msg: `⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
+    🎁 *VIP TURN WAITING FOR {name}!* 🎡
+⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
 
-Hey {name}! 🐝
-Your Lucky Honey Wheel turn is ready to spin right now!
+🐝 Hey {name}!
+Your VIP Lucky Honey Wheel turn is ready to roll right now! 🎰
 
-🎲 Will you hit the *1 GRAM Jackpot* or *Real USDT*? Test your luck today!
+🎲 Will you hit the *1.0 GRAM Jackpot* or *Real USDT*?
 
-👇 *Tap below to spin immediately:*`,
+👇 *Tap below to claim your turn & spin:*`,
     btn: '🎰 Claim Free Spin & Play ⚡'
   },
   personalized_buzz: {
-    msg: `👋 Hey {name}, your Hive is buzzing! 🐝⚡
+    msg: `🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
+    ⚡ *HEY {name}, YOUR HIVE IS FULL!* 🍯
+🐝 ━━━━━━━━━━━━━━━━━━━ 🐝
 
-⛏️ Your mining rig has accumulated unclaimed Honey! Don't let your honeycomb capacity cap out.
+⛏️ Your miner has produced unclaimed Honey! Don't let your honeycomb capacity go to waste.
 
-💰 *What you can do right now:*
-⚡ Collect your passive Honey earnings
-🎁 Claim free GHS bonuses from your referrals
-📢 Launch a Boost Campaign to get real members for your Telegram channel/bot at dirt-cheap launch rates!
+💰 *TODAY'S OPPORTUNITIES:*
+━━━━━━━━━━━━━━━━━━━━
+🍯 *Harvest* your accumulated passive Honey earnings
+📦 *Unbox* the new Mystery Loot Crates (Win up to 25 GRAM!)
+🎡 *Spin* the Lucky Wheel for USDT & Free Bonuses
+━━━━━━━━━━━━━━━━━━━━
 
-👇 Tap below to harvest your rewards & boost your power:`,
+👇 *Tap below to collect your harvest & play:*`,
     btn: '🐝 Open HashBee & Collect Now 🚀'
   },
   viral_20k: {
-    msg: `🚀 *20,000+ USERS ON DAY 1! THE HIVE IS ON FIRE!* 🔥
+    msg: `🔥 ━━━━━━━━━━━━━━━━━━━ 🔥
+    🚀 *20,000+ MINERS CELEBRATION!* 🚀
+🔥 ━━━━━━━━━━━━━━━━━━━ 🔥
 
-We just shattered all records with *20,000+ active miners*! 🐝⚡
+We just hit a massive milestone: *20,000+ Active Bees!* 🐝⚡
 
-💰 *Invite Friends* ➔ Earn Free GH/s Power & Boost 24/7 Mining!
-📢 *Promote Your Project* ➔ Get real Telegram members for your Bots & Channels at dirt-cheap launch rates!
+💰 *HOW TO MULTIPLY YOUR GAINS TODAY:*
+━━━━━━━━━━━━━━━━━━━━
+📦 *Open Mystery Crates* ➔ Win up to 25 GRAM & $20 USDT!
+🎡 *Spin Lucky Wheel* ➔ 1 Invite = 1 Free Spin
+⛏️ *Upgrade Mining Rig* ➔ Boost 24/7 passive GRAM yield
+━━━━━━━━━━━━━━━━━━━━
 
-👇 *Tap below to mine, invite & promote now!*`,
+👇 *Join the celebration in the app now:*`,
     btn: '🐝 Open App & Boost Now 🚀'
   },
   mining_boost: {
-    msg: `🚀 *DOUBLE YOUR MINING POWER TODAY!*
+    msg: `⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
+    ⛏️ *DOUBLE MINING POWER ACTIVE!* ⛏️
+⚡ ━━━━━━━━━━━━━━━━━━━ ⚡
 
-⛏️ We have supercharged bee extraction rates across all hives! 
-Don't leave your honeycombs idle.
+🐝 Extraction rates have been supercharged across the entire Hive network!
 
-💰 Tap the button below to start mining & stack GRAM automatically!`,
-    btn: '🐝 Open HashBee & Mine'
+🍯 Your bees are generating Honey at peak speed.
+Don't let your honeycombs stay full & idle.
+
+👇 *Tap below to harvest & accelerate your mining:*`,
+    btn: '🐝 Open HashBee & Mine ⚡'
   },
   ghs_drop: {
-    msg: `🎁 *FREE BONUS GHS POWER DROP!*
+    msg: `🎁 ━━━━━━━━━━━━━━━━━━━ 🎁
+    ⚡ *FREE BONUS MINING POWER GIFT!* ⚡
+🎁 ━━━━━━━━━━━━━━━━━━━ 🎁
 
-⚡ A special boost has been unlocked for your account.
-Collect active Honey and invite friends to multiply your earnings 24/7!
+👋 *Hey {name}!* 🐝
+A special Hashrate speed boost has been unlocked for your account!
 
-👇 Claim your bonus in the app now:`,
+⚡ Stack free GHS power, harvest honeycombs, and withdraw GRAM anytime!
+
+👇 *Tap below to claim your power boost:*`,
     btn: '🎁 Claim Free GHS Power'
   },
   tasks_drop: {
-    msg: `🔥 *NEW SPONSORED TASKS ARE LIVE!*
+    msg: `🔥 ━━━━━━━━━━━━━━━━━━━ 🔥
+    ⭐ *HIGH-REWARD MISSIONS ARE LIVE!* ⭐
+🔥 ━━━━━━━━━━━━━━━━━━━ 🔥
 
-⭐ Complete new high-reward partner channels and bot missions to earn instant +0.1 to +5.0 GHS Power!
+🐝 New sponsored partner channels & bot tasks have just dropped!
 
-👉 Tap below to complete tasks and boost your speed:`,
+💰 Complete quick 5-second tasks to earn *Instant GHS Mining Power*!
+
+👇 *Tap below to complete missions & boost earnings:*`,
     btn: '⭐ Complete Tasks & Earn'
   },
   withdraw_alert: {
-    msg: `💸 *INSTANT TON / GRAM PAYOUTS LIVE!*
+    msg: `💎 ━━━━━━━━━━━━━━━━━━━ 💎
+    💸 *INSTANT WITHDRAWALS ARE LIVE!* 💸
+💎 ━━━━━━━━━━━━━━━━━━━ 💎
 
-💎 Accumulated Honey can be withdrawn directly to your TON Wallet with zero hassle.
-Keep mining and growing your Swarm!
+🐝 All mined Honey & Crate/Spin wins can be withdrawn directly to your TON Wallet!
 
-🐝 Open HashBee to check your balance:`,
+⚡ Zero delay • Fast processing • Provably transparent
+
+👇 *Tap below to check your balance & withdraw:*`,
     btn: '💸 Open HashBee Wallet'
   }
 };
