@@ -198,29 +198,14 @@ type ReferralEntry struct {
 	ActivatedAt *time.Time `json:"activated_at,omitempty"`
 }
 
-// TryActivateReferral checks if a referral should be activated and pays rewards
+// TryActivateReferral checks if a referral should be activated (strictly upon 1st claim) and pays rewards
 func (s *ReferralService) TryActivateReferral(ctx context.Context, userID uuid.UUID) error {
-	requireCollect := s.settings.GetBool(ctx, "referral_qualifying_collect", true)
-	requireMission := s.settings.GetBool(ctx, "referral_qualifying_mission", false)
-
-	// Get user's qualification status
-	var hasCollected, hasCompletedMission bool
+	// A referral is ONLY active when the invited user has performed their 1st claim (has_collected = true)
+	var hasCollected bool
 	err := s.db.QueryRow(ctx,
-		`SELECT has_collected, has_completed_mission FROM users WHERE id = $1`, userID).
-		Scan(&hasCollected, &hasCompletedMission)
-	if err != nil {
-		return err
-	}
-
-	qualified := true
-	if requireCollect && !hasCollected {
-		qualified = false
-	}
-	if requireMission && !hasCompletedMission {
-		qualified = false
-	}
-
-	if !qualified {
+		`SELECT has_collected FROM users WHERE id = $1`, userID).
+		Scan(&hasCollected)
+	if err != nil || !hasCollected {
 		return nil
 	}
 

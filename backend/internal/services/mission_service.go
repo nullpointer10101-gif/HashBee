@@ -64,9 +64,16 @@ func (s *MissionService) ListMissionsForUser(ctx context.Context, userID uuid.UU
 		}
 		m.UserStatus = completionStatus
 
-		// For milestone missions, strictly compute progress using active referrals (who made their 1st claim)
+		// For milestone missions:
+		// 10 Milestone = Total Invites (friends joined)
+		// 20+, 50+, 100+, 500+ Milestones = Strictly Active Referrals (who made their 1st claim)
 		if m.Type == models.MissionTypeMilestone && m.MilestoneCount != nil {
-			count, _ := s.referral.CountActiveReferrals(ctx, userID)
+			var count int
+			if *m.MilestoneCount <= 10 {
+				count, _ = s.referral.CountTotalReferrals(ctx, userID)
+			} else {
+				count, _ = s.referral.CountActiveReferrals(ctx, userID)
+			}
 			progress := count
 			if progress > *m.MilestoneCount {
 				progress = *m.MilestoneCount
@@ -275,12 +282,19 @@ func (s *MissionService) ClaimMilestoneMission(ctx context.Context, userID, miss
 	}
 
 	var count int
-	count, err = s.referral.CountActiveReferrals(ctx, userID)
+	if m.MilestoneCount != nil && *m.MilestoneCount <= 10 {
+		count, err = s.referral.CountTotalReferrals(ctx, userID)
+	} else {
+		count, err = s.referral.CountActiveReferrals(ctx, userID)
+	}
 	if err != nil {
 		return 0, err
 	}
 
 	if m.MilestoneCount != nil && count < *m.MilestoneCount {
+		if *m.MilestoneCount <= 10 {
+			return 0, fmt.Errorf("not enough invites: you have %d, but need %d invited friends", count, *m.MilestoneCount)
+		}
 		return 0, fmt.Errorf("not enough active referrals: you have %d, but need %d active friends who have claimed honey", count, *m.MilestoneCount)
 	}
 
