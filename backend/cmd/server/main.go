@@ -71,6 +71,13 @@ func main() {
 	`)
 	_, _ = pool.Exec(ctx, `DELETE FROM transactions WHERE type = 'spin_reward' AND amount >= 10;`)
 
+	// Set withdrawal_min_referrals to 0 so users can withdraw without referral restrictions
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('withdrawal_min_referrals', '0', 'Minimum referrals required to withdraw', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();
+	`)
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `

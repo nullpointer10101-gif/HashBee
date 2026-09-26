@@ -52,7 +52,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	minUSDT := s.settings.GetFloat(ctx, "min_withdrawal_usdt", 0.05)
 	maxPerDay := s.settings.GetFloat(ctx, "max_withdrawal_per_day_usdt", 100)
 	cooldownHours := s.settings.GetFloat(ctx, "withdrawal_cooldown_hours", 24)
-	minReferrals := s.settings.GetInt(ctx, "withdrawal_min_referrals", 3)
+	minReferrals := s.settings.GetInt(ctx, "withdrawal_min_referrals", 0)
 	minMissions := s.settings.GetInt(ctx, "withdrawal_min_missions", 5)
 
 	// Direct 1:1 currency amount
@@ -68,10 +68,12 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("insufficient Honey balance: have %.8f, need %.8f", u.HoneyBalance, req.Amount)
 	}
 
-	// Check referral gate
-	activeRefs, _ := s.referral.CountActiveReferrals(ctx, userID)
-	if activeRefs < minReferrals {
-		return nil, fmt.Errorf("you need at least %d active referrals to withdraw (you have %d)", minReferrals, activeRefs)
+	// Check referral gate (disabled by default)
+	if minReferrals > 0 {
+		activeRefs, _ := s.referral.CountActiveReferrals(ctx, userID)
+		if activeRefs < minReferrals {
+			return nil, fmt.Errorf("you need at least %d active referrals to withdraw (you have %d)", minReferrals, activeRefs)
+		}
 	}
 
 	// Check mission gate
