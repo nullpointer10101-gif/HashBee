@@ -8,6 +8,7 @@ import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { BannedScreen } from './components/BannedScreen'
+import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
@@ -49,6 +50,9 @@ export const App: React.FC = () => {
     if (typeof (window as any).adexiumWidget?.requestAd === 'function') {
       (window as any).adexiumWidget.requestAd('interstitial')
     }
+
+    // Initialize Monetag Opening Ad & 2-Minute Auto-Ad Trigger
+    initMonetagAutoAds()
   }, [])
 
   return (

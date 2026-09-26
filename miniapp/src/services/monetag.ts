@@ -7,31 +7,30 @@ export const isMonetagReady = (): boolean => {
 }
 
 /**
- * Show Rewarded Interstitial Ad
- * Returns true if the user watched the ad successfully and earned their reward.
+ * Show Rewarded / Interstitial Ad
  */
-export const showRewardedInterstitial = async (): Promise<boolean> => {
+export const showInterstitialAd = async (): Promise<boolean> => {
   if (!isMonetagReady()) {
-    console.warn('[Monetag] SDK not ready or blocked')
+    console.warn('[Monetag] SDK not ready or adblocker detected')
     return false
   }
 
   try {
     await window.show_11894371!()
+    console.log('[Monetag] Interstitial ad displayed successfully')
     return true
   } catch (err) {
-    console.error('[Monetag] Rewarded Interstitial error:', err)
+    console.error('[Monetag] Interstitial ad error/dismissed:', err)
     return false
   }
 }
 
 /**
  * Show Rewarded Popup Ad ('pop')
- * Returns true if user completed/closed the popup reward ad.
  */
 export const showRewardedPopup = async (): Promise<boolean> => {
   if (!isMonetagReady()) {
-    console.warn('[Monetag] SDK not ready or blocked')
+    console.warn('[Monetag] SDK not ready or adblocker detected')
     return false
   }
 
@@ -44,28 +43,51 @@ export const showRewardedPopup = async (): Promise<boolean> => {
   }
 }
 
+let periodicTimer: ReturnType<typeof setInterval> | null = null
+
 /**
- * Initialize In-App Interstitial background ads
+ * Initialize automatic Monetag Ads:
+ * 1. Shows an ad upon opening the app (after SDK loads).
+ * 2. Automatically triggers an ad every 2 minutes (120 seconds).
  */
-export const initInAppInterstitial = (config = {
-  frequency: 2,
-  capping: 0.1,
-  interval: 30,
-  timeout: 5,
-  everyPage: false,
-}) => {
-  if (!isMonetagReady()) {
-    console.warn('[Monetag] SDK not ready for In-App Interstitial')
-    return
+export const initMonetagAutoAds = () => {
+  if (typeof window === 'undefined') return
+
+  // Helper to wait for SDK and trigger initial opening ad
+  const triggerOpeningAd = (attemptsLeft = 10) => {
+    if (isMonetagReady()) {
+      console.log('[Monetag] Showing opening ad on app launch...')
+      window.show_11894371!({
+        type: 'inApp',
+        inAppSettings: {
+          frequency: 2,
+          capping: 0.1,
+          interval: 120,
+          timeout: 2,
+          everyPage: false,
+        },
+      })
+      // Also try instant interstitial call after 1.5s
+      setTimeout(() => {
+        showInterstitialAd().catch(() => {})
+      }, 1500)
+    } else if (attemptsLeft > 0) {
+      setTimeout(() => triggerOpeningAd(attemptsLeft - 1), 800)
+    }
   }
 
-  try {
-    window.show_11894371!({
-      type: 'inApp',
-      inAppSettings: config,
-    })
-    console.log('[Monetag] In-App Interstitial initialized')
-  } catch (err) {
-    console.error('[Monetag] In-App Interstitial init error:', err)
+  // Start opening ad check
+  triggerOpeningAd()
+
+  // Setup periodic ad trigger every 2 minutes (120,000 ms)
+  if (periodicTimer) {
+    clearInterval(periodicTimer)
   }
+
+  periodicTimer = setInterval(() => {
+    console.log('[Monetag] Triggering scheduled 2-minute recurring ad...')
+    showInterstitialAd().catch((err) => {
+      console.warn('[Monetag] Periodic ad skip/error:', err)
+    })
+  }, 120000) // 2 minutes
 }
