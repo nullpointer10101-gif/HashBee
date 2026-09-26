@@ -177,6 +177,9 @@ func main() {
 		middleware.TelegramAuth(cfg, userSvc),
 		userHandler.Auth)
 
+	// Public: spin epoch (no auth required, used by miniapp to filter which referrals grant spins)
+	api.GET("/spin-epoch", adminHandler.GetSpinEpoch)
+
 	// =====================================================
 	// Protected user routes (JWT required)
 	// =====================================================
@@ -229,6 +232,7 @@ func main() {
 			adminProtected.GET("/fraud", adminHandler.ListFraudFlags)
 			adminProtected.POST("/broadcast", adminHandler.Broadcast)
 			adminProtected.GET("/broadcast/status", adminHandler.GetBroadcastStatus)
+			adminProtected.POST("/spin-reset", adminHandler.SpinReset)
 		}
 	}
 

@@ -20,7 +20,6 @@ export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin 
       onLogin(token)
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Invalid admin credentials')
-      }
     } finally {
       setLoading(false)
     }

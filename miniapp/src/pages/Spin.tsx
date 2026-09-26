@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { fetchReferrals } from '../services/api'
+import { fetchReferrals, fetchSpinEpoch } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -38,13 +38,17 @@ const SLICES: WheelSlice[] = [
   { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0.5, type: 'gram', amount: 1 },
 ]
 
+// v7: epoch-based tracking (permanent, cross-device safe)
+const SPIN_STORAGE_KEY = 'hb_spins_v7'
+const CREDITED_KEY = 'hb_spin_credited_ids_v7'
+
 export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Clean Spin State (Reset previous excessive spins, 1 starter spin)
+  // Spins: start with 1 signup bonus
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
-    const saved = localStorage.getItem('hb_spins_clean_v6')
+    const saved = localStorage.getItem(SPIN_STORAGE_KEY)
     return saved !== null ? parseInt(saved, 10) : 1
   })
   const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
@@ -52,55 +56,56 @@ export const Spin: React.FC = () => {
   const [rotation, setRotation] = useState(0)
   const [wonReward, setWonReward] = useState<WheelSlice | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
+  // Default to far future so no spins are credited until epoch is loaded from server
+  const [spinEpoch, setSpinEpoch] = useState<string>('2099-01-01T00:00:00Z')
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   // Persist clean spins count
   useEffect(() => {
-    localStorage.setItem('hb_spins_clean_v6', spinsLeft.toString())
+    localStorage.setItem(SPIN_STORAGE_KEY, spinsLeft.toString())
   }, [spinsLeft])
 
-  // Real-time Referral Credit: Only show & credit FRESH referrals from now on
+  // Load server spin epoch once on mount
   useEffect(() => {
-    if (!user) return
+    fetchSpinEpoch().then((epoch) => {
+      setSpinEpoch(epoch)
+    })
+  }, [])
+
+  // Permanent server-epoch referral credit: only referrals AFTER spin_epoch get spins
+  useEffect(() => {
+    if (!user || spinEpoch === '2099-01-01T00:00:00Z') return // wait for epoch to load
 
     const checkNewReferrals = async () => {
       try {
         const data = await fetchReferrals()
         const allRefs = data?.referrals || []
 
-        const savedOldIdsStr = localStorage.getItem('hb_spin_known_old_ids_v6')
+        const epochMs = new Date(spinEpoch).getTime()
 
-        // First launch of v6: capture old historical referrals as baseline so they are NOT listed or rewarded
-        if (savedOldIdsStr === null) {
-          const oldIds = allRefs.map((r: ReferralItem) => r.id)
-          localStorage.setItem('hb_spin_known_old_ids_v6', JSON.stringify(oldIds))
-          localStorage.setItem('hb_spin_credited_ids_v6', JSON.stringify([]))
-          setRecentFriends([])
-          return
-        }
+        // HARD GATE: only referrals that joined AFTER server epoch count
+        const eligibleRefs = allRefs.filter((r: ReferralItem) => {
+          const joinedMs = new Date(r.joined_at).getTime()
+          return joinedMs >= epochMs
+        })
 
-        const oldIdsList: string[] = JSON.parse(savedOldIdsStr)
-        const oldIdsSet = new Set(oldIdsList)
+        setRecentFriends(eligibleRefs)
 
-        // Filter ONLY fresh newly joined referrals
-        const freshList = allRefs.filter((r: ReferralItem) => !oldIdsSet.has(r.id))
-        setRecentFriends(freshList)
-
-        // Check which fresh referrals haven't been credited yet
-        const creditedIdsList: string[] = JSON.parse(localStorage.getItem('hb_spin_credited_ids_v6') || '[]')
+        // Track credited IDs locally for instant UX (not for correctness — epoch is the guard)
+        const creditedIdsList: string[] = JSON.parse(localStorage.getItem(CREDITED_KEY) || '[]')
         const creditedSet = new Set(creditedIdsList)
 
-        const uncreditedFriends = freshList.filter((r: ReferralItem) => !creditedSet.has(r.id))
+        const uncredited = eligibleRefs.filter((r: ReferralItem) => !creditedSet.has(r.id))
 
-        if (uncreditedFriends.length > 0) {
-          const newSpins = uncreditedFriends.length * 1 // 1 SPIN PER FRESH INVITE
+        if (uncredited.length > 0) {
+          const newSpins = uncredited.length * 1 // exactly 1 spin per invite
           setSpinsLeft((prev) => prev + newSpins)
 
-          uncreditedFriends.forEach((r) => creditedSet.add(r.id))
-          localStorage.setItem('hb_spin_credited_ids_v6', JSON.stringify(Array.from(creditedSet)))
+          uncredited.forEach((r) => creditedSet.add(r.id))
+          localStorage.setItem(CREDITED_KEY, JSON.stringify(Array.from(creditedSet)))
 
-          toast.success(`🎉 +${newSpins} Free Spin credited! (${uncreditedFriends[0]?.first_name || 'New friend'} signed up)`, {
+          toast.success(`🎉 +${newSpins} Free Spin! (${uncredited[0]?.first_name || 'New friend'} joined)`, {
             duration: 4000,
             icon: '🎁',
           })
@@ -115,10 +120,9 @@ export const Spin: React.FC = () => {
     }
 
     checkNewReferrals()
-    // Poll every 8s while on spin screen so new signups reflect immediately
     const interval = setInterval(checkNewReferrals, 8000)
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, spinEpoch])
 
   // Render High-DPR Crisp Canvas Wheel
   useEffect(() => {

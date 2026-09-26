@@ -678,6 +678,35 @@ func (h *AdminHandler) GetBroadcastStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, broadcastStatus)
 }
 
+// POST /api/admin/spin-reset — Permanently reset spin epoch: only referrals from NOW onwards grant spins
+func (h *AdminHandler) SpinReset(c *gin.Context) {
+	ctx := c.Request.Context()
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	// Save epoch to settings table
+	err := h.settings.Set(ctx, "spin_epoch", now)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set spin_epoch: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "✅ Spin epoch reset! Only referrals from NOW onwards will grant spins.",
+		"spin_epoch": now,
+	})
+}
+
+// GET /api/spin-epoch — Returns the current spin epoch timestamp (public, used by miniapp)
+func (h *AdminHandler) GetSpinEpoch(c *gin.Context) {
+	ctx := c.Request.Context()
+	epoch, err := h.settings.Get(ctx, "spin_epoch")
+	if err != nil || epoch == "" {
+		// Default epoch: app launch (very old, allow all)
+		epoch = "2026-09-26T00:00:00Z"
+	}
+	c.JSON(http.StatusOK, gin.H{"spin_epoch": epoch})
+}
+
 // POST /api/admin/broadcast - Send rich template broadcast with inline WebApp button in background
 func (h *AdminHandler) Broadcast(c *gin.Context) {
 	broadcastMu.Lock()

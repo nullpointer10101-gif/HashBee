@@ -104,7 +104,7 @@ func (s *ReferralService) SetReferrerByTelegramID(ctx context.Context, userID uu
 // GetSwarmStats returns referral stats for all 3 levels
 func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (map[int]SwarmLevelStats, error) {
 	rows, err := s.db.Query(ctx,
-		`SELECT r.level, r.status, r.reward_paid,
+		`SELECT r.id, r.referred_id, r.level, r.status, r.reward_paid,
 		        u.username, u.first_name, r.created_at, r.activated_at
 		 FROM referrals r
 		 JOIN users u ON u.id = r.referred_id
@@ -122,6 +122,7 @@ func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (
 	}
 
 	for rows.Next() {
+		var refID, referredID uuid.UUID
 		var level int
 		var status string
 		var rewardPaid bool
@@ -129,7 +130,7 @@ func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (
 		var createdAt time.Time
 		var activatedAt *time.Time
 
-		if err := rows.Scan(&level, &status, &rewardPaid, &username, &firstName, &createdAt, &activatedAt); err != nil {
+		if err := rows.Scan(&refID, &referredID, &level, &status, &rewardPaid, &username, &firstName, &createdAt, &activatedAt); err != nil {
 			return nil, err
 		}
 
@@ -139,8 +140,10 @@ func (s *ReferralService) GetSwarmStats(ctx context.Context, userID uuid.UUID) (
 			ls.Active++
 		}
 
-		if len(ls.RecentReferrals) < 10 {
+		if len(ls.RecentReferrals) < 50 {
 			ls.RecentReferrals = append(ls.RecentReferrals, ReferralEntry{
+				ID:          refID.String(),
+				ReferredID:  referredID.String(),
 				Username:    username,
 				FirstName:   firstName,
 				Status:      status,
@@ -183,6 +186,8 @@ type SwarmLevelStats struct {
 }
 
 type ReferralEntry struct {
+	ID          string     `json:"id"`
+	ReferredID  string     `json:"referred_id"`
 	Username    string     `json:"username"`
 	FirstName   string     `json:"first_name"`
 	Status      string     `json:"status"`

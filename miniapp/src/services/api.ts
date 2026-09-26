@@ -215,13 +215,23 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
     tier1_earnings: swarm.level1_honey_earned || 0,
     tier2_earnings: swarm.level2_honey_earned || 0,
     referrals: rawList.map((r: any) => ({
-      id: r.id || String(Math.random()),
+      // Use stable server-side UUID; never Math.random()
+      id: r.id || r.referred_id || `${r.username || 'u'}-${r.joined_at || r.created_at || ''}`,
       username: r.username || 'Miner',
       first_name: r.first_name || '',
-      joined_at: r.created_at || r.joined_at || new Date().toISOString(),
+      joined_at: r.joined_at || r.created_at || new Date().toISOString(),
       honey_earned_for_referrer: r.reward_bp || 3,
       status: r.status || 'pending',
     })),
+  }
+}
+
+export const fetchSpinEpoch = async (): Promise<string> => {
+  try {
+    const res = await api.get('/api/spin-epoch')
+    return res.data?.spin_epoch || '2026-09-26T00:00:00Z'
+  } catch {
+    return '2026-09-26T00:00:00Z'
   }
 }
 

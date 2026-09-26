@@ -36,7 +36,7 @@ interface Campaign {
 }
 
 export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ token, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'withdrawals' | 'users' | 'campaigns' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'withdrawals' | 'users' | 'campaigns' | 'broadcast' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [withdrawals, setWithdrawals] = useState<PendingWithdrawal[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -54,6 +54,20 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   // User search query
   const [userQuery, setUserQuery] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
+
+  // Broadcast state
+  const SPIN_TEMPLATES = [
+    { id: 'spin_daily', label: 'Daily Spin Reminder', message: 'Lucky Honey Wheel is waiting! Every invite = +1 free spin. Open HashBee and spin now!', button: 'Spin Now' },
+    { id: 'spin_invite', label: 'Invite for Free Spins', message: 'Get FREE spins by inviting friends! For every friend who signs up, you get +1 free spin on the Lucky Wheel. Win USDT, GRAM, HASH!', button: 'Open HashBee' },
+    { id: 'spin_jackpot', label: 'Jackpot Alert', message: 'JACKPOT ALERT on HashBee Lucky Wheel! Spin for a chance to win 1 GRAM today! All users get 1 free spin per invite.', button: 'Spin for Jackpot' },
+  ]
+  const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
+  const [broadcastMsg, setBroadcastMsg] = useState(SPIN_TEMPLATES[0].message)
+  const [broadcastBtn, setBroadcastBtn] = useState(SPIN_TEMPLATES[0].button)
+  const [broadcastTarget, setBroadcastTarget] = useState('')
+  const [broadcastLoading, setBroadcastLoading] = useState(false)
+  const [broadcastStatus, setBroadcastStatus] = useState<any>(null)
+  const [spinResetLoading, setSpinResetLoading] = useState(false)
 
   const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
   const api = axios.create({
@@ -146,6 +160,18 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     loadData()
   }, [])
 
+  useEffect(() => {
+    if (!broadcastStatus?.is_running) return
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get('/broadcast/status')
+        setBroadcastStatus(res.data)
+        if (!res.data.is_running) clearInterval(interval)
+      } catch {}
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [broadcastStatus?.is_running])
+
   const handleApproveWithdrawal = async (id: string) => {
     try {
       await api.patch(`/withdrawals/${id}`, { status: 'approved' })
@@ -176,6 +202,27 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     }
   }
 
+  const handleBroadcast = async () => {
+    if (!broadcastMsg.trim()) return toast.error('Message required')
+    setBroadcastLoading(true)
+    try {
+      const payload: any = { message: broadcastMsg, button_text: broadcastBtn, button_url: 'https://t.me/hashbee_bot/app' }
+      if (broadcastTarget.trim()) { const tid = parseInt(broadcastTarget.trim()); if (!isNaN(tid)) payload.target_telegram_id = tid }
+      const res = await api.post('/broadcast', payload)
+      setBroadcastStatus({ is_running: true, total: res.data.total, sent: 0, failed: 0, percent: 0, message: 'Starting...' })
+      toast.success(`Broadcast started for ${res.data.total} users!`)
+    } catch (err: any) { toast.error(err?.response?.data?.error || 'Broadcast failed') }
+    finally { setBroadcastLoading(false) }
+  }
+
+  const handleSpinReset = async () => {
+    if (!confirm('PERMANENT: Set spin epoch to NOW. Old referrals will NOT grant spins. Only NEW referrals from this moment count. Continue?')) return
+    setSpinResetLoading(true)
+    try { const res = await api.post('/spin-reset'); toast.success(res.data.message || 'Spin epoch reset permanently!') }
+    catch (err: any) { toast.error(err?.response?.data?.error || 'Spin reset failed') }
+    finally { setSpinResetLoading(false) }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
       {/* Sidebar Navigation */}
@@ -195,6 +242,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
               { id: 'withdrawals', label: '💸 Pending Payouts', badge: withdrawals.length },
               { id: 'users', label: '👥 Users & Fraud Flags', badge: null },
               { id: 'campaigns', label: '📢 Campaigns & Ads', badge: null },
+              { id: 'broadcast', label: '📣 Broadcast & Spins', badge: null },
               { id: 'settings', label: '⚙️ System Settings', badge: null },
             ].map((item) => (
               <button
@@ -307,6 +355,69 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Broadcast & Spin Tab */}
+        {activeTab === 'broadcast' && (
+          <div className="max-w-2xl">
+            <h2 className="text-2xl font-bold text-slate-100 mb-2">📣 Broadcast & Spin Management</h2>
+            <p className="text-slate-400 text-sm mb-6">Send spin announcements and manage the spin epoch permanently.</p>
+
+            <div className="bg-rose-950/40 border border-rose-700/40 rounded-2xl p-5 mb-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-extrabold text-rose-300 text-sm mb-1">🔒 Permanent Spin Reset (Server-Side Epoch)</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">Sets epoch to RIGHT NOW in the database. All old referrals will NOT grant spins — only new friends who sign up AFTER this moment give +1 spin. Cross-device, permanent fix — not localStorage based.</p>
+                </div>
+                <button onClick={handleSpinReset} disabled={spinResetLoading} className="ml-4 shrink-0 px-4 py-2.5 rounded-xl bg-rose-600 text-white font-extrabold text-xs hover:bg-rose-500 disabled:opacity-50 transition-all">
+                  {spinResetLoading ? 'Resetting...' : '🔄 Reset Epoch NOW'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-xs font-bold text-slate-400 uppercase block mb-2">Quick Templates</label>
+              <div className="grid grid-cols-3 gap-2">
+                {SPIN_TEMPLATES.map((t) => (
+                  <button key={t.id} onClick={() => { setSelectedTemplate(t); setBroadcastMsg(t.message); setBroadcastBtn(t.button) }}
+                    className={`text-left p-3 rounded-xl text-xs font-semibold border transition-all ${selectedTemplate.id === t.id ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Message</label>
+                <textarea value={broadcastMsg} onChange={(e) => setBroadcastMsg(e.target.value)} rows={6} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 font-mono focus:outline-none focus:border-amber-500 resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Button Text</label>
+                  <input type="text" value={broadcastBtn} onChange={(e) => setBroadcastBtn(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase block mb-1.5">Target Telegram ID (blank = all)</label>
+                  <input type="text" value={broadcastTarget} onChange={(e) => setBroadcastTarget(e.target.value)} placeholder="e.g. 123456789" className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500" />
+                </div>
+              </div>
+              <button onClick={handleBroadcast} disabled={broadcastLoading || broadcastStatus?.is_running} className="w-full py-3 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-sm hover:bg-amber-400 disabled:opacity-50 transition-all shadow-lg shadow-amber-500/20">
+                {broadcastLoading ? 'Sending...' : broadcastStatus?.is_running ? 'Broadcasting...' : '🚀 Send Broadcast'}
+              </button>
+              {broadcastStatus && (
+                <div className="bg-slate-800 rounded-xl p-3">
+                  <div className="flex justify-between text-xs text-slate-300 mb-1.5"><span>{broadcastStatus.message}</span><span className="font-bold text-amber-400">{broadcastStatus.percent || 0}%</span></div>
+                  <div className="w-full bg-slate-700 rounded-full h-2"><div className="bg-amber-400 h-2 rounded-full transition-all duration-300" style={{ width: `${broadcastStatus.percent || 0}%` }} /></div>
+                  <div className="flex gap-4 mt-2 text-[11px] text-slate-400">
+                    <span>✅ Sent: <strong className="text-emerald-400">{broadcastStatus.sent || 0}</strong></span>
+                    <span>❌ Failed: <strong className="text-rose-400">{broadcastStatus.failed || 0}</strong></span>
+                    <span>📋 Total: <strong className="text-slate-200">{broadcastStatus.total || 0}</strong></span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
