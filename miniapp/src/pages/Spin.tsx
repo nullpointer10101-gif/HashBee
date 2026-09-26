@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { fetchReferrals, fetchSpinEpoch, claimSpinReward } from '../services/api'
+import { fetchReferrals, fetchSpinEpoch, claimSpinReward, fetchSpinStatus } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -46,6 +46,8 @@ export const Spin: React.FC = () => {
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
     return user?.spin_balance !== undefined ? user.spin_balance : 1
   })
+  const [spinsToday, setSpinsToday] = useState<number>(0)
+  const [dailyLimit] = useState<number>(20)
   const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -75,16 +77,24 @@ export const Spin: React.FC = () => {
     }
   }, [user?.spin_balance])
 
-  // Load friends/referrals list (filtered by spin epoch so only fresh new invites are shown)
+  // Load spin status (daily count out of 20) and fresh referrals
   useEffect(() => {
     if (!user) return
 
-    const loadReferrals = async () => {
+    const loadSpinData = async () => {
       try {
-        const [data, epochStr] = await Promise.all([
+        const [data, epochStr, spinStatus] = await Promise.all([
           fetchReferrals(),
           fetchSpinEpoch(),
+          fetchSpinStatus(),
         ])
+        if (spinStatus?.spins_today !== undefined) {
+          setSpinsToday(spinStatus.spins_today)
+        }
+        if (spinStatus?.spin_balance !== undefined) {
+          setSpinsLeft(spinStatus.spin_balance)
+        }
+
         const allRefs = data?.referrals || []
         const epochMs = epochStr ? new Date(epochStr).getTime() : 0
 
@@ -101,8 +111,8 @@ export const Spin: React.FC = () => {
       }
     }
 
-    loadReferrals()
-    const interval = setInterval(loadReferrals, 10000)
+    loadSpinData()
+    const interval = setInterval(loadSpinData, 10000)
     return () => clearInterval(interval)
   }, [user])
 
@@ -230,6 +240,10 @@ export const Spin: React.FC = () => {
   // Fast & Snappy Spin Action (2.2s)
   const handleSpin = async () => {
     if (isSpinning) return
+    if (spinsToday >= dailyLimit) {
+      toast.error(`Daily limit reached (${spinsToday}/${dailyLimit} spins used today). Resets at 00:00 UTC.`)
+      return
+    }
     if (spinsLeft <= 0) {
       toast.error('No spins left! For each invite you get 1 free spin.')
       return
@@ -267,6 +281,11 @@ export const Spin: React.FC = () => {
 
         if (res.new_spin_balance !== undefined) {
           setSpinsLeft(res.new_spin_balance)
+        }
+        if ((res as any).spins_today !== undefined) {
+          setSpinsToday((res as any).spins_today)
+        } else {
+          setSpinsToday((prev) => prev + 1)
         }
 
         setWonReward(selectedReward)
@@ -314,18 +333,28 @@ export const Spin: React.FC = () => {
     <div className="flex flex-col min-h-screen pb-28 px-4 pt-4 text-stone-100 max-w-md mx-auto relative overflow-hidden">
       {showConfetti && <ReactConfetti numberOfPieces={130} recycle={false} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999 }} />}
 
-      {/* Top Banner */}
+      {/* Top Banner with Balance and Daily Limit Status */}
       <div className="flex items-center justify-between bg-gradient-to-r from-[#12231b] via-[#1a382b] to-[#12231b] border border-[#2c5743] rounded-2xl p-3.5 mb-3 shadow-xl">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">For each invite you get 1 free spin</p>
+            <p className="text-[11px] text-[#78a591]">1 free spin per invite • 20/day limit</p>
           </div>
         </div>
-        <div className="bg-[#0f1c16] border border-[#234535] px-3.5 py-1.5 rounded-xl text-center shadow-inner">
-          <span className="text-[9px] uppercase font-black text-[#10b981] block">Spins</span>
-          <span className="text-xl font-black text-amber-400">{spinsLeft}</span>
+        <div className="flex items-center gap-2">
+          {/* Daily limit badge */}
+          <div className="bg-[#0f1c16] border border-[#234535] px-2.5 py-1.5 rounded-xl text-center shadow-inner">
+            <span className="text-[8px] uppercase font-black text-amber-300/80 block">Today</span>
+            <span className={`text-xs font-black ${spinsToday >= dailyLimit ? 'text-rose-400' : 'text-stone-200'}`}>
+              {spinsToday}/{dailyLimit}
+            </span>
+          </div>
+          {/* Spins left badge */}
+          <div className="bg-[#0f1c16] border border-[#234535] px-3 py-1.5 rounded-xl text-center shadow-inner">
+            <span className="text-[8px] uppercase font-black text-[#10b981] block">Spins</span>
+            <span className="text-base font-black text-amber-400">{spinsLeft}</span>
+          </div>
         </div>
       </div>
 
@@ -350,9 +379,11 @@ export const Spin: React.FC = () => {
         {/* Fast Spin Action Button */}
         <button
           onClick={handleSpin}
-          disabled={isSpinning || spinsLeft <= 0}
+          disabled={isSpinning || spinsLeft <= 0 || spinsToday >= dailyLimit}
           className={`mt-5 w-full max-w-xs py-4 px-6 rounded-2xl font-black text-base uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-2xl flex items-center justify-center gap-2 ${
-            spinsLeft > 0 && !isSpinning
+            spinsToday >= dailyLimit
+              ? 'bg-rose-950/60 text-rose-300 border border-rose-700/60 cursor-not-allowed'
+              : spinsLeft > 0 && !isSpinning
               ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-stone-950 hover:brightness-110 shadow-[0_0_25px_rgba(251,191,36,0.4)]'
               : 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700'
           }`}
@@ -362,6 +393,8 @@ export const Spin: React.FC = () => {
               <span className="w-4 h-4 border-2 border-stone-900 border-t-transparent rounded-full animate-spin"></span>
               Fast Spinning...
             </span>
+          ) : spinsToday >= dailyLimit ? (
+            <span>DAILY LIMIT REACHED (20/20) ⏳</span>
           ) : spinsLeft > 0 ? (
             <span>SPIN NOW ({spinsLeft} Left) 🎰</span>
           ) : (

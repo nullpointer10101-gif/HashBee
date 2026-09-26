@@ -236,6 +236,27 @@ export const fetchSpinEpoch = async (): Promise<string> => {
   }
 }
 
+export const fetchSpinStatus = async (): Promise<{
+  spins_today: number
+  daily_limit: number
+  remaining_today: number
+  spin_balance: number
+  can_spin: boolean
+}> => {
+  try {
+    const res = await api.get('/api/spin/status')
+    return res.data
+  } catch {
+    return {
+      spins_today: 0,
+      daily_limit: 20,
+      remaining_today: 20,
+      spin_balance: 0,
+      can_spin: false,
+    }
+  }
+}
+
 export const claimSpinReward = async (
   rewardType: string,
   rewardLabel: string,

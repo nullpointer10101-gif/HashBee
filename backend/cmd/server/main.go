@@ -233,6 +233,7 @@ func main() {
 		protected.POST("/checkin", userHandler.Checkin)
 		protected.GET("/history", userHandler.GetHistory)
 		protected.GET("/swarm", userHandler.GetSwarm)
+		protected.GET("/spin/status", userHandler.GetSpinStatus)
 		protected.POST("/spin/claim", userHandler.SpinClaim)
 
 		protected.GET("/missions", missionHandler.ListMissions)

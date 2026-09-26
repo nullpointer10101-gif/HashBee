@@ -284,6 +284,23 @@ func (h *UserHandler) SpinClaim(c *gin.Context) {
 		return
 	}
 
+	// Enforce daily limit: strictly max 20 spins per UTC calendar day
+	var spinsToday int
+	_ = tx.QueryRow(ctx,
+		`SELECT COUNT(*) FROM transactions 
+		 WHERE user_id = $1 AND type = 'spin_reward' AND created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')`,
+		user.ID).Scan(&spinsToday)
+
+	const dailySpinLimit = 20
+	if spinsToday >= dailySpinLimit {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":       fmt.Sprintf("Daily spin limit reached (%d/%d used today). Resets daily at 00:00 UTC.", spinsToday, dailySpinLimit),
+			"spins_today": spinsToday,
+			"daily_limit": dailySpinLimit,
+		})
+		return
+	}
+
 	// Deduct 1 spin
 	newSpinBalance := currentSpinBalance - 1
 	var honeyCredit float64
@@ -336,7 +353,39 @@ func (h *UserHandler) SpinClaim(c *gin.Context) {
 		"new_spin_balance":  newSpinBalance,
 		"new_honey_balance": currentHoney,
 		"new_bp":            currentBP,
+		"spins_today":       spinsToday + 1,
+		"daily_limit":       dailySpinLimit,
 		"credited":          true,
 	})
 }
+
+// GET /api/spin/status — Get user daily spin count and limit
+func (h *UserHandler) GetSpinStatus(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var spinsToday int
+	_ = h.userSvc.GetDB().QueryRow(ctx,
+		`SELECT COUNT(*) FROM transactions 
+		 WHERE user_id = $1 AND type = 'spin_reward' AND created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')`,
+		user.ID).Scan(&spinsToday)
+
+	var spinBalance int
+	_ = h.userSvc.GetDB().QueryRow(ctx, `SELECT spin_balance FROM users WHERE id = $1`, user.ID).Scan(&spinBalance)
+
+	const dailySpinLimit = 20
+	remainingToday := dailySpinLimit - spinsToday
+	if remainingToday < 0 {
+		remainingToday = 0
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"spins_today":     spinsToday,
+		"daily_limit":     dailySpinLimit,
+		"remaining_today": remainingToday,
+		"spin_balance":    spinBalance,
+		"can_spin":        spinBalance > 0 && spinsToday < dailySpinLimit,
+	})
+}
+
 
