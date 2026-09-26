@@ -26,16 +26,16 @@ interface WheelSlice {
   amount: number
 }
 
-// 8 wheel slices configured with 0.002 GRAM and 0.001 USDT (50% combined drop chance)
+// 8 wheel slices configured with 0.002 GRAM & 0.001 USDT (50% drop rate), plus 0.01 USDT and 1 GRAM jackpot
 const SLICES: WheelSlice[] = [
   { id: 0, label: '0.002 GRAM', sublabel: 'Crypto Drop', icon: '🪙', color1: '#261b0c', color2: '#382812', textColor: '#fbbf24', weight: 25.0, type: 'gram', amount: 0.002 },
   { id: 1, label: '0.001 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#0e2b1e', color2: '#174530', textColor: '#4ade80', weight: 25.0, type: 'usdt', amount: 0.001 },
   { id: 2, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#112920', color2: '#16382a', textColor: '#34d399', weight: 25.0, type: 'hash', amount: 1 },
   { id: 3, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#142338', color2: '#1e3554', textColor: '#60a5fa', weight: 18.0, type: 'spin', amount: 1 },
   { id: 4, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#0c3321', color2: '#134f33', textColor: '#10b981', weight: 5.0, type: 'hash', amount: 2 },
-  { id: 5, label: '0.002 GRAM', sublabel: 'Bonus Drop', icon: '🪙', color1: '#2d1a0a', color2: '#42260f', textColor: '#f59e0b', weight: 1.0, type: 'gram', amount: 0.002 },
-  { id: 6, label: '0.001 USDT', sublabel: 'Lucky Cash', icon: '💵', color1: '#09361c', color2: '#12572e', textColor: '#22c55e', weight: 0.5, type: 'usdt', amount: 0.001 },
-  { id: 7, label: '0.01 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0.5, type: 'gram', amount: 0.01 },
+  { id: 5, label: '0.01 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#09361c', color2: '#12572e', textColor: '#22c55e', weight: 1.0, type: 'usdt', amount: 0.01 },
+  { id: 6, label: '5 HASH', sublabel: 'Mega Boost', icon: '⚡', color1: '#153325', color2: '#1f4a36', textColor: '#6ee7b7', weight: 0.8, type: 'hash', amount: 5 },
+  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0.2, type: 'gram', amount: 1.0 },
 ]
 
 export const Spin: React.FC = () => {
