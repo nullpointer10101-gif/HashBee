@@ -348,9 +348,14 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Auto-Broadcast Template Preset</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label" style="margin-bottom:0;">Auto-Broadcast Template Preset</label>
+            <button type="button" onclick="applyAutoTemplate(document.getElementById('autoBroadcastTemplateSelect').value)" class="btn" style="background:#27272a; color:#fbbf24; border:1px solid #3f3f46; font-size:11px; padding:4px 10px; font-weight:700;">
+              ⚡ Load Preset Into Box
+            </button>
+          </div>
           <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
-            <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
+            <option value="crate_mega_jackpot" selected>📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
             <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
             <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
             <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
@@ -368,7 +373,20 @@
 
         <div class="form-group">
           <label class="form-label">Automated Broadcast Message (Markdown Supported)</label>
-          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour..."></textarea>
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="8" style="resize:vertical;" placeholder="Message to automatically send every hour...">📦 *NEW FEATURE: MYSTERY LOOT CRATES ARE LIVE!* 🎁💎
+
+Hey {name}! 🐝
+Unbox instant high-value fortunes in the brand new *HashBee Mystery Crates*!
+
+💰 *AVAILABLE CRATES:*
+🥉 *Bronze Crate* (0.5 GRAM) ➔ Win up to 2.5 GRAM + USDT + HASH!
+🥈 *Silver Crate* (1.5 GRAM) ➔ Win up to 7.5 GRAM + $5 USDT!
+🥇 *Gold Crate* (3.0 GRAM) ➔ Win up to 15.0 GRAM + $10 USDT!
+💎 *Diamond Crate* (5.0 GRAM) ➔ Win up to *25.0 GRAM Mega Jackpot* + $20 USDT!
+
+✨ *Pure Value:* Win real USDT, instant GRAM cash, or massive HASH mining speeds!
+
+👇 *Tap below to open your first crate right now:*</textarea>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
@@ -382,13 +400,18 @@
           </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
           <div style="font-size:12px; color:#9ca3af;">
             <span>🕒 Last Sent: <b id="autoBroadcastLastRun" style="color:#fbbf24;">Never</b></span>
           </div>
-          <button onclick="saveAutoBroadcast()" id="saveAutoBroadcastBtn" class="btn btn-primary" style="padding:12px 24px; font-size:13px; font-weight:800;">
-            💾 Save Automated Broadcast Settings
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="testSendAutoBroadcast()" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:12px 18px; font-size:13px; font-weight:800;">
+              ⚡ Test Send 1 Message Now
+            </button>
+            <button type="button" onclick="saveAutoBroadcast()" id="saveAutoBroadcastBtn" class="btn btn-primary" style="padding:12px 24px; font-size:13px; font-weight:800;">
+              💾 Save Automated Broadcast Settings
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1261,6 +1284,40 @@ async function saveAutoBroadcast() {
       btn.disabled = false;
       btn.innerText = '💾 Save Automated Broadcast Settings';
     }
+  }
+}
+
+async function testSendAutoBroadcast() {
+  const message = document.getElementById('autoBroadcastMsg').value.trim();
+  const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
+  const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
+
+  if (!message) {
+    showToast('Please load or enter a message first', true);
+    return;
+  }
+
+  const tgIdStr = prompt('Enter your Telegram ID to receive instant test message:', '6446145632');
+  if (!tgIdStr || isNaN(parseInt(tgIdStr))) return;
+  const targetId = parseInt(tgIdStr);
+
+  showToast('⏳ Sending test message to ' + targetId + '...');
+  try {
+    const res = await fetch(API_URL + '/api/admin/broadcast', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        message: message,
+        button_text: buttonText,
+        button_url: buttonUrl,
+        target_telegram_id: targetId
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Test broadcast failed');
+    showToast('🎉 Test broadcast sent to Telegram ID ' + targetId + '!');
+  } catch (err) {
+    showToast(err.message, true);
   }
 }
 
