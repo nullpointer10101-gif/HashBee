@@ -101,6 +101,7 @@ export const fetchProfile = async (): Promise<User> => {
     streak_count: profileData.streak_count || 1,
     last_streak_date: new Date().toISOString().split('T')[0],
     ref_code: String(tgId),
+    spin_balance: profileData.spin_balance !== undefined ? Number(profileData.spin_balance) : 1,
     created_at: profileData.created_at || new Date().toISOString(),
   }
 }
@@ -233,6 +234,29 @@ export const fetchSpinEpoch = async (): Promise<string> => {
   } catch {
     return '2026-09-26T00:00:00Z'
   }
+}
+
+export const claimSpinReward = async (
+  rewardType: string,
+  rewardLabel: string,
+  amount: number,
+  idempotencyKey?: string
+): Promise<{
+  new_spin_balance: number
+  new_honey_balance: number
+  new_bp: number
+  reward_type: string
+  reward_label: string
+  honey_credit: number
+  bp_credit: number
+}> => {
+  const res = await api.post('/api/spin/claim', {
+    reward_type: rewardType,
+    reward_label: rewardLabel,
+    amount: amount,
+    idempotency_key: idempotencyKey,
+  })
+  return res.data
 }
 
 export const fetchLeaderboard = async (): Promise<LeaderboardEntry[]> => {

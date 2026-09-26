@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { fetchReferrals, fetchSpinEpoch } from '../services/api'
+import { fetchReferrals, claimSpinReward } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -38,91 +38,45 @@ const SLICES: WheelSlice[] = [
   { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0.5, type: 'gram', amount: 1 },
 ]
 
-// v7: epoch-based tracking (permanent, cross-device safe)
-const SPIN_STORAGE_KEY = 'hb_spins_v7'
-const CREDITED_KEY = 'hb_spin_credited_ids_v7'
-
 export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Spins: start with 1 signup bonus
+  // Spins balance: authoritative from server database profile
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
-    const saved = localStorage.getItem(SPIN_STORAGE_KEY)
-    return saved !== null ? parseInt(saved, 10) : 1
+    return user?.spin_balance !== undefined ? user.spin_balance : 1
   })
   const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
   const [wonReward, setWonReward] = useState<WheelSlice | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
-  // Default to far future so no spins are credited until epoch is loaded from server
-  const [spinEpoch, setSpinEpoch] = useState<string>('2099-01-01T00:00:00Z')
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Persist clean spins count
+  // Sync spinsLeft whenever authoritative user profile updates
   useEffect(() => {
-    localStorage.setItem(SPIN_STORAGE_KEY, spinsLeft.toString())
-  }, [spinsLeft])
+    if (user?.spin_balance !== undefined) {
+      setSpinsLeft(user.spin_balance)
+    }
+  }, [user?.spin_balance])
 
-  // Load server spin epoch once on mount
+  // Load friends/referrals list
   useEffect(() => {
-    fetchSpinEpoch().then((epoch) => {
-      setSpinEpoch(epoch)
-    })
-  }, [])
+    if (!user) return
 
-  // Permanent server-epoch referral credit: only referrals AFTER spin_epoch get spins
-  useEffect(() => {
-    if (!user || spinEpoch === '2099-01-01T00:00:00Z') return // wait for epoch to load
-
-    const checkNewReferrals = async () => {
+    const loadReferrals = async () => {
       try {
         const data = await fetchReferrals()
         const allRefs = data?.referrals || []
-
-        const epochMs = new Date(spinEpoch).getTime()
-
-        // HARD GATE: only referrals that joined AFTER server epoch count
-        const eligibleRefs = allRefs.filter((r: ReferralItem) => {
-          const joinedMs = new Date(r.joined_at).getTime()
-          return joinedMs >= epochMs
-        })
-
-        setRecentFriends(eligibleRefs)
-
-        // Track credited IDs locally for instant UX (not for correctness — epoch is the guard)
-        const creditedIdsList: string[] = JSON.parse(localStorage.getItem(CREDITED_KEY) || '[]')
-        const creditedSet = new Set(creditedIdsList)
-
-        const uncredited = eligibleRefs.filter((r: ReferralItem) => !creditedSet.has(r.id))
-
-        if (uncredited.length > 0) {
-          const newSpins = uncredited.length * 1 // exactly 1 spin per invite
-          setSpinsLeft((prev) => prev + newSpins)
-
-          uncredited.forEach((r) => creditedSet.add(r.id))
-          localStorage.setItem(CREDITED_KEY, JSON.stringify(Array.from(creditedSet)))
-
-          toast.success(`🎉 +${newSpins} Free Spin! (${uncredited[0]?.first_name || 'New friend'} joined)`, {
-            duration: 4000,
-            icon: '🎁',
-          })
-
-          if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
-          }
-        }
+        setRecentFriends(allRefs.slice(0, 20))
       } catch (err) {
         // Silently catch network blip
       }
     }
 
-    checkNewReferrals()
-    const interval = setInterval(checkNewReferrals, 8000)
-    return () => clearInterval(interval)
-  }, [user, spinEpoch])
+    loadReferrals()
+  }, [user])
 
   // Render High-DPR Crisp Canvas Wheel
   useEffect(() => {
@@ -245,7 +199,7 @@ export const Spin: React.FC = () => {
   }
 
   // Fast & Snappy Spin Action (2.2s)
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning) return
     if (spinsLeft <= 0) {
       toast.error('No spins left! For each invite you get 1 free spin.')
@@ -272,25 +226,42 @@ export const Spin: React.FC = () => {
 
     setRotation(finalRotation)
 
-    // Fast resolution: 2.2 seconds
-    setTimeout(() => {
-      setIsSpinning(false)
-      setWonReward(selectedReward)
-      setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 3500)
+    // Spin animation duration: 2.2 seconds
+    setTimeout(async () => {
+      try {
+        const res = await claimSpinReward(
+          selectedReward.type,
+          selectedReward.label,
+          selectedReward.amount,
+          `spin_${Date.now()}`
+        )
 
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
+        if (res.new_spin_balance !== undefined) {
+          setSpinsLeft(res.new_spin_balance)
+        }
+
+        setWonReward(selectedReward)
+        setShowConfetti(true)
+        setTimeout(() => setShowConfetti(false), 3500)
+
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
+        }
+
+        if (selectedReward.type === 'spin') {
+          toast.success('🎉 You won +1 FREE SPIN!')
+        } else {
+          toast.success(`🎉 You won ${selectedReward.label}! Credited instantly.`)
+        }
+
+        if (refreshUser) refreshUser()
+      } catch (err: any) {
+        const errorMsg = err?.response?.data?.error || 'Failed to claim spin reward'
+        toast.error(errorMsg)
+        if (refreshUser) refreshUser()
+      } finally {
+        setIsSpinning(false)
       }
-
-      if (selectedReward.type === 'spin') {
-        setSpinsLeft((prev) => prev + 1)
-        toast.success('🎉 You won +1 FREE SPIN!')
-      } else {
-        toast.success(`🎉 You won ${selectedReward.label}!`)
-      }
-
-      if (refreshUser) refreshUser()
     }, 2200)
   }
 
@@ -298,7 +269,7 @@ export const Spin: React.FC = () => {
   const handleShareReferral = () => {
     const botUser = 'hashbee_bot'
     const refCode = user?.telegram_id || ''
-    const refUrl = `https://t.me/${botUser}?start=ref_${refCode}`
+    const refUrl = `https://t.me/${botUser}?start=${refCode}`
     const shareText = encodeURIComponent(`🐝 Spin the Lucky Wheel on HashBee to win USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)
     const tgUrl = `https://t.me/share/url?url=${refUrl}&text=${shareText}`
 
@@ -399,14 +370,14 @@ export const Spin: React.FC = () => {
         </button>
       </div>
 
-      {/* Recently Joined Friends Section (Fresh New Invites Only) */}
+      {/* Recently Joined Friends Section */}
       <div className="mt-4 bg-[#0d1713]/95 border border-[#1e362a] rounded-2xl p-3.5 shadow-inner">
         <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#1b2f25]">
           <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
             <span>👥</span> New Invited Friends
           </span>
           <span className="text-[10px] font-bold text-[#10b981]">
-            {recentFriends.length} New Invites
+            {recentFriends.length} Invites
           </span>
         </div>
 
@@ -426,7 +397,7 @@ export const Spin: React.FC = () => {
                       {friend.first_name || friend.username || 'Friend'}
                     </span>
                     <span className="text-[10px] text-stone-500">
-                      {friend.username ? `@${friend.username}` : 'Joined now'}
+                      {friend.username ? `@${friend.username}` : 'Friend joined'}
                     </span>
                   </div>
                 </div>

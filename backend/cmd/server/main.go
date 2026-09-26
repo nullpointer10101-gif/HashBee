@@ -51,6 +51,9 @@ func main() {
 		ON CONFLICT (email) DO UPDATE SET password_hash = $2, status = 'active', updated_at = NOW()
 	`, uuid.New(), string(meelaHash))
 
+	// Ensure spin_balance column exists on users table
+	_, _ = pool.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS spin_balance INT NOT NULL DEFAULT 1;`)
+
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
 	_, _ = pool.Exec(ctx, `
@@ -192,6 +195,7 @@ func main() {
 		protected.POST("/checkin", userHandler.Checkin)
 		protected.GET("/history", userHandler.GetHistory)
 		protected.GET("/swarm", userHandler.GetSwarm)
+		protected.POST("/spin/claim", userHandler.SpinClaim)
 
 		protected.GET("/missions", missionHandler.ListMissions)
 		protected.POST("/missions/:id/start", missionHandler.StartMission)

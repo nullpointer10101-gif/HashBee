@@ -106,6 +106,10 @@ func NewUserService(db *pgxpool.Pool, settings *SettingsService) *UserService {
 	return &UserService{db: db, settings: settings}
 }
 
+func (s *UserService) GetDB() *pgxpool.Pool {
+	return s.db
+}
+
 // GetOrCreate finds or creates a user from Telegram auth data
 func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, username, firstName, language string, referrerTelegramID *int64) (*models.User, bool, error) {
 	// Try to find existing user
@@ -142,6 +146,7 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 		ReferrerID:    referrerID,
 		BP:            bp,
 		HoneyBalance:  0,
+		SpinBalance:   1, // 1 free signup spin
 		LastCollectAt: time.Now(),
 		Status:        models.UserStatusActive,
 	}
@@ -153,17 +158,20 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx,
-		`INSERT INTO users (id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, last_collect_at, status, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
+		`INSERT INTO users (id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance, last_collect_at, status, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
 		newUser.ID, newUser.TelegramID, newUser.Username, newUser.FirstName,
 		newUser.Language, newUser.ReferrerID, newUser.BP, newUser.HoneyBalance,
-		newUser.LastCollectAt, newUser.Status)
+		newUser.SpinBalance, newUser.LastCollectAt, newUser.Status)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create referral chain (up to 3 levels)
+	// Create referral chain (up to 3 levels) + reward 1 spin to direct referrer
 	if referrerID != nil {
+		// Award 1 spin immediately to referrer
+		_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`, *referrerID)
+
 		if err := s.createReferralChain(ctx, tx, newUser.ID, *referrerID); err != nil {
 			return nil, false, fmt.Errorf("failed to create referral chain: %w", err)
 		}
@@ -219,12 +227,12 @@ func (s *UserService) createReferralChain(ctx context.Context, tx pgx.Tx, newUse
 func (s *UserService) GetByTelegramID(ctx context.Context, telegramID int64) (*models.User, error) {
 	var u models.User
 	err := s.db.QueryRow(ctx,
-		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance,
+		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
 		        last_collect_at, streak_count, last_checkin_at, status, has_collected,
 		        has_completed_mission, last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
 		 FROM users WHERE telegram_id = $1`, telegramID).
 		Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
-			&u.BP, &u.HoneyBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
 			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
@@ -236,12 +244,12 @@ func (s *UserService) GetByTelegramID(ctx context.Context, telegramID int64) (*m
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var u models.User
 	err := s.db.QueryRow(ctx,
-		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance,
+		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
 		        last_collect_at, streak_count, last_checkin_at, status, has_collected,
 		        has_completed_mission, last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
 		 FROM users WHERE id = $1`, id).
 		Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
-			&u.BP, &u.HoneyBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
 			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
@@ -304,12 +312,12 @@ func (s *UserService) CollectHoney(ctx context.Context, userID uuid.UUID, idempo
 	// Lock user row
 	var u models.User
 	err = tx.QueryRow(ctx,
-		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance,
+		`SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
 		        last_collect_at, streak_count, last_checkin_at, status, has_collected,
 		        has_completed_mission, last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
 		 FROM users WHERE id = $1 FOR UPDATE`, userID).
 		Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
-			&u.BP, &u.HoneyBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
 			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
@@ -474,6 +482,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		FirstName:    user.FirstName,
 		BP:           user.BP,
 		HoneyBalance: user.HoneyBalance,
+		SpinBalance:  user.SpinBalance,
 		Hive:         hive,
 		StreakCount:   user.StreakCount,
 		Status:       user.Status,
@@ -544,7 +553,7 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 	}
 
 	args = append(args, limit, offset)
-	query := fmt.Sprintf(`SELECT u.id, u.telegram_id, u.username, u.first_name, u.language, u.referrer_id, u.bp, u.honey_balance,
+	query := fmt.Sprintf(`SELECT u.id, u.telegram_id, u.username, u.first_name, u.language, u.referrer_id, u.bp, u.honey_balance, u.spin_balance,
 		        u.last_collect_at, u.streak_count, u.last_checkin_at, u.status, u.has_collected,
 		        u.has_completed_mission, u.last_hive_full_notified_at, u.opted_out_notifications, u.created_at, u.updated_at,
 		        COALESCE(GREATEST(
@@ -563,7 +572,7 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 	for rows.Next() {
 		var u models.User
 		if err := rows.Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
-			&u.BP, &u.HoneyBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
 			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt, &u.ReferralCount); err != nil {
 			return nil, 0, err

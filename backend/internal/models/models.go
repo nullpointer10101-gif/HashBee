@@ -31,6 +31,7 @@ type User struct {
 	HasCompletedMission   bool       `json:"has_completed_mission" db:"has_completed_mission"`
 	LastHiveFullNotifiedAt *time.Time `json:"last_hive_full_notified_at,omitempty" db:"last_hive_full_notified_at"`
 	OptedOutNotifications bool       `json:"opted_out_notifications" db:"opted_out_notifications"`
+	SpinBalance           int        `json:"spin_balance" db:"spin_balance"`
 	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
 }
@@ -53,6 +54,7 @@ type UserProfile struct {
 	FirstName    string     `json:"first_name"`
 	BP           float64    `json:"bp"`
 	HoneyBalance float64    `json:"honey_balance"`
+	SpinBalance  int        `json:"spin_balance"`
 	Hive         HiveStatus `json:"hive"`
 	StreakCount   int        `json:"streak_count"`
 	Status       string     `json:"status"`

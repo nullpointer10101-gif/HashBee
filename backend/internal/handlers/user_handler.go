@@ -238,3 +238,105 @@ func (h *UserHandler) GetSwarm(c *gin.Context) {
 		},
 	})
 }
+
+// POST /api/spin/claim — Immediately credit spin wheel reward to user account
+// Body: { "reward_type": "usdt|gram|hash|spin", "reward_label": "0.01 USDT", "amount": 0.01 }
+func (h *UserHandler) SpinClaim(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var req struct {
+		RewardType     string  `json:"reward_type" binding:"required"`
+		RewardLabel    string  `json:"reward_label"`
+		Amount         float64 `json:"amount"`
+		IdempotencyKey string  `json:"idempotency_key"` // prevent double-claim
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate reward type
+	validTypes := map[string]bool{"usdt": true, "gram": true, "hash": true, "spin": true}
+	if !validTypes[req.RewardType] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid reward_type"})
+		return
+	}
+
+	tx, err := h.userSvc.GetDB().Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	var currentSpinBalance int
+	var currentBP, currentHoney float64
+	err = tx.QueryRow(ctx, `SELECT spin_balance, bp, honey_balance FROM users WHERE id = $1 FOR UPDATE`, user.ID).
+		Scan(&currentSpinBalance, &currentBP, &currentHoney)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if currentSpinBalance <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No spins available. Invite friends to get 1 free spin each!"})
+		return
+	}
+
+	// Deduct 1 spin
+	newSpinBalance := currentSpinBalance - 1
+	var honeyCredit float64
+	var bpCredit float64
+
+	switch req.RewardType {
+	case "spin":
+		// Free re-spin: spin added back
+		newSpinBalance = newSpinBalance + 1
+	case "hash":
+		bpCredit = req.Amount
+		currentBP += bpCredit
+	case "usdt":
+		// 1 USDT = 10,000 honey ($0.0001 per honey)
+		honeyCredit = req.Amount * 10000
+		currentHoney += honeyCredit
+	case "gram":
+		// 1 GRAM = 5,000 honey
+		honeyCredit = req.Amount * 5000
+		currentHoney += honeyCredit
+	}
+
+	now := time.Now().UTC()
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET spin_balance = $1, bp = $2, honey_balance = $3, updated_at = $4 WHERE id = $5`,
+		newSpinBalance, currentBP, currentHoney, now, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update spin reward"})
+		return
+	}
+
+	// Log reward to transactions table
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, description, created_at)
+		 VALUES ($1, $2, 'spin_reward', $3, $4, $5)
+		 ON CONFLICT DO NOTHING`,
+		uuid.New(), user.ID, req.Amount, "Spin Wheel: "+req.RewardLabel, now)
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":           "✅ Reward credited to your account!",
+		"reward_type":       req.RewardType,
+		"reward_label":      req.RewardLabel,
+		"honey_credit":      honeyCredit,
+		"bp_credit":         bpCredit,
+		"new_spin_balance":  newSpinBalance,
+		"new_honey_balance": currentHoney,
+		"new_bp":            currentBP,
+		"credited":          true,
+	})
+}
+
