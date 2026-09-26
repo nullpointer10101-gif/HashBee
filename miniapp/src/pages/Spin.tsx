@@ -42,9 +42,9 @@ export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Clean Spin State (Reset previous excessive spins)
+  // Clean Spin State (Reset previous excessive spins, 1 starter spin)
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
-    const saved = localStorage.getItem('hb_spins_clean_v5')
+    const saved = localStorage.getItem('hb_spins_clean_v6')
     return saved !== null ? parseInt(saved, 10) : 1
   })
   const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
@@ -57,42 +57,54 @@ export const Spin: React.FC = () => {
 
   // Persist clean spins count
   useEffect(() => {
-    localStorage.setItem('hb_spins_clean_v5', spinsLeft.toString())
+    localStorage.setItem('hb_spins_clean_v6', spinsLeft.toString())
   }, [spinsLeft])
 
-  // Real-time Referral Credit: +1 Spin per newly joined referral from NOW onwards
+  // Real-time Referral Credit: Only show & credit FRESH referrals from now on
   useEffect(() => {
     if (!user) return
 
     const checkNewReferrals = async () => {
       try {
         const data = await fetchReferrals()
-        const currentRefCount = data?.tier1_count || 0
-        if (data?.referrals) {
-          setRecentFriends(data.referrals)
-        }
+        const allRefs = data?.referrals || []
 
-        const savedBaseline = localStorage.getItem('hb_baseline_refs_v5')
+        const savedOldIdsStr = localStorage.getItem('hb_spin_known_old_ids_v6')
 
-        // First time running clean version: lock in current count as baseline
-        if (savedBaseline === null) {
-          localStorage.setItem('hb_baseline_refs_v5', currentRefCount.toString())
-          localStorage.setItem('hb_credited_refs_v5', currentRefCount.toString())
+        // First launch of v6: capture old historical referrals as baseline so they are NOT listed or rewarded
+        if (savedOldIdsStr === null) {
+          const oldIds = allRefs.map((r: ReferralItem) => r.id)
+          localStorage.setItem('hb_spin_known_old_ids_v6', JSON.stringify(oldIds))
+          localStorage.setItem('hb_spin_credited_ids_v6', JSON.stringify([]))
+          setRecentFriends([])
           return
         }
 
-        const lastCredited = parseInt(localStorage.getItem('hb_credited_refs_v5') || savedBaseline, 10)
+        const oldIdsList: string[] = JSON.parse(savedOldIdsStr)
+        const oldIdsSet = new Set(oldIdsList)
 
-        // Only new signups from now on award +1 spin each
-        if (currentRefCount > lastCredited) {
-          const newJoined = currentRefCount - lastCredited
-          const bonusSpins = newJoined * 1 // EXACTLY 1 SPIN PER INVITE
-          setSpinsLeft((prev) => prev + bonusSpins)
-          localStorage.setItem('hb_credited_refs_v5', currentRefCount.toString())
-          toast.success(`🎉 +${bonusSpins} Free Spin credited! (${newJoined} new friend signup)`, {
+        // Filter ONLY fresh newly joined referrals
+        const freshList = allRefs.filter((r: ReferralItem) => !oldIdsSet.has(r.id))
+        setRecentFriends(freshList)
+
+        // Check which fresh referrals haven't been credited yet
+        const creditedIdsList: string[] = JSON.parse(localStorage.getItem('hb_spin_credited_ids_v6') || '[]')
+        const creditedSet = new Set(creditedIdsList)
+
+        const uncreditedFriends = freshList.filter((r: ReferralItem) => !creditedSet.has(r.id))
+
+        if (uncreditedFriends.length > 0) {
+          const newSpins = uncreditedFriends.length * 1 // 1 SPIN PER FRESH INVITE
+          setSpinsLeft((prev) => prev + newSpins)
+
+          uncreditedFriends.forEach((r) => creditedSet.add(r.id))
+          localStorage.setItem('hb_spin_credited_ids_v6', JSON.stringify(Array.from(creditedSet)))
+
+          toast.success(`🎉 +${newSpins} Free Spin credited! (${uncreditedFriends[0]?.first_name || 'New friend'} signed up)`, {
             duration: 4000,
             icon: '🎁',
           })
+
           if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
           }
@@ -383,20 +395,20 @@ export const Spin: React.FC = () => {
         </button>
       </div>
 
-      {/* Recently Joined Friends Section (Replacing odds table) */}
+      {/* Recently Joined Friends Section (Fresh New Invites Only) */}
       <div className="mt-4 bg-[#0d1713]/95 border border-[#1e362a] rounded-2xl p-3.5 shadow-inner">
         <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#1b2f25]">
           <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
-            <span>👥</span> Recently Joined Friends
+            <span>👥</span> New Invited Friends
           </span>
           <span className="text-[10px] font-bold text-[#10b981]">
-            {recentFriends.length} Invited
+            {recentFriends.length} New Invites
           </span>
         </div>
 
         {recentFriends.length > 0 ? (
           <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {recentFriends.slice(0, 10).map((friend, idx) => (
+            {recentFriends.map((friend, idx) => (
               <div
                 key={friend.id || idx}
                 className="flex items-center justify-between bg-[#12211a] px-3 py-2 rounded-xl border border-[#1d382b]"
@@ -410,7 +422,7 @@ export const Spin: React.FC = () => {
                       {friend.first_name || friend.username || 'Friend'}
                     </span>
                     <span className="text-[10px] text-stone-500">
-                      {friend.username ? `@${friend.username}` : 'Signed up'}
+                      {friend.username ? `@${friend.username}` : 'Joined now'}
                     </span>
                   </div>
                 </div>
@@ -424,9 +436,9 @@ export const Spin: React.FC = () => {
         ) : (
           <div className="text-center py-4 px-2">
             <span className="text-2xl block mb-1">🎁</span>
-            <p className="text-xs font-bold text-stone-300">No friends joined yet</p>
+            <p className="text-xs font-bold text-stone-300">No new friends joined yet</p>
             <p className="text-[11px] text-stone-500 mt-0.5">
-              Share your invite link above — for each friend who signs up, you'll receive +1 free spin immediately!
+              Share your invite link above — for each new friend who signs up, you'll receive +1 free spin immediately!
             </p>
           </div>
         )}
