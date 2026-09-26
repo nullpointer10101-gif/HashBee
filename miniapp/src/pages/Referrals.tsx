@@ -70,7 +70,7 @@ export const Referrals: React.FC = () => {
           {t('invite_friends_title', 'INVITE FRIENDS & EARN GHS')}
         </h1>
         <p className="text-xs font-semibold text-stone-400 mt-1">
-          Get <span className="text-emerald-400 font-extrabold">+10 GHS</span> &amp; <span className="text-amber-400 font-extrabold">+1 Free Spin</span> for every friend you invite!
+          Get <span className="text-emerald-400 font-extrabold">+3 GHS</span> for every active referral who starts mining!
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export const Referrals: React.FC = () => {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
-          SHARE LINK (+10 GHS &amp; +1 SPIN / INVITE)
+          SHARE LINK (+3 GHS / ACTIVE)
         </button>
       </div>
 
@@ -173,7 +173,7 @@ export const Referrals: React.FC = () => {
           >
             <div className="text-[9px] uppercase tracking-wider opacity-80">Tier 1</div>
             <div className="text-base font-black mt-0.5">{summary?.tier1_count || 0}</div>
-            <div className="text-[9px] font-bold mt-0.5">+10 GHS</div>
+            <div className="text-[9px] font-bold mt-0.5">+3 GHS</div>
           </button>
 
           <button

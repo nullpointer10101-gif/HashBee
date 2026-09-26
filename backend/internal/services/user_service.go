@@ -167,11 +167,10 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 		return nil, false, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create referral chain (up to 3 levels) + reward 1 spin and 10 GHS power to direct referrer
+	// Create referral chain (up to 3 levels) + reward 1 spin to direct referrer
 	if referrerID != nil {
-		referralBP := s.settings.GetFloat(ctx, "referral_l1_bp", 10.0)
-		// Award 1 spin and 10 GHS immediately to referrer
-		_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, bp = bp + $1, updated_at = NOW() WHERE id = $2`, referralBP, *referrerID)
+		// Award 1 free spin immediately to referrer
+		_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`, *referrerID)
 
 		if err := s.createReferralChain(ctx, tx, newUser.ID, *referrerID); err != nil {
 			return nil, false, fmt.Errorf("failed to create referral chain: %w", err)
