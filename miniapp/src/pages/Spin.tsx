@@ -34,13 +34,10 @@ export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Daily Free 10 Spins
+  // Fresh Clean Spin State (Reset previous excessive spins)
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
-    const saved = localStorage.getItem('hb_spins_count_v2')
-    return saved !== null ? parseInt(saved, 10) : 10
-  })
-  const [lastFreeDate, setLastFreeDate] = useState<string>(() => {
-    return localStorage.getItem('hb_last_free_spin_v2') || ''
+    const saved = localStorage.getItem('hb_spins_clean_v5')
+    return saved !== null ? parseInt(saved, 10) : 1 // 1 free starter spin
   })
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -49,22 +46,12 @@ export const Spin: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Persist spins count
+  // Persist clean spins count
   useEffect(() => {
-    localStorage.setItem('hb_spins_count_v2', spinsLeft.toString())
+    localStorage.setItem('hb_spins_clean_v5', spinsLeft.toString())
   }, [spinsLeft])
 
-  // Daily 10 Free Spins Check
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    if (lastFreeDate !== today) {
-      setSpinsLeft((prev) => Math.max(10, prev + 10))
-      setLastFreeDate(today)
-      localStorage.setItem('hb_last_free_spin_v2', today)
-    }
-  }, [lastFreeDate])
-
-  // Real-time Immediate Referral Credit Check (+2 spins per friend signup from now on)
+  // Real-time Referral Credit: +1 Spin per newly joined referral from NOW onwards
   useEffect(() => {
     if (!user) return
 
@@ -72,23 +59,24 @@ export const Spin: React.FC = () => {
       try {
         const data = await fetchReferrals()
         const currentRefCount = data?.tier1_count || 0
-        const savedBaseline = localStorage.getItem('hb_spin_baseline_refs_v3')
+        const savedBaseline = localStorage.getItem('hb_baseline_refs_v5')
 
-        // First time loading this feature: lock in current count as baseline so past/yesterday signups are not retroactively awarded
+        // First time running clean version: lock in current count as baseline
         if (savedBaseline === null) {
-          localStorage.setItem('hb_spin_baseline_refs_v3', currentRefCount.toString())
-          localStorage.setItem('hb_credited_refs_v3', currentRefCount.toString())
+          localStorage.setItem('hb_baseline_refs_v5', currentRefCount.toString())
+          localStorage.setItem('hb_credited_refs_v5', currentRefCount.toString())
           return
         }
 
-        const lastCredited = parseInt(localStorage.getItem('hb_credited_refs_v3') || savedBaseline, 10)
+        const lastCredited = parseInt(localStorage.getItem('hb_credited_refs_v5') || savedBaseline, 10)
 
+        // Only new signups from now on award +1 spin each
         if (currentRefCount > lastCredited) {
           const newJoined = currentRefCount - lastCredited
-          const bonusSpins = newJoined * 2
+          const bonusSpins = newJoined * 1 // EXACTLY 1 SPIN PER INVITE
           setSpinsLeft((prev) => prev + bonusSpins)
-          localStorage.setItem('hb_credited_refs_v3', currentRefCount.toString())
-          toast.success(`🎉 +${bonusSpins} Free Spins credited! (${newJoined} new friend signup!)`, {
+          localStorage.setItem('hb_credited_refs_v5', currentRefCount.toString())
+          toast.success(`🎉 +${bonusSpins} Free Spin credited! (${newJoined} new friend signup)`, {
             duration: 4000,
             icon: '🎁',
           })
@@ -97,13 +85,13 @@ export const Spin: React.FC = () => {
           }
         }
       } catch (err) {
-        // Silently catch if network blip
+        // Silently catch network blip
       }
     }
 
     checkNewReferrals()
-    // Background polling every 10 seconds while on spin screen so friend signup reflects instantly
-    const interval = setInterval(checkNewReferrals, 10000)
+    // Poll every 8s while on spin screen so new signups reflect immediately
+    const interval = setInterval(checkNewReferrals, 8000)
     return () => clearInterval(interval)
   }, [user])
 
@@ -173,7 +161,7 @@ export const Spin: React.FC = () => {
       ctx.lineWidth = 1.5
       ctx.stroke()
 
-      // Slice Typography & Icons (Rotated along slice radial axis)
+      // Slice Typography & Icons
       ctx.translate(center, center)
       ctx.rotate(angle + arc / 2)
       ctx.textAlign = 'right'
@@ -231,7 +219,7 @@ export const Spin: React.FC = () => {
   const handleSpin = () => {
     if (isSpinning) return
     if (spinsLeft <= 0) {
-      toast.error('No spins left! Invite friends for +2 spins each or wait for daily refill.')
+      toast.error('No spins left! Invite friends to get +1 spin per signup.')
       return
     }
 
@@ -277,7 +265,7 @@ export const Spin: React.FC = () => {
     }, 2200)
   }
 
-  // Share referral link to get +2 spins
+  // Share referral link to get +1 spin
   const handleShareReferral = () => {
     const botUser = 'hashbee_bot'
     const refCode = user?.telegram_id || ''
@@ -289,7 +277,7 @@ export const Spin: React.FC = () => {
       window.Telegram.WebApp.openTelegramLink(tgUrl)
     } else {
       navigator.clipboard.writeText(refUrl)
-      toast.success('Invite link copied! Send to friends for +2 spins each.')
+      toast.success('Invite link copied! Send to friends for +1 spin each.')
     }
   }
 
@@ -303,7 +291,7 @@ export const Spin: React.FC = () => {
           <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">10 Free Daily Spins + 2 Spins / Friend</p>
+            <p className="text-[11px] text-[#78a591]">+1 Free Spin Per Friend Invite</p>
           </div>
         </div>
         <div className="bg-[#0f1c16] border border-[#234535] px-3.5 py-1.5 rounded-xl text-center shadow-inner">
@@ -373,11 +361,11 @@ export const Spin: React.FC = () => {
             <span className="text-2xl p-2 bg-[#10241b] rounded-xl border border-[#234535]">👥</span>
             <div className="text-left">
               <span className="text-sm font-black text-[#e6f0ec] block">Invite 1 Friend</span>
-              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +2 Free Spins!</span>
+              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +1 Free Spin on signup!</span>
             </div>
           </div>
           <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3.5 py-1.5 rounded-xl shadow">
-            +2 SPINS
+            +1 SPIN
           </span>
         </button>
       </div>
