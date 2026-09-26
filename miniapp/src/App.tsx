@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { LanguageProvider } from './context/LanguageContext'
@@ -9,10 +9,35 @@ import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { Spin } from './pages/Spin'
 import { BannedScreen } from './components/BannedScreen'
+import { PrivateGroupGatekeeper } from './components/PrivateGroupGatekeeper'
 import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
+  const [isGatekeeperVerified, setIsGatekeeperVerified] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hashbee_pvt_channel_verified_global') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    if (user) {
+      try {
+        const userKey = `hashbee_pvt_channel_verified_${user.telegram_id || user.id}`
+        const userVerified = localStorage.getItem(userKey) === 'true'
+        const globalVerified = localStorage.getItem('hashbee_pvt_channel_verified_global') === 'true'
+        if (userVerified || globalVerified) {
+          setIsGatekeeperVerified(true)
+        } else {
+          setIsGatekeeperVerified(false)
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [user])
 
   if (loading) {
     return (
@@ -25,6 +50,10 @@ const AppContent: React.FC = () => {
 
   if (isBanned || user?.status === 'banned') {
     return <BannedScreen />
+  }
+
+  if (!isGatekeeperVerified) {
+    return <PrivateGroupGatekeeper onVerified={() => setIsGatekeeperVerified(true)} />
   }
 
   return (
