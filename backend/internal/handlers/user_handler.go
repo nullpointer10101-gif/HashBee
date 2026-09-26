@@ -388,4 +388,229 @@ func (h *UserHandler) GetSpinStatus(c *gin.Context) {
 	})
 }
 
+type OpenCrateRequest struct {
+	CrateTier     string `json:"crate_tier" binding:"required"` // bronze, silver, gold
+	PaymentMethod string `json:"payment_method"`               // balance, ton
+}
+
+type CrateReward struct {
+	RarityLabel string  `json:"rarity_label"` // COMMON, UNCOMMON, RARE, JACKPOT
+	RarityColor string  `json:"rarity_color"`
+	RewardUSDT  float64 `json:"reward_usdt"`
+	RewardGRAM  float64 `json:"reward_gram"`
+	RewardGHS   float64 `json:"reward_ghs"`
+	SummaryText string  `json:"summary_text"`
+}
+
+// POST /api/crates/open — Open a Mystery Loot Crate
+func (h *UserHandler) OpenCrate(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var req OpenCrateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	tier := strings.ToLower(strings.TrimSpace(req.CrateTier))
+	var cost float64
+	var tierName string
+
+	switch tier {
+	case "bronze":
+		cost = 0.50
+		tierName = "Bronze Crate"
+	case "silver":
+		cost = 1.50
+		tierName = "Silver Crate"
+	case "gold":
+		cost = 3.00
+		tierName = "Golden Queen Crate"
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid crate tier (choose bronze, silver, or gold)"})
+		return
+	}
+
+	tx, err := h.userSvc.GetDB().Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database transaction error"})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	var currentHoney, currentBP float64
+	err = tx.QueryRow(ctx, `SELECT honey_balance, bp FROM users WHERE id = $1 FOR UPDATE`, user.ID).
+		Scan(&currentHoney, &currentBP)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Verify balance
+	if currentHoney < cost {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Insufficient balance. %s costs %.2f USDT/GRAM. You have %.4f.", tierName, cost, currentHoney),
+			"required": cost,
+			"current_balance": currentHoney,
+		})
+		return
+	}
+
+	// Calculate random reward using timestamp entropy
+	r := float64(time.Now().UnixNano()%10000) / 10000.0
+	var reward CrateReward
+
+	switch tier {
+	case "bronze":
+		if r < 0.50 { // 50% Common
+			reward = CrateReward{
+				RarityLabel: "COMMON",
+				RarityColor: "#94a3b8",
+				RewardGHS:   40.0,
+				SummaryText: "+40 GHS Mining Hashrate",
+			}
+		} else if r < 0.75 { // 25% Uncommon
+			reward = CrateReward{
+				RarityLabel: "UNCOMMON",
+				RarityColor: "#34d399",
+				RewardUSDT:  0.25,
+				RewardGHS:   20.0,
+				SummaryText: "+0.25 USDT + 20 GHS",
+			}
+		} else if r < 0.93 { // 18% Rare
+			reward = CrateReward{
+				RarityLabel: "RARE",
+				RarityColor: "#60a5fa",
+				RewardGRAM:  0.35,
+				RewardUSDT:  0.35,
+				RewardGHS:   30.0,
+				SummaryText: "+0.35 GRAM + 30 GHS",
+			}
+		} else { // 7% Jackpot
+			reward = CrateReward{
+				RarityLabel: "🔥 JACKPOT",
+				RarityColor: "#f59e0b",
+				RewardUSDT:  1.50, // 1.00 USDT + 0.50 GRAM value
+				RewardGRAM:  0.50,
+				RewardGHS:   100.0,
+				SummaryText: "🎉 +1.00 USDT + 0.50 GRAM + 100 GHS!",
+			}
+		}
+
+	case "silver":
+		if r < 0.45 { // 45% Common
+			reward = CrateReward{
+				RarityLabel: "COMMON",
+				RarityColor: "#94a3b8",
+				RewardGHS:   120.0,
+				SummaryText: "+120 GHS Mining Hashrate",
+			}
+		} else if r < 0.75 { // 30% Uncommon
+			reward = CrateReward{
+				RarityLabel: "UNCOMMON",
+				RarityColor: "#34d399",
+				RewardUSDT:  0.80,
+				RewardGHS:   60.0,
+				SummaryText: "+0.80 USDT + 60 GHS",
+			}
+		} else if r < 0.93 { // 18% Rare
+			reward = CrateReward{
+				RarityLabel: "RARE",
+				RarityColor: "#60a5fa",
+				RewardGRAM:  1.20,
+				RewardUSDT:  1.20,
+				RewardGHS:   100.0,
+				SummaryText: "+1.20 GRAM + 100 GHS",
+			}
+		} else { // 7% Jackpot
+			reward = CrateReward{
+				RarityLabel: "🔥 JACKPOT",
+				RarityColor: "#f59e0b",
+				RewardUSDT:  5.00, // 3.50 USDT + 1.50 GRAM value
+				RewardGRAM:  1.50,
+				RewardGHS:   350.0,
+				SummaryText: "🎉 +3.50 USDT + 1.50 GRAM + 350 GHS!",
+			}
+		}
+
+	case "gold":
+		if r < 0.40 { // 40% Common
+			reward = CrateReward{
+				RarityLabel: "COMMON",
+				RarityColor: "#94a3b8",
+				RewardGHS:   260.0,
+				SummaryText: "+260 GHS Mining Hashrate",
+			}
+		} else if r < 0.72 { // 32% Uncommon
+			reward = CrateReward{
+				RarityLabel: "UNCOMMON",
+				RarityColor: "#34d399",
+				RewardUSDT:  2.00,
+				RewardGHS:   150.0,
+				SummaryText: "+2.00 USDT + 150 GHS",
+			}
+		} else if r < 0.92 { // 20% Rare
+			reward = CrateReward{
+				RarityLabel: "RARE",
+				RarityColor: "#60a5fa",
+				RewardGRAM:  2.80,
+				RewardUSDT:  2.80,
+				RewardGHS:   250.0,
+				SummaryText: "+2.80 GRAM + 250 GHS",
+			}
+		} else { // 8% Jackpot
+			reward = CrateReward{
+				RarityLabel: "🔥 JACKPOT",
+				RarityColor: "#f59e0b",
+				RewardUSDT:  11.00, // 8.00 USDT + 3.00 GRAM value
+				RewardGRAM:  3.00,
+				RewardGHS:   1000.0,
+				SummaryText: "🎉 +8.00 USDT + 3.00 GRAM + 1,000 GHS!",
+			}
+		}
+	}
+
+	newHoney := currentHoney - cost + reward.RewardUSDT
+	newBP := currentBP + reward.RewardGHS
+	now := time.Now().UTC()
+
+	// Update user record
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET honey_balance = $1, bp = $2, updated_at = $3 WHERE id = $4`,
+		newHoney, newBP, now, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user balance"})
+		return
+	}
+
+	// Insert purchase transaction
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
+		 VALUES ($1, $2, 'crate_purchase', $3, 'HONEY', $4, $5)`,
+		uuid.New(), user.ID, cost, fmt.Sprintf("Unlock %s", tierName), now)
+
+	// Insert reward transaction
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
+		 VALUES ($1, $2, 'crate_reward', $3, 'HONEY', $4, $5)`,
+		uuid.New(), user.ID, reward.RewardUSDT, fmt.Sprintf("Crate Reward (%s): %s", reward.RarityLabel, reward.SummaryText), now)
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit crate transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":           true,
+		"tier":              tier,
+		"tier_name":         tierName,
+		"cost":              cost,
+		"reward":            reward,
+		"new_honey_balance": newHoney,
+		"new_bp":            newBP,
+	})
+}
+
+
 

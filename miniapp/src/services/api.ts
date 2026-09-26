@@ -345,3 +345,31 @@ export const checkDeposit = async (senderAddress?: string): Promise<any> => {
   const res = await api.post('/api/check-deposit', { sender_address: senderAddress || '' })
   return res.data
 }
+
+export interface CrateRewardResponse {
+  rarity_label: string
+  rarity_color: string
+  reward_usdt: number
+  reward_gram: number
+  reward_ghs: number
+  summary_text: string
+}
+
+export interface OpenCrateResult {
+  success: boolean
+  tier: string
+  tier_name: string
+  cost: number
+  reward: CrateRewardResponse
+  new_honey_balance: number
+  new_bp: number
+}
+
+export const openCrate = async (tier: 'bronze' | 'silver' | 'gold'): Promise<OpenCrateResult> => {
+  const res = await api.post('/api/crates/open', {
+    crate_tier: tier,
+    payment_method: 'balance',
+  })
+  return res.data
+}
+
