@@ -51,9 +51,11 @@ func main() {
 		ON CONFLICT (email) DO UPDATE SET password_hash = $2, status = 'active', updated_at = NOW()
 	`, uuid.New(), string(meelaHash))
 
-	// Ensure spin_balance column exists on users table and reset any inflated glitched spins
+	// Ensure spin_balance column exists on users table
 	_, _ = pool.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS spin_balance INT NOT NULL DEFAULT 1;`)
-	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 1 WHERE spin_balance > 1 OR spin_balance IS NULL;`)
+
+	// Credit 20 test spins to Kanzx (telegram_id: 6446145632 / @kiopajje)
+	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 20 WHERE telegram_id = 6446145632 OR username ILIKE '%kiopajje%';`)
 
 	// Set/Update spin_epoch to current reset timestamp so old referrals are not displayed in the fresh spin log
 	nowEpoch := time.Now().UTC().Format(time.RFC3339)
