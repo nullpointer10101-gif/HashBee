@@ -5,6 +5,14 @@ import { fetchReferrals } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
+interface ReferralItem {
+  id: string
+  username: string
+  first_name: string
+  joined_at: string
+  status?: string
+}
+
 interface WheelSlice {
   id: number
   label: string
@@ -13,7 +21,7 @@ interface WheelSlice {
   color1: string
   color2: string
   textColor: string
-  weight: number // Drop probability weight
+  weight: number
   type: 'usdt' | 'gram' | 'hash' | 'spin'
   amount: number
 }
@@ -34,11 +42,12 @@ export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Fresh Clean Spin State (Reset previous excessive spins)
+  // Clean Spin State (Reset previous excessive spins)
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
     const saved = localStorage.getItem('hb_spins_clean_v5')
-    return saved !== null ? parseInt(saved, 10) : 1 // 1 free starter spin
+    return saved !== null ? parseInt(saved, 10) : 1
   })
+  const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
   const [wonReward, setWonReward] = useState<WheelSlice | null>(null)
@@ -59,6 +68,10 @@ export const Spin: React.FC = () => {
       try {
         const data = await fetchReferrals()
         const currentRefCount = data?.tier1_count || 0
+        if (data?.referrals) {
+          setRecentFriends(data.referrals)
+        }
+
         const savedBaseline = localStorage.getItem('hb_baseline_refs_v5')
 
         // First time running clean version: lock in current count as baseline
@@ -219,7 +232,7 @@ export const Spin: React.FC = () => {
   const handleSpin = () => {
     if (isSpinning) return
     if (spinsLeft <= 0) {
-      toast.error('No spins left! Invite friends to get +1 spin per signup.')
+      toast.error('No spins left! For each invite you get 1 free spin.')
       return
     }
 
@@ -277,7 +290,7 @@ export const Spin: React.FC = () => {
       window.Telegram.WebApp.openTelegramLink(tgUrl)
     } else {
       navigator.clipboard.writeText(refUrl)
-      toast.success('Invite link copied! Send to friends for +1 spin each.')
+      toast.success('Invite link copied! Send to friends for 1 free spin each.')
     }
   }
 
@@ -291,7 +304,7 @@ export const Spin: React.FC = () => {
           <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">+1 Free Spin Per Friend Invite</p>
+            <p className="text-[11px] text-[#78a591]">For each invite you get 1 free spin</p>
           </div>
         </div>
         <div className="bg-[#0f1c16] border border-[#234535] px-3.5 py-1.5 rounded-xl text-center shadow-inner">
@@ -360,8 +373,8 @@ export const Spin: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="text-2xl p-2 bg-[#10241b] rounded-xl border border-[#234535]">👥</span>
             <div className="text-left">
-              <span className="text-sm font-black text-[#e6f0ec] block">Invite 1 Friend</span>
-              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +1 Free Spin on signup!</span>
+              <span className="text-sm font-black text-[#e6f0ec] block">For each invite you get 1 free spin</span>
+              <span className="text-[11px] text-[#60a5fa] font-semibold">Share your link ➔ Instant +1 spin on signup!</span>
             </div>
           </div>
           <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3.5 py-1.5 rounded-xl shadow">
@@ -370,20 +383,53 @@ export const Spin: React.FC = () => {
         </button>
       </div>
 
-      {/* Rewards Odds Table */}
+      {/* Recently Joined Friends Section (Replacing odds table) */}
       <div className="mt-4 bg-[#0d1713]/95 border border-[#1e362a] rounded-2xl p-3.5 shadow-inner">
-        <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 block mb-2">
-          Reward Odds
-        </span>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {SLICES.map((s) => (
-            <div key={s.id} className="flex items-center gap-2 bg-[#12211a] px-2.5 py-1.5 rounded-xl border border-[#1d382b]">
-              <span>{s.icon}</span>
-              <span className="font-bold text-stone-200">{s.label}</span>
-              <span className="text-[10px] text-stone-400 ml-auto font-mono">{s.weight}%</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#1b2f25]">
+          <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+            <span>👥</span> Recently Joined Friends
+          </span>
+          <span className="text-[10px] font-bold text-[#10b981]">
+            {recentFriends.length} Invited
+          </span>
         </div>
+
+        {recentFriends.length > 0 ? (
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {recentFriends.slice(0, 10).map((friend, idx) => (
+              <div
+                key={friend.id || idx}
+                className="flex items-center justify-between bg-[#12211a] px-3 py-2 rounded-xl border border-[#1d382b]"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#1a382b] flex items-center justify-center text-xs font-bold text-amber-300">
+                    🐝
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-stone-200 block">
+                      {friend.first_name || friend.username || 'Friend'}
+                    </span>
+                    <span className="text-[10px] text-stone-500">
+                      {friend.username ? `@${friend.username}` : 'Signed up'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                  <span className="text-[10px] font-black text-emerald-400">+1 SPIN</span>
+                  <span className="text-[9px] text-emerald-300">✨</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 px-2">
+            <span className="text-2xl block mb-1">🎁</span>
+            <p className="text-xs font-bold text-stone-300">No friends joined yet</p>
+            <p className="text-[11px] text-stone-500 mt-0.5">
+              Share your invite link above — for each friend who signs up, you'll receive +1 free spin immediately!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
