@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { showRewardedInterstitial } from '../services/monetag'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -10,7 +9,8 @@ interface WheelSlice {
   label: string
   sublabel: string
   icon: string
-  color: string
+  color1: string
+  color2: string
   textColor: string
   weight: number // Drop probability weight
   type: 'usdt' | 'gram' | 'hash' | 'spin'
@@ -19,14 +19,14 @@ interface WheelSlice {
 
 // 8 exact requested slices with low chance on big rewards
 const SLICES: WheelSlice[] = [
-  { id: 0, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color: '#1a2e26', textColor: '#10b981', weight: 35, type: 'hash', amount: 1 },
-  { id: 1, label: '0.01 GRAM', sublabel: 'Crypto Drop', icon: '🪙', color: '#272015', textColor: '#f59e0b', weight: 25, type: 'gram', amount: 0.01 },
-  { id: 2, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color: '#1e2430', textColor: '#60a5fa', weight: 20, type: 'spin', amount: 1 },
-  { id: 3, label: '0.01 USDT', sublabel: 'Cash Win', icon: '💵', color: '#192b23', textColor: '#34d399', weight: 12, type: 'usdt', amount: 0.01 },
-  { id: 4, label: '0.02 GRAM', sublabel: 'Token Reward', icon: '🪙', color: '#2b1f15', textColor: '#fbbf24', weight: 4.5, type: 'gram', amount: 0.02 },
-  { id: 5, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color: '#16382a', textColor: '#059669', weight: 2, type: 'hash', amount: 2 },
-  { id: 6, label: '0.03 USDT', sublabel: 'Big Cash', icon: '💵', color: '#133924', textColor: '#10b981', weight: 1.0, type: 'usdt', amount: 0.03 },
-  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color: '#3d240d', textColor: '#fbbf24', weight: 0.5, type: 'gram', amount: 1 },
+  { id: 0, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#112920', color2: '#16382a', textColor: '#34d399', weight: 35, type: 'hash', amount: 1 },
+  { id: 1, label: '0.01 GRAM', sublabel: 'Crypto Drop', icon: '🪙', color1: '#261b0c', color2: '#382812', textColor: '#fbbf24', weight: 25, type: 'gram', amount: 0.01 },
+  { id: 2, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#142338', color2: '#1e3554', textColor: '#60a5fa', weight: 20, type: 'spin', amount: 1 },
+  { id: 3, label: '0.01 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#0e2b1e', color2: '#174530', textColor: '#4ade80', weight: 12, type: 'usdt', amount: 0.01 },
+  { id: 4, label: '0.02 GRAM', sublabel: 'Token Reward', icon: '🪙', color1: '#2d1a0a', color2: '#42260f', textColor: '#f59e0b', weight: 4.5, type: 'gram', amount: 0.02 },
+  { id: 5, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#0c3321', color2: '#134f33', textColor: '#10b981', weight: 2.0, type: 'hash', amount: 2 },
+  { id: 6, label: '0.03 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#09361c', color2: '#12572e', textColor: '#22c55e', weight: 1.0, type: 'usdt', amount: 0.03 },
+  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0.5, type: 'gram', amount: 1 },
 ]
 
 export const Spin: React.FC = () => {
@@ -44,16 +44,15 @@ export const Spin: React.FC = () => {
   const [rotation, setRotation] = useState(0)
   const [wonReward, setWonReward] = useState<WheelSlice | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [adLoading, setAdLoading] = useState(false)
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Save spins count
+  // Persist spins count
   useEffect(() => {
     localStorage.setItem('hb_spins_count', spinsLeft.toString())
   }, [spinsLeft])
 
-  // Daily free spin grant
+  // Daily free spin check
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
     if (lastFreeDate !== today) {
@@ -63,70 +62,111 @@ export const Spin: React.FC = () => {
     }
   }, [lastFreeDate])
 
-  // Draw the lucky wheel canvas
+  // Render High-DPR Crisp Canvas Wheel
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const size = canvas.width
+    const dpr = window.devicePixelRatio || 2
+    const size = 320
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    ctx.scale(dpr, dpr)
+
     const center = size / 2
-    const radius = center - 8
+    const radius = center - 14
     const totalSlices = SLICES.length
     const arc = (2 * Math.PI) / totalSlices
 
     ctx.clearRect(0, 0, size, size)
 
-    // Draw outer golden ring
+    // Outer Glowing Metallic Gold Bezel
+    ctx.save()
     ctx.beginPath()
-    ctx.arc(center, center, radius + 4, 0, 2 * Math.PI)
-    ctx.strokeStyle = '#f59e0b'
-    ctx.lineWidth = 6
+    ctx.arc(center, center, radius + 10, 0, 2 * Math.PI)
+    const goldGrad = ctx.createLinearGradient(0, 0, size, size)
+    goldGrad.addColorStop(0, '#ffe57f')
+    goldGrad.addColorStop(0.3, '#f59e0b')
+    goldGrad.addColorStop(0.7, '#d97706')
+    goldGrad.addColorStop(1, '#fffae0')
+    ctx.strokeStyle = goldGrad
+    ctx.lineWidth = 9
     ctx.stroke()
+    ctx.restore()
 
-    // Draw Slices
+    // Outer LED Lights
+    const numBulbs = 24
+    for (let b = 0; b < numBulbs; b++) {
+      const bulbAngle = (b * 2 * Math.PI) / numBulbs
+      const bx = center + (radius + 10) * Math.cos(bulbAngle)
+      const by = center + (radius + 10) * Math.sin(bulbAngle)
+      ctx.beginPath()
+      ctx.arc(bx, by, 2.5, 0, 2 * Math.PI)
+      ctx.fillStyle = b % 2 === 0 ? '#ffffff' : '#fbbf24'
+      ctx.fill()
+    }
+
+    // Draw Slices with Rich Radial Gradients
     SLICES.forEach((slice, i) => {
       const angle = i * arc
+      ctx.save()
       ctx.beginPath()
-      ctx.fillStyle = slice.color
       ctx.moveTo(center, center)
       ctx.arc(center, center, radius, angle, angle + arc)
       ctx.lineTo(center, center)
+
+      const grad = ctx.createRadialGradient(center, center, 10, center, center, radius)
+      grad.addColorStop(0, slice.color2)
+      grad.addColorStop(1, slice.color1)
+      ctx.fillStyle = grad
       ctx.fill()
 
-      ctx.strokeStyle = '#23332e'
+      // Slice Divider Line
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)'
       ctx.lineWidth = 1.5
       ctx.stroke()
 
-      // Slice text & icon
-      ctx.save()
+      // Slice Typography & Icons (Rotated along slice radial axis)
       ctx.translate(center, center)
       ctx.rotate(angle + arc / 2)
       ctx.textAlign = 'right'
-      ctx.fillStyle = slice.textColor
-      ctx.font = 'bold 13px Outfit, sans-serif'
-      ctx.fillText(slice.label, radius - 24, 4)
 
-      // Slice Icon
-      ctx.font = '14px sans-serif'
-      ctx.fillText(slice.icon, radius - 6, 5)
+      // Amount / Label
+      ctx.fillStyle = slice.textColor
+      ctx.font = '900 13px Outfit, -apple-system, sans-serif'
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
+      ctx.shadowBlur = 4
+      ctx.fillText(slice.label, radius - 30, 4)
+
+      // Icon
+      ctx.font = '16px sans-serif'
+      ctx.shadowBlur = 0
+      ctx.fillText(slice.icon, radius - 8, 5)
+
       ctx.restore()
     })
 
-    // Center pin
+    // Center Gold Metallic Cap
+    ctx.save()
     ctx.beginPath()
-    ctx.arc(center, center, 24, 0, 2 * Math.PI)
-    ctx.fillStyle = '#0f1715'
+    ctx.arc(center, center, 28, 0, 2 * Math.PI)
+    const centerGrad = ctx.createRadialGradient(center - 5, center - 5, 2, center, center, 28)
+    centerGrad.addColorStop(0, '#fef08a')
+    centerGrad.addColorStop(0.5, '#eab308')
+    centerGrad.addColorStop(1, '#78350f')
+    ctx.fillStyle = centerGrad
     ctx.fill()
-    ctx.strokeStyle = '#f59e0b'
-    ctx.lineWidth = 3
+    ctx.strokeStyle = '#fff'
+    ctx.lineWidth = 2.5
     ctx.stroke()
 
-    ctx.font = '16px sans-serif'
+    ctx.font = '18px sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('🐝', center, center)
+    ctx.fillText('⚡', center, center)
+    ctx.restore()
   }, [])
 
   // Weighted random picker
@@ -142,11 +182,11 @@ export const Spin: React.FC = () => {
     return SLICES[0]
   }
 
-  // Handle spin action
+  // Fast & Snappy Spin Action (2.2s)
   const handleSpin = () => {
     if (isSpinning) return
     if (spinsLeft <= 0) {
-      toast.error('No spins left! Watch an ad or invite friends to get more.')
+      toast.error('No spins left! Invite friends or check in tomorrow for more.')
       return
     }
 
@@ -162,19 +202,20 @@ export const Spin: React.FC = () => {
     const sliceIndex = selectedReward.id
     const sliceAngle = 360 / SLICES.length
 
-    // Target angle where slice lands under top indicator (270 degrees in canvas coordinates)
-    const extraSpins = 5 * 360 // 5 full rotations
+    // Target landing under the top pointer
+    const extraSpins = 4 * 360 // 4 full rotations
     const targetSliceCenter = sliceIndex * sliceAngle + sliceAngle / 2
     const stopAngle = 360 - targetSliceCenter + 270
     const finalRotation = rotation + extraSpins + (stopAngle - (rotation % 360))
 
     setRotation(finalRotation)
 
+    // Fast resolution: 2.2 seconds
     setTimeout(() => {
       setIsSpinning(false)
       setWonReward(selectedReward)
       setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 4500)
+      setTimeout(() => setShowConfetti(false), 3500)
 
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
@@ -188,39 +229,15 @@ export const Spin: React.FC = () => {
       }
 
       if (refreshUser) refreshUser()
-    }, 4200)
+    }, 2200)
   }
 
-  // Watch Monetag Rewarded Ad to get +1 Spin
-  const handleWatchAd = async () => {
-    setAdLoading(true)
-    toast.loading('Loading sponsor video...', { id: 'monetag-ad' })
-    try {
-      const watched = await showRewardedInterstitial()
-      toast.dismiss('monetag-ad')
-      if (watched) {
-        setSpinsLeft((prev) => prev + 1)
-        toast.success('🎉 +1 Free Spin added for watching!')
-        if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
-        }
-      } else {
-        toast.error('Ad ended early or no ads available. Try again in a minute!')
-      }
-    } catch (e) {
-      toast.dismiss('monetag-ad')
-      toast.error('Could not load ad right now.')
-    } finally {
-      setAdLoading(false)
-    }
-  }
-
-  // Share referral link to get spins
+  // Share referral link to get +3 spins
   const handleShareReferral = () => {
     const botUser = 'hashbee_bot'
     const refCode = user?.telegram_id || ''
     const refUrl = `https://t.me/${botUser}?start=ref_${refCode}`
-    const shareText = encodeURIComponent(`🐝 Join HashBee & Spin the Lucky Wheel for free USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)
+    const shareText = encodeURIComponent(`🐝 Spin the Lucky Wheel on HashBee to win USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)
     const tgUrl = `https://t.me/share/url?url=${refUrl}&text=${shareText}`
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
@@ -233,125 +250,104 @@ export const Spin: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen pb-28 px-4 pt-4 text-stone-100 max-w-md mx-auto relative overflow-hidden">
-      {showConfetti && <ReactConfetti numberOfPieces={140} recycle={false} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999 }} />}
+      {showConfetti && <ReactConfetti numberOfPieces={130} recycle={false} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999 }} />}
 
       {/* Top Banner */}
-      <div className="flex items-center justify-between bg-[#14221c] border border-[#233f33] rounded-2xl p-3.5 mb-4 shadow-lg">
+      <div className="flex items-center justify-between bg-gradient-to-r from-[#12231b] via-[#1a382b] to-[#12231b] border border-[#2c5743] rounded-2xl p-3.5 mb-3 shadow-xl">
         <div className="flex items-center gap-2.5">
-          <span className="text-2xl">🎡</span>
+          <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#6e8a7e]">Spin & Win Crypto & Hashrate!</p>
+            <p className="text-[11px] text-[#78a591]">Instant Drops & Permanent Hashrate</p>
           </div>
         </div>
-        <div className="bg-[#1b3327] border border-[#29523f] px-3 py-1.5 rounded-xl text-center">
-          <span className="text-[10px] uppercase font-bold text-[#10b981] block">Spins Left</span>
-          <span className="text-lg font-black text-amber-400">{spinsLeft}</span>
+        <div className="bg-[#0f1c16] border border-[#234535] px-3.5 py-1.5 rounded-xl text-center shadow-inner">
+          <span className="text-[9px] uppercase font-black text-[#10b981] block">Spins</span>
+          <span className="text-xl font-black text-amber-400">{spinsLeft}</span>
         </div>
       </div>
 
-      {/* Wheel Area */}
-      <div className="relative flex flex-col items-center justify-center my-3">
+      {/* High-Quality Wheel Section */}
+      <div className="relative flex flex-col items-center justify-center my-2">
         {/* Top Pointer Indicator */}
-        <div className="absolute -top-3 z-30 flex flex-col items-center pointer-events-none">
-          <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[20px] border-t-amber-400 drop-shadow-[0_4px_8px_rgba(251,191,36,0.6)]"></div>
+        <div className="absolute -top-3.5 z-30 flex flex-col items-center pointer-events-none drop-shadow-[0_4px_10px_rgba(251,191,36,0.9)]">
+          <div className="w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[24px] border-t-amber-400"></div>
         </div>
 
-        {/* Wheel Canvas Container */}
+        {/* Wheel Container with 3D Depth & Lighting */}
         <div
-          className="relative w-[300px] h-[300px] rounded-full p-2 bg-gradient-to-b from-[#1b3327] to-[#0d1613] shadow-[0_0_35px_rgba(16,185,129,0.25)]"
+          className="relative w-[320px] h-[320px] rounded-full p-2 bg-gradient-to-b from-[#1b3d2c] via-[#0f2118] to-[#070e0a] shadow-[0_0_45px_rgba(16,185,129,0.35)] border-2 border-amber-400/30"
           style={{
             transform: `rotate(${rotation}deg)`,
-            transition: isSpinning ? 'transform 4s cubic-bezier(0.15, 0.9, 0.25, 1)' : 'none',
+            transition: isSpinning ? 'transform 2.2s cubic-bezier(0.12, 0.8, 0.2, 1.0)' : 'none',
           }}
         >
-          <canvas ref={canvasRef} width={284} height={284} className="rounded-full" />
+          <canvas ref={canvasRef} style={{ width: '300px', height: '300px' }} className="rounded-full" />
         </div>
 
-        {/* Spin Action Button */}
+        {/* Fast Spin Action Button */}
         <button
           onClick={handleSpin}
           disabled={isSpinning || spinsLeft <= 0}
-          className={`mt-6 w-full max-w-xs py-3.5 px-6 rounded-2xl font-black text-base uppercase tracking-wider transition-all duration-200 transform active:scale-95 shadow-xl flex items-center justify-center gap-2 ${
+          className={`mt-5 w-full max-w-xs py-4 px-6 rounded-2xl font-black text-base uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-2xl flex items-center justify-center gap-2 ${
             spinsLeft > 0 && !isSpinning
-              ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 animate-pulse'
+              ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-stone-950 hover:brightness-110 shadow-[0_0_25px_rgba(251,191,36,0.4)]'
               : 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700'
           }`}
         >
           {isSpinning ? (
             <span className="flex items-center gap-2 text-stone-900">
               <span className="w-4 h-4 border-2 border-stone-900 border-t-transparent rounded-full animate-spin"></span>
-              Spinning Wheel...
+              Fast Spinning...
             </span>
           ) : spinsLeft > 0 ? (
             <span>SPIN NOW ({spinsLeft} Left) 🎰</span>
           ) : (
-            <span>No Spins Left (Get More Below)</span>
+            <span>No Spins Left (Invite Friends)</span>
           )}
         </button>
       </div>
 
-      {/* Won Reward Alert Modal */}
+      {/* Won Reward Alert Card */}
       {wonReward && (
-        <div className="bg-gradient-to-br from-[#1b3327] to-[#12221a] border-2 border-amber-400/80 rounded-2xl p-4 mt-4 shadow-2xl text-center animate-fade-in">
+        <div className="bg-gradient-to-br from-[#16382a] via-[#1b4232] to-[#10241c] border-2 border-amber-400 rounded-3xl p-4 mt-3 shadow-2xl text-center animate-fade-in">
           <span className="text-3xl mb-1 block">{wonReward.icon}</span>
-          <p className="text-xs font-bold text-amber-300 uppercase tracking-widest">Congratulations!</p>
-          <h3 className="text-xl font-black text-white">{wonReward.label}</h3>
-          <p className="text-xs text-stone-300 mt-1">{wonReward.sublabel} credited to your account!</p>
+          <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">Congratulations!</p>
+          <h3 className="text-xl font-black text-white mt-0.5">{wonReward.label}</h3>
+          <p className="text-xs text-emerald-300 font-medium mt-0.5">{wonReward.sublabel} credited!</p>
         </div>
       )}
 
-      {/* Get More Spins Actions */}
-      <div className="mt-6 space-y-3">
-        <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 px-1">Get Extra Spins</h3>
-
-        {/* Watch Ad for Spin */}
-        <button
-          onClick={handleWatchAd}
-          disabled={adLoading || isSpinning}
-          className="w-full bg-[#13281f] hover:bg-[#1a382b] border border-[#234d3a] p-3.5 rounded-2xl flex items-center justify-between transition-all duration-200 active:scale-[0.98]"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl p-2 bg-[#1b382b] rounded-xl">🎬</span>
-            <div className="text-left">
-              <span className="text-sm font-bold text-[#e6f0ec] block">Watch Sponsor Ad</span>
-              <span className="text-[11px] text-[#10b981]">Watch a 15s video ➔ +1 Free Spin</span>
-            </div>
-          </div>
-          <span className="text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl">
-            +1 SPIN
-          </span>
-        </button>
-
-        {/* Invite Friends for 3 Spins */}
+      {/* Referral Viral Share */}
+      <div className="mt-4">
         <button
           onClick={handleShareReferral}
-          className="w-full bg-[#13281f] hover:bg-[#1a382b] border border-[#234d3a] p-3.5 rounded-2xl flex items-center justify-between transition-all duration-200 active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-[#142820] to-[#1b3b2e] hover:from-[#1b3b2e] hover:to-[#224c3b] border border-[#2d614b] p-3.5 rounded-2xl flex items-center justify-between transition-all duration-150 active:scale-[0.98] shadow-lg"
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl p-2 bg-[#1b382b] rounded-xl">👥</span>
+            <span className="text-2xl p-2 bg-[#10241b] rounded-xl border border-[#234535]">👥</span>
             <div className="text-left">
-              <span className="text-sm font-bold text-[#e6f0ec] block">Invite 1 Friend</span>
-              <span className="text-[11px] text-[#60a5fa]">Share invite link ➔ +3 Free Spins</span>
+              <span className="text-sm font-black text-[#e6f0ec] block">Invite 1 Friend</span>
+              <span className="text-[11px] text-[#60a5fa] font-semibold">Share invite link ➔ Get +3 Free Spins!</span>
             </div>
           </div>
-          <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-xl">
+          <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3.5 py-1.5 rounded-xl shadow">
             +3 SPINS
           </span>
         </button>
       </div>
 
-      {/* Rewards Odds & Legend */}
-      <div className="mt-6 bg-[#0f1715]/90 border border-[#1e3028] rounded-2xl p-3.5">
-        <span className="text-[10px] font-black uppercase tracking-wider text-stone-500 block mb-2">
-          Available Wheel Rewards
+      {/* Rewards Odds Table */}
+      <div className="mt-4 bg-[#0d1713]/95 border border-[#1e362a] rounded-2xl p-3.5 shadow-inner">
+        <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 block mb-2">
+          Reward Odds
         </span>
         <div className="grid grid-cols-2 gap-2 text-xs">
           {SLICES.map((s) => (
-            <div key={s.id} className="flex items-center gap-2 bg-[#14211c] px-2.5 py-1.5 rounded-xl border border-[#1f362c]">
+            <div key={s.id} className="flex items-center gap-2 bg-[#12211a] px-2.5 py-1.5 rounded-xl border border-[#1d382b]">
               <span>{s.icon}</span>
               <span className="font-bold text-stone-200">{s.label}</span>
-              <span className="text-[10px] text-stone-500 ml-auto">{s.weight}%</span>
+              <span className="text-[10px] text-stone-400 ml-auto font-mono">{s.weight}%</span>
             </div>
           ))}
         </div>
