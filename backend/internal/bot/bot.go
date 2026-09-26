@@ -148,7 +148,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 	}
 
 	// Append version query param to force Telegram to clear cached bundle
-	versionQuery := "v=7.0"
+	versionQuery := "v=9.0"
 	if strings.Contains(miniAppURL, "?") {
 		miniAppURL = miniAppURL + "&" + versionQuery
 	} else {

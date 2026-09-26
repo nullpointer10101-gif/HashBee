@@ -72,10 +72,11 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
       setVerifiedSuccess(true)
       triggerSuccessHaptic()
 
-      const userKey = `hashbee_pvt_channel_verified_${user?.telegram_id || user?.id || 'guest'}`
       try {
-        localStorage.setItem(userKey, 'true')
-        localStorage.setItem('hashbee_pvt_channel_verified_global', 'true')
+        localStorage.setItem('hashbee_vip_join_verified_v1', 'true')
+        if (user?.telegram_id) {
+          localStorage.setItem(`hashbee_vip_join_verified_${user.telegram_id}`, 'true')
+        }
       } catch {
         // ignore
       }

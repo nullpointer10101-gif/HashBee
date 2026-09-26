@@ -16,28 +16,16 @@ const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
   const [isGatekeeperVerified, setIsGatekeeperVerified] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('hashbee_pvt_channel_verified_global') === 'true'
+      return localStorage.getItem('hashbee_vip_join_verified_v1') === 'true'
     } catch {
       return false
     }
   })
 
-  useEffect(() => {
-    if (user) {
-      try {
-        const userKey = `hashbee_pvt_channel_verified_${user.telegram_id || user.id}`
-        const userVerified = localStorage.getItem(userKey) === 'true'
-        const globalVerified = localStorage.getItem('hashbee_pvt_channel_verified_global') === 'true'
-        if (userVerified || globalVerified) {
-          setIsGatekeeperVerified(true)
-        } else {
-          setIsGatekeeperVerified(false)
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }, [user])
+  // Show Gatekeeper FIRST to ALL unverified users (both existing and new)
+  if (!isGatekeeperVerified) {
+    return <PrivateGroupGatekeeper onVerified={() => setIsGatekeeperVerified(true)} />
+  }
 
   if (loading) {
     return (
@@ -50,10 +38,6 @@ const AppContent: React.FC = () => {
 
   if (isBanned || user?.status === 'banned') {
     return <BannedScreen />
-  }
-
-  if (!isGatekeeperVerified) {
-    return <PrivateGroupGatekeeper onVerified={() => setIsGatekeeperVerified(true)} />
   }
 
   return (
