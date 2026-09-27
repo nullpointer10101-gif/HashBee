@@ -213,12 +213,16 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// Determine target user strictly from Telegram ID in memo (e.g., HB_123456789 or 123456789)
+			// Determine target user strictly from Telegram ID in memo (e.g., HB_123456789, CRATE_123456789, 123456789)
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
-			if strings.HasPrefix(strings.ToUpper(cleanComment), "HB_") {
-				cleanComment = cleanComment[3:]
+			for _, pfx := range []string{"HB_", "HB", "CRATE_", "CRATE", "CR_", "GHS_", "GHS", "USER_"} {
+				if strings.HasPrefix(strings.ToUpper(cleanComment), pfx) {
+					cleanComment = strings.TrimSpace(cleanComment[len(pfx):])
+					break
+				}
 			}
+			cleanComment = strings.Trim(cleanComment, "_ :-#")
 			if tid, err := strconv.ParseInt(cleanComment, 10, 64); err == nil && tid > 10000 {
 				targetTelegramID = tid
 			}
@@ -260,8 +264,8 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 
 	// 2. Lock user row
 	var userID uuid.UUID
-	var currentBP float64
-	err = tx.QueryRow(ctx, "SELECT id, bp FROM users WHERE telegram_id = $1 FOR UPDATE", telegramID).Scan(&userID, &currentBP)
+	var currentHoney, currentBP float64
+	err = tx.QueryRow(ctx, "SELECT id, honey_balance, bp FROM users WHERE telegram_id = $1 FOR UPDATE", telegramID).Scan(&userID, &currentHoney, &currentBP)
 	if err != nil {
 		// User does not exist yet
 		return false, fmt.Errorf("user %d not found in database", telegramID)
@@ -270,15 +274,16 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 	// Rate: 1 GRAM = 50 GHS, +5% bonus = 52.5 GHS per 1 GRAM
 	powerGained := amountGram * 50.0 * 1.05
 
-	// 3. Update user BP
+	// 3. Update user both spendable balance (for crates / miner) and hashrate (for cloud mining)
+	newHoney := currentHoney + amountGram
 	newBP := currentBP + powerGained
-	_, err = tx.Exec(ctx, "UPDATE users SET bp = $1, updated_at = NOW() WHERE id = $2", newBP, userID)
+	_, err = tx.Exec(ctx, "UPDATE users SET honey_balance = $1, bp = $2, updated_at = NOW() WHERE id = $3", newHoney, newBP, userID)
 	if err != nil {
-		return false, fmt.Errorf("failed to update user bp: %w", err)
+		return false, fmt.Errorf("failed to update user balance: %w", err)
 	}
 
 	// 4. Record ledger transaction
-	desc := fmt.Sprintf("Blockchain deposit: +%.3f GRAM (+%.2f GHS)", amountGram, powerGained)
+	desc := fmt.Sprintf("Blockchain deposit: +%.3f GRAM (+%.4f USDT Balance & +%.2f GHS)", amountGram, amountGram, powerGained)
 	_, err = tx.Exec(ctx,
 		"INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at) VALUES ($1, $2, 'deposit', $3, 'GRAM', $4, $5, NOW())",
 		uuid.New(), userID, amountGram, eventID, desc)
@@ -290,7 +295,7 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 		return false, err
 	}
 
-	log.Printf("💎 [DepositService] Successfully credited +%.3f GRAM (+%.2f GHS) to user %d (tx: %s)", amountGram, powerGained, telegramID, eventID)
+	log.Printf("💎 [DepositService] Successfully credited +%.3f GRAM (+%.4f USDT & +%.2f GHS) to user %d (tx: %s)", amountGram, amountGram, powerGained, telegramID, eventID)
 
 	// Send instant notification via Bot
 	if s.bot != nil {
