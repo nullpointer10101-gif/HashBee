@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 const PRIVATE_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
+const GATEKEEPER_VERSION = 'v2'
 
 interface PrivateGroupGatekeeperProps {
   onVerified?: () => void
@@ -26,7 +27,7 @@ export const getActiveTelegramId = (userTelegramId?: number | string): string =>
 export const isAccountVerified = (userTelegramId?: number | string): boolean => {
   const tgId = getActiveTelegramId(userTelegramId)
   try {
-    return localStorage.getItem(`hashbee_vip_join_verified_acc_${tgId}`) === 'true'
+    return localStorage.getItem(`hashbee_vip_join_verified_${GATEKEEPER_VERSION}_acc_${tgId}`) === 'true'
   } catch {
     return false
   }
@@ -38,7 +39,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
 
   const [hasClickedLink, setHasClickedLink] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(`hashbee_pvt_clicked_acc_${currentTgId}`) === 'true'
+      return localStorage.getItem(`hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`) === 'true'
     } catch {
       return false
     }
@@ -73,7 +74,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     setErrorMsg(null)
     setHasClickedLink(true)
 
-    const storageKey = `hashbee_pvt_clicked_acc_${currentTgId}`
+    const storageKey = `hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`
     try {
       localStorage.setItem(storageKey, 'true')
     } catch {
@@ -106,7 +107,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
 
       try {
         // Save strictly for THIS specific Telegram Account ID
-        localStorage.setItem(`hashbee_vip_join_verified_acc_${currentTgId}`, 'true')
+        localStorage.setItem(`hashbee_vip_join_verified_${GATEKEEPER_VERSION}_acc_${currentTgId}`, 'true')
       } catch {
         // ignore
       }
@@ -120,7 +121,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
   }
 
   useEffect(() => {
-    const storageKey = `hashbee_pvt_clicked_acc_${currentTgId}`
+    const storageKey = `hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`
     try {
       if (localStorage.getItem(storageKey) === 'true') {
         setHasClickedLink(true)
