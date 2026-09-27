@@ -34,20 +34,18 @@ const AppContent: React.FC = () => {
     return <BannedScreen />
   }
 
-  // Show Gatekeeper to EVERY account that has not verified v3 key (1 time per Telegram account)
-  if (!isVerified && (!activeTgId || !verifiedMap[String(activeTgId)])) {
-    return (
-      <PrivateGroupGatekeeper
-        telegramId={activeTgId}
-        onVerified={() => {
-          setVerifiedMap((prev) => ({ ...prev, [String(activeTgId)]: true }))
-        }}
-      />
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-[#101715] text-[#e6f0ec] font-sans antialiased selection:bg-[#93b3a6] selection:text-[#0f1614]">
+    <div className="min-h-screen bg-[#101715] text-[#e6f0ec] font-sans antialiased selection:bg-[#93b3a6] selection:text-[#0f1614] relative">
+      {/* 🔒 1-TIME VIP CHANNEL VERIFICATION MODAL OVERLAY FOR EVERY TELEGRAM ACCOUNT */}
+      {!isVerified && (!activeTgId || !verifiedMap[String(activeTgId)]) && (
+        <PrivateGroupGatekeeper
+          telegramId={activeTgId}
+          onVerified={() => {
+            setVerifiedMap((prev) => ({ ...prev, [String(activeTgId)]: true }))
+          }}
+        />
+      )}
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/crates" element={<Crates />} />

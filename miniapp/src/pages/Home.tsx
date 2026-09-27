@@ -210,6 +210,32 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* 📢 OFFICIAL VIP CHANNEL BANNER */}
+      <div
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
+            window.Telegram.WebApp.openTelegramLink('https://t.me/+L4xApdSQJkA3N2Rl')
+          } else {
+            window.open('https://t.me/+L4xApdSQJkA3N2Rl', '_blank')
+          }
+        }}
+        className="cursor-pointer mb-3 p-4 rounded-3xl bg-gradient-to-r from-[#0b2138] via-[#103050] to-[#0a1c30] border border-[#0284c7]/60 shadow-[0_4px_25px_rgba(2,132,199,0.25)] flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-sky-400"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-3xl animate-bounce">📢</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-sky-300 uppercase tracking-wider">Official VIP Channel</span>
+              <span className="text-[9px] bg-sky-500 text-white font-black px-1.5 py-0.5 rounded-full shadow">JOIN</span>
+            </div>
+            <p className="text-[11px] text-sky-200/90 font-medium mt-0.5">VIP drops, secret promo codes & updates!</p>
+          </div>
+        </div>
+        <button className="bg-gradient-to-r from-[#0088cc] to-[#00a8ff] text-white px-3.5 py-1.5 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110 shrink-0">
+          JOIN ➔
+        </button>
+      </div>
+
       {/* 🎡 LUCKY WHEEL CALLOUT BANNER */}
       <div
         onClick={() => navigate('/spin')}
