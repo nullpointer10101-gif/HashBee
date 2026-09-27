@@ -471,7 +471,9 @@ export const Crates: React.FC = () => {
         onClick={() => {
           crateAudio.playClick()
           triggerHaptic('medium')
+          const godCrate = CRATE_TIERS.find((c) => c.id === 'god') || CRATE_TIERS[3]
           setActiveTab('god')
+          setPreviewCrate(godCrate)
         }}
         className="mb-3.5 p-3.5 rounded-3xl bg-gradient-to-r from-[#3b0764] via-[#24063d] to-[#12021f] border-2 border-fuchsia-400/80 shadow-[0_0_25px_rgba(217,70,239,0.35)] relative overflow-hidden cursor-pointer active:scale-98 transition-transform"
       >
@@ -497,25 +499,38 @@ export const Crates: React.FC = () => {
           </div>
         </div>
 
+        {/* 4 Reward Pills Preview on Banner */}
+        <div className="grid grid-cols-4 gap-1 mb-2">
+          <div className="p-1 rounded-lg bg-black/40 border border-purple-500/30 text-center">
+            <div className="text-[7.5px] text-stone-400 font-bold">BASE</div>
+            <div className="text-[9.5px] font-black text-purple-300">1.20 G</div>
+          </div>
+          <div className="p-1 rounded-lg bg-black/40 border border-pink-500/30 text-center">
+            <div className="text-[7.5px] text-stone-400 font-bold">HIGH</div>
+            <div className="text-[9.5px] font-black text-pink-300">12.00 G</div>
+          </div>
+          <div className="p-1 rounded-lg bg-black/40 border border-sky-500/30 text-center">
+            <div className="text-[7.5px] text-stone-400 font-bold">MEGA</div>
+            <div className="text-[9.5px] font-black text-sky-300">25.00 G</div>
+          </div>
+          <div className="p-1 rounded-lg bg-amber-500/20 border border-amber-400/50 text-center">
+            <div className="text-[7.5px] text-amber-300 font-bold">GOD</div>
+            <div className="text-[9.5px] font-black text-amber-300">50.00 G</div>
+          </div>
+        </div>
+
         {/* Guaranteed Callout Ribbon */}
-        <div className="p-2 rounded-xl bg-gradient-to-r from-amber-500/25 via-fuchsia-500/20 to-amber-500/25 border border-amber-400/60 flex items-center justify-between text-center text-[10px] font-black text-amber-300 mb-2.5">
+        <div className="p-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 via-fuchsia-500/20 to-amber-500/25 border border-amber-400/60 flex items-center justify-between text-center text-[10px] font-black text-amber-300 mb-2">
           <span>👑 100% GUARANTEED 99 OVR CARD WITHIN 2-3 OPENS</span>
           <span className="text-xs">⚡</span>
         </div>
 
-        {/* Quick Open Cyber God Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            const godCrate = CRATE_TIERS.find((c) => c.id === 'god') || CRATE_TIERS[3]
-            handleOpenCrate(godCrate)
-          }}
-          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-fuchsia-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-        >
-          <span>👁️</span>
-          <span>OPEN CYBER GOD • 5.0 GRAM</span>
+        {/* Action Button: Click to view all rewards */}
+        <div className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-fuchsia-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+          <span>🎁</span>
+          <span>CLICK TO VIEW ALL REWARDS & OPEN (5.0 G)</span>
           <span>➔</span>
-        </button>
+        </div>
       </div>
 
       {/* 👑 GUARANTEED PITY PROGRESS METER */}
@@ -590,10 +605,10 @@ export const Crates: React.FC = () => {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
-            <span>🎁</span> SELECT LOOT CRATE (4 TIERS)
+            <span>🎁</span> TAP ANY BOX TO SEE ALL REWARDS
           </span>
           <span className="text-[10px] font-extrabold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
-            1-TAP TO UNBOX
+            CLICK TO PREVIEW
           </span>
         </div>
 
@@ -612,6 +627,7 @@ export const Crates: React.FC = () => {
                   crateAudio.playClick()
                   triggerHaptic('light')
                   setActiveTab(crate.id)
+                  setPreviewCrate(crate)
                 }}
                 style={{
                   boxShadow: isSelected
@@ -624,7 +640,7 @@ export const Crates: React.FC = () => {
                     : 'border-[#1f3028] bg-[#101915]/90 hover:border-stone-500'
                 }`}
               >
-                {/* Top Badge & God Hot Ribbon */}
+                {/* Top Badge & Price */}
                 <div className="w-full flex items-center justify-between mb-1">
                   <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase tracking-tight border ${crate.badgeBg}`}>
                     {crate.badge.split(' ')[0]} {crate.badge.split(' ')[1] || ''}
@@ -634,7 +650,7 @@ export const Crates: React.FC = () => {
                   </span>
                 </div>
 
-                {/* 3D Animated Crate Box (Compact size) */}
+                {/* 3D Animated Crate Box */}
                 <div className="my-1 flex items-center justify-center">
                   <CrateAnimatedBox
                     tierId={crate.id}
@@ -646,23 +662,30 @@ export const Crates: React.FC = () => {
                   />
                 </div>
 
-                {/* Box Name & Top Prize Callout */}
+                {/* Box Name */}
                 <div className="text-center w-full my-1">
                   <div className="text-xs font-black text-white truncate">
                     {crate.name.split(' ')[0]} {crate.name.split(' ')[1]}
                   </div>
-                  <div className="text-[9px] font-extrabold text-amber-300 bg-black/40 border border-amber-500/30 rounded-lg px-1.5 py-0.5 mt-1 truncate">
-                    {crate.id === 'bronze'
-                      ? '⚡ +1.00 G / 100 GHS'
-                      : crate.id === 'silver'
-                        ? '🔥 +10.00 G DROP'
-                        : crate.id === 'gold'
-                          ? '👑 +20.00 G VAULT'
-                          : '👁️ +50.00 G GOD'}
-                  </div>
                 </div>
 
-                {/* View Drops Text Button */}
+                {/* 4 Rewards Mini Badges / Chips */}
+                <div className="w-full grid grid-cols-2 gap-1 my-1">
+                  {crate.rewards.map((r, i) => (
+                    <div
+                      key={i}
+                      className={`px-1 py-0.5 rounded text-[8px] font-black text-center truncate border ${
+                        r.isTopReward
+                          ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+                          : 'bg-black/40 text-stone-300 border-white/5'
+                      }`}
+                    >
+                      {r.rewardValue}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action: Tap to view all rewards */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -670,27 +693,10 @@ export const Crates: React.FC = () => {
                     triggerHaptic('light')
                     setPreviewCrate(crate)
                   }}
-                  className="text-[9px] font-extrabold text-[#7dd3fc] hover:underline my-0.5"
+                  className="w-full mt-1 py-1.5 px-1 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 text-[10px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1"
                 >
-                  👀 View All Rewards
-                </button>
-
-                {/* Quick Action Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleOpenCrate(crate)
-                  }}
-                  className={`w-full mt-1 py-2 px-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 ${
-                    hasBalance
-                      ? isGod
-                        ? 'bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 hover:brightness-110 shadow-fuchsia-500/30'
-                        : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 hover:brightness-110 shadow-amber-500/20'
-                      : 'bg-[#1b2b24] text-emerald-300 border border-emerald-500/40 hover:bg-[#23382f]'
-                  }`}
-                >
-                  <span>{hasBalance ? 'OPEN' : 'UNLOCK'}</span>
-                  <span>➔</span>
+                  <span>🎁</span>
+                  <span>VIEW ALL REWARDS</span>
                 </button>
               </div>
             )
