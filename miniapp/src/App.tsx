@@ -15,17 +15,11 @@ import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
-  const [isGatekeeperVerified, setIsGatekeeperVerified] = useState<boolean>(() => isAccountVerified(user?.telegram_id))
+  const [verifiedMap, setVerifiedMap] = useState<Record<string, boolean>>({})
 
-  // Update verification check whenever account / user switches
-  useEffect(() => {
-    setIsGatekeeperVerified(isAccountVerified(user?.telegram_id))
-  }, [user?.telegram_id])
-
-  // Show Gatekeeper FIRST to ALL unverified accounts (new & existing)
-  if (!isGatekeeperVerified) {
-    return <PrivateGroupGatekeeper onVerified={() => setIsGatekeeperVerified(true)} />
-  }
+  // Resolve current Telegram account ID
+  const activeTgId = user?.telegram_id || (typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user?.id : 0) || 0
+  const isVerified = Boolean(activeTgId && isAccountVerified(activeTgId))
 
   if (loading) {
     return (
@@ -38,6 +32,18 @@ const AppContent: React.FC = () => {
 
   if (isBanned || user?.status === 'banned') {
     return <BannedScreen />
+  }
+
+  // Show Gatekeeper to EVERY account that has not verified v3 key (1 time per Telegram account)
+  if (!isVerified && (!activeTgId || !verifiedMap[String(activeTgId)])) {
+    return (
+      <PrivateGroupGatekeeper
+        telegramId={activeTgId}
+        onVerified={() => {
+          setVerifiedMap((prev) => ({ ...prev, [String(activeTgId)]: true }))
+        }}
+      />
+    )
   }
 
   return (

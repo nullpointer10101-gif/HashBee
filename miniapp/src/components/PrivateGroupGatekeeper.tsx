@@ -1,45 +1,57 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 
-const PRIVATE_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
-const GATEKEEPER_VERSION = 'v2'
+export const PRIVATE_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
+export const GATEKEEPER_KEY_PREFIX = 'hb_vip_channel_v3_'
 
 interface PrivateGroupGatekeeperProps {
+  telegramId?: number | string
   onVerified?: () => void
 }
 
 export const getActiveTelegramId = (userTelegramId?: number | string): string => {
+  if (userTelegramId && Number(userTelegramId) > 0) {
+    return String(userTelegramId)
+  }
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
     return String(window.Telegram.WebApp.initDataUnsafe.user.id)
   }
-  if (userTelegramId) {
-    return String(userTelegramId)
-  }
   try {
     const stored = localStorage.getItem('hashbee_user_id')
-    if (stored) return stored
-  } catch {
-    // ignore
-  }
-  return 'default'
+    if (stored && stored !== '0' && stored !== 'default') return stored
+  } catch {}
+  return ''
 }
 
 export const isAccountVerified = (userTelegramId?: number | string): boolean => {
   const tgId = getActiveTelegramId(userTelegramId)
+  if (!tgId) {
+    return false
+  }
   try {
-    return localStorage.getItem(`hashbee_vip_join_verified_${GATEKEEPER_VERSION}_acc_${tgId}`) === 'true'
+    return localStorage.getItem(`${GATEKEEPER_KEY_PREFIX}${tgId}`) === 'true'
   } catch {
     return false
   }
 }
 
-export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ onVerified }) => {
+export const markAccountVerified = (userTelegramId?: number | string) => {
+  const tgId = getActiveTelegramId(userTelegramId)
+  if (tgId) {
+    try {
+      localStorage.setItem(`${GATEKEEPER_KEY_PREFIX}${tgId}`, 'true')
+    } catch {}
+  }
+}
+
+export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ telegramId, onVerified }) => {
   const { user } = useAuth()
-  const currentTgId = getActiveTelegramId(user?.telegram_id)
+  const currentTgId = getActiveTelegramId(telegramId || user?.telegram_id)
 
   const [hasClickedLink, setHasClickedLink] = useState<boolean>(() => {
+    if (!currentTgId) return false
     try {
-      return localStorage.getItem(`hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`) === 'true'
+      return localStorage.getItem(`hb_pvt_clicked_v3_${currentTgId}`) === 'true'
     } catch {
       return false
     }
@@ -48,15 +60,12 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  // Trigger haptic feedback if available
-  const triggerHaptic = (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
+  const triggerHaptic = (style: 'light' | 'medium' | 'heavy') => {
     try {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred(style)
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   const triggerSuccessHaptic = () => {
@@ -64,9 +73,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   const handleOpenChannel = () => {
@@ -74,11 +81,10 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     setErrorMsg(null)
     setHasClickedLink(true)
 
-    const storageKey = `hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`
-    try {
-      localStorage.setItem(storageKey, 'true')
-    } catch {
-      // ignore
+    if (currentTgId) {
+      try {
+        localStorage.setItem(`hb_pvt_clicked_v3_${currentTgId}`, 'true')
+      } catch {}
     }
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
@@ -99,42 +105,34 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     setErrorMsg(null)
     setIsVerifying(true)
 
-    // 1.2s simulated verification check
+    // Verification check delay
     setTimeout(() => {
       setIsVerifying(false)
       setVerifiedSuccess(true)
       triggerSuccessHaptic()
 
-      try {
-        // Save strictly for THIS specific Telegram Account ID
-        localStorage.setItem(`hashbee_vip_join_verified_${GATEKEEPER_VERSION}_acc_${currentTgId}`, 'true')
-      } catch {
-        // ignore
-      }
+      // Save strictly for THIS specific Telegram Account ID
+      markAccountVerified(currentTgId)
 
       setTimeout(() => {
         if (onVerified) {
           onVerified()
         }
       }, 600)
-    }, 1200)
+    }, 1100)
   }
 
   useEffect(() => {
-    const storageKey = `hashbee_pvt_clicked_${GATEKEEPER_VERSION}_acc_${currentTgId}`
+    if (!currentTgId) return
     try {
-      if (localStorage.getItem(storageKey) === 'true') {
+      if (localStorage.getItem(`hb_pvt_clicked_v3_${currentTgId}`) === 'true') {
         setHasClickedLink(true)
-      } else {
-        setHasClickedLink(false)
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [currentTgId])
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-[#0c1210] text-[#e6f0ec] flex flex-col justify-between items-center px-5 py-8 overflow-y-auto select-none">
+    <div className="fixed inset-0 z-[99999] bg-[#0a0f0d] text-[#e6f0ec] flex flex-col justify-between items-center px-5 py-8 overflow-y-auto select-none">
       {/* Background ambient glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#10b981]/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-80 h-80 bg-[#f59e0b]/10 rounded-full blur-3xl pointer-events-none" />
@@ -209,7 +207,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
         {/* Step 1: Open Channel Link */}
         <button
           onClick={handleOpenChannel}
-          className={`w-full py-4 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-between transition-all active:scale-[0.98] ${
+          className={`w-full py-4 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-between transition-all active:scale-[0.98] cursor-pointer ${
             hasClickedLink
               ? 'bg-[#182a23] border border-[#10b981]/50 text-[#34d399]'
               : 'bg-gradient-to-r from-[#0088cc] to-[#00a8ff] text-white shadow-[0_4px_25px_rgba(0,136,204,0.35)]'
@@ -238,7 +236,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
             verifiedSuccess
               ? 'bg-[#10b981] text-[#0c1210] shadow-[0_4px_30px_rgba(16,185,129,0.4)]'
               : hasClickedLink
-              ? 'bg-gradient-to-r from-[#10b981] to-[#059669] text-[#091511] shadow-[0_4px_30px_rgba(16,185,129,0.3)] animate-pulse'
+              ? 'bg-gradient-to-r from-[#10b981] to-[#059669] text-[#091511] shadow-[0_4px_30px_rgba(16,185,129,0.3)] animate-pulse cursor-pointer'
               : 'bg-[#1a2622] text-stone-500 border border-[#273933] cursor-not-allowed opacity-90'
           }`}
         >
@@ -261,7 +259,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
         </button>
 
         <p className="text-[10px] text-center text-stone-500 uppercase tracking-widest pt-1">
-          🔒 Required 1-time verification for all miners
+          🔒 Required 1-time verification for each Telegram account
         </p>
       </div>
     </div>
