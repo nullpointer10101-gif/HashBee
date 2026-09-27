@@ -506,108 +506,33 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 		}
 
 	case "silver":
-		if r < 0.70 { // 70% Common Low Drop
-			reward = CrateReward{
-				RarityLabel: "COMMON",
-				RarityColor: "#94a3b8",
-				RewardGRAM:  0.40,
-				RewardUSDT:  0.40,
-				SummaryText: "+0.40 GRAM Token Drop",
-			}
-		} else if r < 0.90 { // 20% Uncommon
-			reward = CrateReward{
-				RarityLabel: "UNCOMMON",
-				RarityColor: "#34d399",
-				RewardGRAM:  0.90,
-				RewardUSDT:  0.90,
-				SummaryText: "+0.90 GRAM Token Drop",
-			}
-		} else if r < 0.97 { // 7% Rare
-			reward = CrateReward{
-				RarityLabel: "RARE",
-				RarityColor: "#60a5fa",
-				RewardGRAM:  1.80,
-				RewardUSDT:  1.80,
-				SummaryText: "+1.80 GRAM Token Drop",
-			}
-		} else { // 3% Jackpot
-			reward = CrateReward{
-				RarityLabel: "🔥 JACKPOT",
-				RarityColor: "#f59e0b",
-				RewardGRAM:  5.00,
-				RewardUSDT:  5.00,
-				SummaryText: "🎉 +5.00 GRAM Mega Jackpot!",
-			}
+		// User always receives small low reward (0.35–0.40 GRAM)
+		reward = CrateReward{
+			RarityLabel: "COMMON",
+			RarityColor: "#94a3b8",
+			RewardGRAM:  0.35 + float64(int(r*100)%6)/100.0, // 0.35 to 0.40 GRAM
+			RewardUSDT:  0.35 + float64(int(r*100)%6)/100.0,
+			SummaryText: fmt.Sprintf("+%.2f GRAM Token Drop", 0.35+float64(int(r*100)%6)/100.0),
 		}
 
 	case "gold":
-		if r < 0.70 { // 70% Common Low Drop
-			reward = CrateReward{
-				RarityLabel: "COMMON",
-				RarityColor: "#94a3b8",
-				RewardGRAM:  0.80,
-				RewardUSDT:  0.80,
-				SummaryText: "+0.80 GRAM Token Drop",
-			}
-		} else if r < 0.90 { // 20% Uncommon
-			reward = CrateReward{
-				RarityLabel: "UNCOMMON",
-				RarityColor: "#34d399",
-				RewardGRAM:  1.80,
-				RewardUSDT:  1.80,
-				SummaryText: "+1.80 GRAM Token Drop",
-			}
-		} else if r < 0.97 { // 7% Rare
-			reward = CrateReward{
-				RarityLabel: "RARE",
-				RarityColor: "#60a5fa",
-				RewardGRAM:  3.50,
-				RewardUSDT:  3.50,
-				SummaryText: "+3.50 GRAM Token Drop",
-			}
-		} else { // 3% Jackpot
-			reward = CrateReward{
-				RarityLabel: "🔥 JACKPOT",
-				RarityColor: "#f59e0b",
-				RewardGRAM:  10.00,
-				RewardUSDT:  10.00,
-				SummaryText: "🎉 +10.00 GRAM Golden Jackpot!",
-			}
+		// User always receives small low reward (0.75–0.80 GRAM)
+		reward = CrateReward{
+			RarityLabel: "COMMON",
+			RarityColor: "#94a3b8",
+			RewardGRAM:  0.75 + float64(int(r*100)%6)/100.0, // 0.75 to 0.80 GRAM
+			RewardUSDT:  0.75 + float64(int(r*100)%6)/100.0,
+			SummaryText: fmt.Sprintf("+%.2f GRAM Token Drop", 0.75+float64(int(r*100)%6)/100.0),
 		}
 
 	case "god", "cyber_god", "cybergod":
-		if r < 0.70 { // 70% Common Low Drop
-			reward = CrateReward{
-				RarityLabel: "MYTHIC COMMON",
-				RarityColor: "#a855f7",
-				RewardGRAM:  1.50,
-				RewardUSDT:  1.50,
-				SummaryText: "+1.50 GRAM Token Drop",
-			}
-		} else if r < 0.90 { // 20% Uncommon
-			reward = CrateReward{
-				RarityLabel: "DIVINE UNCOMMON",
-				RarityColor: "#ec4899",
-				RewardGRAM:  3.00,
-				RewardUSDT:  3.00,
-				SummaryText: "+3.00 GRAM Token Drop",
-			}
-		} else if r < 0.97 { // 7% Rare
-			reward = CrateReward{
-				RarityLabel: "GOD TIER RARE",
-				RarityColor: "#38bdf8",
-				RewardGRAM:  6.50,
-				RewardUSDT:  6.50,
-				SummaryText: "+6.50 GRAM Token Drop",
-			}
-		} else { // 3% Jackpot
-			reward = CrateReward{
-				RarityLabel: "👑 CYBER GOD JACKPOT",
-				RarityColor: "#f59e0b",
-				RewardGRAM:  25.00,
-				RewardUSDT:  25.00,
-				SummaryText: "⚡ +25.00 GRAM 5X God Jackpot!",
-			}
+		// User always receives small low reward (1.20–1.50 GRAM)
+		reward = CrateReward{
+			RarityLabel: "MYTHIC COMMON",
+			RarityColor: "#a855f7",
+			RewardGRAM:  1.20 + float64(int(r*100)%30)/100.0, // 1.20 to 1.50 GRAM
+			RewardUSDT:  1.20 + float64(int(r*100)%30)/100.0,
+			SummaryText: fmt.Sprintf("+%.2f GRAM Token Drop", 1.20+float64(int(r*100)%30)/100.0),
 		}
 	}
 

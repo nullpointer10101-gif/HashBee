@@ -113,6 +113,18 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 	}
 }
 
+func (b *Bot) getFreshMiniAppURL() string {
+	miniAppURL := b.cfg.MiniAppURL
+	if miniAppURL == "" {
+		miniAppURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	versionQuery := fmt.Sprintf("v=%d", time.Now().Unix())
+	if strings.Contains(miniAppURL, "?") {
+		return miniAppURL + "&" + versionQuery
+	}
+	return miniAppURL + "?" + versionQuery
+}
+
 func (b *Bot) handleStart(msg *tgbotapi.Message) {
 	args := strings.TrimSpace(msg.CommandArguments())
 	var referrerTelegramID *int64
@@ -142,19 +154,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		}(*msg.From, referrerTelegramID)
 	}
 
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
-
-	// Append version query param to force Telegram to clear cached bundle
-	versionQuery := "v=10.0"
-	if strings.Contains(miniAppURL, "?") {
-		miniAppURL = miniAppURL + "&" + versionQuery
-	} else {
-		miniAppURL = miniAppURL + "?" + versionQuery
-	}
-
+	miniAppURL := b.getFreshMiniAppURL()
 	appURLWithRef := miniAppURL
 	if args != "" {
 		appURLWithRef = fmt.Sprintf("%s&ref=%s", miniAppURL, args)
@@ -200,10 +200,7 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 *Missions* — Complete tasks to earn free GHS.
 *Cash Out* — Fast withdrawal to USDT (BSC) or GRAM.`
 
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
+	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
@@ -213,10 +210,7 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 }
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
+	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
 
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
@@ -243,10 +237,7 @@ Open the miner to collect your pending USDT!`, user.HoneyBalance, user.BP, user.
 
 // SendHiveFullNotification sends a "your hive is full" notification
 func (b *Bot) SendHiveFullNotification(telegramID int64) {
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
+	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("🍯 Collect Now", miniAppURL)
 
 	text := "🍯 *Your Miner is full!*\n\nYour accumulated balance has reached maximum capacity. Claim your USDT now so your mining continues at full speed!"
@@ -280,10 +271,7 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 	if b == nil || b.api == nil || referrerTelegramID == 0 {
 		return
 	}
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
+	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("👥 View My Swarm", miniAppURL)
 
 	botName := b.cfg.BotUsername
@@ -314,10 +302,7 @@ func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName s
 	if b == nil || b.api == nil || telegramID == 0 {
 		return
 	}
-	miniAppURL := b.cfg.MiniAppURL
-	if miniAppURL == "" {
-		miniAppURL = "https://miniapp-five-topaz.vercel.app"
-	}
+	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("⚡ Check Mining Power", miniAppURL)
 
 	safeName := html.EscapeString(referredName)

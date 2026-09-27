@@ -238,14 +238,15 @@ export const Home: React.FC = () => {
         <div className="flex items-center gap-3">
           <span className="text-3xl animate-pulse">🎁</span>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-xs font-black text-amber-300 uppercase tracking-wider">Mystery Crates</span>
-              <span className="text-[9px] bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">0.5 GRAM</span>
+              <span className="text-[8px] bg-gradient-to-r from-cyan-400 to-indigo-500 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">👁️ CYBER GOD</span>
+              <span className="text-[8px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">0.5G - 5G</span>
             </div>
-            <p className="text-[11px] text-amber-200/80 font-medium mt-0.5">Win up to +8.00 USDT & +1,000 GHS!</p>
+            <p className="text-[11px] text-amber-200/90 font-medium mt-0.5">FUT Card Walkouts • Win up to +25.00 GRAM Jackpot!</p>
           </div>
         </div>
-        <button className="bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 px-3.5 py-1.5 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110">
+        <button className="bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 px-3.5 py-2 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110 shrink-0">
           OPEN ➔
         </button>
       </div>
