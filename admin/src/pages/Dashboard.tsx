@@ -57,12 +57,42 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
   // Broadcast state
   const SPIN_TEMPLATES = [
-    { id: 'crate_launch', label: '🎁 Mystery Crates Launch', message: '🎁 NEW: Mystery Loot Crates are LIVE on HashBee! 🐝\n\nUnlock crates starting at just 0.5 GRAM to win instant rewards:\n💵 Instant USDT Cash\n💎 Direct GRAM Drops\n⚡ Massive Mining Power (Up to +1,000 GHS!)\n\nOpen your first crate now and boost your daily earnings!', button: '🎁 Open Mystery Crates' },
-    { id: 'crate_jackpot', label: '👑 Crate Jackpot Alert', message: '🔥 MASSIVE CRATE JACKPOT ALERT! 👑\n\nMiners are winning up to +8.00 USDT and +1,000 GHS Hash Power from Golden Mystery Crates!\n\n⚡ Guaranteed rewards on EVERY unboxing: USDT, GRAM & Hash Power!\n\nTap below to test your luck before today\'s prize pool fills up!', button: '👑 Claim Crate Jackpot' },
-    { id: 'crate_bronze', label: '📦 0.5 GRAM Special Crate', message: '💎 LOW-COST MYSTERY CRATE (Only 0.5 GRAM)!\n\nReady to supercharge your miner? For just 0.5 GRAM, unlock guaranteed rewards:\n• +40 GHS to +100 GHS Hashrate\n• Instant USDT & GRAM cashback drops\n\nUnlock your Bronze Crate now!', button: '📦 Unlock 0.5 GRAM Crate' },
-    { id: 'spin_daily', label: 'Daily Spin Reminder', message: 'Lucky Honey Wheel is waiting! Every invite = +1 free spin. Open HashBee and spin now!', button: 'Spin Now' },
-    { id: 'spin_invite', label: 'Invite for Free Spins', message: 'Get FREE spins by inviting friends! For every friend who signs up, you get +1 free spin on the Lucky Wheel. Win USDT, GRAM, HASH!', button: 'Open HashBee' },
-    { id: 'spin_jackpot', label: 'Spin Jackpot Alert', message: 'JACKPOT ALERT on HashBee Lucky Wheel! Spin for a chance to win 1 GRAM today! All users get 1 free spin per invite.', button: 'Spin for Jackpot' },
+    {
+      id: 'crate_god_jackpot',
+      label: '👁️ 25.0 G Cyber God Jackpot',
+      message: '⚡ *CYBER GOD 25.0 GRAM JACKPOT UNLOCKED!* 👁️🔥\n\nMiners are pulling 99 OVR Football Cards & +25.00 GRAM Supreme Drops!\n💎 Pure GRAM Token Instant Drops\n⚽ FIFA-Style Pack Walkouts\n👑 Guaranteed Top Drop within 2-3 Opens!\n\nPayment Verified ✅\nInstant TON Blockchain Transfer Confirmed!\n\n👇 Open your Cyber God Pack now:',
+      button: '👁️ Unlock Cyber God Pack 👑',
+    },
+    {
+      id: 'crate_bronze_hash',
+      label: '📦 0.5 G Starter (1.0 G Top)',
+      message: '📦 *0.5 GRAM MINER PACK: 1.00 GRAM TOP PRIZE!* ⚡\n\nSupercharge your cloud mining for just 0.50 GRAM!\n⚡ Win +25 GHS to +100 GHS Permanent Hashpower\n💎 Top Prize: +1.00 GRAM Direct Payout!\n\nPayment Verified ✅\nGuaranteed Hashrate & GRAM Drops on Every Open!\n\n👇 Tap below to unlock:',
+      button: '📦 Open 0.5 G Miner Pack 🚀',
+    },
+    {
+      id: 'payouts_completed',
+      label: '💸 Payouts Proof & Verified',
+      message: '💸 *DAILY WITHDRAWALS PROCESSED & CREDITED!* 💎🎉\n\nOver 450+ Miner Payouts have been dispatched to TON Wallets!\nCheck your wallet or withdraw your mined GRAM right now!\n\nPayment Verified ✅\nStatus: 100% On-Chain Confirmed\n\n👇 Check your balance & withdraw:',
+      button: '💎 Check Balance & Payouts 💸',
+    },
+    {
+      id: 'fever_2x_rush',
+      label: '🔥 15-Min Lucky Fever 2X',
+      message: '🔥 *15-MIN LUCKY FEVER ACTIVE: 2X JACKPOT RUSH!* ⏱️⚡\n\nDrop rates for 96+ OVR Football Cards & GRAM Jackpots are DOUBLED!\n• 🥉 Bronze ➔ +1.00 G + 100 GHS\n• 🥈 Silver ➔ +5.00 G Mega Drop\n• 👑 Gold ➔ +10.00 G VIP Drop\n• 👁️ Cyber God ➔ +25.00 G Supreme Drop\n\nPayment Verified ✅\nInstant Credit Direct to Account!\n\n👇 Claim 2X Fever Luck:',
+      button: '🔥 Claim 2X Lucky Fever ⚡',
+    },
+    {
+      id: 'spin_viral_invite',
+      label: '👥 1 Invite = 1 Free Spin',
+      message: '👥 *UNLIMITED FREE SPINS & REWARDS!* 🚀💎\n\nEvery single friend you invite gives you:\n🎁 +1 Free Spin on the Lucky Honey Wheel\n⚡ +3 GHS Permanent Mining Speed\n\nPayment Verified ✅\n100% Real Instant Withdrawals!\n\n👇 Invite friends & spin:',
+      button: '👥 Get Free Spins & Mine 🚀',
+    },
+    {
+      id: 'hive_full_harvest',
+      label: '🐝 Hive Full Harvest',
+      message: '🐝 *HEY {name}, YOUR HONEYCOMB IS AT FULL CAPACITY!* 🍯⚡\n\nYour bees have mined maximum GRAM rewards!\nCollect now before your honeycomb storage fills up.\n\nPayment Verified ✅\nDirect One-Tap Harvest!\n\n👇 Collect your earnings:',
+      button: '🐝 Collect My GRAM Now 🚀',
+    },
   ]
   const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
   const [broadcastMsg, setBroadcastMsg] = useState(SPIN_TEMPLATES[0].message)

@@ -897,89 +897,94 @@ type AutoBroadcastTemplate struct {
 
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
-		Key: "crate_mega_jackpot",
-		Message: `🎁 *MYSTERY CRATES ARE LIVE!* 🐝💎
+		Key: "crate_god_jackpot",
+		Message: `⚡ *CYBER GOD 25.0 GRAM JACKPOT UNLOCKED!* 👁️🔥
 
-Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
-• 🥉 *Bronze (0.5 G)* ➔ Win up to 2.5 GRAM
-• 🥈 *Silver (1.5 G)* ➔ Win up to 7.5 GRAM
-• 🥇 *Gold (3.0 G)* ➔ Win up to 15.0 GRAM
-• 💎 *Diamond (5.0 G)* ➔ *25 GRAM Jackpot + $20 USDT!*
+Miners are pulling 99 OVR Football Cards & +25.00 GRAM Supreme Drops!
+💎 Pure GRAM Token Instant Drops
+⚽ FIFA-Style Pack Walkouts
+👑 Guaranteed Top Drop within 2-3 Opens!
 
-👇 Open your crate now:`,
-		ButtonText: "📦 Unlock Mystery Crates 🎁",
+Payment Verified ✅
+Instant TON Blockchain Transfer Confirmed!
+
+👇 Open your Cyber God Pack now:`,
+		ButtonText: "👁️ Unlock Cyber God Pack 👑",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "crate_bronze_starter",
-		Message: `📦 *0.5 GRAM STARTER CRATE!* ⚡
+		Key: "crate_bronze_hash",
+		Message: `📦 *0.5 GRAM MINER PACK: 1.00 GRAM TOP PRIZE!* ⚡
 
-Test your luck for just 0.5 GRAM!
-💵 *Real USDT* • 🪙 *Up to 2.5 GRAM* • ⚡ *+5 HASH*
+Supercharge your cloud mining for just 0.50 GRAM!
+⚡ Win +25 GHS to +100 GHS Permanent Hashpower
+💎 Top Prize: +1.00 GRAM Direct Payout!
 
-100% instant unboxing with guaranteed rewards!
+Payment Verified ✅
+Guaranteed Hashrate & GRAM Drops on Every Open!
 
-👇 Tap below to unbox:`,
-		ButtonText: "📦 Open 0.5 G Crate 🚀",
+👇 Tap below to unlock:`,
+		ButtonText: "📦 Open 0.5 G Miner Pack 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "crate_vip_dopamine",
-		Message: `👑 *25 GRAM CRATE JACKPOT ALERT!* 💎🔥
+		Key: "payouts_completed",
+		Message: `💸 *DAILY WITHDRAWALS PROCESSED & CREDITED!* 💎🎉
 
-Hey {name}, High-Roller Crates are loaded!
-🏆 *25.0 GRAM Single Drop Jackpot*
-💵 *$20.00 Instant USDT Cash*
-⚡ *+20 HASH Permanent Mining Speed*
+Over 450+ Miner Payouts have been dispatched to TON Wallets!
+Check your wallet or withdraw your mined GRAM right now!
 
-👇 Test your luck today:`,
-		ButtonText: "💎 Play High Roller Crates 👑",
+Payment Verified ✅
+Status: 100% On-Chain Confirmed
+
+👇 Check your balance & withdraw:`,
+		ButtonText: "💎 Check Balance & Payouts 💸",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "spin_dopamine_jackpot",
-		Message: `🎡 *LUCKY WHEEL: SPIN & WIN USDT!* 🎁⚡
+		Key: "fever_2x_rush",
+		Message: `🔥 *15-MIN LUCKY FEVER ACTIVE: 2X JACKPOT RUSH!* ⏱️⚡
 
-Hey {name}, your Lucky Wheel turn is ready!
-👑 *1.0 GRAM Jackpot* • 💵 *Real USDT* • ⚡ *Mining Boosts*
+Drop rates for 96+ OVR Football Cards & GRAM Jackpots are DOUBLED!
+• 🥉 Bronze ➔ +1.00 G + 100 GHS
+• 🥈 Silver ➔ +5.00 G Mega Drop
+• 👑 Gold ➔ +10.00 G VIP Drop
+• 👁️ Cyber God ➔ +25.00 G Supreme Drop
 
-🎁 *Invite Friends = +1 Free Spin every time!*
+Payment Verified ✅
+Instant Credit Direct to Account!
 
-👇 Spin the wheel now:`,
-		ButtonText: "🎡 Spin The Lucky Wheel 🎰",
+👇 Claim 2X Fever Luck:`,
+		ButtonText: "🔥 Claim 2X Lucky Fever ⚡",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "spin_viral_referrals",
-		Message: `👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🚀
+		Message: `👥 *UNLIMITED FREE SPINS & REWARDS!* 🚀💎
 
-Want free USDT, GRAM & mining speed?
-Every friend you invite gives you *+1 Free Spin instantly!*
+Every single friend you invite gives you:
+🎁 +1 Free Spin on the Lucky Honey Wheel
+⚡ +3 GHS Permanent Mining Speed
 
-👇 Grab your link & spin:`,
-		ButtonText: "🎡 Get Free Spins 🚀",
+Payment Verified ✅
+100% Real Instant Withdrawals!
+
+👇 Invite friends & spin:`,
+		ButtonText: "👥 Get Free Spins & Mine 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "personalized_buzz",
-		Message: `🐝 *HEY {name}, YOUR HIVE IS FULL!* 🍯
+		Message: `🐝 *HEY {name}, YOUR HONEYCOMB IS AT FULL CAPACITY!* 🍯⚡
 
-Your mining rig has unclaimed Honey waiting.
-Collect your earnings now before your honeycomb capacity caps out!
+Your bees have mined maximum GRAM rewards!
+Collect now before your honeycomb storage fills up.
 
-👇 Collect your harvest:`,
-		ButtonText: "🐝 Collect Honey Now 🚀",
-		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
-	},
-	{
-		Key: "mining_boost",
-		Message: `⛏️ *DOUBLE MINING SPEED ACTIVE!* ⚡
+Payment Verified ✅
+Direct One-Tap Harvest!
 
-Extraction rates are supercharged across all hives!
-Your bees are mining Honey at maximum speed.
-
-👇 Collect & boost your power:`,
-		ButtonText: "🐝 Open HashBee & Mine ⚡",
+👇 Collect your earnings:`,
+		ButtonText: "🐝 Collect My GRAM Now 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 }
