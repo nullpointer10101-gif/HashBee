@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { openCrate, OpenCrateResult, checkDeposit } from '../services/api'
 import toast from 'react-hot-toast'
-import ReactConfetti from 'react-confetti'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { crateAudio } from '../utils/crateAudio'
+import { CrateAnimatedBox } from '../components/CrateAnimatedBox'
+import { CrateUnboxModal } from '../components/CrateUnboxModal'
 
 interface RewardTierItem {
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'JACKPOT'
@@ -20,7 +23,7 @@ interface RewardTierItem {
 }
 
 interface CrateTierInfo {
-  id: 'bronze' | 'silver' | 'gold'
+  id: 'bronze' | 'silver' | 'gold' | 'god'
   name: string
   subtitle: string
   badge: string
@@ -34,6 +37,7 @@ interface CrateTierInfo {
   cardBg: string
   chestImage: string
   jackpotBanner: string
+  guaranteedTag: string
   rewards: RewardTierItem[]
 }
 
@@ -41,8 +45,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'bronze',
     name: 'Bronze Worker Crate',
-    subtitle: 'Great starter box with instant USDT & GHS drops',
-    badge: '🥉 ENTRY TIER',
+    subtitle: 'Great starter pack with boosted instant GRAM drops',
+    badge: '🥉 ENTRY PACK',
     badgeBg: 'bg-amber-800/40 text-amber-300 border-amber-600/50',
     priceGram: 0.5,
     priceUsdt: 0.5,
@@ -52,16 +56,17 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-amber-600/40',
     cardBg: 'from-[#23170e] via-[#19110a] to-[#0f0b07]',
     chestImage: '📦',
-    jackpotBanner: '🔥 JACKPOT: +1.00 USDT + 0.50 GRAM + 100 GHS',
+    jackpotBanner: '🔥 JACKPOT: +2.50 GRAM (5X WIN)',
+    guaranteedTag: '👑 GUARANTEED GRAM WITHIN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
         rarityLabel: 'COMMON',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+40 GHS Hashrate',
-        subtitle: 'Permanent Cloud Mining Power',
-        rewardValue: '40 GHS',
-        icon: '⚡',
+        title: '+0.60 GRAM Token',
+        subtitle: '100% Minimum Value Return',
+        rewardValue: '0.60 G',
+        icon: '💎',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
         border: 'border-white/5',
@@ -70,33 +75,33 @@ const CRATE_TIERS: CrateTierInfo[] = [
         rarity: 'UNCOMMON',
         rarityLabel: 'UNCOMMON',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+0.25 USDT + 20 GHS',
-        subtitle: 'Instant Cash + Mining Power',
-        rewardValue: '$0.25 + 20 GHS',
-        icon: '💵',
+        title: '+0.85 GRAM Token',
+        subtitle: '1.7X Multiplier Surge',
+        rewardValue: '0.85 G',
+        icon: '💎',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
         border: 'border-emerald-500/20',
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE',
-        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
-        title: '+0.35 GRAM + 30 GHS',
-        subtitle: 'Direct GRAM Token Drop',
-        rewardValue: '0.35 G + 30 GHS',
+        rarityLabel: 'RARE • GUARANTEED',
+        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40 font-black',
+        title: '+1.25 GRAM Token',
+        subtitle: '2.5X Mega Crypto Return',
+        rewardValue: '1.25 G',
         icon: '💎',
         textColor: 'text-blue-400',
-        cardBg: 'bg-blue-950/20',
-        border: 'border-blue-500/20',
+        cardBg: 'bg-blue-950/30',
+        border: 'border-blue-500/40',
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 TOP REWARD',
+        rarityLabel: '👑 5X JACKPOT',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
-        title: '+1.00 USDT + 0.50 GRAM + 100 GHS',
-        subtitle: 'Triple Jackpot MEGA Drop!',
-        rewardValue: '🔥 TOP PRIZE',
+        title: '+2.50 GRAM MEGA DROP',
+        subtitle: '500% Jackpot Explosion!',
+        rewardValue: '🔥 2.50 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
@@ -107,28 +112,29 @@ const CRATE_TIERS: CrateTierInfo[] = [
   },
   {
     id: 'silver',
-    name: 'Silver Soldier Crate',
-    subtitle: 'High multiplier crate with massive GHS & USDT',
+    name: 'Silver Soldier Vault',
+    subtitle: 'High multiplier pack with up to +7.50 GRAM rewards',
     badge: '🥈 MOST POPULAR',
-    badgeBg: 'bg-slate-700/50 text-slate-200 border-slate-400/50',
+    badgeBg: 'bg-cyan-900/40 text-cyan-300 border-cyan-500/50',
     priceGram: 1.5,
     priceUsdt: 1.5,
     icon: '🥈',
-    accentColor: '#94a3b8',
-    glowColor: 'rgba(148, 163, 184, 0.35)',
-    borderColor: 'border-slate-400/40',
-    cardBg: 'from-[#17232e] via-[#101922] to-[#0a0f15]',
+    accentColor: '#38bdf8',
+    glowColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: 'border-cyan-500/40',
+    cardBg: 'from-[#102434] via-[#0b1722] to-[#060e15]',
     chestImage: '🥈',
-    jackpotBanner: '🔥 JACKPOT: +3.50 USDT + 1.50 GRAM + 350 GHS',
+    jackpotBanner: '🔥 JACKPOT: +7.50 GRAM (5X WIN)',
+    guaranteedTag: '👑 GUARANTEED 3.80+ GRAM IN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
         rarityLabel: 'COMMON',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+120 GHS Hashrate',
-        subtitle: 'Boost Daily Passive Mining',
-        rewardValue: '120 GHS',
-        icon: '⚡',
+        title: '+1.80 GRAM Token',
+        subtitle: '100% Minimum Value Return',
+        rewardValue: '1.80 G',
+        icon: '💎',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
         border: 'border-white/5',
@@ -137,33 +143,33 @@ const CRATE_TIERS: CrateTierInfo[] = [
         rarity: 'UNCOMMON',
         rarityLabel: 'UNCOMMON',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+0.80 USDT + 60 GHS',
-        subtitle: 'Instant Cash + Mining Power',
-        rewardValue: '$0.80 + 60 GHS',
-        icon: '💵',
+        title: '+2.50 GRAM Token',
+        subtitle: '1.7X Multiplier Surge',
+        rewardValue: '2.50 G',
+        icon: '💎',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
         border: 'border-emerald-500/20',
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE',
-        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
-        title: '+1.20 GRAM + 100 GHS',
-        subtitle: 'Direct GRAM Token Drop',
-        rewardValue: '1.20 G + 100 GHS',
+        rarityLabel: 'RARE • GUARANTEED',
+        rarityBadgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-400/40 font-black',
+        title: '+3.80 GRAM Token',
+        subtitle: '2.5X Direct GRAM Drop',
+        rewardValue: '3.80 G',
         icon: '💎',
-        textColor: 'text-blue-400',
-        cardBg: 'bg-blue-950/20',
-        border: 'border-blue-500/20',
+        textColor: 'text-cyan-400',
+        cardBg: 'bg-cyan-950/30',
+        border: 'border-cyan-500/40',
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 TOP REWARD',
+        rarityLabel: '👑 5X JACKPOT',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
-        title: '+3.50 USDT + 1.50 GRAM + 350 GHS',
-        subtitle: 'Mega Cyber Jackpot Drop!',
-        rewardValue: '🔥 TOP PRIZE',
+        title: '+7.50 GRAM MEGA DROP',
+        subtitle: '500% Silver Jackpot Strike!',
+        rewardValue: '🔥 7.50 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
@@ -174,9 +180,9 @@ const CRATE_TIERS: CrateTierInfo[] = [
   },
   {
     id: 'gold',
-    name: 'Golden Queen Crate',
-    subtitle: 'VIP High Roller box with up to 1,000 GHS jackpot',
-    badge: '👑 VIP HIGH ROLLER',
+    name: 'Golden Queen Treasury',
+    subtitle: 'VIP High Roller pack with up to +18.00 GRAM jackpot',
+    badge: '👑 VIP 3.0 GRAM',
     badgeBg: 'bg-amber-400/30 text-amber-300 border-amber-400/60 shadow-amber-500/20',
     priceGram: 3.0,
     priceUsdt: 3.0,
@@ -186,16 +192,17 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-amber-400/60',
     cardBg: 'from-[#2e210a] via-[#1d1506] to-[#120d04]',
     chestImage: '👑',
-    jackpotBanner: '🔥 VIP JACKPOT: +8.00 USDT + 3.00 GRAM + 1,000 GHS',
+    jackpotBanner: '🔥 VIP JACKPOT: +18.00 GRAM (6X WIN)',
+    guaranteedTag: '👑 GUARANTEED 8.50+ GRAM IN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
         rarityLabel: 'COMMON',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+260 GHS Hashrate',
-        subtitle: 'Massive Permanent Hashrate',
-        rewardValue: '260 GHS',
-        icon: '⚡',
+        title: '+3.60 GRAM Token',
+        subtitle: '100% Minimum Value Return',
+        rewardValue: '3.60 G',
+        icon: '💎',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
         border: 'border-white/5',
@@ -204,33 +211,33 @@ const CRATE_TIERS: CrateTierInfo[] = [
         rarity: 'UNCOMMON',
         rarityLabel: 'UNCOMMON',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+2.00 USDT + 150 GHS',
-        subtitle: 'Instant Cash + Mining Power',
-        rewardValue: '$2.00 + 150 GHS',
-        icon: '💵',
+        title: '+5.20 GRAM Token',
+        subtitle: '1.7X Multiplier Surge',
+        rewardValue: '5.20 G',
+        icon: '💎',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
         border: 'border-emerald-500/20',
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE',
-        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
-        title: '+2.80 GRAM + 250 GHS',
-        subtitle: 'Direct GRAM Token Drop',
-        rewardValue: '2.80 G + 250 GHS',
+        rarityLabel: 'RARE • GUARANTEED',
+        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40 font-black',
+        title: '+8.50 GRAM Token',
+        subtitle: '2.8X Direct GRAM Drop',
+        rewardValue: '8.50 G',
         icon: '💎',
         textColor: 'text-blue-400',
-        cardBg: 'bg-blue-950/20',
-        border: 'border-blue-500/20',
+        cardBg: 'bg-blue-950/30',
+        border: 'border-blue-500/40',
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 VIP TOP REWARD',
+        rarityLabel: '👑 6X VIP JACKPOT',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black shadow-lg shadow-amber-500/40 animate-pulse',
-        title: '+8.00 USDT + 3.00 GRAM + 1,000 GHS',
-        subtitle: 'Golden Queen Ultimate Jackpot!',
-        rewardValue: '👑 ULTIMATE PRIZE',
+        title: '+18.00 GRAM VIP DROP',
+        subtitle: '600% Golden Queen Jackpot!',
+        rewardValue: '👑 18.00 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#442c08] via-[#332105] to-[#201503]',
@@ -239,26 +246,104 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
     ],
   },
+  {
+    id: 'god',
+    name: 'Cyber God Deity Vault',
+    subtitle: 'Supreme Mythic pack with up to +35.00 GRAM supreme drop',
+    badge: '👁️ SUPREME GOD TIER',
+    badgeBg: 'bg-fuchsia-500/30 text-fuchsia-300 border-fuchsia-400/70 shadow-fuchsia-500/30',
+    priceGram: 5.0,
+    priceUsdt: 5.0,
+    icon: '👁️',
+    accentColor: '#d946ef',
+    glowColor: 'rgba(217, 70, 239, 0.55)',
+    borderColor: 'border-fuchsia-400/80',
+    cardBg: 'from-[#3b0764] via-[#24063d] to-[#12021f]',
+    chestImage: '👁️',
+    jackpotBanner: '⚡ 7X GOD JACKPOT: +35.00 GRAM SUPREME',
+    guaranteedTag: '👑 100% 99 OVR CYBER GOD CARD PACK',
+    rewards: [
+      {
+        rarity: 'COMMON',
+        rarityLabel: 'MYTHIC RETURN',
+        rarityBadgeColor: 'bg-purple-950 text-purple-300 border-purple-500/50 font-black',
+        title: '+6.50 GRAM Token',
+        subtitle: '130% Minimum Return Rate',
+        rewardValue: '6.50 G',
+        icon: '💎',
+        textColor: 'text-purple-300',
+        cardBg: 'bg-purple-950/40',
+        border: 'border-purple-500/30',
+      },
+      {
+        rarity: 'UNCOMMON',
+        rarityLabel: 'DIVINE SURGE',
+        rarityBadgeColor: 'bg-pink-950 text-pink-300 border-pink-500/50 font-black',
+        title: '+10.00 GRAM Token',
+        subtitle: '200% Instant 2X Surge',
+        rewardValue: '10.00 G',
+        icon: '💎',
+        textColor: 'text-pink-300',
+        cardBg: 'bg-pink-950/40',
+        border: 'border-pink-500/30',
+      },
+      {
+        rarity: 'RARE',
+        rarityLabel: 'GOD TIER 95 OVR',
+        rarityBadgeColor: 'bg-sky-950 text-sky-300 border-sky-400/60 font-black',
+        title: '+16.50 GRAM Token',
+        subtitle: '330% Direct Mega GRAM Drop',
+        rewardValue: '16.50 G',
+        icon: '💎',
+        textColor: 'text-sky-300',
+        cardBg: 'bg-sky-950/40',
+        border: 'border-sky-400/40',
+      },
+      {
+        rarity: 'JACKPOT',
+        rarityLabel: '👑 7X CYBER GOD 99 OVR',
+        rarityBadgeColor: 'bg-gradient-to-r from-fuchsia-500 via-pink-400 to-amber-300 text-stone-950 border-fuchsia-300 font-black shadow-xl shadow-fuchsia-500/50 animate-pulse',
+        title: '+35.00 GRAM SUPREME',
+        subtitle: '700% Supreme Cyber God Jackpot!',
+        rewardValue: '👁️ 35.00 G',
+        icon: '👁️',
+        textColor: 'text-fuchsia-300 font-black',
+        cardBg: 'bg-gradient-to-r from-[#581c87] via-[#3b0764] to-[#1e0533]',
+        border: 'border-2 border-fuchsia-400 shadow-[0_0_35px_rgba(217,70,239,0.5)]',
+        isTopReward: true,
+      },
+    ],
+  },
 ]
 
 const LIVE_WINS = [
-  '🔥 @Alex9... unboxed +8.00 USDT + 1,000 GHS VIP Jackpot from Gold Crate!',
-  '⚡ @Dmitry... unlocked +260 GHS Hashrate from Gold Crate!',
-  '💎 @Elena_K... won +1.20 GRAM + 100 GHS from Silver Crate!',
-  '🚀 @CryptoBee... hit +3.50 USDT Mega Drop from Silver Crate!',
-  '🎉 @Samir... won +1.00 USDT + 100 GHS from Bronze Crate!',
+  '👁️ @Alex9... unboxed 99 OVR Cyber God (+35.00 GRAM Supreme Drop)!',
+  '👑 @TonWhale... triggered +18.00 GRAM Golden Queen 6X Card!',
+  '⚡ @Dmitry... unlocked +16.50 GRAM God Tier Rare Card!',
+  '💎 @Elena_K... won +7.50 GRAM Silver 5X Jackpot Card!',
+  '🚀 @CryptoBee... hit +8.50 GRAM Rare Golden Card!',
+  '🎉 @Samir... won +2.50 GRAM from Bronze Worker Pack!',
+  '💎 @Ivan_T... hit Guaranteed GRAM Pity Reward (+16.50 GRAM)!',
 ]
 
 export const Crates: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState<'all' | 'bronze' | 'silver' | 'gold'>('all')
-  const [openingTier, setOpeningTier] = useState<string | null>(null)
-  const [openingState, setOpeningState] = useState<'idle' | 'shaking' | 'revealed'>('idle')
+  const [activeTab, setActiveTab] = useState<'all' | 'bronze' | 'silver' | 'gold' | 'god'>('all')
+  const [openingCrate, setOpeningCrate] = useState<CrateTierInfo | null>(null)
   const [wonResult, setWonResult] = useState<OpenCrateResult | null>(null)
-  const [showConfetti, setShowConfetti] = useState(false)
+  const [showUnboxModal, setShowUnboxModal] = useState(false)
   const [currentWinIndex, setCurrentWinIndex] = useState(0)
+
+  // Sunk-cost Dopamine Pity System (Persisted in localStorage)
+  const [pityCount, setPityCount] = useState<number>(() => {
+    const saved = localStorage.getItem('hashbee_crate_pity_count')
+    return saved ? parseInt(saved, 10) : 1
+  })
+
+  // 15-Minute Lucky Fever Countdown Timer
+  const [feverSeconds, setFeverSeconds] = useState(742)
 
   // TON Deposit Modal State
   const [showDepositModal, setShowDepositModal] = useState(false)
@@ -273,9 +358,22 @@ export const Crates: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWinIndex((prev) => (prev + 1) % LIVE_WINS.length)
-    }, 3200)
+    }, 3000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFeverSeconds((prev) => (prev > 0 ? prev - 1 : 900))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
 
   const triggerHaptic = (style: 'light' | 'medium' | 'heavy') => {
     try {
@@ -285,43 +383,33 @@ export const Crates: React.FC = () => {
     } catch {}
   }
 
-  const triggerNotificationHaptic = (type: 'success' | 'warning' | 'error') => {
-    try {
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred(type)
-      }
-    } catch {}
-  }
-
   const handleOpenCrate = async (tier: CrateTierInfo) => {
     const userBalance = user?.honey_balance || 0
 
-    if (userBalance < tier.priceUsdt) {
+    if (userBalance < tier.priceGram) {
+      crateAudio.playClick()
       setSelectedDepositTier(tier)
       setShowDepositModal(true)
       return
     }
 
     triggerHaptic('heavy')
-    setOpeningTier(tier.id)
-    setOpeningState('shaking')
+    setOpeningCrate(tier)
+    setShowUnboxModal(true)
     setWonResult(null)
 
     try {
       const result = await openCrate(tier.id)
+      setWonResult(result)
 
-      setTimeout(() => {
-        setWonResult(result)
-        setOpeningState('revealed')
-        setShowConfetti(true)
-        triggerNotificationHaptic('success')
-        refreshUser()
+      const nextPity = pityCount + 1
+      setPityCount(nextPity)
+      localStorage.setItem('hashbee_crate_pity_count', String(nextPity))
 
-        setTimeout(() => setShowConfetti(false), 5000)
-      }, 1600)
+      await refreshUser()
     } catch (err: any) {
-      setOpeningState('idle')
-      setOpeningTier(null)
+      setShowUnboxModal(false)
+      setOpeningCrate(null)
       const errorMsg = err?.response?.data?.error || 'Failed to open crate'
       toast.error(errorMsg)
       if (errorMsg.toLowerCase().includes('insufficient')) {
@@ -352,57 +440,120 @@ export const Crates: React.FC = () => {
     }
   }
 
+  const pityStage = (pityCount % 3) === 0 ? 3 : (pityCount % 3)
   const filteredTiers = activeTab === 'all' ? CRATE_TIERS : CRATE_TIERS.filter((t) => t.id === activeTab)
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-[#e6f0ec] pb-32 pt-4 px-4 max-w-md mx-auto select-none">
-      {showConfetti && (
-        <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          numberOfPieces={180}
-          recycle={false}
-          gravity={0.3}
-        />
-      )}
-
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between mb-3.5">
+    <div className="min-h-screen bg-[#080d0b] text-[#e6f0ec] pb-32 pt-3 px-4 max-w-md mx-auto select-none">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between mb-3">
         <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#15201b] border border-[#23362e] text-xs font-extrabold text-stone-300 active:scale-95 transition-all shadow-sm"
+          onClick={() => {
+            crateAudio.playClick()
+            navigate('/')
+          }}
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#131d19] border border-[#22332c] text-xs font-extrabold text-stone-300 active:scale-95 transition-all shadow-sm"
         >
           <span>←</span>
           <span>Miner</span>
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="px-3.5 py-1.5 rounded-full bg-[#14221c] border border-amber-500/30 flex items-center gap-1.5 text-xs font-black text-amber-300 shadow-sm shadow-amber-500/10">
-            <span>🍯</span>
-            <span>{(user?.honey_balance || 0).toFixed(4)} USDT</span>
+          <div className="px-3.5 py-1.5 rounded-full bg-[#12221b] border border-amber-500/40 flex items-center gap-1.5 text-xs font-black text-amber-300 shadow-sm shadow-amber-500/10">
+            <span>💎</span>
+            <span>{(user?.honey_balance || 0).toFixed(4)} GRAM</span>
           </div>
         </div>
       </div>
 
-      {/* Hero Title & Showcase */}
-      <div className="text-center mb-4">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-amber-500/40 text-[10px] font-black uppercase tracking-widest text-amber-300 mb-2 shadow-sm">
-          <span>🎁</span>
-          <span>100% GUARANTEED REWARD UNBOXING</span>
+      {/* ⚡ LUCKY FEVER RUSH COUNTDOWN BANNER (Dopamine Trigger) */}
+      <motion.div
+        animate={{ scale: [1, 1.01, 1] }}
+        transition={{ repeat: Infinity, duration: 2 }}
+        className="mb-3.5 p-2.5 rounded-2xl bg-gradient-to-r from-amber-600/30 via-red-600/20 to-fuchsia-600/30 border border-amber-500/50 flex items-center justify-between shadow-lg shadow-amber-500/10"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xl animate-bounce">🔥</span>
+          <div>
+            <div className="text-[11px] font-black text-amber-300 uppercase tracking-wide">
+              LUCKY FEVER: 2X GRAM JACKPOT CHANCE
+            </div>
+            <div className="text-[9px] text-amber-200/80 font-bold">
+              Boosted Football Card Pack Drop Rates Active
+            </div>
+          </div>
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight uppercase">
-          Mystery Loot Crates
-        </h1>
-        <p className="text-xs text-stone-400 mt-1 max-w-xs mx-auto">
-          Unlock premium crates for instant <b>USDT Cash</b>, <b>GRAM</b>, and permanent <b>GHS Power</b>!
+        <div className="px-2.5 py-1 rounded-xl bg-black/60 border border-amber-400/40 text-xs font-mono font-black text-amber-400 tracking-wider">
+          ⏱️ {formatTime(feverSeconds)}
+        </div>
+      </motion.div>
+
+      {/* 👑 GUARANTEED GRAM PITY PROGRESS METER (2nd or 3rd Box Guarantee) */}
+      <div className="mb-4 p-3.5 rounded-2xl bg-[#111a17] border-2 border-[#20362c] shadow-xl relative overflow-hidden">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5 text-xs font-black text-stone-200 uppercase tracking-wide">
+            <span>⚽</span>
+            <span>GUARANTEED GRAM CARD PITY METER</span>
+          </div>
+          <span
+            className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider ${
+              pityStage === 3
+                ? 'bg-amber-400 text-stone-950 border-amber-300 animate-pulse'
+                : 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+            }`}
+          >
+            {pityStage === 3 ? '👑 100% GUARANTEED NOW!' : `PACK ${pityStage} OF 3`}
+          </span>
+        </div>
+
+        {/* 3-Step Visual Track */}
+        <div className="grid grid-cols-3 gap-2 my-2">
+          <div
+            className={`p-2 rounded-xl border text-center transition-all ${
+              pityStage >= 1
+                ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
+                : 'bg-stone-900/60 border-white/5 text-stone-500'
+            }`}
+          >
+            <div className="text-sm">📦 1st Box</div>
+            <div className="text-[9px] font-bold mt-0.5">Base Drop</div>
+          </div>
+
+          <div
+            className={`p-2 rounded-xl border text-center transition-all ${
+              pityStage >= 2
+                ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
+                : 'bg-stone-900/60 border-white/5 text-stone-500'
+            }`}
+          >
+            <div className="text-sm">⚡ 2nd Box</div>
+            <div className="text-[9px] font-bold mt-0.5">+50% GRAM Luck</div>
+          </div>
+
+          <div
+            className={`p-2 rounded-xl border-2 text-center transition-all ${
+              pityStage === 3
+                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black shadow-lg shadow-amber-500/40 animate-pulse'
+                : 'bg-amber-950/30 border-amber-500/30 text-amber-400'
+            }`}
+          >
+            <div className="text-sm font-black">👑 3rd Box</div>
+            <div className="text-[9px] font-extrabold mt-0.5">100% GRAM WIN</div>
+          </div>
+        </div>
+
+        <p className="text-[10px] text-center text-amber-300/90 font-bold mt-2">
+          {pityStage === 3
+            ? '🔥 UNLOCK NOW: Next pack is GUARANTEED to drop a rare 92+ OVR GRAM Card!'
+            : `Open ${3 - pityStage} more box to trigger guaranteed pure GRAM Crypto Token drop!`}
         </p>
       </div>
 
       {/* Live Winners Ticker */}
-      <div className="mb-4 py-2 px-3 rounded-2xl bg-[#121b18] border border-[#21332c] flex items-center gap-2 overflow-hidden shadow-inner">
+      <div className="mb-4 py-2 px-3 rounded-2xl bg-[#0f1714] border border-[#1b2a24] flex items-center gap-2 overflow-hidden shadow-inner">
         <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          RECENT:
+          FUT WALKOUT:
         </span>
         <p className="text-[11px] text-stone-300 font-semibold truncate transition-all duration-300">
           {LIVE_WINS[currentWinIndex]}
@@ -410,22 +561,24 @@ export const Crates: React.FC = () => {
       </div>
 
       {/* Tier Filter Tabs */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#121c18] border border-[#22332c] rounded-2xl mb-4">
+      <div className="flex items-center gap-1 p-1 bg-[#111a17] border border-[#1f3028] rounded-2xl mb-4 overflow-x-auto">
         {[
-          { id: 'all', label: 'All Crates' },
+          { id: 'all', label: 'All Packs' },
           { id: 'bronze', label: '🥉 0.5 G' },
           { id: 'silver', label: '🥈 1.5 G' },
           { id: 'gold', label: '👑 3.0 G' },
+          { id: 'god', label: '👁️ 5.0 G (GOD)' },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => {
+              crateAudio.playClick()
               triggerHaptic('light')
               setActiveTab(tab.id as any)
             }}
-            className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition-all ${
+            className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-wide whitespace-nowrap transition-all ${
               activeTab === tab.id
-                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-md font-black'
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-md'
                 : 'text-stone-400 hover:text-stone-200'
             }`}
           >
@@ -438,7 +591,7 @@ export const Crates: React.FC = () => {
       <div className="space-y-6">
         {filteredTiers.map((crate) => {
           const userBalance = user?.honey_balance || 0
-          const userHasBalance = userBalance >= crate.priceUsdt
+          const userHasBalance = userBalance >= crate.priceGram
 
           return (
             <div
@@ -446,7 +599,6 @@ export const Crates: React.FC = () => {
               style={{ boxShadow: `0 10px 35px -5px ${crate.glowColor}` }}
               className={`rounded-3xl border-2 ${crate.borderColor} bg-gradient-to-b ${crate.cardBg} p-5 relative overflow-hidden transition-all duration-200`}
             >
-              {/* Decorative background glow */}
               <div
                 className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-40"
                 style={{ backgroundColor: crate.accentColor }}
@@ -458,50 +610,53 @@ export const Crates: React.FC = () => {
                   {crate.badge}
                 </span>
 
-                <div className="flex items-baseline gap-1.5 bg-[#0e1613]/90 px-3 py-1 rounded-xl border border-white/10">
+                <div className="flex items-baseline gap-1 bg-[#0e1613]/90 px-3 py-1 rounded-xl border border-white/10">
                   <span className="text-base font-black text-amber-300 font-mono">
                     {crate.priceGram} GRAM
-                  </span>
-                  <span className="text-[10px] font-bold text-stone-400">
-                    (≈ ${crate.priceUsdt.toFixed(2)})
                   </span>
                 </div>
               </div>
 
-              {/* 3D Crate Display Showcase */}
-              <div className="my-3 py-4 text-center relative z-10">
-                <div className="inline-flex items-center justify-center w-28 h-28 rounded-3xl bg-gradient-to-b from-[#182620] to-[#0c1411] border-2 border-white/15 shadow-2xl relative group">
-                  {/* Outer pulse aura */}
-                  <div
-                    className="absolute inset-0 rounded-3xl blur-md opacity-30 animate-pulse"
-                    style={{ backgroundColor: crate.accentColor }}
-                  />
-                  <span className="text-6xl filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] transform transition-transform group-hover:scale-110">
-                    {crate.chestImage}
-                  </span>
-                </div>
+              {/* 3D Animated Crate Showcase */}
+              <div className="my-2 py-3 text-center relative z-10 flex flex-col items-center">
+                <CrateAnimatedBox
+                  tierId={crate.id}
+                  tierName={crate.name}
+                  accentColor={crate.accentColor}
+                  glowColor={crate.glowColor}
+                  icon={crate.icon}
+                  onClick={() => handleOpenCrate(crate)}
+                  size="lg"
+                />
+
                 <h3 className="text-lg font-black text-white uppercase tracking-wide mt-3">
                   {crate.name}
                 </h3>
                 <p className="text-[11px] text-stone-400 max-w-xs mx-auto mt-0.5">
                   {crate.subtitle}
                 </p>
+
+                {/* Guaranteed Tag Callout */}
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-[10px] font-black text-amber-300 uppercase tracking-wide shadow-sm">
+                  <span>⚽</span>
+                  <span>{crate.guaranteedTag}</span>
+                </div>
               </div>
 
               {/* Jackpot Callout Banner */}
-              <div className="mb-4 py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border border-amber-500/50 flex items-center justify-center text-center text-xs font-black text-amber-300 shadow-sm">
+              <div className="mb-4 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border border-amber-500/50 flex items-center justify-center text-center text-xs font-black text-amber-300 shadow-sm">
                 <span>{crate.jackpotBanner}</span>
               </div>
 
-              {/* REWARDS SHOWCASE SECTION (Top reward highlighted, no percentages) */}
+              {/* REWARDS SHOWCASE SECTION (Pure GRAM Cards) */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2.5 px-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
-                    <span>🎁</span> REWARD POOL & CRATE ITEMS
+                    <span>⚽</span> FOOTBALL GRAM REWARD CARDS
                   </span>
                   <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Guaranteed Drop
+                    100% Value Guarantee
                   </span>
                 </div>
 
@@ -513,7 +668,6 @@ export const Crates: React.FC = () => {
                           key={idx}
                           className={`p-3 rounded-2xl border-2 ${rew.border} ${rew.cardBg} relative overflow-hidden transition-all duration-300`}
                         >
-                          {/* Ambient background glow inside top reward card */}
                           <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-amber-500/20 blur-xl pointer-events-none" />
 
                           <div className="flex items-center justify-between relative z-10">
@@ -565,138 +719,58 @@ export const Crates: React.FC = () => {
                 </div>
               </div>
 
-              {/* BIG OPEN CRATE BUTTON */}
-              <button
-                onClick={() => handleOpenCrate(crate)}
-                className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-xl transition-all active:scale-95 cursor-pointer ${
-                  userHasBalance
-                    ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/30'
-                    : 'bg-gradient-to-r from-[#1f2f28] to-[#283e35] text-stone-200 border border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span>{crate.icon}</span>
-                  <span>
-                    {userHasBalance
-                      ? `OPEN CRATE • ${crate.priceGram} GRAM`
-                      : `⚡ DEPOSIT & UNLOCK • ${crate.priceGram} GRAM`}
+              {/* ACTION BUTTON */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleOpenCrate(crate)}
+                  className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-xl transition-all active:scale-95 cursor-pointer ${
+                    userHasBalance
+                      ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/30'
+                      : 'bg-gradient-to-r from-[#1f2f28] to-[#283e35] text-stone-200 border border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{crate.icon}</span>
+                    <span>
+                      {userHasBalance
+                        ? `OPEN FOOTBALL PACK • ${crate.priceGram} GRAM`
+                        : `⚡ DEPOSIT & UNLOCK • ${crate.priceGram} GRAM`}
+                    </span>
+                    <span>➔</span>
+                  </div>
+                  <span className="text-[9px] font-bold opacity-80 uppercase tracking-widest">
+                    {userHasBalance ? 'Instant Pack Walkout Reveal' : 'Click to send TON/GRAM via Wallet'}
                   </span>
-                  <span>➔</span>
-                </div>
-                <span className="text-[9px] font-bold opacity-80 uppercase tracking-widest">
-                  {userHasBalance ? 'Instant Reveal • Direct Credit' : 'Click to send TON/GRAM via Wallet'}
-                </span>
-              </button>
+                </button>
+              </div>
             </div>
           )
         })}
       </div>
 
-      {/* Dramatic Unboxing / Reveal Modal */}
-      {openingState !== 'idle' && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 select-none animate-fade-in">
-          <div className="bg-[#121c18] border-2 border-amber-500/50 rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl relative overflow-hidden">
-            {/* Spinning radiant rays background */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-2xl bg-amber-500/20 pointer-events-none" />
-
-            {openingState === 'shaking' && (
-              <div className="py-8 relative z-10">
-                <div className="text-8xl animate-bounce mb-6 filter drop-shadow-[0_0_20px_rgba(245,158,11,0.6)]">
-                  🎁
-                </div>
-                <div className="w-14 h-14 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
-                <h3 className="text-xl font-black text-white uppercase tracking-wider mb-1">
-                  UNLOCKING CRATE...
-                </h3>
-                <p className="text-xs text-amber-300/80 font-semibold animate-pulse">
-                  Decrypting lucky prize from smart contract...
-                </p>
-              </div>
-            )}
-
-            {openingState === 'revealed' && wonResult && (
-              <div className="py-2 relative z-10">
-                <span
-                  style={{
-                    backgroundColor: `${wonResult.reward.rarity_color}30`,
-                    borderColor: wonResult.reward.rarity_color,
-                    color: wonResult.reward.rarity_color,
-                  }}
-                  className="inline-block px-4 py-1 rounded-full border text-xs font-black uppercase tracking-widest mb-3 shadow-lg"
-                >
-                  {wonResult.reward.rarity_label}
-                </span>
-
-                <div className="text-7xl my-2 filter drop-shadow-[0_0_25px_rgba(245,158,11,0.5)]">
-                  🎉
-                </div>
-
-                <h2 className="text-2xl font-black text-white uppercase tracking-wide mb-1">
-                  CONGRATULATIONS!
-                </h2>
-                <div className="text-xs text-stone-400 font-bold mb-4 uppercase tracking-wider">
-                  You unlocked from {wonResult.tier_name}
-                </div>
-
-                {/* Reward Highlight Box */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border-2 border-amber-400/60 text-lg font-black text-amber-300 font-mono mb-4 shadow-inner">
-                  {wonResult.reward.summary_text}
-                </div>
-
-                {/* Stat Breakdown */}
-                <div className="bg-[#172520] border border-[#2b4238] rounded-2xl p-4 mb-5 space-y-2 text-left text-xs">
-                  <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider mb-1">
-                    Instantly Added to Account:
-                  </div>
-                  {wonResult.reward.reward_usdt > 0 && (
-                    <div className="flex items-center justify-between text-emerald-400 font-bold">
-                      <span>USDT/GRAM Reward:</span>
-                      <span>+{wonResult.reward.reward_usdt.toFixed(4)} USDT</span>
-                    </div>
-                  )}
-                  {wonResult.reward.reward_ghs > 0 && (
-                    <div className="flex items-center justify-between text-amber-400 font-bold">
-                      <span>Mining Hashrate:</span>
-                      <span>+{wonResult.reward.reward_ghs.toFixed(1)} GHS</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-stone-300 font-semibold pt-2 border-t border-white/10">
-                    <span>New Total Hashrate:</span>
-                    <span className="font-mono font-bold text-white">{wonResult.new_bp.toFixed(1)} GHS</span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="space-y-2.5">
-                  <button
-                    onClick={() => {
-                      triggerHaptic('medium')
-                      setOpeningState('idle')
-                      setOpeningTier(null)
-                    }}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer"
-                  >
-                    COLLECT & CONTINUE ➔
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const currentTierObj = CRATE_TIERS.find((t) => t.id === openingTier)
-                      setOpeningState('idle')
-                      setOpeningTier(null)
-                      if (currentTierObj) {
-                        handleOpenCrate(currentTierObj)
-                      }
-                    }}
-                    className="w-full py-3 rounded-2xl bg-[#1d2d26] border border-[#2d443b] text-stone-300 font-extrabold text-xs uppercase active:scale-95 cursor-pointer"
-                  >
-                    OPEN ANOTHER CRATE
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* CS:GO / Football Pack Walkout Suspense Unboxing Modal */}
+      {openingCrate && (
+        <CrateUnboxModal
+          isOpen={showUnboxModal}
+          tierId={openingCrate.id}
+          tierName={openingCrate.name}
+          accentColor={openingCrate.accentColor}
+          glowColor={openingCrate.glowColor}
+          icon={openingCrate.icon}
+          priceGram={openingCrate.priceGram}
+          priceUsdt={openingCrate.priceUsdt}
+          result={wonResult}
+          pityCount={pityCount}
+          onClose={() => {
+            setShowUnboxModal(false)
+            setOpeningCrate(null)
+          }}
+          onOpenAgain={() => {
+            if (openingCrate) {
+              handleOpenCrate(openingCrate)
+            }
+          }}
+        />
       )}
 
       {/* TON Deposit Helper Modal */}

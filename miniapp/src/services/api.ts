@@ -365,7 +365,7 @@ export interface OpenCrateResult {
   new_bp: number
 }
 
-export const openCrate = async (tier: 'bronze' | 'silver' | 'gold'): Promise<OpenCrateResult> => {
+export const openCrate = async (tier: 'bronze' | 'silver' | 'gold' | 'god'): Promise<OpenCrateResult> => {
   const res = await api.post('/api/crates/open', {
     crate_tier: tier,
     payment_method: 'balance',

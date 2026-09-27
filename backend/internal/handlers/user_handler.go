@@ -432,8 +432,11 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 	case "gold":
 		cost = 3.00
 		tierName = "Golden Queen Crate"
+	case "god", "cyber_god", "cybergod":
+		cost = 5.00
+		tierName = "Cyber God Crate"
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid crate tier (choose bronze, silver, or gold)"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid crate tier (choose bronze, silver, gold, or god)"})
 		return
 	}
 
@@ -472,34 +475,33 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
-				RewardGHS:   40.0,
-				SummaryText: "+40 GHS Mining Hashrate",
+				RewardGRAM:  0.60,
+				RewardUSDT:  0.60,
+				SummaryText: "+0.60 GRAM Token Drop",
 			}
 		} else if r < 0.75 { // 25% Uncommon
 			reward = CrateReward{
 				RarityLabel: "UNCOMMON",
 				RarityColor: "#34d399",
-				RewardUSDT:  0.25,
-				RewardGHS:   20.0,
-				SummaryText: "+0.25 USDT + 20 GHS",
+				RewardGRAM:  0.85,
+				RewardUSDT:  0.85,
+				SummaryText: "+0.85 GRAM Boosted Drop",
 			}
 		} else if r < 0.93 { // 18% Rare
 			reward = CrateReward{
 				RarityLabel: "RARE",
 				RarityColor: "#60a5fa",
-				RewardGRAM:  0.35,
-				RewardUSDT:  0.35,
-				RewardGHS:   30.0,
-				SummaryText: "+0.35 GRAM + 30 GHS",
+				RewardGRAM:  1.25,
+				RewardUSDT:  1.25,
+				SummaryText: "+1.25 GRAM Mega Drop",
 			}
 		} else { // 7% Jackpot
 			reward = CrateReward{
 				RarityLabel: "🔥 JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardUSDT:  1.50, // 1.00 USDT + 0.50 GRAM value
-				RewardGRAM:  0.50,
-				RewardGHS:   100.0,
-				SummaryText: "🎉 +1.00 USDT + 0.50 GRAM + 100 GHS!",
+				RewardGRAM:  2.50,
+				RewardUSDT:  2.50,
+				SummaryText: "🎉 +2.50 GRAM 5X Jackpot!",
 			}
 		}
 
@@ -508,34 +510,33 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
-				RewardGHS:   120.0,
-				SummaryText: "+120 GHS Mining Hashrate",
+				RewardGRAM:  1.80,
+				RewardUSDT:  1.80,
+				SummaryText: "+1.80 GRAM Token Drop",
 			}
 		} else if r < 0.75 { // 30% Uncommon
 			reward = CrateReward{
 				RarityLabel: "UNCOMMON",
 				RarityColor: "#34d399",
-				RewardUSDT:  0.80,
-				RewardGHS:   60.0,
-				SummaryText: "+0.80 USDT + 60 GHS",
+				RewardGRAM:  2.50,
+				RewardUSDT:  2.50,
+				SummaryText: "+2.50 GRAM Boosted Drop",
 			}
 		} else if r < 0.93 { // 18% Rare
 			reward = CrateReward{
 				RarityLabel: "RARE",
 				RarityColor: "#60a5fa",
-				RewardGRAM:  1.20,
-				RewardUSDT:  1.20,
-				RewardGHS:   100.0,
-				SummaryText: "+1.20 GRAM + 100 GHS",
+				RewardGRAM:  3.80,
+				RewardUSDT:  3.80,
+				SummaryText: "+3.80 GRAM Mega Drop",
 			}
 		} else { // 7% Jackpot
 			reward = CrateReward{
 				RarityLabel: "🔥 JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardUSDT:  5.00, // 3.50 USDT + 1.50 GRAM value
-				RewardGRAM:  1.50,
-				RewardGHS:   350.0,
-				SummaryText: "🎉 +3.50 USDT + 1.50 GRAM + 350 GHS!",
+				RewardGRAM:  7.50,
+				RewardUSDT:  7.50,
+				SummaryText: "🎉 +7.50 GRAM 5X Jackpot!",
 			}
 		}
 
@@ -544,40 +545,74 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
-				RewardGHS:   260.0,
-				SummaryText: "+260 GHS Mining Hashrate",
+				RewardGRAM:  3.60,
+				RewardUSDT:  3.60,
+				SummaryText: "+3.60 GRAM Token Drop",
 			}
 		} else if r < 0.72 { // 32% Uncommon
 			reward = CrateReward{
 				RarityLabel: "UNCOMMON",
 				RarityColor: "#34d399",
-				RewardUSDT:  2.00,
-				RewardGHS:   150.0,
-				SummaryText: "+2.00 USDT + 150 GHS",
+				RewardGRAM:  5.20,
+				RewardUSDT:  5.20,
+				SummaryText: "+5.20 GRAM Boosted Drop",
 			}
 		} else if r < 0.92 { // 20% Rare
 			reward = CrateReward{
 				RarityLabel: "RARE",
 				RarityColor: "#60a5fa",
-				RewardGRAM:  2.80,
-				RewardUSDT:  2.80,
-				RewardGHS:   250.0,
-				SummaryText: "+2.80 GRAM + 250 GHS",
+				RewardGRAM:  8.50,
+				RewardUSDT:  8.50,
+				SummaryText: "+8.50 GRAM Mega Drop",
 			}
 		} else { // 8% Jackpot
 			reward = CrateReward{
 				RarityLabel: "🔥 JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardUSDT:  11.00, // 8.00 USDT + 3.00 GRAM value
-				RewardGRAM:  3.00,
-				RewardGHS:   1000.0,
-				SummaryText: "🎉 +8.00 USDT + 3.00 GRAM + 1,000 GHS!",
+				RewardGRAM:  18.00,
+				RewardUSDT:  18.00,
+				SummaryText: "🎉 +18.00 GRAM 6X Jackpot!",
+			}
+		}
+
+	case "god", "cyber_god", "cybergod":
+		if r < 0.35 { // 35% Common
+			reward = CrateReward{
+				RarityLabel: "MYTHIC COMMON",
+				RarityColor: "#a855f7",
+				RewardGRAM:  6.50,
+				RewardUSDT:  6.50,
+				SummaryText: "+6.50 GRAM Cyber God Drop",
+			}
+		} else if r < 0.65 { // 30% Uncommon
+			reward = CrateReward{
+				RarityLabel: "DIVINE UNCOMMON",
+				RarityColor: "#ec4899",
+				RewardGRAM:  10.00,
+				RewardUSDT:  10.00,
+				SummaryText: "+10.00 GRAM Divine Drop",
+			}
+		} else if r < 0.87 { // 22% Rare
+			reward = CrateReward{
+				RarityLabel: "GOD TIER RARE",
+				RarityColor: "#38bdf8",
+				RewardGRAM:  16.50,
+				RewardUSDT:  16.50,
+				SummaryText: "+16.50 GRAM God Tier Drop",
+			}
+		} else { // 13% Jackpot
+			reward = CrateReward{
+				RarityLabel: "👑 CYBER GOD JACKPOT",
+				RarityColor: "#f59e0b",
+				RewardGRAM:  35.00,
+				RewardUSDT:  35.00,
+				SummaryText: "⚡ +35.00 GRAM 7X God Jackpot!",
 			}
 		}
 	}
 
-	newHoney := currentHoney - cost + reward.RewardUSDT
-	newBP := currentBP + reward.RewardGHS
+	newHoney := currentHoney - cost + reward.RewardGRAM
+	newBP := currentBP
 	now := time.Now().UTC()
 
 	// Update user record
@@ -592,14 +627,14 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 	// Insert purchase transaction
 	_, _ = tx.Exec(ctx,
 		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
-		 VALUES ($1, $2, 'crate_purchase', $3, 'HONEY', $4, $5)`,
+		 VALUES ($1, $2, 'crate_purchase', $3, 'GRAM', $4, $5)`,
 		uuid.New(), user.ID, cost, fmt.Sprintf("Unlock %s", tierName), now)
 
 	// Insert reward transaction
 	_, _ = tx.Exec(ctx,
 		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
-		 VALUES ($1, $2, 'crate_reward', $3, 'HONEY', $4, $5)`,
-		uuid.New(), user.ID, reward.RewardUSDT, fmt.Sprintf("Crate Reward (%s): %s", reward.RarityLabel, reward.SummaryText), now)
+		 VALUES ($1, $2, 'crate_reward', $3, 'GRAM', $4, $5)`,
+		uuid.New(), user.ID, reward.RewardGRAM, fmt.Sprintf("Crate Reward (%s): %s", reward.RarityLabel, reward.SummaryText), now)
 
 	if err := tx.Commit(ctx); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit crate transaction"})
