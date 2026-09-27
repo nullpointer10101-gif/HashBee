@@ -68,6 +68,35 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("insufficient Honey balance: have %.8f, need %.8f", u.HoneyBalance, req.Amount)
 	}
 
+	// Strict Gate: Only earned rewards (mining yield, spins, crates, referral & mission rewards) are withdrawable.
+	// Deposited funds cannot be directly withdrawn.
+	var totalEarned float64
+	_ = s.db.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0)
+		FROM transactions
+		WHERE user_id = $1
+		  AND type IN ('collect', 'spin_reward', 'crate_reward', 'mission_reward', 'referral_reward', 'admin_adjustment', 'adjustment')
+		  AND currency IN ('HONEY', 'USDT', 'GRAM')
+		  AND amount > 0
+	`, userID).Scan(&totalEarned)
+
+	var totalWithdrawn float64
+	_ = s.db.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0)
+		FROM withdrawals
+		WHERE user_id = $1
+		  AND status != 'rejected'
+	`, userID).Scan(&totalWithdrawn)
+
+	maxWithdrawable := totalEarned - totalWithdrawn
+	if maxWithdrawable < 0 {
+		maxWithdrawable = 0
+	}
+
+	if usdtAmount > maxWithdrawable {
+		return nil, fmt.Errorf("only earned rewards (mining yield, spins, crates & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
+	}
+
 	// Check referral gate (disabled by default)
 	if minReferrals > 0 {
 		activeRefs, _ := s.referral.CountActiveReferrals(ctx, userID)

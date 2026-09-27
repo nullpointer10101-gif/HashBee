@@ -282,6 +282,16 @@ export const Withdraw: React.FC = () => {
             >
               {submitting ? 'PROCESSING...' : `WITHDRAW ${selectedCrypto === 'USDT_BSC' ? 'USDT (BSC)' : 'GRAM'}`}
             </button>
+
+            <div className="mt-3 p-3 rounded-xl bg-[#16231e] border border-[#273a33] text-[10.5px] text-stone-400 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-stone-300">
+                <span>🛡️</span>
+                <span>Earnings & Profit Withdrawal</span>
+              </div>
+              <p className="leading-tight text-stone-400">
+                You can withdraw all earnings from <b>Cloud Mining</b>, <b>Lucky Spins</b>, <b>Mystery Crates</b>, and <b>Referrals</b>! Deposited funds power your active GHS miner and unlock crates.
+              </p>
+            </div>
           </form>
         </>
       ) : (
