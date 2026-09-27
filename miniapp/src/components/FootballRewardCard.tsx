@@ -10,11 +10,11 @@ interface FootballRewardCardProps {
 export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, tierId }) => {
   const reward = result.reward
   const isGod = tierId === 'god' || (reward.reward_gram || 0) >= 15
-  const isJackpot = reward.rarity_label.includes('JACKPOT') || (reward.reward_gram || 0) >= 7
-  const isRare = (reward.reward_gram || 0) >= 1.2
+  const isJackpot = reward.rarity_label.includes('JACKPOT') || reward.rarity_label.includes('TOP PRIZE') || (reward.reward_gram || 0) >= 1
+  const isRare = (reward.reward_gram || 0) >= 0.25 || (reward.reward_ghs || 0) >= 50
 
   // Determine FIFA Overall Rating (OVR)
-  const rating = isGod ? 99 : isJackpot ? 96 : isRare ? 92 : 87
+  const rating = isGod ? 99 : isJackpot ? 96 : isRare ? 91 : 86
 
   // Determine Football Card Theme
   const getCardTheme = () => {
@@ -53,7 +53,7 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
         nameBg: 'from-cyan-600 via-sky-600 to-blue-600',
         glow: 'rgba(56, 189, 248, 0.7)',
         position: 'ST',
-        rarityTitle: 'GRAM HERO',
+        rarityTitle: 'STAR CARD',
         statColor: 'text-cyan-300',
       }
     }
@@ -65,24 +65,22 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
       nameBg: 'from-emerald-600 via-teal-600 to-emerald-700',
       glow: 'rgba(52, 211, 153, 0.6)',
       position: 'CAM',
-      rarityTitle: 'GRAM STRIKER',
+      rarityTitle: 'MINER CARD',
       statColor: 'text-emerald-300',
     }
   }
 
   const theme = getCardTheme()
 
-  // Calculate FIFA 6-Attribute pure GRAM stats
   const gramAmount = reward.reward_gram || 0
-  const cost = result.cost || 1
-  const multiplier = Math.max(1, Math.round((gramAmount / cost) * 10) / 10)
+  const ghsAmount = reward.reward_ghs || 0
 
-  const statGrm = Math.min(99, Math.round(75 + gramAmount * 2.5))
-  const statMlt = `${multiplier}X`
-  const statLck = isGod ? 99 : isJackpot ? 97 : isRare ? 92 : 85
-  const statVal = Math.min(99, Math.round(80 + gramAmount * 2))
+  const statGrm = gramAmount > 0 ? Math.min(99, Math.round(75 + gramAmount * 3)) : 70
+  const statPow = ghsAmount > 0 ? Math.min(99, Math.round(75 + ghsAmount * 0.2)) : 80
+  const statLck = isGod ? 99 : isJackpot ? 97 : isRare ? 91 : 84
+  const statVal = Math.min(99, Math.round(80 + gramAmount * 2 + ghsAmount * 0.1))
   const statBst = isGod ? 99 : isJackpot ? 95 : isRare ? 90 : 82
-  const statRar = isGod ? 99 : isJackpot ? 96 : isRare ? 91 : 84
+  const statRar = isGod ? 99 : isJackpot ? 96 : isRare ? 91 : 85
 
   return (
     <motion.div
@@ -121,7 +119,6 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
 
         {/* TOP SECTION: FIFA Rating, Position, Nation, Crest */}
         <div className="w-full flex items-start justify-between relative z-10">
-          {/* Rating & Position Column */}
           <div className="flex flex-col items-center">
             <span className="text-3xl font-black text-white font-mono tracking-tighter drop-shadow-md leading-none">
               {rating}
@@ -130,7 +127,6 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
               {theme.position}
             </span>
 
-            {/* Club & Country Badges */}
             <div className="mt-2 flex flex-col items-center gap-1">
               <span className="text-base" title="TON / GRAM Chain">💎</span>
               <span className="text-xs font-black text-amber-300">GRAM</span>
@@ -145,7 +141,7 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
           >
             <div className="relative">
               <span className="text-6xl filter drop-shadow-[0_10px_15px_rgba(0,0,0,0.7)]">
-                {isGod ? '👁️' : isJackpot ? '👑' : '💎'}
+                {isGod ? '👁️' : isJackpot ? '👑' : ghsAmount > 0 ? '⚡' : '💎'}
               </span>
               <motion.span
                 animate={{ rotate: 360, scale: [0.8, 1.2, 0.8] }}
@@ -157,10 +153,9 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
             </div>
           </motion.div>
 
-          {/* Top Right Card Type Badge */}
           <div className="flex flex-col items-end">
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-300">
-              GRAM 26
+              FUT 26
             </span>
             <span className="text-[8px] font-bold text-stone-300 uppercase">
               {result.tier_name.split(' ')[0]}
@@ -172,7 +167,7 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
         <div className="w-full mt-2 relative z-10">
           <div className={`w-full py-1.5 px-3 rounded-lg bg-gradient-to-r ${theme.nameBg} text-center shadow-md border border-white/30`}>
             <div className="text-xs font-black text-stone-950 uppercase tracking-widest truncate">
-              +{gramAmount.toFixed(2)} GRAM DROP
+              {reward.summary_text.replace(/^[+🎉⚡🔥\s]+/, '')}
             </div>
           </div>
           <div className="text-center text-[9px] font-black text-stone-300 uppercase tracking-widest mt-0.5">
@@ -180,15 +175,15 @@ export const FootballRewardCard: React.FC<FootballRewardCardProps> = ({ result, 
           </div>
         </div>
 
-        {/* 6-ATTRIBUTE FIFA STAT GRID (Pure GRAM Metrics) */}
+        {/* 6-ATTRIBUTE FIFA STAT GRID */}
         <div className="w-full mt-2.5 pt-2 border-t border-white/20 grid grid-cols-6 gap-1 text-center relative z-10">
           <div>
             <div className={`text-xs font-black ${theme.statColor}`}>{statGrm}</div>
             <div className="text-[8px] font-extrabold text-stone-400">GRM</div>
           </div>
           <div>
-            <div className={`text-xs font-black ${theme.statColor}`}>{statMlt}</div>
-            <div className="text-[8px] font-extrabold text-stone-400">MLT</div>
+            <div className={`text-xs font-black ${theme.statColor}`}>{statPow}</div>
+            <div className="text-[8px] font-extrabold text-stone-400">POW</div>
           </div>
           <div>
             <div className={`text-xs font-black ${theme.statColor}`}>{statLck}</div>

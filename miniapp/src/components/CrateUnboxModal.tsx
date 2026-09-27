@@ -33,28 +33,28 @@ interface CrateUnboxModalProps {
 
 const REEL_POOL: Record<string, ReelItem[]> = {
   bronze: [
-    { id: 'b1', title: '+0.60 GRAM Drop', subtitle: 'Base Token Return', icon: '💎', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
-    { id: 'b2', title: '+0.85 GRAM Drop', subtitle: 'Uncommon Surge', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
-    { id: 'b3', title: '+1.25 GRAM Drop', subtitle: 'Rare 2.5X Win', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
-    { id: 'b4', title: '+2.50 GRAM Drop', subtitle: '🔥 5X MEGA JACKPOT', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
+    { id: 'b1', title: '+25 GHS Power', subtitle: 'Cloud Mining Power', icon: '⚡', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
+    { id: 'b2', title: '+60 GHS Power', subtitle: 'Mining Power Boost', icon: '⚡', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
+    { id: 'b3', title: '+0.25 G + 50 GHS', subtitle: 'Crypto & Hashrate', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
+    { id: 'b4', title: '+1.00 G + 100 GHS', subtitle: '🔥 HIGHEST PRIZE 1.00 G', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
   ],
   silver: [
-    { id: 's1', title: '+1.80 GRAM Drop', subtitle: 'Base Token Return', icon: '💎', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
-    { id: 's2', title: '+2.50 GRAM Drop', subtitle: 'Uncommon Surge', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
-    { id: 's3', title: '+3.80 GRAM Drop', subtitle: 'Rare 2.5X Win', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
-    { id: 's4', title: '+7.50 GRAM Drop', subtitle: '🔥 5X MEGA JACKPOT', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
+    { id: 's1', title: '+0.40 GRAM Drop', subtitle: 'Base Token Return', icon: '💎', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
+    { id: 's2', title: '+0.90 GRAM Drop', subtitle: 'Uncommon Return', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
+    { id: 's3', title: '+1.80 GRAM Drop', subtitle: 'Rare Multiplier', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
+    { id: 's4', title: '+5.00 GRAM Drop', subtitle: '🔥 5.00 G MEGA JACKPOT', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
   ],
   gold: [
-    { id: 'g1', title: '+3.60 GRAM Drop', subtitle: 'Base Token Return', icon: '💎', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
-    { id: 'g2', title: '+5.20 GRAM Drop', subtitle: 'Uncommon Surge', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
-    { id: 'g3', title: '+8.50 GRAM Drop', subtitle: 'Rare 2.8X Win', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
-    { id: 'g4', title: '+18.00 GRAM Drop', subtitle: '👑 6X GOLDEN JACKPOT', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
+    { id: 'g1', title: '+0.80 GRAM Drop', subtitle: 'Base Token Return', icon: '💎', rarity: 'COMMON', rarityColor: '#94a3b8', rarityBg: 'bg-stone-800' },
+    { id: 'g2', title: '+1.80 GRAM Drop', subtitle: 'Uncommon Return', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#34d399', rarityBg: 'bg-emerald-950' },
+    { id: 'g3', title: '+3.50 GRAM Drop', subtitle: 'Rare Multiplier', icon: '💎', rarity: 'RARE', rarityColor: '#60a5fa', rarityBg: 'bg-blue-950' },
+    { id: 'g4', title: '+10.00 GRAM Drop', subtitle: '👑 10.00 G GOLDEN JACKPOT', icon: '👑', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
   ],
   god: [
-    { id: 'gd1', title: '+6.50 GRAM Drop', subtitle: 'Mythic God Return', icon: '💎', rarity: 'COMMON', rarityColor: '#a855f7', rarityBg: 'bg-purple-950' },
-    { id: 'gd2', title: '+10.00 GRAM Drop', subtitle: 'Divine 2X Surge', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#ec4899', rarityBg: 'bg-pink-950' },
-    { id: 'gd3', title: '+16.50 GRAM Drop', subtitle: 'God Tier 3.3X Win', icon: '💎', rarity: 'RARE', rarityColor: '#38bdf8', rarityBg: 'bg-sky-950' },
-    { id: 'gd4', title: '+35.00 GRAM Drop', subtitle: '⚡ 7X CYBER GOD JACKPOT', icon: '👁️', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
+    { id: 'gd1', title: '+1.50 GRAM Drop', subtitle: 'Base God Return', icon: '💎', rarity: 'COMMON', rarityColor: '#a855f7', rarityBg: 'bg-purple-950' },
+    { id: 'gd2', title: '+3.00 GRAM Drop', subtitle: 'Divine Return', icon: '💎', rarity: 'UNCOMMON', rarityColor: '#ec4899', rarityBg: 'bg-pink-950' },
+    { id: 'gd3', title: '+6.50 GRAM Drop', subtitle: 'God Tier Multiplier', icon: '💎', rarity: 'RARE', rarityColor: '#38bdf8', rarityBg: 'bg-sky-950' },
+    { id: 'gd4', title: '+25.00 GRAM Drop', subtitle: '⚡ 25.00 G SUPREME JACKPOT', icon: '👁️', rarity: 'JACKPOT', rarityColor: '#f59e0b', rarityBg: 'bg-amber-950' },
   ],
 }
 
@@ -95,15 +95,16 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
     const targetIdx = 30
 
     if (result) {
-      const gramDrop = result.reward?.reward_gram || result.reward?.reward_usdt || 0
-      const isJackpot = gramDrop >= priceGram * 3
-      const isRare = gramDrop >= priceGram * 2
+      const gramDrop = result.reward?.reward_gram || 0
+      const ghsDrop = result.reward?.reward_ghs || 0
+      const isJackpot = gramDrop >= 1 || ghsDrop >= 100
+      const isRare = gramDrop >= 0.25 || ghsDrop >= 50
 
       generatedList[targetIdx] = {
         id: 'winner-item',
-        title: `+${gramDrop.toFixed(2)} GRAM Drop`,
+        title: result.reward.summary_text,
         subtitle: `${result.reward.rarity_label} Reward`,
-        icon: isJackpot ? '👑' : '💎',
+        icon: isJackpot ? '👑' : ghsDrop > 0 ? '⚡' : '💎',
         rarity: isJackpot ? 'JACKPOT' : isRare ? 'RARE' : 'UNCOMMON',
         rarityColor: result.reward.rarity_color || '#fbbf24',
         rarityBg: isJackpot ? 'bg-amber-950' : isRare ? 'bg-sky-950' : 'bg-emerald-950',
@@ -133,7 +134,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
       const revealTimer = setTimeout(() => {
         setPhase('revealed')
         setShowConfetti(true)
-        const isJackpot = result?.reward?.rarity_label?.includes('JACKPOT') || false
+        const isJackpot = result?.reward?.rarity_label?.includes('JACKPOT') || result?.reward?.rarity_label?.includes('TOP') || false
         crateAudio.playWinFanfare(isJackpot)
         crateAudio.playCoins()
 
@@ -150,7 +151,8 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
 
   if (!isOpen) return null
 
-  const wonGram = result?.reward?.reward_gram || result?.reward?.reward_usdt || 0
+  const wonGram = result?.reward?.reward_gram || 0
+  const wonGhs = result?.reward?.reward_ghs || 0
 
   return (
     <AnimatePresence>
@@ -188,7 +190,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
             {/* Pity Counter Pill */}
             <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-black text-amber-300 animate-pulse">
               <span>💎</span>
-              <span>PITY: {pityCount % 3 === 0 ? '👑 GUARANTEED NEXT' : `${(pityCount % 3)}/3 TO GRAM`}</span>
+              <span>PITY: {pityCount % 3 === 0 ? '👑 GUARANTEED NEXT' : `${(pityCount % 3)}/3 TO TOP`}</span>
             </div>
           </div>
 
@@ -215,7 +217,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
                 OPENING FOOTBALL PACK...
               </motion.h3>
               <p className="text-xs text-amber-400/90 font-bold mt-1">
-                Flipping holographic GRAM player card
+                Flipping holographic player card
               </p>
             </div>
           )}
@@ -225,7 +227,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
             <div className="py-4 flex flex-col items-center">
               <div className="text-xs font-black text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                ROLLING GRAM CARD PACK...
+                ROLLING CARD PACK...
               </div>
 
               {/* Roulette Viewport with Selection Marker */}
@@ -297,7 +299,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
 
               <div className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                 <span>⚽</span>
-                <span>FUT 26 GRAM PACK WALKOUT</span>
+                <span>FUT 26 PACK WALKOUT</span>
                 <span>✨</span>
               </div>
 
@@ -308,12 +310,20 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
               <div className="w-full bg-[#131f1a] border border-[#23382f] rounded-2xl p-2.5 my-2 space-y-1 text-left text-xs">
                 <div className="text-[9px] font-black text-stone-400 uppercase tracking-wider flex justify-between">
                   <span>Instantly Credited:</span>
-                  <span className="text-emerald-400 font-bold">✓ Direct to GRAM Balance</span>
+                  <span className="text-emerald-400 font-bold">✓ Direct to Account</span>
                 </div>
-                <div className="flex items-center justify-between text-amber-300 font-black text-sm">
-                  <span>💎 GRAM Tokens Won:</span>
-                  <span className="font-mono">+{wonGram.toFixed(2)} GRAM</span>
-                </div>
+                {wonGram > 0 && (
+                  <div className="flex items-center justify-between text-amber-300 font-black text-sm">
+                    <span>💎 GRAM Won:</span>
+                    <span className="font-mono">+{wonGram.toFixed(2)} GRAM</span>
+                  </div>
+                )}
+                {wonGhs > 0 && (
+                  <div className="flex items-center justify-between text-emerald-400 font-bold">
+                    <span>⚡ Mining Hashrate:</span>
+                    <span className="font-mono">+{wonGhs.toFixed(0)} GHS</span>
+                  </div>
+                )}
               </div>
 
               {/* Dopamine CTA Buttons */}
@@ -339,7 +349,7 @@ export const CrateUnboxModal: React.FC<CrateUnboxModalProps> = ({
                   }}
                   className="w-full py-2.5 rounded-xl bg-[#192721] border border-[#273d33] text-stone-300 font-extrabold text-xs uppercase hover:text-white active:scale-95 transition-all cursor-pointer"
                 >
-                  COLLECT GRAM & CLOSE
+                  COLLECT REWARD & CLOSE
                 </button>
               </div>
             </motion.div>

@@ -44,8 +44,8 @@ interface CrateTierInfo {
 const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'bronze',
-    name: 'Bronze Worker Crate',
-    subtitle: 'Great starter pack with boosted instant GRAM drops',
+    name: 'Bronze Miner Crate',
+    subtitle: 'Great starter pack with GHS Hashpower & 1.00 GRAM top prize',
     badge: '🥉 ENTRY PACK',
     badgeBg: 'bg-amber-800/40 text-amber-300 border-amber-600/50',
     priceGram: 0.5,
@@ -56,40 +56,40 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-amber-600/40',
     cardBg: 'from-[#23170e] via-[#19110a] to-[#0f0b07]',
     chestImage: '📦',
-    jackpotBanner: '🔥 JACKPOT: +2.50 GRAM (5X WIN)',
-    guaranteedTag: '👑 GUARANTEED GRAM WITHIN 2-3 OPENS',
+    jackpotBanner: '🔥 HIGHEST PRIZE: +1.00 GRAM + 100 GHS',
+    guaranteedTag: '⚡ GUARANTEED HASHPOWER & GRAM IN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
-        rarityLabel: 'COMMON',
+        rarityLabel: 'COMMON (70%)',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+0.60 GRAM Token',
-        subtitle: '100% Minimum Value Return',
-        rewardValue: '0.60 G',
-        icon: '💎',
+        title: '+25 GHS Hashrate',
+        subtitle: 'Permanent Cloud Mining Power',
+        rewardValue: '25 GHS',
+        icon: '⚡',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
         border: 'border-white/5',
       },
       {
         rarity: 'UNCOMMON',
-        rarityLabel: 'UNCOMMON',
+        rarityLabel: 'UNCOMMON (20%)',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+0.85 GRAM Token',
-        subtitle: '1.7X Multiplier Surge',
-        rewardValue: '0.85 G',
-        icon: '💎',
+        title: '+60 GHS Hashrate',
+        subtitle: 'Mining Hashrate Surge',
+        rewardValue: '60 GHS',
+        icon: '⚡',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
         border: 'border-emerald-500/20',
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE • GUARANTEED',
+        rarityLabel: 'RARE (7%)',
         rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40 font-black',
-        title: '+1.25 GRAM Token',
-        subtitle: '2.5X Mega Crypto Return',
-        rewardValue: '1.25 G',
+        title: '+0.25 GRAM + 50 GHS',
+        subtitle: 'Crypto Token & Hash Power',
+        rewardValue: '0.25 G + 50 GHS',
         icon: '💎',
         textColor: 'text-blue-400',
         cardBg: 'bg-blue-950/30',
@@ -97,11 +97,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 5X JACKPOT',
+        rarityLabel: '👑 TOP PRIZE (3%)',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
-        title: '+2.50 GRAM MEGA DROP',
-        subtitle: '500% Jackpot Explosion!',
-        rewardValue: '🔥 2.50 G',
+        title: '+1.00 GRAM + 100 GHS',
+        subtitle: 'Bronze Ultimate 1.00 GRAM Prize!',
+        rewardValue: '🔥 1.00 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
@@ -113,7 +113,7 @@ const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'silver',
     name: 'Silver Soldier Vault',
-    subtitle: 'High multiplier pack with up to +7.50 GRAM rewards',
+    subtitle: 'High multiplier pack with up to +5.00 GRAM jackpot',
     badge: '🥈 MOST POPULAR',
     badgeBg: 'bg-cyan-900/40 text-cyan-300 border-cyan-500/50',
     priceGram: 1.5,
@@ -124,16 +124,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-cyan-500/40',
     cardBg: 'from-[#102434] via-[#0b1722] to-[#060e15]',
     chestImage: '🥈',
-    jackpotBanner: '🔥 JACKPOT: +7.50 GRAM (5X WIN)',
-    guaranteedTag: '👑 GUARANTEED 3.80+ GRAM IN 2-3 OPENS',
+    jackpotBanner: '🔥 JACKPOT: +5.00 GRAM (3.3X WIN)',
+    guaranteedTag: '👑 GUARANTEED GRAM WIN WITHIN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
-        rarityLabel: 'COMMON',
+        rarityLabel: 'COMMON (70%)',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+1.80 GRAM Token',
-        subtitle: '100% Minimum Value Return',
-        rewardValue: '1.80 G',
+        title: '+0.40 GRAM Token',
+        subtitle: 'Base Token Return',
+        rewardValue: '0.40 G',
         icon: '💎',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
@@ -141,11 +141,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        rarityLabel: 'UNCOMMON',
+        rarityLabel: 'UNCOMMON (20%)',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+2.50 GRAM Token',
-        subtitle: '1.7X Multiplier Surge',
-        rewardValue: '2.50 G',
+        title: '+0.90 GRAM Token',
+        subtitle: 'Uncommon Token Surge',
+        rewardValue: '0.90 G',
         icon: '💎',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
@@ -153,11 +153,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE • GUARANTEED',
+        rarityLabel: 'RARE (7%)',
         rarityBadgeColor: 'bg-cyan-950/80 text-cyan-300 border-cyan-400/40 font-black',
-        title: '+3.80 GRAM Token',
-        subtitle: '2.5X Direct GRAM Drop',
-        rewardValue: '3.80 G',
+        title: '+1.80 GRAM Token',
+        subtitle: 'Direct Profit Return',
+        rewardValue: '1.80 G',
         icon: '💎',
         textColor: 'text-cyan-400',
         cardBg: 'bg-cyan-950/30',
@@ -165,11 +165,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 5X JACKPOT',
+        rarityLabel: '👑 5.00 G JACKPOT (3%)',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
-        title: '+7.50 GRAM MEGA DROP',
-        subtitle: '500% Silver Jackpot Strike!',
-        rewardValue: '🔥 7.50 G',
+        title: '+5.00 GRAM MEGA DROP',
+        subtitle: 'Silver Vault Top Jackpot!',
+        rewardValue: '🔥 5.00 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
@@ -181,7 +181,7 @@ const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'gold',
     name: 'Golden Queen Treasury',
-    subtitle: 'VIP High Roller pack with up to +18.00 GRAM jackpot',
+    subtitle: 'VIP High Roller pack with up to +10.00 GRAM jackpot',
     badge: '👑 VIP 3.0 GRAM',
     badgeBg: 'bg-amber-400/30 text-amber-300 border-amber-400/60 shadow-amber-500/20',
     priceGram: 3.0,
@@ -192,16 +192,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-amber-400/60',
     cardBg: 'from-[#2e210a] via-[#1d1506] to-[#120d04]',
     chestImage: '👑',
-    jackpotBanner: '🔥 VIP JACKPOT: +18.00 GRAM (6X WIN)',
-    guaranteedTag: '👑 GUARANTEED 8.50+ GRAM IN 2-3 OPENS',
+    jackpotBanner: '🔥 VIP JACKPOT: +10.00 GRAM (3.3X WIN)',
+    guaranteedTag: '👑 GUARANTEED GRAM WIN WITHIN 2-3 OPENS',
     rewards: [
       {
         rarity: 'COMMON',
-        rarityLabel: 'COMMON',
+        rarityLabel: 'COMMON (70%)',
         rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
-        title: '+3.60 GRAM Token',
-        subtitle: '100% Minimum Value Return',
-        rewardValue: '3.60 G',
+        title: '+0.80 GRAM Token',
+        subtitle: 'Base Token Return',
+        rewardValue: '0.80 G',
         icon: '💎',
         textColor: 'text-stone-200',
         cardBg: 'bg-[#151c19]/80',
@@ -209,11 +209,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        rarityLabel: 'UNCOMMON',
+        rarityLabel: 'UNCOMMON (20%)',
         rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
-        title: '+5.20 GRAM Token',
-        subtitle: '1.7X Multiplier Surge',
-        rewardValue: '5.20 G',
+        title: '+1.80 GRAM Token',
+        subtitle: 'Uncommon Token Surge',
+        rewardValue: '1.80 G',
         icon: '💎',
         textColor: 'text-emerald-400',
         cardBg: 'bg-emerald-950/20',
@@ -221,11 +221,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'RARE • GUARANTEED',
+        rarityLabel: 'RARE (7%)',
         rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40 font-black',
-        title: '+8.50 GRAM Token',
-        subtitle: '2.8X Direct GRAM Drop',
-        rewardValue: '8.50 G',
+        title: '+3.50 GRAM Token',
+        subtitle: 'Direct Profit Return',
+        rewardValue: '3.50 G',
         icon: '💎',
         textColor: 'text-blue-400',
         cardBg: 'bg-blue-950/30',
@@ -233,11 +233,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 6X VIP JACKPOT',
+        rarityLabel: '👑 10.00 G VIP JACKPOT (3%)',
         rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black shadow-lg shadow-amber-500/40 animate-pulse',
-        title: '+18.00 GRAM VIP DROP',
-        subtitle: '600% Golden Queen Jackpot!',
-        rewardValue: '👑 18.00 G',
+        title: '+10.00 GRAM VIP DROP',
+        subtitle: 'Golden Queen Mega Jackpot!',
+        rewardValue: '👑 10.00 G',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#442c08] via-[#332105] to-[#201503]',
@@ -249,8 +249,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'god',
     name: 'Cyber God Deity Vault',
-    subtitle: 'Supreme Mythic pack with up to +35.00 GRAM supreme drop',
-    badge: '👁️ SUPREME GOD TIER',
+    subtitle: 'Supreme Mythic pack with up to +25.00 GRAM supreme jackpot',
+    badge: '👁️ 5.0 GRAM SUPREME TOP',
     badgeBg: 'bg-fuchsia-500/30 text-fuchsia-300 border-fuchsia-400/70 shadow-fuchsia-500/30',
     priceGram: 5.0,
     priceUsdt: 5.0,
@@ -260,16 +260,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
     borderColor: 'border-fuchsia-400/80',
     cardBg: 'from-[#3b0764] via-[#24063d] to-[#12021f]',
     chestImage: '👁️',
-    jackpotBanner: '⚡ 7X GOD JACKPOT: +35.00 GRAM SUPREME',
+    jackpotBanner: '⚡ SUPREME 5X JACKPOT: +25.00 GRAM TOP PRIZE',
     guaranteedTag: '👑 100% 99 OVR CYBER GOD CARD PACK',
     rewards: [
       {
         rarity: 'COMMON',
-        rarityLabel: 'MYTHIC RETURN',
+        rarityLabel: 'MYTHIC (70%)',
         rarityBadgeColor: 'bg-purple-950 text-purple-300 border-purple-500/50 font-black',
-        title: '+6.50 GRAM Token',
-        subtitle: '130% Minimum Return Rate',
-        rewardValue: '6.50 G',
+        title: '+1.50 GRAM Token',
+        subtitle: 'Base Token Return',
+        rewardValue: '1.50 G',
         icon: '💎',
         textColor: 'text-purple-300',
         cardBg: 'bg-purple-950/40',
@@ -277,11 +277,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        rarityLabel: 'DIVINE SURGE',
+        rarityLabel: 'DIVINE (20%)',
         rarityBadgeColor: 'bg-pink-950 text-pink-300 border-pink-500/50 font-black',
-        title: '+10.00 GRAM Token',
-        subtitle: '200% Instant 2X Surge',
-        rewardValue: '10.00 G',
+        title: '+3.00 GRAM Token',
+        subtitle: 'Divine Surge',
+        rewardValue: '3.00 G',
         icon: '💎',
         textColor: 'text-pink-300',
         cardBg: 'bg-pink-950/40',
@@ -289,11 +289,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        rarityLabel: 'GOD TIER 95 OVR',
+        rarityLabel: 'GOD TIER (7%)',
         rarityBadgeColor: 'bg-sky-950 text-sky-300 border-sky-400/60 font-black',
-        title: '+16.50 GRAM Token',
-        subtitle: '330% Direct Mega GRAM Drop',
-        rewardValue: '16.50 G',
+        title: '+6.50 GRAM Token',
+        subtitle: 'Direct Mega GRAM Drop',
+        rewardValue: '6.50 G',
         icon: '💎',
         textColor: 'text-sky-300',
         cardBg: 'bg-sky-950/40',
@@ -301,11 +301,11 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        rarityLabel: '👑 7X CYBER GOD 99 OVR',
+        rarityLabel: '👑 25.00 G SUPREME (3%)',
         rarityBadgeColor: 'bg-gradient-to-r from-fuchsia-500 via-pink-400 to-amber-300 text-stone-950 border-fuchsia-300 font-black shadow-xl shadow-fuchsia-500/50 animate-pulse',
-        title: '+35.00 GRAM SUPREME',
-        subtitle: '700% Supreme Cyber God Jackpot!',
-        rewardValue: '👁️ 35.00 G',
+        title: '+25.00 GRAM SUPREME',
+        subtitle: '500% Supreme Cyber God Jackpot!',
+        rewardValue: '👁️ 25.00 G',
         icon: '👁️',
         textColor: 'text-fuchsia-300 font-black',
         cardBg: 'bg-gradient-to-r from-[#581c87] via-[#3b0764] to-[#1e0533]',
@@ -317,13 +317,13 @@ const CRATE_TIERS: CrateTierInfo[] = [
 ]
 
 const LIVE_WINS = [
-  '👁️ @Alex9... unboxed 99 OVR Cyber God (+35.00 GRAM Supreme Drop)!',
-  '👑 @TonWhale... triggered +18.00 GRAM Golden Queen 6X Card!',
-  '⚡ @Dmitry... unlocked +16.50 GRAM God Tier Rare Card!',
-  '💎 @Elena_K... won +7.50 GRAM Silver 5X Jackpot Card!',
-  '🚀 @CryptoBee... hit +8.50 GRAM Rare Golden Card!',
-  '🎉 @Samir... won +2.50 GRAM from Bronze Worker Pack!',
-  '💎 @Ivan_T... hit Guaranteed GRAM Pity Reward (+16.50 GRAM)!',
+  '👁️ @Alex9... unboxed 99 OVR Cyber God (+25.00 GRAM Supreme Drop)!',
+  '👑 @TonWhale... triggered +10.00 GRAM Golden Queen 96 OVR Card!',
+  '⚡ @Dmitry... unlocked +100 GHS & +1.00 GRAM from Bronze Miner Pack!',
+  '💎 @Elena_K... won +5.00 GRAM Silver Mega Jackpot Card!',
+  '🚀 @CryptoBee... hit +6.50 GRAM Rare Cyber God Card!',
+  '🎉 @Samir... hit +1.00 GRAM Highest Prize from 0.5 G Crate!',
+  '💎 @Ivan_T... hit Guaranteed Pity Reward (+6.50 GRAM)!',
 ]
 
 export const Crates: React.FC = () => {
@@ -466,20 +466,20 @@ export const Crates: React.FC = () => {
         </div>
       </div>
 
-      {/* ⚡ LUCKY FEVER RUSH COUNTDOWN BANNER (Dopamine Trigger) */}
+      {/* ⚡ 5.0 GRAM SUPREME CYBER GOD TOP BANNER (Dopamine Trigger) */}
       <motion.div
         animate={{ scale: [1, 1.01, 1] }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className="mb-3.5 p-2.5 rounded-2xl bg-gradient-to-r from-amber-600/30 via-red-600/20 to-fuchsia-600/30 border border-amber-500/50 flex items-center justify-between shadow-lg shadow-amber-500/10"
+        className="mb-3.5 p-2.5 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 via-amber-600/20 to-fuchsia-600/30 border border-fuchsia-500/50 flex items-center justify-between shadow-lg shadow-fuchsia-500/10"
       >
         <div className="flex items-center gap-2">
-          <span className="text-xl animate-bounce">🔥</span>
+          <span className="text-xl animate-bounce">👁️</span>
           <div>
-            <div className="text-[11px] font-black text-amber-300 uppercase tracking-wide">
-              LUCKY FEVER: 2X GRAM JACKPOT CHANCE
+            <div className="text-[11px] font-black text-fuchsia-300 uppercase tracking-wide">
+              TOP JACKPOT: 5.0 G CYBER GOD (+25.00 G)
             </div>
-            <div className="text-[9px] text-amber-200/80 font-bold">
-              Boosted Football Card Pack Drop Rates Active
+            <div className="text-[9px] text-fuchsia-200/80 font-bold">
+              Supreme 99 OVR Walkout • Instant Credit
             </div>
           </div>
         </div>
@@ -488,12 +488,12 @@ export const Crates: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 👑 GUARANTEED GRAM PITY PROGRESS METER (2nd or 3rd Box Guarantee) */}
+      {/* 👑 GUARANTEED PITY PROGRESS METER */}
       <div className="mb-4 p-3.5 rounded-2xl bg-[#111a17] border-2 border-[#20362c] shadow-xl relative overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5 text-xs font-black text-stone-200 uppercase tracking-wide">
             <span>⚽</span>
-            <span>GUARANTEED GRAM CARD PITY METER</span>
+            <span>GUARANTEED CARD PITY METER</span>
           </div>
           <span
             className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider ${
@@ -527,7 +527,7 @@ export const Crates: React.FC = () => {
             }`}
           >
             <div className="text-sm">⚡ 2nd Box</div>
-            <div className="text-[9px] font-bold mt-0.5">+50% GRAM Luck</div>
+            <div className="text-[9px] font-bold mt-0.5">+50% Luck Surge</div>
           </div>
 
           <div
@@ -538,14 +538,14 @@ export const Crates: React.FC = () => {
             }`}
           >
             <div className="text-sm font-black">👑 3rd Box</div>
-            <div className="text-[9px] font-extrabold mt-0.5">100% GRAM WIN</div>
+            <div className="text-[9px] font-extrabold mt-0.5">100% TOP WIN</div>
           </div>
         </div>
 
         <p className="text-[10px] text-center text-amber-300/90 font-bold mt-2">
           {pityStage === 3
-            ? '🔥 UNLOCK NOW: Next pack is GUARANTEED to drop a rare 92+ OVR GRAM Card!'
-            : `Open ${3 - pityStage} more box to trigger guaranteed pure GRAM Crypto Token drop!`}
+            ? '🔥 UNLOCK NOW: Next pack is GUARANTEED to drop a rare 92+ OVR Card!'
+            : `Open ${3 - pityStage} more box to trigger guaranteed top card drop!`}
         </p>
       </div>
 
@@ -567,7 +567,7 @@ export const Crates: React.FC = () => {
           { id: 'bronze', label: '🥉 0.5 G' },
           { id: 'silver', label: '🥈 1.5 G' },
           { id: 'gold', label: '👑 3.0 G' },
-          { id: 'god', label: '👁️ 5.0 G (GOD)' },
+          { id: 'god', label: '👁️ 5.0 G (TOP)' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -648,15 +648,15 @@ export const Crates: React.FC = () => {
                 <span>{crate.jackpotBanner}</span>
               </div>
 
-              {/* REWARDS SHOWCASE SECTION (Pure GRAM Cards) */}
+              {/* REWARDS SHOWCASE SECTION */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2.5 px-1">
                   <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
-                    <span>⚽</span> FOOTBALL GRAM REWARD CARDS
+                    <span>⚽</span> REWARD POOL CARDS
                   </span>
                   <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    100% Value Guarantee
+                    Instant Credit
                   </span>
                 </div>
 
@@ -733,7 +733,7 @@ export const Crates: React.FC = () => {
                     <span>{crate.icon}</span>
                     <span>
                       {userHasBalance
-                        ? `OPEN FOOTBALL PACK • ${crate.priceGram} GRAM`
+                        ? `OPEN PACK • ${crate.priceGram} GRAM`
                         : `⚡ DEPOSIT & UNLOCK • ${crate.priceGram} GRAM`}
                     </span>
                     <span>➔</span>

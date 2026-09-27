@@ -471,148 +471,148 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 
 	switch tier {
 	case "bronze":
-		if r < 0.50 { // 50% Common
+		if r < 0.70 { // 70% Common Low Drop
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
-				RewardGRAM:  0.60,
-				RewardUSDT:  0.60,
-				SummaryText: "+0.60 GRAM Token Drop",
+				RewardGHS:   25.0,
+				SummaryText: "+25 GHS Cloud Hashrate",
 			}
-		} else if r < 0.75 { // 25% Uncommon
+		} else if r < 0.90 { // 20% Uncommon
 			reward = CrateReward{
 				RarityLabel: "UNCOMMON",
 				RarityColor: "#34d399",
-				RewardGRAM:  0.85,
-				RewardUSDT:  0.85,
-				SummaryText: "+0.85 GRAM Boosted Drop",
+				RewardGHS:   60.0,
+				SummaryText: "+60 GHS Cloud Hashrate",
 			}
-		} else if r < 0.93 { // 18% Rare
+		} else if r < 0.97 { // 7% Rare
 			reward = CrateReward{
 				RarityLabel: "RARE",
 				RarityColor: "#60a5fa",
-				RewardGRAM:  1.25,
-				RewardUSDT:  1.25,
-				SummaryText: "+1.25 GRAM Mega Drop",
+				RewardGRAM:  0.25,
+				RewardUSDT:  0.25,
+				RewardGHS:   50.0,
+				SummaryText: "+0.25 GRAM + 50 GHS",
 			}
-		} else { // 7% Jackpot
+		} else { // 3% Top Jackpot (Max: 1.00 GRAM)
 			reward = CrateReward{
-				RarityLabel: "🔥 JACKPOT",
+				RarityLabel: "🔥 TOP PRIZE",
 				RarityColor: "#f59e0b",
-				RewardGRAM:  2.50,
-				RewardUSDT:  2.50,
-				SummaryText: "🎉 +2.50 GRAM 5X Jackpot!",
+				RewardGRAM:  1.00,
+				RewardUSDT:  1.00,
+				RewardGHS:   100.0,
+				SummaryText: "🎉 +1.00 GRAM + 100 GHS TOP PRIZE!",
 			}
 		}
 
 	case "silver":
-		if r < 0.45 { // 45% Common
+		if r < 0.70 { // 70% Common Low Drop
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
+				RewardGRAM:  0.40,
+				RewardUSDT:  0.40,
+				SummaryText: "+0.40 GRAM Token Drop",
+			}
+		} else if r < 0.90 { // 20% Uncommon
+			reward = CrateReward{
+				RarityLabel: "UNCOMMON",
+				RarityColor: "#34d399",
+				RewardGRAM:  0.90,
+				RewardUSDT:  0.90,
+				SummaryText: "+0.90 GRAM Token Drop",
+			}
+		} else if r < 0.97 { // 7% Rare
+			reward = CrateReward{
+				RarityLabel: "RARE",
+				RarityColor: "#60a5fa",
 				RewardGRAM:  1.80,
 				RewardUSDT:  1.80,
 				SummaryText: "+1.80 GRAM Token Drop",
 			}
-		} else if r < 0.75 { // 30% Uncommon
-			reward = CrateReward{
-				RarityLabel: "UNCOMMON",
-				RarityColor: "#34d399",
-				RewardGRAM:  2.50,
-				RewardUSDT:  2.50,
-				SummaryText: "+2.50 GRAM Boosted Drop",
-			}
-		} else if r < 0.93 { // 18% Rare
-			reward = CrateReward{
-				RarityLabel: "RARE",
-				RarityColor: "#60a5fa",
-				RewardGRAM:  3.80,
-				RewardUSDT:  3.80,
-				SummaryText: "+3.80 GRAM Mega Drop",
-			}
-		} else { // 7% Jackpot
+		} else { // 3% Jackpot
 			reward = CrateReward{
 				RarityLabel: "🔥 JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardGRAM:  7.50,
-				RewardUSDT:  7.50,
-				SummaryText: "🎉 +7.50 GRAM 5X Jackpot!",
+				RewardGRAM:  5.00,
+				RewardUSDT:  5.00,
+				SummaryText: "🎉 +5.00 GRAM Mega Jackpot!",
 			}
 		}
 
 	case "gold":
-		if r < 0.40 { // 40% Common
+		if r < 0.70 { // 70% Common Low Drop
 			reward = CrateReward{
 				RarityLabel: "COMMON",
 				RarityColor: "#94a3b8",
-				RewardGRAM:  3.60,
-				RewardUSDT:  3.60,
-				SummaryText: "+3.60 GRAM Token Drop",
+				RewardGRAM:  0.80,
+				RewardUSDT:  0.80,
+				SummaryText: "+0.80 GRAM Token Drop",
 			}
-		} else if r < 0.72 { // 32% Uncommon
+		} else if r < 0.90 { // 20% Uncommon
 			reward = CrateReward{
 				RarityLabel: "UNCOMMON",
 				RarityColor: "#34d399",
-				RewardGRAM:  5.20,
-				RewardUSDT:  5.20,
-				SummaryText: "+5.20 GRAM Boosted Drop",
+				RewardGRAM:  1.80,
+				RewardUSDT:  1.80,
+				SummaryText: "+1.80 GRAM Token Drop",
 			}
-		} else if r < 0.92 { // 20% Rare
+		} else if r < 0.97 { // 7% Rare
 			reward = CrateReward{
 				RarityLabel: "RARE",
 				RarityColor: "#60a5fa",
-				RewardGRAM:  8.50,
-				RewardUSDT:  8.50,
-				SummaryText: "+8.50 GRAM Mega Drop",
+				RewardGRAM:  3.50,
+				RewardUSDT:  3.50,
+				SummaryText: "+3.50 GRAM Token Drop",
 			}
-		} else { // 8% Jackpot
+		} else { // 3% Jackpot
 			reward = CrateReward{
 				RarityLabel: "🔥 JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardGRAM:  18.00,
-				RewardUSDT:  18.00,
-				SummaryText: "🎉 +18.00 GRAM 6X Jackpot!",
+				RewardGRAM:  10.00,
+				RewardUSDT:  10.00,
+				SummaryText: "🎉 +10.00 GRAM Golden Jackpot!",
 			}
 		}
 
 	case "god", "cyber_god", "cybergod":
-		if r < 0.35 { // 35% Common
+		if r < 0.70 { // 70% Common Low Drop
 			reward = CrateReward{
 				RarityLabel: "MYTHIC COMMON",
 				RarityColor: "#a855f7",
-				RewardGRAM:  6.50,
-				RewardUSDT:  6.50,
-				SummaryText: "+6.50 GRAM Cyber God Drop",
+				RewardGRAM:  1.50,
+				RewardUSDT:  1.50,
+				SummaryText: "+1.50 GRAM Token Drop",
 			}
-		} else if r < 0.65 { // 30% Uncommon
+		} else if r < 0.90 { // 20% Uncommon
 			reward = CrateReward{
 				RarityLabel: "DIVINE UNCOMMON",
 				RarityColor: "#ec4899",
-				RewardGRAM:  10.00,
-				RewardUSDT:  10.00,
-				SummaryText: "+10.00 GRAM Divine Drop",
+				RewardGRAM:  3.00,
+				RewardUSDT:  3.00,
+				SummaryText: "+3.00 GRAM Token Drop",
 			}
-		} else if r < 0.87 { // 22% Rare
+		} else if r < 0.97 { // 7% Rare
 			reward = CrateReward{
 				RarityLabel: "GOD TIER RARE",
 				RarityColor: "#38bdf8",
-				RewardGRAM:  16.50,
-				RewardUSDT:  16.50,
-				SummaryText: "+16.50 GRAM God Tier Drop",
+				RewardGRAM:  6.50,
+				RewardUSDT:  6.50,
+				SummaryText: "+6.50 GRAM Token Drop",
 			}
-		} else { // 13% Jackpot
+		} else { // 3% Jackpot
 			reward = CrateReward{
 				RarityLabel: "👑 CYBER GOD JACKPOT",
 				RarityColor: "#f59e0b",
-				RewardGRAM:  35.00,
-				RewardUSDT:  35.00,
-				SummaryText: "⚡ +35.00 GRAM 7X God Jackpot!",
+				RewardGRAM:  25.00,
+				RewardUSDT:  25.00,
+				SummaryText: "⚡ +25.00 GRAM 5X God Jackpot!",
 			}
 		}
 	}
 
 	newHoney := currentHoney - cost + reward.RewardGRAM
-	newBP := currentBP
+	newBP := currentBP + reward.RewardGHS
 	now := time.Now().UTC()
 
 	// Update user record
