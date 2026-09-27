@@ -560,193 +560,234 @@ export const Crates: React.FC = () => {
         </p>
       </div>
 
-      {/* Tier Filter Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-[#111a17] border border-[#1f3028] rounded-2xl mb-4 overflow-x-auto">
-        {[
-          { id: 'all', label: 'All Packs' },
-          { id: 'bronze', label: '🥉 0.5 G' },
-          { id: 'silver', label: '🥈 1.5 G' },
-          { id: 'gold', label: '👑 3.0 G' },
-          { id: 'god', label: '👁️ 5.0 G (TOP)' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              crateAudio.playClick()
-              triggerHaptic('light')
-              setActiveTab(tab.id as any)
-            }}
-            className={`flex-1 py-1.5 px-2 rounded-xl text-[10px] font-black uppercase tracking-wide whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-md'
-                : 'text-stone-400 hover:text-stone-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* ======================================================== */}
+      {/* 📦 4-BOX MATRIX (ALL BOXES ON SAME SCREEN IN 2x2 GRID)   */}
+      {/* ======================================================== */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
+            <span>🎁</span> SELECT LOOT CRATE (4 TIERS)
+          </span>
+          <span className="text-[10px] font-extrabold text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+            1-TAP TO UNBOX
+          </span>
+        </div>
+
+        {/* 2x2 Grid of all 4 boxes on the same screen */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {CRATE_TIERS.map((crate) => {
+            const isSelected = activeTab === crate.id
+            const isGod = crate.id === 'god'
+            const userBalance = user?.honey_balance || 0
+            const hasBalance = userBalance >= crate.priceGram
+
+            return (
+              <div
+                key={crate.id}
+                onClick={() => {
+                  crateAudio.playClick()
+                  triggerHaptic('light')
+                  setActiveTab(crate.id)
+                }}
+                style={{
+                  boxShadow: isSelected
+                    ? `0 0 25px 2px ${crate.glowColor}`
+                    : `0 4px 15px -2px ${crate.glowColor}`,
+                }}
+                className={`relative rounded-2xl border-2 transition-all duration-200 p-2.5 flex flex-col items-center justify-between cursor-pointer active:scale-98 ${
+                  isSelected
+                    ? `${crate.borderColor} bg-gradient-to-b ${crate.cardBg} ring-2 ring-amber-400/50`
+                    : 'border-[#1f3028] bg-[#101915]/90 hover:border-stone-500'
+                }`}
+              >
+                {/* Top Badge & God Hot Ribbon */}
+                <div className="w-full flex items-center justify-between mb-1">
+                  <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase tracking-tight border ${crate.badgeBg}`}>
+                    {crate.badge.split(' ')[0]} {crate.badge.split(' ')[1] || ''}
+                  </span>
+                  <span className="text-[11px] font-black text-amber-300 font-mono">
+                    {crate.priceGram} G
+                  </span>
+                </div>
+
+                {/* 3D Animated Crate Box (Compact size) */}
+                <div className="my-1 flex items-center justify-center">
+                  <CrateAnimatedBox
+                    tierId={crate.id}
+                    tierName={crate.name}
+                    accentColor={crate.accentColor}
+                    glowColor={crate.glowColor}
+                    icon={crate.icon}
+                    size="sm"
+                  />
+                </div>
+
+                {/* Box Name & Top Prize Callout */}
+                <div className="text-center w-full my-1">
+                  <div className="text-xs font-black text-white truncate">
+                    {crate.name.split(' ')[0]} {crate.name.split(' ')[1]}
+                  </div>
+                  <div className="text-[9px] font-extrabold text-amber-300 bg-black/40 border border-amber-500/30 rounded-lg px-1.5 py-0.5 mt-1 truncate">
+                    {crate.id === 'bronze'
+                      ? '⚡ +1.00 G / 100 GHS'
+                      : crate.id === 'silver'
+                        ? '🔥 +10.00 G DROP'
+                        : crate.id === 'gold'
+                          ? '👑 +20.00 G VAULT'
+                          : '👁️ +50.00 G GOD'}
+                  </div>
+                </div>
+
+                {/* Quick Action Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleOpenCrate(crate)
+                  }}
+                  className={`w-full mt-1.5 py-2 px-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 ${
+                    hasBalance
+                      ? isGod
+                        ? 'bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 hover:brightness-110 shadow-fuchsia-500/30'
+                        : 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 hover:brightness-110 shadow-amber-500/20'
+                      : 'bg-[#1b2b24] text-emerald-300 border border-emerald-500/40 hover:bg-[#23382f]'
+                  }`}
+                >
+                  <span>{hasBalance ? 'OPEN' : 'UNLOCK'}</span>
+                  <span>➔</span>
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Crates Cards List */}
-      <div className="space-y-6">
-        {filteredTiers.map((crate) => {
-          const userBalance = user?.honey_balance || 0
-          const userHasBalance = userBalance >= crate.priceGram
+      {/* ======================================================== */}
+      {/* 🔍 ACTIVE SELECTED CRATE INSPECTOR & REWARDS WALKOUT     */}
+      {/* ======================================================== */}
+      {(() => {
+        const activeCrate = CRATE_TIERS.find((c) => c.id === activeTab) || CRATE_TIERS[3]
+        const userBalance = user?.honey_balance || 0
+        const userHasBalance = userBalance >= activeCrate.priceGram
 
-          return (
+        return (
+          <div
+            style={{ boxShadow: `0 10px 35px -5px ${activeCrate.glowColor}` }}
+            className={`rounded-3xl border-2 ${activeCrate.borderColor} bg-gradient-to-b ${activeCrate.cardBg} p-4 mb-4 relative overflow-hidden transition-all duration-300`}
+          >
             <div
-              key={crate.id}
-              style={{ boxShadow: `0 10px 35px -5px ${crate.glowColor}` }}
-              className={`rounded-3xl border-2 ${crate.borderColor} bg-gradient-to-b ${crate.cardBg} p-5 relative overflow-hidden transition-all duration-200`}
-            >
-              <div
-                className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-40"
-                style={{ backgroundColor: crate.accentColor }}
-              />
+              className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-40"
+              style={{ backgroundColor: activeCrate.accentColor }}
+            />
 
-              {/* Top Row: Badge & Price */}
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${crate.badgeBg}`}>
-                  {crate.badge}
+            {/* Header with Title & Guaranteed Tag */}
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{activeCrate.icon}</span>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wide">
+                    {activeCrate.name}
+                  </h3>
+                  <div className="text-[10px] text-amber-300 font-extrabold">
+                    {activeCrate.jackpotBanner}
+                  </div>
+                </div>
+              </div>
+
+              <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${activeCrate.badgeBg}`}>
+                {activeCrate.priceGram} GRAM
+              </span>
+            </div>
+
+            {/* Guaranteed Tag Callout */}
+            <div className="mb-3 inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-[10px] font-black text-amber-300 uppercase tracking-wide shadow-sm">
+              <span>⚽</span>
+              <span>{activeCrate.guaranteedTag}</span>
+            </div>
+
+            {/* REWARDS SHOWCASE SECTION */}
+            <div className="mb-3 space-y-1.5">
+              <div className="flex items-center justify-between px-1 mb-1">
+                <span className="text-[9.5px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1">
+                  <span>⚽</span> 4 REWARD WALKOUT CARDS
                 </span>
-
-                <div className="flex items-baseline gap-1 bg-[#0e1613]/90 px-3 py-1 rounded-xl border border-white/10">
-                  <span className="text-base font-black text-amber-300 font-mono">
-                    {crate.priceGram} GRAM
-                  </span>
-                </div>
+                <span className="text-[9.5px] font-bold text-amber-400">Instant TON/GRAM</span>
               </div>
 
-              {/* 3D Animated Crate Showcase */}
-              <div className="my-2 py-3 text-center relative z-10 flex flex-col items-center">
-                <CrateAnimatedBox
-                  tierId={crate.id}
-                  tierName={crate.name}
-                  accentColor={crate.accentColor}
-                  glowColor={crate.glowColor}
-                  icon={crate.icon}
-                  onClick={() => handleOpenCrate(crate)}
-                  size="lg"
-                />
-
-                <h3 className="text-lg font-black text-white uppercase tracking-wide mt-3">
-                  {crate.name}
-                </h3>
-                <p className="text-[11px] text-stone-400 max-w-xs mx-auto mt-0.5">
-                  {crate.subtitle}
-                </p>
-
-                {/* Guaranteed Tag Callout */}
-                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-[10px] font-black text-amber-300 uppercase tracking-wide shadow-sm">
-                  <span>⚽</span>
-                  <span>{crate.guaranteedTag}</span>
-                </div>
-              </div>
-
-              {/* Jackpot Callout Banner */}
-              <div className="mb-4 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border border-amber-500/50 flex items-center justify-center text-center text-xs font-black text-amber-300 shadow-sm">
-                <span>{crate.jackpotBanner}</span>
-              </div>
-
-              {/* REWARDS SHOWCASE SECTION */}
-              <div className="mb-5">
-                <div className="flex items-center justify-between mb-2.5 px-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
-                    <span>⚽</span> REWARD POOL CARDS
-                  </span>
-                  <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Instant Credit
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {crate.rewards.map((rew, idx) => {
-                    if (rew.isTopReward) {
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-2xl border-2 ${rew.border} ${rew.cardBg} relative overflow-hidden transition-all duration-300`}
-                        >
-                          <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-amber-500/20 blur-xl pointer-events-none" />
-
-                          <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
-                                <span>{rew.icon}</span>
-                              </div>
-                              <div>
-                                <div className="text-xs font-black text-amber-300 tracking-tight">
-                                  {rew.title}
-                                </div>
-                                <div className="text-[10px] text-amber-200/70 font-semibold">
-                                  {rew.subtitle}
-                                </div>
-                              </div>
-                            </div>
-
-                            <span className={`px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
-                              {rew.rarityLabel}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-2.5 rounded-xl border ${rew.border} ${rew.cardBg} flex items-center justify-between transition-all`}
-                      >
+              {activeCrate.rewards.map((rew, idx) => {
+                if (rew.isTopReward) {
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-2.5 rounded-xl border-2 ${rew.border} ${rew.cardBg} relative overflow-hidden transition-all`}
+                    >
+                      <div className="flex items-center justify-between relative z-10">
                         <div className="flex items-center gap-2.5">
-                          <span className="text-base">{rew.icon}</span>
+                          <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-lg shadow-inner shrink-0">
+                            <span>{rew.icon}</span>
+                          </div>
                           <div>
-                            <div className={`text-xs font-bold ${rew.textColor}`}>
+                            <div className="text-xs font-black text-amber-300 tracking-tight">
                               {rew.title}
                             </div>
-                            <div className="text-[10px] text-stone-400 font-medium">
+                            <div className="text-[9px] text-amber-200/70 font-semibold">
                               {rew.subtitle}
                             </div>
                           </div>
                         </div>
 
-                        <span className={`px-2 py-0.5 rounded-md border text-[9px] font-extrabold uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
+                        <span className={`px-2 py-0.5 rounded-md border text-[8.5px] font-black uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
                           {rew.rarityLabel}
                         </span>
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
+                    </div>
+                  )
+                }
 
-              {/* ACTION BUTTON */}
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleOpenCrate(crate)}
-                  className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-xl transition-all active:scale-95 cursor-pointer ${
-                    userHasBalance
-                      ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/30'
-                      : 'bg-gradient-to-r from-[#1f2f28] to-[#283e35] text-stone-200 border border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{crate.icon}</span>
-                    <span>
-                      {userHasBalance
-                        ? `OPEN PACK • ${crate.priceGram} GRAM`
-                        : `⚡ DEPOSIT & UNLOCK • ${crate.priceGram} GRAM`}
+                return (
+                  <div
+                    key={idx}
+                    className={`p-2 rounded-xl border ${rew.border} ${rew.cardBg} flex items-center justify-between transition-all`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{rew.icon}</span>
+                      <div>
+                        <div className={`text-[11px] font-bold ${rew.textColor}`}>
+                          {rew.title}
+                        </div>
+                        <div className="text-[9px] text-stone-400 font-medium">
+                          {rew.subtitle}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className={`px-1.5 py-0.5 rounded border text-[8.5px] font-extrabold uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
+                      {rew.rarityLabel}
                     </span>
-                    <span>➔</span>
                   </div>
-                  <span className="text-[9px] font-bold opacity-80 uppercase tracking-widest">
-                    {userHasBalance ? 'Instant Pack Walkout Reveal' : 'Click to send TON/GRAM via Wallet'}
-                  </span>
-                </button>
-              </div>
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+
+            {/* ACTION BUTTON */}
+            <button
+              onClick={() => handleOpenCrate(activeCrate)}
+              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 cursor-pointer ${
+                userHasBalance
+                  ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/30'
+                  : 'bg-gradient-to-r from-[#1f2f28] to-[#283e35] text-stone-200 border border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10'
+              }`}
+            >
+              <span>{activeCrate.icon}</span>
+              <span>
+                {userHasBalance
+                  ? `OPEN ${activeCrate.name.toUpperCase()} • ${activeCrate.priceGram} GRAM`
+                  : `⚡ DEPOSIT & UNLOCK • ${activeCrate.priceGram} GRAM`}
+              </span>
+              <span>➔</span>
+            </button>
+          </div>
+        )
+      })()}
 
       {/* CS:GO / Football Pack Walkout Suspense Unboxing Modal */}
       {openingCrate && (
