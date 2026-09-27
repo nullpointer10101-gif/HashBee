@@ -53,13 +53,10 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 		return err
 	}
 
-	// Award 1 free spin to referrer immediately upon referral signup
-	_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`, referrerID)
-
-	// Level 1: direct referrer (created as pending, unlocked when friend collects mining harvest)
+	// Level 1: direct referrer (created as pending, spin awarded when friend opens mini app)
 	_, err = tx.Exec(ctx,
-		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, created_at)
-		 VALUES ($1, $2, $3, 1, 'pending', false, NOW())
+		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, spin_reward_paid, created_at)
+		 VALUES ($1, $2, $3, 1, 'pending', false, false, NOW())
 		 ON CONFLICT (referred_id) DO NOTHING`,
 		uuid.New(), referrerID, userID)
 	if err != nil {
@@ -89,6 +86,59 @@ func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uu
 	}
 
 	return tx.Commit(ctx)
+}
+
+// RewardReferralSpinOnAppOpen awards 1 free spin to the direct referrer ONLY when the referred user (referee) opens the mini app for the first time
+func (s *ReferralService) RewardReferralSpinOnAppOpen(ctx context.Context, referredUserID uuid.UUID) (bool, error) {
+	// Mark user as having opened the mini app
+	_, _ = s.db.Exec(ctx, `UPDATE users SET has_opened_app = true, updated_at = NOW() WHERE id = $1 AND (has_opened_app IS NULL OR has_opened_app = false)`, referredUserID)
+
+	// Check if there is a pending spin reward for level 1 referrer
+	var refID, referrerID uuid.UUID
+	err := s.db.QueryRow(ctx,
+		`SELECT id, referrer_id FROM referrals 
+		 WHERE referred_id = $1 AND level = 1 AND (spin_reward_paid IS NULL OR spin_reward_paid = false)`,
+		referredUserID).Scan(&refID, &referrerID)
+	if err != nil {
+		return false, nil // No unrewarded referral found
+	}
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback(ctx)
+
+	// Atomically mark spin_reward_paid = true to prevent double crediting
+	tag, err := tx.Exec(ctx,
+		`UPDATE referrals SET spin_reward_paid = true 
+		 WHERE id = $1 AND (spin_reward_paid IS NULL OR spin_reward_paid = false)`,
+		refID)
+	if err != nil || tag.RowsAffected() == 0 {
+		return false, nil // Already processed by concurrent request
+	}
+
+	// Award +1 spin to direct referrer
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`,
+		referrerID)
+	if err != nil {
+		return false, err
+	}
+
+	// Record transaction audit
+	idempKey := fmt.Sprintf("ref_spin_%s", refID)
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at)
+		 VALUES ($1, $2, 'spin_reward', 1, 'SPIN', $3, 'referral_spin', $4, $5, NOW())
+		 ON CONFLICT (idempotency_key) DO NOTHING`,
+		uuid.New(), referrerID, refID, idempKey, "Referral Mini App Launch: +1 Free Spin")
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // SetReferrerByTelegramID resolves referrer by Telegram ID and links user

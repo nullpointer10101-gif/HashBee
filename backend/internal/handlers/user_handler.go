@@ -75,6 +75,9 @@ func (h *UserHandler) Auth(c *gin.Context) {
 		}
 	}
 
+	// Reward referral spin to referrer ONLY when the referee opens the mini app
+	_, _ = h.referralSvc.RewardReferralSpinOnAppOpen(c.Request.Context(), u.ID)
+
 	token, err := middleware.IssueJWT(u.ID.String(), u.TelegramID, h.cfg.JWTSecret)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to issue token"})
@@ -92,6 +95,7 @@ func (h *UserHandler) Auth(c *gin.Context) {
 // GET /api/me — Get current user profile with live hive
 func (h *UserHandler) GetMe(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
+	_, _ = h.referralSvc.RewardReferralSpinOnAppOpen(c.Request.Context(), user.ID)
 	profile := h.userSvc.GetUserProfile(c.Request.Context(), user)
 	c.JSON(http.StatusOK, profile)
 }

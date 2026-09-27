@@ -31,6 +31,7 @@ type User struct {
 	HasCompletedMission   bool       `json:"has_completed_mission" db:"has_completed_mission"`
 	LastHiveFullNotifiedAt *time.Time `json:"last_hive_full_notified_at,omitempty" db:"last_hive_full_notified_at"`
 	OptedOutNotifications bool       `json:"opted_out_notifications" db:"opted_out_notifications"`
+	HasOpenedApp          bool       `json:"has_opened_app" db:"has_opened_app"`
 	SpinBalance           int        `json:"spin_balance" db:"spin_balance"`
 	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
@@ -69,14 +70,15 @@ const (
 )
 
 type Referral struct {
-	ID          uuid.UUID  `json:"id" db:"id"`
-	ReferrerID  uuid.UUID  `json:"referrer_id" db:"referrer_id"`
-	ReferredID  uuid.UUID  `json:"referred_id" db:"referred_id"`
-	Level       int        `json:"level" db:"level"`
-	Status      string     `json:"status" db:"status"`
-	RewardPaid  bool       `json:"reward_paid" db:"reward_paid"`
-	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
-	ActivatedAt *time.Time `json:"activated_at,omitempty" db:"activated_at"`
+	ID             uuid.UUID  `json:"id" db:"id"`
+	ReferrerID     uuid.UUID  `json:"referrer_id" db:"referrer_id"`
+	ReferredID     uuid.UUID  `json:"referred_id" db:"referred_id"`
+	Level          int        `json:"level" db:"level"`
+	Status         string     `json:"status" db:"status"`
+	RewardPaid     bool       `json:"reward_paid" db:"reward_paid"`
+	SpinRewardPaid bool       `json:"spin_reward_paid" db:"spin_reward_paid"`
+	CreatedAt      time.Time  `json:"created_at" db:"created_at"`
+	ActivatedAt    *time.Time `json:"activated_at,omitempty" db:"activated_at"`
 
 	// Joined fields for API responses
 	ReferredUsername  string `json:"referred_username,omitempty"`

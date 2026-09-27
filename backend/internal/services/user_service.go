@@ -167,11 +167,8 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 		return nil, false, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create referral chain (up to 3 levels) + reward 1 spin to direct referrer
+	// Create referral chain (up to 3 levels). Note: Free spins are NOT awarded on bot start, only when referee opens mini app.
 	if referrerID != nil {
-		// Award 1 free spin immediately to referrer
-		_, _ = tx.Exec(ctx, `UPDATE users SET spin_balance = spin_balance + 1, updated_at = NOW() WHERE id = $1`, *referrerID)
-
 		if err := s.createReferralChain(ctx, tx, newUser.ID, *referrerID); err != nil {
 			return nil, false, fmt.Errorf("failed to create referral chain: %w", err)
 		}
@@ -185,10 +182,10 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 }
 
 func (s *UserService) createReferralChain(ctx context.Context, tx pgx.Tx, newUserID, directReferrerID uuid.UUID) error {
-	// Level 1: direct referrer
+	// Level 1: direct referrer (spin_reward_paid is false until referee launches mini app)
 	_, err := tx.Exec(ctx,
-		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
-		 VALUES ($1, $2, $3, 1, 'pending', NOW())
+		`INSERT INTO referrals (id, referrer_id, referred_id, level, status, reward_paid, spin_reward_paid, created_at)
+		 VALUES ($1, $2, $3, 1, 'pending', false, false, NOW())
 		 ON CONFLICT (referred_id) DO NOTHING`,
 		uuid.New(), directReferrerID, newUserID)
 	if err != nil {
