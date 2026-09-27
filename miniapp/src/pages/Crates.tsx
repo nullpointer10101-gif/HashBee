@@ -5,101 +5,258 @@ import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 import { useNavigate } from 'react-router-dom'
 
+interface RewardTierItem {
+  rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'JACKPOT'
+  prob: string
+  probBadgeColor: string
+  title: string
+  subtitle: string
+  rewardValue: string
+  icon: string
+  textColor: string
+  cardBg: string
+  border: string
+}
+
 interface CrateTierInfo {
   id: 'bronze' | 'silver' | 'gold'
   name: string
+  subtitle: string
   badge: string
-  badgeColor: string
+  badgeBg: string
   priceGram: number
   priceUsdt: number
   icon: string
+  accentColor: string
   glowColor: string
   borderColor: string
-  bgGradient: string
-  rewardsPreview: { label: string; text: string; color: string }[]
-  jackpotText: string
+  cardBg: string
+  chestImage: string
+  jackpotBanner: string
+  rewards: RewardTierItem[]
 }
 
 const CRATE_TIERS: CrateTierInfo[] = [
   {
     id: 'bronze',
     name: 'Bronze Worker Crate',
-    badge: 'ENTRY LEVEL',
-    badgeColor: 'bg-amber-700/30 text-amber-300 border-amber-600/40',
+    subtitle: 'Great starter box with instant USDT & GHS drops',
+    badge: '🥉 ENTRY TIER',
+    badgeBg: 'bg-amber-800/40 text-amber-300 border-amber-600/50',
     priceGram: 0.5,
     priceUsdt: 0.5,
     icon: '📦',
-    glowColor: 'rgba(217, 119, 6, 0.25)',
-    borderColor: 'border-amber-600/50',
-    bgGradient: 'from-[#24180e] via-[#1a130c] to-[#120d09]',
-    rewardsPreview: [
-      { label: 'COMMON (50%)', text: '+40 GHS Mining Hashrate', color: 'text-stone-300' },
-      { label: 'UNCOMMON (25%)', text: '+0.25 USDT + 20 GHS', color: 'text-emerald-400' },
-      { label: 'RARE (18%)', text: '+0.35 GRAM + 30 GHS', color: 'text-blue-400' },
-      { label: '🔥 JACKPOT (7%)', text: '+1.00 USDT + 0.50 GRAM + 100 GHS', color: 'text-amber-400 font-bold' },
+    accentColor: '#d97706',
+    glowColor: 'rgba(217, 119, 6, 0.35)',
+    borderColor: 'border-amber-600/40',
+    cardBg: 'from-[#23170e] via-[#19110a] to-[#0f0b07]',
+    chestImage: '📦',
+    jackpotBanner: '🔥 JACKPOT: +1.00 USDT + 0.50 GRAM + 100 GHS',
+    rewards: [
+      {
+        rarity: 'COMMON',
+        prob: '50% DROP',
+        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        title: '+40 GHS Hashrate',
+        subtitle: 'Permanent Cloud Mining Power',
+        rewardValue: '40 GHS',
+        icon: '⚡',
+        textColor: 'text-stone-200',
+        cardBg: 'bg-[#151c19]/80',
+        border: 'border-white/5',
+      },
+      {
+        rarity: 'UNCOMMON',
+        prob: '25% DROP',
+        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        title: '+0.25 USDT + 20 GHS',
+        subtitle: 'Instant Cash + Mining Power',
+        rewardValue: '$0.25 + 20 GHS',
+        icon: '💵',
+        textColor: 'text-emerald-400',
+        cardBg: 'bg-emerald-950/20',
+        border: 'border-emerald-500/20',
+      },
+      {
+        rarity: 'RARE',
+        prob: '18% DROP',
+        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        title: '+0.35 GRAM + 30 GHS',
+        subtitle: 'Direct GRAM Token Drop',
+        rewardValue: '0.35 G + 30 GHS',
+        icon: '💎',
+        textColor: 'text-blue-400',
+        cardBg: 'bg-blue-950/20',
+        border: 'border-blue-500/20',
+      },
+      {
+        rarity: 'JACKPOT',
+        prob: '7% CHANCE',
+        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        title: '+1.00 USDT + 0.50 GRAM + 100 GHS',
+        subtitle: 'Triple Jackpot MEGA Drop!',
+        rewardValue: '🔥 HUGE REWARD',
+        icon: '👑',
+        textColor: 'text-amber-300 font-black',
+        cardBg: 'bg-gradient-to-r from-amber-950/40 to-yellow-950/30',
+        border: 'border-amber-500/50 shadow-sm shadow-amber-500/20',
+      },
     ],
-    jackpotText: 'Up to +1.00 USDT & +100 GHS',
   },
   {
     id: 'silver',
     name: 'Silver Soldier Crate',
-    badge: 'POPULAR CHOICE',
-    badgeColor: 'bg-slate-500/30 text-slate-200 border-slate-400/40',
+    subtitle: 'High multiplier crate with massive GHS & USDT',
+    badge: '🥈 MOST POPULAR',
+    badgeBg: 'bg-slate-700/50 text-slate-200 border-slate-400/50',
     priceGram: 1.5,
     priceUsdt: 1.5,
     icon: '🥈',
-    glowColor: 'rgba(148, 163, 184, 0.25)',
-    borderColor: 'border-slate-400/50',
-    bgGradient: 'from-[#1a232e] via-[#121922] to-[#0c1117]',
-    rewardsPreview: [
-      { label: 'COMMON (45%)', text: '+120 GHS Mining Hashrate', color: 'text-stone-300' },
-      { label: 'UNCOMMON (30%)', text: '+0.80 USDT + 60 GHS', color: 'text-emerald-400' },
-      { label: 'RARE (18%)', text: '+1.20 GRAM + 100 GHS', color: 'text-blue-400' },
-      { label: '🔥 JACKPOT (7%)', text: '+3.50 USDT + 1.50 GRAM + 350 GHS', color: 'text-amber-400 font-bold' },
+    accentColor: '#94a3b8',
+    glowColor: 'rgba(148, 163, 184, 0.35)',
+    borderColor: 'border-slate-400/40',
+    cardBg: 'from-[#17232e] via-[#101922] to-[#0a0f15]',
+    chestImage: '🥈',
+    jackpotBanner: '🔥 JACKPOT: +3.50 USDT + 1.50 GRAM + 350 GHS',
+    rewards: [
+      {
+        rarity: 'COMMON',
+        prob: '45% DROP',
+        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        title: '+120 GHS Hashrate',
+        subtitle: 'Boost Daily Passive Mining',
+        rewardValue: '120 GHS',
+        icon: '⚡',
+        textColor: 'text-stone-200',
+        cardBg: 'bg-[#151c19]/80',
+        border: 'border-white/5',
+      },
+      {
+        rarity: 'UNCOMMON',
+        prob: '30% DROP',
+        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        title: '+0.80 USDT + 60 GHS',
+        subtitle: 'Instant Cash + Mining Power',
+        rewardValue: '$0.80 + 60 GHS',
+        icon: '💵',
+        textColor: 'text-emerald-400',
+        cardBg: 'bg-emerald-950/20',
+        border: 'border-emerald-500/20',
+      },
+      {
+        rarity: 'RARE',
+        prob: '18% DROP',
+        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        title: '+1.20 GRAM + 100 GHS',
+        subtitle: 'Direct GRAM Token Drop',
+        rewardValue: '1.20 G + 100 GHS',
+        icon: '💎',
+        textColor: 'text-blue-400',
+        cardBg: 'bg-blue-950/20',
+        border: 'border-blue-500/20',
+      },
+      {
+        rarity: 'JACKPOT',
+        prob: '7% CHANCE',
+        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        title: '+3.50 USDT + 1.50 GRAM + 350 GHS',
+        subtitle: 'Mega Cyber Jackpot Drop!',
+        rewardValue: '🔥 HUGE REWARD',
+        icon: '👑',
+        textColor: 'text-amber-300 font-black',
+        cardBg: 'bg-gradient-to-r from-amber-950/40 to-yellow-950/30',
+        border: 'border-amber-500/50 shadow-sm shadow-amber-500/20',
+      },
     ],
-    jackpotText: 'Up to +3.50 USDT & +350 GHS',
   },
   {
     id: 'gold',
     name: 'Golden Queen Crate',
-    badge: 'VIP HIGH ROLLER',
-    badgeColor: 'bg-amber-400/30 text-amber-300 border-amber-400/50',
+    subtitle: 'VIP High Roller box with up to 1,000 GHS jackpot',
+    badge: '👑 VIP HIGH ROLLER',
+    badgeBg: 'bg-amber-400/30 text-amber-300 border-amber-400/60 shadow-amber-500/20',
     priceGram: 3.0,
     priceUsdt: 3.0,
     icon: '👑',
-    glowColor: 'rgba(245, 158, 11, 0.35)',
+    accentColor: '#f59e0b',
+    glowColor: 'rgba(245, 158, 11, 0.45)',
     borderColor: 'border-amber-400/60',
-    bgGradient: 'from-[#2b200b] via-[#1d1607] to-[#140f05]',
-    rewardsPreview: [
-      { label: 'COMMON (40%)', text: '+260 GHS Mining Hashrate', color: 'text-stone-300' },
-      { label: 'UNCOMMON (32%)', text: '+2.00 USDT + 150 GHS', color: 'text-emerald-400' },
-      { label: 'RARE (20%)', text: '+2.80 GRAM + 250 GHS', color: 'text-blue-400' },
-      { label: '🔥 JACKPOT (8%)', text: '+8.00 USDT + 3.00 GRAM + 1,000 GHS', color: 'text-amber-400 font-bold' },
+    cardBg: 'from-[#2e210a] via-[#1d1506] to-[#120d04]',
+    chestImage: '👑',
+    jackpotBanner: '🔥 VIP JACKPOT: +8.00 USDT + 3.00 GRAM + 1,000 GHS',
+    rewards: [
+      {
+        rarity: 'COMMON',
+        prob: '40% DROP',
+        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        title: '+260 GHS Hashrate',
+        subtitle: 'Massive Permanent Hashrate',
+        rewardValue: '260 GHS',
+        icon: '⚡',
+        textColor: 'text-stone-200',
+        cardBg: 'bg-[#151c19]/80',
+        border: 'border-white/5',
+      },
+      {
+        rarity: 'UNCOMMON',
+        prob: '32% DROP',
+        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        title: '+2.00 USDT + 150 GHS',
+        subtitle: 'Instant Cash + Mining Power',
+        rewardValue: '$2.00 + 150 GHS',
+        icon: '💵',
+        textColor: 'text-emerald-400',
+        cardBg: 'bg-emerald-950/20',
+        border: 'border-emerald-500/20',
+      },
+      {
+        rarity: 'RARE',
+        prob: '20% DROP',
+        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        title: '+2.80 GRAM + 250 GHS',
+        subtitle: 'Direct GRAM Token Drop',
+        rewardValue: '2.80 G + 250 GHS',
+        icon: '💎',
+        textColor: 'text-blue-400',
+        cardBg: 'bg-blue-950/20',
+        border: 'border-blue-500/20',
+      },
+      {
+        rarity: 'JACKPOT',
+        prob: '8% CHANCE',
+        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        title: '+8.00 USDT + 3.00 GRAM + 1,000 GHS',
+        subtitle: 'Golden Queen Ultimate Jackpot!',
+        rewardValue: '👑 ULTIMATE DROP',
+        icon: '👑',
+        textColor: 'text-amber-300 font-black',
+        cardBg: 'bg-gradient-to-r from-amber-950/50 to-yellow-950/40',
+        border: 'border-amber-400 shadow-md shadow-amber-500/30',
+      },
     ],
-    jackpotText: 'Up to +8.00 USDT & +1,000 GHS',
   },
 ]
 
-// Mock live winning feed ticker for high dopamine & social proof
 const LIVE_WINS = [
-  '🔥 @Ramiz... won +1.00 USDT + 100 GHS from Bronze Crate!',
-  '⚡ @Dmitry... unlocked +260 GHS from Golden Crate!',
-  '💎 @Elena... won +1.20 GRAM + 100 GHS from Silver Crate!',
-  '🚀 @CryptoBee... hit +3.50 USDT JACKPOT from Silver Crate!',
-  '👑 @AlexTon... won +8.00 USDT + 1,000 GHS VIP JACKPOT!',
+  '🔥 @Alex9... unboxed +8.00 USDT + 1,000 GHS VIP Jackpot from Gold Crate!',
+  '⚡ @Dmitry... unlocked +260 GHS Hashrate from Gold Crate!',
+  '💎 @Elena_K... won +1.20 GRAM + 100 GHS from Silver Crate!',
+  '🚀 @CryptoBee... hit +3.50 USDT Mega Drop from Silver Crate!',
+  '🎉 @Samir... won +1.00 USDT + 100 GHS from Bronze Crate!',
 ]
 
 export const Crates: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
 
+  const [activeTab, setActiveTab] = useState<'all' | 'bronze' | 'silver' | 'gold'>('all')
   const [openingTier, setOpeningTier] = useState<string | null>(null)
   const [openingState, setOpeningState] = useState<'idle' | 'shaking' | 'revealed'>('idle')
   const [wonResult, setWonResult] = useState<OpenCrateResult | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const [currentWinIndex, setCurrentWinIndex] = useState(0)
 
-  // TON Deposit Modal State for Crates
+  // TON Deposit Modal State
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [selectedDepositTier, setSelectedDepositTier] = useState<CrateTierInfo>(CRATE_TIERS[0])
   const [copiedMemo, setCopiedMemo] = useState(false)
@@ -109,11 +266,10 @@ export const Crates: React.FC = () => {
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
   const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
 
-  // Cycle live win feed
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWinIndex((prev) => (prev + 1) % LIVE_WINS.length)
-    }, 3500)
+    }, 3200)
     return () => clearInterval(interval)
   }, [])
 
@@ -122,9 +278,7 @@ export const Crates: React.FC = () => {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred(style)
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   const triggerNotificationHaptic = (type: 'success' | 'warning' | 'error') => {
@@ -132,15 +286,12 @@ export const Crates: React.FC = () => {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred(type)
       }
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   const handleOpenCrate = async (tier: CrateTierInfo) => {
     const userBalance = user?.honey_balance || 0
 
-    // If balance is too low, open deposit helper
     if (userBalance < tier.priceUsdt) {
       setSelectedDepositTier(tier)
       setShowDepositModal(true)
@@ -153,10 +304,8 @@ export const Crates: React.FC = () => {
     setWonResult(null)
 
     try {
-      // Call backend to open crate
       const result = await openCrate(tier.id)
 
-      // Dramatic suspense delay
       setTimeout(() => {
         setWonResult(result)
         setOpeningState('revealed')
@@ -180,149 +329,223 @@ export const Crates: React.FC = () => {
 
   const handleVerifyDeposit = async () => {
     setVerifyingDeposit(true)
-    toast.loading('Checking blockchain for your transfer...', { id: 'crate-dep' })
+    toast.loading('Checking blockchain for deposit...', { id: 'crate-dep' })
     try {
       const res = await checkDeposit()
       toast.dismiss('crate-dep')
       await refreshUser()
       if (res?.credited && res.credited > 0) {
-        toast.success(`🎉 Detected ${res.credited} deposit! Balance & Hashrate upgraded!`)
+        toast.success(`🎉 Detected ${res.credited} deposit! Ready to unlock!`)
         setShowDepositModal(false)
       } else {
-        toast.success('Blockchain scan complete! Any transfers are automatically credited.')
+        toast.success('Blockchain scan complete! Transfers are automatically credited.')
       }
     } catch {
       toast.dismiss('crate-dep')
-      toast.error('Could not detect transfer yet. Please wait a few seconds and try again.')
+      toast.error('Could not detect transfer yet. TON transfers take ~5-15s.')
     } finally {
       setVerifyingDeposit(false)
     }
   }
 
+  const filteredTiers = activeTab === 'all' ? CRATE_TIERS : CRATE_TIERS.filter((t) => t.id === activeTab)
+
   return (
-    <div className="min-h-screen bg-[#0d1311] text-[#e6f0ec] pb-28 pt-5 px-4 max-w-md mx-auto select-none">
+    <div className="min-h-screen bg-[#0a0f0d] text-[#e6f0ec] pb-32 pt-4 px-4 max-w-md mx-auto select-none">
       {showConfetti && (
         <ReactConfetti
           width={window.innerWidth}
           height={window.innerHeight}
-          numberOfPieces={160}
+          numberOfPieces={180}
           recycle={false}
           gravity={0.3}
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between mb-3.5">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#182621] border border-[#273d34] text-xs font-bold text-stone-300 active:scale-95 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#15201b] border border-[#23362e] text-xs font-extrabold text-stone-300 active:scale-95 transition-all shadow-sm"
         >
           <span>←</span>
           <span>Miner</span>
         </button>
+
         <div className="flex items-center gap-2">
-          <div className="px-3.5 py-1.5 rounded-full bg-[#162520] border border-[#263e34] flex items-center gap-1.5 text-xs font-extrabold text-stone-100 shadow-sm">
-            <span className="text-amber-400">💰</span>
+          <div className="px-3.5 py-1.5 rounded-full bg-[#14221c] border border-amber-500/30 flex items-center gap-1.5 text-xs font-black text-amber-300 shadow-sm shadow-amber-500/10">
+            <span>🍯</span>
             <span>{(user?.honey_balance || 0).toFixed(4)} USDT</span>
           </div>
         </div>
       </div>
 
-      {/* Title & Banner */}
+      {/* Hero Title & Showcase */}
       <div className="text-center mb-4">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-emerald-500/20 border border-amber-500/40 text-[10px] font-black uppercase tracking-widest text-amber-300 mb-2 shadow-sm">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-amber-500/40 text-[10px] font-black uppercase tracking-widest text-amber-300 mb-2 shadow-sm">
           <span>🎁</span>
-          <span>INSTANT WIN CRATES</span>
+          <span>100% GUARANTEED REWARD UNBOXING</span>
         </div>
         <h1 className="text-2xl font-black text-white tracking-tight uppercase">
           Mystery Loot Crates
         </h1>
         <p className="text-xs text-stone-400 mt-1 max-w-xs mx-auto">
-          Unlock crates for guaranteed <b>USDT</b>, <b>GRAM</b>, and massive <b>Hashrate (GHS)</b> upgrades!
+          Unlock premium crates for instant <b>USDT Cash</b>, <b>GRAM</b>, and permanent <b>GHS Power</b>!
         </p>
       </div>
 
-      {/* Live Win Ticker (Dopamine Trigger) */}
-      <div className="mb-5 py-2 px-3 rounded-2xl bg-[#141e1b] border border-[#243630] flex items-center gap-2 overflow-hidden shadow-inner">
-        <span className="text-xs font-black text-amber-400 animate-pulse uppercase tracking-wider shrink-0">
-          LIVE WINS:
+      {/* Live Winners Ticker */}
+      <div className="mb-4 py-2 px-3 rounded-2xl bg-[#121b18] border border-[#21332c] flex items-center gap-2 overflow-hidden shadow-inner">
+        <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          RECENT:
         </span>
         <p className="text-[11px] text-stone-300 font-semibold truncate transition-all duration-300">
           {LIVE_WINS[currentWinIndex]}
         </p>
       </div>
 
-      {/* Crates List */}
-      <div className="space-y-4">
-        {CRATE_TIERS.map((crate) => {
-          const userHasBalance = (user?.honey_balance || 0) >= crate.priceUsdt
+      {/* Tier Filter Tabs */}
+      <div className="flex items-center gap-1.5 p-1 bg-[#121c18] border border-[#22332c] rounded-2xl mb-4">
+        {[
+          { id: 'all', label: 'All Crates' },
+          { id: 'bronze', label: '🥉 0.5 G' },
+          { id: 'silver', label: '🥈 1.5 G' },
+          { id: 'gold', label: '👑 3.0 G' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              triggerHaptic('light')
+              setActiveTab(tab.id as any)
+            }}
+            className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wide transition-all ${
+              activeTab === tab.id
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 shadow-md font-black'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Crates Cards List */}
+      <div className="space-y-6">
+        {filteredTiers.map((crate) => {
+          const userBalance = user?.honey_balance || 0
+          const userHasBalance = userBalance >= crate.priceUsdt
 
           return (
             <div
               key={crate.id}
-              style={{ boxShadow: `0 8px 30px ${crate.glowColor}` }}
-              className={`rounded-3xl border ${crate.borderColor} bg-gradient-to-b ${crate.bgGradient} p-5 relative overflow-hidden transition-all duration-200 hover:scale-[1.01]`}
+              style={{ boxShadow: `0 10px 35px -5px ${crate.glowColor}` }}
+              className={`rounded-3xl border-2 ${crate.borderColor} bg-gradient-to-b ${crate.cardBg} p-5 relative overflow-hidden transition-all duration-200`}
             >
-              {/* Background ambient lighting */}
+              {/* Decorative background glow */}
               <div
-                className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-2xl pointer-events-none"
-                style={{ backgroundColor: crate.glowColor }}
+                className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl pointer-events-none opacity-40"
+                style={{ backgroundColor: crate.accentColor }}
               />
 
-              {/* Top Tier Header */}
-              <div className="flex items-start justify-between mb-3 relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-[#0e1714]/80 border border-white/10 flex items-center justify-center text-3xl shadow-inner">
-                    {crate.icon}
-                  </div>
-                  <div>
-                    <span className={`inline-block px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider ${crate.badgeColor} mb-1`}>
-                      {crate.badge}
-                    </span>
-                    <h3 className="text-base font-black text-white">{crate.name}</h3>
-                  </div>
-                </div>
+              {/* Top Row: Badge & Price */}
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${crate.badgeBg}`}>
+                  {crate.badge}
+                </span>
 
-                <div className="text-right">
-                  <div className="text-lg font-black text-amber-300 font-mono">
+                <div className="flex items-baseline gap-1.5 bg-[#0e1613]/90 px-3 py-1 rounded-xl border border-white/10">
+                  <span className="text-base font-black text-amber-300 font-mono">
                     {crate.priceGram} GRAM
-                  </div>
-                  <div className="text-[10px] font-bold text-stone-400">
-                    ≈ ${crate.priceUsdt.toFixed(2)} USDT
-                  </div>
+                  </span>
+                  <span className="text-[10px] font-bold text-stone-400">
+                    (≈ ${crate.priceUsdt.toFixed(2)})
+                  </span>
                 </div>
               </div>
 
-              {/* Jackpot Highlight */}
-              <div className="mb-3 py-1.5 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-300 font-bold">
-                <span>🔥 Max Jackpot:</span>
-                <span className="font-extrabold">{crate.jackpotText}</span>
+              {/* 3D Crate Display Showcase */}
+              <div className="my-3 py-4 text-center relative z-10">
+                <div className="inline-flex items-center justify-center w-28 h-28 rounded-3xl bg-gradient-to-b from-[#182620] to-[#0c1411] border-2 border-white/15 shadow-2xl relative group">
+                  {/* Outer pulse aura */}
+                  <div
+                    className="absolute inset-0 rounded-3xl blur-md opacity-30 animate-pulse"
+                    style={{ backgroundColor: crate.accentColor }}
+                  />
+                  <span className="text-6xl filter drop-shadow-[0_10px_10px_rgba(0,0,0,0.6)] transform transition-transform group-hover:scale-110">
+                    {crate.chestImage}
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-white uppercase tracking-wide mt-3">
+                  {crate.name}
+                </h3>
+                <p className="text-[11px] text-stone-400 max-w-xs mx-auto mt-0.5">
+                  {crate.subtitle}
+                </p>
               </div>
 
-              {/* Rewards Breakdown Accordion/List */}
-              <div className="bg-[#0b1210]/60 rounded-xl p-3 border border-white/5 space-y-1.5 mb-4 text-[11px]">
-                {crate.rewardsPreview.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <span className="text-stone-400 font-semibold">{item.label}:</span>
-                    <span className={item.color}>{item.text}</span>
-                  </div>
-                ))}
+              {/* Jackpot Callout Banner */}
+              <div className="mb-4 py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border border-amber-500/50 flex items-center justify-center text-center text-xs font-black text-amber-300 shadow-sm">
+                <span>{crate.jackpotBanner}</span>
               </div>
 
-              {/* Open Crate Action Button */}
+              {/* REWARDS SHOWCASE SECTION (Clear drop rates below crate) */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1">
+                    <span>🎁</span> REWARD POOL & DROP RATES
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-400/90">
+                    Guaranteed Drop
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {crate.rewards.map((rew, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-2.5 rounded-xl border ${rew.border} ${rew.cardBg} flex items-center justify-between transition-all`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-lg">{rew.icon}</span>
+                        <div>
+                          <div className={`text-xs font-black ${rew.textColor}`}>
+                            {rew.title}
+                          </div>
+                          <div className="text-[10px] text-stone-400 font-medium">
+                            {rew.subtitle}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider shrink-0 ${rew.probBadgeColor}`}>
+                        {rew.prob}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* BIG OPEN CRATE BUTTON */}
               <button
                 onClick={() => handleOpenCrate(crate)}
-                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${
+                className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider flex flex-col items-center justify-center gap-0.5 shadow-xl transition-all active:scale-95 cursor-pointer ${
                   userHasBalance
-                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/20'
-                    : 'bg-[#1e2d27] text-stone-200 border border-[#324a3f] hover:bg-[#253931]'
+                    ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 hover:brightness-110 shadow-amber-500/30'
+                    : 'bg-gradient-to-r from-[#1f2f28] to-[#283e35] text-stone-200 border border-emerald-500/30 hover:border-emerald-500/60 shadow-emerald-500/10'
                 }`}
               >
-                <span>{crate.icon}</span>
-                <span>
-                  {userHasBalance
-                    ? `OPEN FOR ${crate.priceGram} GRAM`
-                    : `DEPOSIT ${crate.priceGram} GRAM & UNLOCK`}
+                <div className="flex items-center gap-2">
+                  <span>{crate.icon}</span>
+                  <span>
+                    {userHasBalance
+                      ? `OPEN CRATE • ${crate.priceGram} GRAM`
+                      : `⚡ DEPOSIT & UNLOCK • ${crate.priceGram} GRAM`}
+                  </span>
+                  <span>➔</span>
+                </div>
+                <span className="text-[9px] font-bold opacity-80 uppercase tracking-widest">
+                  {userHasBalance ? 'Instant Reveal • Direct Credit' : 'Click to send TON/GRAM via Wallet'}
                 </span>
               </button>
             </div>
@@ -330,46 +553,61 @@ export const Crates: React.FC = () => {
         })}
       </div>
 
-      {/* Opening & Reveal Modal */}
+      {/* Dramatic Unboxing / Reveal Modal */}
       {openingState !== 'idle' && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none">
-          <div className="bg-[#121c19] border border-[#293d35] rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl relative overflow-hidden">
-            {/* Ambient burst */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 select-none animate-fade-in">
+          <div className="bg-[#121c18] border-2 border-amber-500/50 rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl relative overflow-hidden">
+            {/* Spinning radiant rays background */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-2xl bg-amber-500/20 pointer-events-none" />
 
             {openingState === 'shaking' && (
-              <div className="py-8">
-                <div className="text-7xl animate-bounce mb-6">🎁</div>
-                <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <h3 className="text-lg font-black text-white uppercase tracking-wider mb-1">
+              <div className="py-8 relative z-10">
+                <div className="text-8xl animate-bounce mb-6 filter drop-shadow-[0_0_20px_rgba(245,158,11,0.6)]">
+                  🎁
+                </div>
+                <div className="w-14 h-14 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
+                <h3 className="text-xl font-black text-white uppercase tracking-wider mb-1">
                   UNLOCKING CRATE...
                 </h3>
-                <p className="text-xs text-stone-400">Decrypting rewards from smart hive...</p>
+                <p className="text-xs text-amber-300/80 font-semibold animate-pulse">
+                  Decrypting lucky prize from smart contract...
+                </p>
               </div>
             )}
 
             {openingState === 'revealed' && wonResult && (
-              <div className="py-3 relative z-10 animate-fade-in">
+              <div className="py-2 relative z-10">
                 <span
-                  style={{ backgroundColor: `${wonResult.reward.rarity_color}25`, borderColor: wonResult.reward.rarity_color, color: wonResult.reward.rarity_color }}
-                  className="inline-block px-3 py-1 rounded-full border text-xs font-black uppercase tracking-widest mb-3 shadow-md"
+                  style={{
+                    backgroundColor: `${wonResult.reward.rarity_color}30`,
+                    borderColor: wonResult.reward.rarity_color,
+                    color: wonResult.reward.rarity_color,
+                  }}
+                  className="inline-block px-4 py-1 rounded-full border text-xs font-black uppercase tracking-widest mb-3 shadow-lg"
                 >
                   {wonResult.reward.rarity_label}
                 </span>
 
-                <div className="text-6xl my-2">🎉</div>
+                <div className="text-7xl my-2 filter drop-shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+                  🎉
+                </div>
 
-                <h2 className="text-xl font-black text-white uppercase tracking-wide mb-1">
-                  YOU UNLOCKED
+                <h2 className="text-2xl font-black text-white uppercase tracking-wide mb-1">
+                  CONGRATULATIONS!
                 </h2>
+                <div className="text-xs text-stone-400 font-bold mb-4 uppercase tracking-wider">
+                  You unlocked from {wonResult.tier_name}
+                </div>
 
-                <div className="text-lg font-extrabold text-amber-300 mb-4 font-mono">
+                {/* Reward Highlight Box */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-500/20 border-2 border-amber-400/60 text-lg font-black text-amber-300 font-mono mb-4 shadow-inner">
                   {wonResult.reward.summary_text}
                 </div>
 
-                <div className="bg-[#172420] border border-[#2a4238] rounded-2xl p-4 mb-5 space-y-2 text-left text-xs">
+                {/* Stat Breakdown */}
+                <div className="bg-[#172520] border border-[#2b4238] rounded-2xl p-4 mb-5 space-y-2 text-left text-xs">
                   <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider mb-1">
-                    Credited to Your Miner
+                    Instantly Added to Account:
                   </div>
                   {wonResult.reward.reward_usdt > 0 && (
                     <div className="flex items-center justify-between text-emerald-400 font-bold">
@@ -383,19 +621,21 @@ export const Crates: React.FC = () => {
                       <span>+{wonResult.reward.reward_ghs.toFixed(1)} GHS</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-stone-300 font-semibold pt-1 border-t border-white/5">
+                  <div className="flex items-center justify-between text-stone-300 font-semibold pt-2 border-t border-white/10">
                     <span>New Total Hashrate:</span>
-                    <span>{wonResult.new_bp.toFixed(1)} GHS</span>
+                    <span className="font-mono font-bold text-white">{wonResult.new_bp.toFixed(1)} GHS</span>
                   </div>
                 </div>
 
+                {/* Actions */}
                 <div className="space-y-2.5">
                   <button
                     onClick={() => {
+                      triggerHaptic('medium')
                       setOpeningState('idle')
                       setOpeningTier(null)
                     }}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95"
+                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer"
                   >
                     COLLECT & CONTINUE ➔
                   </button>
@@ -409,7 +649,7 @@ export const Crates: React.FC = () => {
                         handleOpenCrate(currentTierObj)
                       }
                     }}
-                    className="w-full py-3 rounded-2xl bg-[#1c2a25] border border-[#2a3e36] text-stone-300 font-bold text-xs uppercase active:scale-95"
+                    className="w-full py-3 rounded-2xl bg-[#1d2d26] border border-[#2d443b] text-stone-300 font-extrabold text-xs uppercase active:scale-95 cursor-pointer"
                   >
                     OPEN ANOTHER CRATE
                   </button>
@@ -420,29 +660,29 @@ export const Crates: React.FC = () => {
         </div>
       )}
 
-      {/* Deposit Helper Modal if balance is low */}
+      {/* TON Deposit Helper Modal */}
       {showDepositModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
-          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm p-5 text-stone-100 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none">
+          <div className="bg-[#121c18] border-2 border-[#2b4238] rounded-3xl w-full max-w-sm p-5 text-stone-100 shadow-2xl relative">
             <button
               onClick={() => setShowDepositModal(false)}
-              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1 text-base font-black cursor-pointer"
             >
               ✕
             </button>
 
             <div className="text-center mb-4">
-              <div className="text-3xl mb-1">{selectedDepositTier.icon}</div>
+              <div className="text-4xl mb-1">{selectedDepositTier.icon}</div>
               <h3 className="text-base font-black uppercase tracking-wide">
                 DEPOSIT FOR {selectedDepositTier.name}
               </h3>
               <p className="text-xs text-stone-400 mt-0.5">
-                Send <b>{selectedDepositTier.priceGram} GRAM</b> to your address to unlock.
+                Transfer <b>{selectedDepositTier.priceGram} GRAM</b> to your address to unlock.
               </p>
             </div>
 
-            {/* Deposit Address Box */}
-            <div className="bg-[#16231f] border border-[#273b33] rounded-2xl p-3.5 mb-3 text-left">
+            {/* Address Box */}
+            <div className="bg-[#16231e] border border-[#283d34] rounded-2xl p-3.5 mb-3 text-left">
               <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider mb-1 flex justify-between">
                 <span>OFFICIAL DEPOSIT ADDRESS</span>
                 <span className="text-emerald-400 font-mono">TON/GRAM</span>
@@ -457,14 +697,14 @@ export const Crates: React.FC = () => {
                   toast.success('Address copied!')
                   setTimeout(() => setCopiedAddr(false), 2000)
                 }}
-                className="w-full mt-2 py-2 rounded-xl bg-[#1e2d27] hover:bg-[#283d34] text-xs font-extrabold text-stone-300 uppercase tracking-wider border border-[#334c40]"
+                className="w-full mt-2 py-2 rounded-xl bg-[#1e2f28] hover:bg-[#283e35] text-xs font-extrabold text-stone-300 uppercase tracking-wider border border-[#345043] cursor-pointer"
               >
                 {copiedAddr ? '✓ ADDRESS COPIED' : '📋 COPY ADDRESS'}
               </button>
             </div>
 
-            {/* Memo Comment Box */}
-            <div className="bg-[#16231f] border border-amber-500/30 rounded-2xl p-3.5 mb-4 text-left">
+            {/* Memo Box */}
+            <div className="bg-[#16231e] border border-amber-500/30 rounded-2xl p-3.5 mb-4 text-left">
               <div className="text-[10px] font-black text-amber-400 uppercase tracking-wider mb-1">
                 REQUIRED TRANSFER COMMENT / MEMO
               </div>
@@ -478,13 +718,13 @@ export const Crates: React.FC = () => {
                   toast.success('Memo copied! Paste this in your transfer comment.')
                   setTimeout(() => setCopiedMemo(false), 2000)
                 }}
-                className="w-full mt-2 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-xs font-extrabold text-amber-300 uppercase tracking-wider border border-amber-500/40"
+                className="w-full mt-2 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-xs font-extrabold text-amber-300 uppercase tracking-wider border border-amber-500/40 cursor-pointer"
               >
                 {copiedMemo ? '✓ MEMO COPIED' : '📋 COPY MEMO'}
               </button>
             </div>
 
-            {/* Direct Wallet Launcher Buttons */}
+            {/* Direct Wallet Launcher */}
             <div className="space-y-2 mb-4">
               <button
                 onClick={() => {
@@ -496,7 +736,7 @@ export const Crates: React.FC = () => {
                     window.open(tonkeeperUrl, '_blank')
                   }
                 }}
-                className="w-full py-3 rounded-xl bg-[#0088cc] hover:bg-[#0099e6] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-[#0088cc] hover:bg-[#0099e6] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 cursor-pointer"
               >
                 <span>⚡</span> OPEN TONKEEPER WALLET
               </button>
@@ -506,7 +746,7 @@ export const Crates: React.FC = () => {
             <button
               onClick={handleVerifyDeposit}
               disabled={verifyingDeposit}
-              className="w-full py-3.5 rounded-2xl bg-emerald-400 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-emerald-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer"
             >
               {verifyingDeposit ? 'VERIFYING BLOCKCHAIN...' : '✅ I SENT PAYMENT / VERIFY'}
             </button>
