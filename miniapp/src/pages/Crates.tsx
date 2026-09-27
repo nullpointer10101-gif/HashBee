@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom'
 
 interface RewardTierItem {
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'JACKPOT'
-  prob: string
-  probBadgeColor: string
+  rarityLabel: string
+  rarityBadgeColor: string
   title: string
   subtitle: string
   rewardValue: string
@@ -16,6 +16,7 @@ interface RewardTierItem {
   textColor: string
   cardBg: string
   border: string
+  isTopReward?: boolean
 }
 
 interface CrateTierInfo {
@@ -55,8 +56,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
     rewards: [
       {
         rarity: 'COMMON',
-        prob: '50% DROP',
-        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        rarityLabel: 'COMMON',
+        rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
         title: '+40 GHS Hashrate',
         subtitle: 'Permanent Cloud Mining Power',
         rewardValue: '40 GHS',
@@ -67,8 +68,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        prob: '25% DROP',
-        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        rarityLabel: 'UNCOMMON',
+        rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
         title: '+0.25 USDT + 20 GHS',
         subtitle: 'Instant Cash + Mining Power',
         rewardValue: '$0.25 + 20 GHS',
@@ -79,8 +80,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        prob: '18% DROP',
-        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        rarityLabel: 'RARE',
+        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
         title: '+0.35 GRAM + 30 GHS',
         subtitle: 'Direct GRAM Token Drop',
         rewardValue: '0.35 G + 30 GHS',
@@ -91,15 +92,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        prob: '7% CHANCE',
-        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        rarityLabel: '👑 TOP REWARD',
+        rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
         title: '+1.00 USDT + 0.50 GRAM + 100 GHS',
         subtitle: 'Triple Jackpot MEGA Drop!',
-        rewardValue: '🔥 HUGE REWARD',
+        rewardValue: '🔥 TOP PRIZE',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
-        cardBg: 'bg-gradient-to-r from-amber-950/40 to-yellow-950/30',
-        border: 'border-amber-500/50 shadow-sm shadow-amber-500/20',
+        cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
+        border: 'border-2 border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.25)]',
+        isTopReward: true,
       },
     ],
   },
@@ -121,8 +123,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
     rewards: [
       {
         rarity: 'COMMON',
-        prob: '45% DROP',
-        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        rarityLabel: 'COMMON',
+        rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
         title: '+120 GHS Hashrate',
         subtitle: 'Boost Daily Passive Mining',
         rewardValue: '120 GHS',
@@ -133,8 +135,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        prob: '30% DROP',
-        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        rarityLabel: 'UNCOMMON',
+        rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
         title: '+0.80 USDT + 60 GHS',
         subtitle: 'Instant Cash + Mining Power',
         rewardValue: '$0.80 + 60 GHS',
@@ -145,8 +147,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        prob: '18% DROP',
-        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        rarityLabel: 'RARE',
+        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
         title: '+1.20 GRAM + 100 GHS',
         subtitle: 'Direct GRAM Token Drop',
         rewardValue: '1.20 G + 100 GHS',
@@ -157,15 +159,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        prob: '7% CHANCE',
-        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        rarityLabel: '👑 TOP REWARD',
+        rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-400 text-stone-950 border-amber-300 font-black shadow-md shadow-amber-500/30',
         title: '+3.50 USDT + 1.50 GRAM + 350 GHS',
         subtitle: 'Mega Cyber Jackpot Drop!',
-        rewardValue: '🔥 HUGE REWARD',
+        rewardValue: '🔥 TOP PRIZE',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
-        cardBg: 'bg-gradient-to-r from-amber-950/40 to-yellow-950/30',
-        border: 'border-amber-500/50 shadow-sm shadow-amber-500/20',
+        cardBg: 'bg-gradient-to-r from-[#3a2608] via-[#2d1e06] to-[#1e1404]',
+        border: 'border-2 border-amber-400/90 shadow-[0_0_20px_rgba(245,158,11,0.25)]',
+        isTopReward: true,
       },
     ],
   },
@@ -187,8 +190,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
     rewards: [
       {
         rarity: 'COMMON',
-        prob: '40% DROP',
-        probBadgeColor: 'bg-stone-700/60 text-stone-300 border-stone-600',
+        rarityLabel: 'COMMON',
+        rarityBadgeColor: 'bg-stone-800/90 text-stone-300 border-stone-700',
         title: '+260 GHS Hashrate',
         subtitle: 'Massive Permanent Hashrate',
         rewardValue: '260 GHS',
@@ -199,8 +202,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'UNCOMMON',
-        prob: '32% DROP',
-        probBadgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-600/40',
+        rarityLabel: 'UNCOMMON',
+        rarityBadgeColor: 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40',
         title: '+2.00 USDT + 150 GHS',
         subtitle: 'Instant Cash + Mining Power',
         rewardValue: '$2.00 + 150 GHS',
@@ -211,8 +214,8 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'RARE',
-        prob: '20% DROP',
-        probBadgeColor: 'bg-blue-950/70 text-blue-300 border-blue-500/40',
+        rarityLabel: 'RARE',
+        rarityBadgeColor: 'bg-blue-950/80 text-blue-300 border-blue-400/40',
         title: '+2.80 GRAM + 250 GHS',
         subtitle: 'Direct GRAM Token Drop',
         rewardValue: '2.80 G + 250 GHS',
@@ -223,15 +226,16 @@ const CRATE_TIERS: CrateTierInfo[] = [
       },
       {
         rarity: 'JACKPOT',
-        prob: '8% CHANCE',
-        probBadgeColor: 'bg-amber-500/30 text-amber-300 border-amber-400 font-black',
+        rarityLabel: '👑 VIP TOP REWARD',
+        rarityBadgeColor: 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black shadow-lg shadow-amber-500/40 animate-pulse',
         title: '+8.00 USDT + 3.00 GRAM + 1,000 GHS',
         subtitle: 'Golden Queen Ultimate Jackpot!',
-        rewardValue: '👑 ULTIMATE DROP',
+        rewardValue: '👑 ULTIMATE PRIZE',
         icon: '👑',
         textColor: 'text-amber-300 font-black',
-        cardBg: 'bg-gradient-to-r from-amber-950/50 to-yellow-950/40',
-        border: 'border-amber-400 shadow-md shadow-amber-500/30',
+        cardBg: 'bg-gradient-to-r from-[#442c08] via-[#332105] to-[#201503]',
+        border: 'border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.4)]',
+        isTopReward: true,
       },
     ],
   },
@@ -489,40 +493,75 @@ export const Crates: React.FC = () => {
                 <span>{crate.jackpotBanner}</span>
               </div>
 
-              {/* REWARDS SHOWCASE SECTION (Clear drop rates below crate) */}
+              {/* REWARDS SHOWCASE SECTION (Top reward highlighted, no percentages) */}
               <div className="mb-5">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1">
-                    <span>🎁</span> REWARD POOL & DROP RATES
+                <div className="flex items-center justify-between mb-2.5 px-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+                    <span>🎁</span> REWARD POOL & CRATE ITEMS
                   </span>
-                  <span className="text-[10px] font-bold text-amber-400/90">
+                  <span className="text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     Guaranteed Drop
                   </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  {crate.rewards.map((rew, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-2.5 rounded-xl border ${rew.border} ${rew.cardBg} flex items-center justify-between transition-all`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-lg">{rew.icon}</span>
-                        <div>
-                          <div className={`text-xs font-black ${rew.textColor}`}>
-                            {rew.title}
-                          </div>
-                          <div className="text-[10px] text-stone-400 font-medium">
-                            {rew.subtitle}
+                <div className="space-y-2">
+                  {crate.rewards.map((rew, idx) => {
+                    if (rew.isTopReward) {
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-2xl border-2 ${rew.border} ${rew.cardBg} relative overflow-hidden transition-all duration-300`}
+                        >
+                          {/* Ambient background glow inside top reward card */}
+                          <div className="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-amber-500/20 blur-xl pointer-events-none" />
+
+                          <div className="flex items-center justify-between relative z-10">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+                                <span>{rew.icon}</span>
+                              </div>
+                              <div>
+                                <div className="text-xs font-black text-amber-300 tracking-tight">
+                                  {rew.title}
+                                </div>
+                                <div className="text-[10px] text-amber-200/70 font-semibold">
+                                  {rew.subtitle}
+                                </div>
+                              </div>
+                            </div>
+
+                            <span className={`px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
+                              {rew.rarityLabel}
+                            </span>
                           </div>
                         </div>
-                      </div>
+                      )
+                    }
 
-                      <span className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider shrink-0 ${rew.probBadgeColor}`}>
-                        {rew.prob}
-                      </span>
-                    </div>
-                  ))}
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-2.5 rounded-xl border ${rew.border} ${rew.cardBg} flex items-center justify-between transition-all`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base">{rew.icon}</span>
+                          <div>
+                            <div className={`text-xs font-bold ${rew.textColor}`}>
+                              {rew.title}
+                            </div>
+                            <div className="text-[10px] text-stone-400 font-medium">
+                              {rew.subtitle}
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-md border text-[9px] font-extrabold uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
+                          {rew.rarityLabel}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
