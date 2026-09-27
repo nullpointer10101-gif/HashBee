@@ -330,11 +330,12 @@ export const Crates: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
 
-  const [activeTab, setActiveTab] = useState<'all' | 'bronze' | 'silver' | 'gold' | 'god'>('all')
+  const [activeTab, setActiveTab] = useState<'bronze' | 'silver' | 'gold' | 'god'>('god')
   const [openingCrate, setOpeningCrate] = useState<CrateTierInfo | null>(null)
   const [wonResult, setWonResult] = useState<OpenCrateResult | null>(null)
   const [showUnboxModal, setShowUnboxModal] = useState(false)
   const [currentWinIndex, setCurrentWinIndex] = useState(0)
+  const [previewCrate, setPreviewCrate] = useState<CrateTierInfo | null>(null)
 
   // Sunk-cost Dopamine Pity System (Persisted in localStorage)
   const [pityCount, setPityCount] = useState<number>(() => {
@@ -441,7 +442,6 @@ export const Crates: React.FC = () => {
   }
 
   const pityStage = (pityCount % 3) === 0 ? 3 : (pityCount % 3)
-  const filteredTiers = activeTab === 'all' ? CRATE_TIERS : CRATE_TIERS.filter((t) => t.id === activeTab)
 
   return (
     <div className="min-h-screen bg-[#080d0b] text-[#e6f0ec] pb-32 pt-3 px-4 max-w-md mx-auto select-none">
@@ -466,96 +466,120 @@ export const Crates: React.FC = () => {
         </div>
       </div>
 
-      {/* ⚡ 5.0 GRAM SUPREME CYBER GOD TOP BANNER (Dopamine Trigger) */}
-      <motion.div
-        animate={{ scale: [1, 1.01, 1] }}
-        transition={{ repeat: Infinity, duration: 2 }}
-        className="mb-3.5 p-2.5 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 via-amber-600/20 to-fuchsia-600/30 border border-fuchsia-500/50 flex items-center justify-between shadow-lg shadow-fuchsia-500/10"
+      {/* ⚡ 5.0 GRAM SUPREME CYBER GOD TOP HERO BANNER (Dopamine Trigger & Guaranteed Reward) */}
+      <div
+        onClick={() => {
+          crateAudio.playClick()
+          triggerHaptic('medium')
+          setActiveTab('god')
+        }}
+        className="mb-3.5 p-3.5 rounded-3xl bg-gradient-to-r from-[#3b0764] via-[#24063d] to-[#12021f] border-2 border-fuchsia-400/80 shadow-[0_0_25px_rgba(217,70,239,0.35)] relative overflow-hidden cursor-pointer active:scale-98 transition-transform"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-xl animate-bounce">👁️</span>
-          <div>
-            <div className="text-[11px] font-black text-fuchsia-300 uppercase tracking-wide">
-              TOP JACKPOT: 5.0 G CYBER GOD (+25.00 G)
-            </div>
-            <div className="text-[9px] text-fuchsia-200/80 font-bold">
-              Supreme 99 OVR Walkout • Instant Credit
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl animate-pulse">👁️</span>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black text-fuchsia-300 uppercase tracking-wide">
+                  CYBER GOD DEITY VAULT
+                </span>
+                <span className="text-[8px] bg-fuchsia-500 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">
+                  TOP 5.0 G
+                </span>
+              </div>
+              <div className="text-[10px] text-amber-300 font-extrabold mt-0.5">
+                🔥 WIN UP TO +50.00 GRAM CELESTIAL JACKPOT!
+              </div>
             </div>
           </div>
+          <div className="px-2 py-1 rounded-xl bg-black/70 border border-fuchsia-400/40 text-[11px] font-mono font-black text-fuchsia-300 shrink-0">
+            5.0 GRAM
+          </div>
         </div>
-        <div className="px-2.5 py-1 rounded-xl bg-black/60 border border-amber-400/40 text-xs font-mono font-black text-amber-400 tracking-wider">
-          ⏱️ {formatTime(feverSeconds)}
+
+        {/* Guaranteed Callout Ribbon */}
+        <div className="p-2 rounded-xl bg-gradient-to-r from-amber-500/25 via-fuchsia-500/20 to-amber-500/25 border border-amber-400/60 flex items-center justify-between text-center text-[10px] font-black text-amber-300 mb-2.5">
+          <span>👑 100% GUARANTEED 99 OVR CARD WITHIN 2-3 OPENS</span>
+          <span className="text-xs">⚡</span>
         </div>
-      </motion.div>
+
+        {/* Quick Open Cyber God Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            const godCrate = CRATE_TIERS.find((c) => c.id === 'god') || CRATE_TIERS[3]
+            handleOpenCrate(godCrate)
+          }}
+          className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-fuchsia-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+        >
+          <span>👁️</span>
+          <span>OPEN CYBER GOD • 5.0 GRAM</span>
+          <span>➔</span>
+        </button>
+      </div>
 
       {/* 👑 GUARANTEED PITY PROGRESS METER */}
-      <div className="mb-4 p-3.5 rounded-2xl bg-[#111a17] border-2 border-[#20362c] shadow-xl relative overflow-hidden">
+      <div className="mb-3.5 p-3 rounded-2xl bg-[#111a17] border border-[#20362c] shadow-md relative overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5 text-xs font-black text-stone-200 uppercase tracking-wide">
             <span>⚽</span>
-            <span>GUARANTEED CARD PITY METER</span>
+            <span>CARD PITY METER</span>
           </div>
           <span
             className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider ${
               pityStage === 3
-                ? 'bg-amber-400 text-stone-950 border-amber-300 animate-pulse'
+                ? 'bg-amber-400 text-stone-950 border-amber-300'
                 : 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
             }`}
           >
-            {pityStage === 3 ? '👑 100% GUARANTEED NOW!' : `PACK ${pityStage} OF 3`}
+            {pityStage === 3 ? '👑 GUARANTEED NEXT!' : `PACK ${pityStage} OF 3`}
           </span>
         </div>
 
         {/* 3-Step Visual Track */}
-        <div className="grid grid-cols-3 gap-2 my-2">
+        <div className="grid grid-cols-3 gap-2 my-1.5">
           <div
-            className={`p-2 rounded-xl border text-center transition-all ${
+            className={`p-1.5 rounded-xl border text-center transition-all ${
               pityStage >= 1
                 ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
                 : 'bg-stone-900/60 border-white/5 text-stone-500'
             }`}
           >
-            <div className="text-sm">📦 1st Box</div>
-            <div className="text-[9px] font-bold mt-0.5">Base Drop</div>
+            <div className="text-xs font-bold">📦 1st Box</div>
+            <div className="text-[8.5px] font-medium text-stone-400">Base Drop</div>
           </div>
 
           <div
-            className={`p-2 rounded-xl border text-center transition-all ${
+            className={`p-1.5 rounded-xl border text-center transition-all ${
               pityStage >= 2
                 ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
                 : 'bg-stone-900/60 border-white/5 text-stone-500'
             }`}
           >
-            <div className="text-sm">⚡ 2nd Box</div>
-            <div className="text-[9px] font-bold mt-0.5">+50% Luck Surge</div>
+            <div className="text-xs font-bold">⚡ 2nd Box</div>
+            <div className="text-[8.5px] font-medium text-stone-400">+50% Surge</div>
           </div>
 
           <div
-            className={`p-2 rounded-xl border-2 text-center transition-all ${
+            className={`p-1.5 rounded-xl border text-center transition-all ${
               pityStage === 3
-                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black shadow-lg shadow-amber-500/40 animate-pulse'
+                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-stone-950 border-amber-300 font-black'
                 : 'bg-amber-950/30 border-amber-500/30 text-amber-400'
             }`}
           >
-            <div className="text-sm font-black">👑 3rd Box</div>
-            <div className="text-[9px] font-extrabold mt-0.5">100% TOP WIN</div>
+            <div className="text-xs font-black">👑 3rd Box</div>
+            <div className="text-[8.5px] font-extrabold">100% TOP WIN</div>
           </div>
         </div>
-
-        <p className="text-[10px] text-center text-amber-300/90 font-bold mt-2">
-          {pityStage === 3
-            ? '🔥 UNLOCK NOW: Next pack is GUARANTEED to drop a rare 92+ OVR Card!'
-            : `Open ${3 - pityStage} more box to trigger guaranteed top card drop!`}
-        </p>
       </div>
 
       {/* Live Winners Ticker */}
-      <div className="mb-4 py-2 px-3 rounded-2xl bg-[#0f1714] border border-[#1b2a24] flex items-center gap-2 overflow-hidden shadow-inner">
-        <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          FUT WALKOUT:
+      <div className="mb-3 py-1.5 px-3 rounded-xl bg-[#0f1714] border border-[#1b2a24] flex items-center gap-2 overflow-hidden shadow-inner">
+        <span className="text-[9.5px] font-black text-amber-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          WALKOUT:
         </span>
-        <p className="text-[11px] text-stone-300 font-semibold truncate transition-all duration-300">
+        <p className="text-[10.5px] text-stone-300 font-semibold truncate">
           {LIVE_WINS[currentWinIndex]}
         </p>
       </div>
@@ -638,13 +662,26 @@ export const Crates: React.FC = () => {
                   </div>
                 </div>
 
+                {/* View Drops Text Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    crateAudio.playClick()
+                    triggerHaptic('light')
+                    setPreviewCrate(crate)
+                  }}
+                  className="text-[9px] font-extrabold text-[#7dd3fc] hover:underline my-0.5"
+                >
+                  👀 View All Rewards
+                </button>
+
                 {/* Quick Action Button */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleOpenCrate(crate)
                   }}
-                  className={`w-full mt-1.5 py-2 px-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 ${
+                  className={`w-full mt-1 py-2 px-1 rounded-xl text-[10.5px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1 ${
                     hasBalance
                       ? isGod
                         ? 'bg-gradient-to-r from-fuchsia-500 via-pink-500 to-amber-400 text-stone-950 hover:brightness-110 shadow-fuchsia-500/30'
@@ -812,6 +849,94 @@ export const Crates: React.FC = () => {
             }
           }}
         />
+      )}
+
+      {/* 🎁 INTERACTIVE REWARDS PREVIEW MODAL (Shows all rewards user can get) */}
+      {previewCrate && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none">
+          <div
+            style={{ boxShadow: `0 10px 40px -5px ${previewCrate.glowColor}` }}
+            className={`bg-[#121c18] border-2 ${previewCrate.borderColor} rounded-3xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative`}
+          >
+            <button
+              onClick={() => setPreviewCrate(null)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1 text-base font-black cursor-pointer z-20"
+            >
+              ✕
+            </button>
+
+            {/* Header */}
+            <div className="text-center mb-4 relative z-10">
+              <div className="text-4xl mb-1">{previewCrate.icon}</div>
+              <h3 className="text-base font-black uppercase tracking-wide text-white">
+                {previewCrate.name}
+              </h3>
+              <p className="text-xs text-amber-300 font-extrabold mt-0.5">
+                {previewCrate.jackpotBanner}
+              </p>
+            </div>
+
+            {/* Guaranteed Drop Banner */}
+            <div className="mb-3 p-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-[10px] font-black text-amber-300 text-center uppercase tracking-wide">
+              {previewCrate.guaranteedTag}
+            </div>
+
+            {/* All Rewards Cards List */}
+            <div className="space-y-2 mb-4">
+              <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider px-1">
+                ALL POSSIBLE DROPS FROM THIS PACK:
+              </div>
+
+              {previewCrate.rewards.map((rew, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 rounded-2xl border ${rew.border} ${rew.cardBg} flex items-center justify-between shadow-sm`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-lg shrink-0">
+                      {rew.icon}
+                    </div>
+                    <div>
+                      <div className={`text-xs font-black ${rew.textColor}`}>
+                        {rew.title}
+                      </div>
+                      <div className="text-[10px] text-stone-400 font-medium">
+                        {rew.subtitle}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-wider shrink-0 ${rew.rarityBadgeColor}`}>
+                    {rew.rarityLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  const target = previewCrate
+                  setPreviewCrate(null)
+                  handleOpenCrate(target)
+                }}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/30 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>{previewCrate.icon}</span>
+                <span>OPEN THIS PACK • {previewCrate.priceGram} GRAM</span>
+                <span>➔</span>
+              </button>
+
+              <button
+                onClick={() => setPreviewCrate(null)}
+                className="w-full py-2.5 rounded-xl bg-[#1b2a24] text-stone-300 font-bold text-xs uppercase tracking-wider border border-white/10 hover:bg-[#23382f]"
+              >
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* TON Deposit Helper Modal */}
