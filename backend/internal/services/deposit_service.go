@@ -19,6 +19,7 @@ import (
 // BotNotifier interface for sending notifications
 type BotNotifier interface {
 	SendDepositNotification(telegramID int64, amountGram, ghsPower float64)
+	SendCampaignDepositNotification(ownerID uuid.UUID, title string, amountGram float64)
 }
 
 type DepositService struct {
@@ -199,6 +200,9 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 							if err := tx.Commit(ctx); err == nil {
 								log.Printf("📢 [DepositService] Activated campaign %s (%s) via deposit tx %s!", campID, campTitle, eventId)
 								creditedCount++
+								if s.bot != nil {
+									s.bot.SendCampaignDepositNotification(campOwnerID, campTitle, amountGram)
+								}
 								continue
 							}
 						}

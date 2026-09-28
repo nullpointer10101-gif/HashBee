@@ -314,6 +314,7 @@ func main() {
 			adminProtected.POST("/users/:id/reset-streak", adminHandler.ResetStreak)
 			adminProtected.GET("/withdrawals", adminHandler.ListWithdrawals)
 			adminProtected.PATCH("/withdrawals/:id", adminHandler.UpdateWithdrawal)
+			adminProtected.GET("/deposits", adminHandler.GetDeposits)
 			adminProtected.GET("/settings", adminHandler.GetSettings)
 			adminProtected.PUT("/settings", adminHandler.UpdateSettings)
 			adminProtected.GET("/campaigns", adminHandler.ListCampaigns)

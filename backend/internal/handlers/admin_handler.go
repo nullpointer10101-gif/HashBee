@@ -1489,3 +1489,102 @@ func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
 	}()
 }
 
+// GET /api/admin/deposits — List all past deposits made by users
+func (h *AdminHandler) GetDeposits(c *gin.Context) {
+	ctx := c.Request.Context()
+	limit := 100
+	if l := c.Query("limit"); l != "" {
+		if val, err := strconv.Atoi(l); err == nil && val > 0 && val <= 500 {
+			limit = val
+		}
+	}
+	offset := 0
+	if o := c.Query("offset"); o != "" {
+		if val, err := strconv.Atoi(o); err == nil && val >= 0 {
+			offset = val
+		}
+	}
+	search := strings.TrimSpace(c.Query("search"))
+	depositType := strings.TrimSpace(c.Query("type")) // 'all', 'miner', 'campaign'
+
+	query := `
+		SELECT 
+			t.id, 
+			t.user_id, 
+			COALESCE(u.username, '') AS username, 
+			COALESCE(u.first_name, '') AS first_name, 
+			COALESCE(u.telegram_id, 0) AS telegram_id, 
+			t.type, 
+			t.amount, 
+			t.currency, 
+			COALESCE(t.idempotency_key, '') AS tx_hash, 
+			COALESCE(t.description, '') AS description, 
+			t.created_at
+		FROM transactions t
+		LEFT JOIN users u ON u.id = t.user_id
+		WHERE (t.type IN ('deposit', 'deposit_balance', 'campaign_payment') OR t.description ILIKE '%deposit%')
+	`
+	var args []interface{}
+	argIdx := 1
+
+	if depositType == "miner" {
+		query += " AND t.type IN ('deposit', 'deposit_balance')"
+	} else if depositType == "campaign" {
+		query += " AND t.type = 'campaign_payment'"
+	}
+
+	if search != "" {
+		query += fmt.Sprintf(" AND (u.username ILIKE $%d OR u.first_name ILIKE $%d OR CAST(u.telegram_id AS TEXT) ILIKE $%d OR t.idempotency_key ILIKE $%d OR t.description ILIKE $%d)", argIdx, argIdx, argIdx, argIdx, argIdx)
+		args = append(args, "%"+search+"%")
+		argIdx++
+	}
+
+	query += fmt.Sprintf(" ORDER BY t.created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	rows, err := h.db.Query(ctx, query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query deposits"})
+		return
+	}
+	defer rows.Close()
+
+	type DepositItem struct {
+		ID          uuid.UUID `json:"id"`
+		UserID      uuid.UUID `json:"user_id"`
+		Username    string    `json:"username"`
+		FirstName   string    `json:"first_name"`
+		TelegramID  int64     `json:"telegram_id"`
+		Type        string    `json:"type"`
+		Amount      float64   `json:"amount"`
+		Currency    string    `json:"currency"`
+		TxHash      string    `json:"tx_hash"`
+		Description string    `json:"description"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+
+	deposits := []DepositItem{}
+	for rows.Next() {
+		var d DepositItem
+		if err := rows.Scan(&d.ID, &d.UserID, &d.Username, &d.FirstName, &d.TelegramID, &d.Type, &d.Amount, &d.Currency, &d.TxHash, &d.Description, &d.CreatedAt); err == nil {
+			deposits = append(deposits, d)
+		}
+	}
+
+	// Calculate summary totals
+	var totalDepositsCount int
+	var totalGramDeposited float64
+	_ = h.db.QueryRow(ctx, `
+		SELECT COUNT(*), COALESCE(SUM(amount), 0)
+		FROM transactions
+		WHERE type IN ('deposit', 'deposit_balance', 'campaign_payment') OR description ILIKE '%deposit%'
+	`).Scan(&totalDepositsCount, &totalGramDeposited)
+
+	c.JSON(http.StatusOK, gin.H{
+		"deposits":              deposits,
+		"total_count":           totalDepositsCount,
+		"total_gram_deposited":  totalGramDeposited,
+		"total_usdt_equivalent": totalGramDeposited,
+	})
+}
+

@@ -320,14 +320,36 @@ Your mining speed has increased automatically. 🚀`, safeName, rewardBP)
 	b.api.Send(msg)
 }
 
-// SendDepositNotification notifies user of credited blockchain deposit
+// SendDepositNotification notifies user of credited blockchain deposit and alerts Kanzx
 func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower float64) {
+	if b == nil || b.api == nil {
+		return
+	}
 	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+%.3f GRAM*\n⚡ Mining Power Added: *+%.2f GHS*!\n\nYour miner is accumulating at the upgraded rate 24/7!", amountGram, ghsPower)
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
-	if b.api != nil {
-		b.api.Send(msg)
+	b.api.Send(msg)
+
+	// Instant alert to Kanzx (@kiopajje / 6446145632)
+	kanzxID := int64(6446145632)
+	adminAlert := fmt.Sprintf("🚨 *NEW DEPOSIT CONFIRMED!*\n\n👤 *User TG ID:* `%d`\n💎 *Amount:* `+%.3f GRAM`\n⚡ *Mining Power Added:* `+%.2f GHS`\n⏰ *Time:* `%s UTC`",
+		telegramID, amountGram, ghsPower, time.Now().UTC().Format("2006-01-02 15:04:05"))
+	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
+	adminMsg.ParseMode = "Markdown"
+	b.api.Send(adminMsg)
+}
+
+// SendCampaignDepositNotification alerts Kanzx on new campaign promotion deposit
+func (b *Bot) SendCampaignDepositNotification(ownerID uuid.UUID, title string, amountGram float64) {
+	if b == nil || b.api == nil {
+		return
 	}
+	kanzxID := int64(6446145632)
+	adminAlert := fmt.Sprintf("📢 *NEW CAMPAIGN DEPOSIT CONFIRMED!*\n\n🆔 *Owner UUID:* `%s`\n🎯 *Campaign:* `%s`\n💎 *Payment:* `+%.3f GRAM`\n⏰ *Time:* `%s UTC`",
+		ownerID.String(), title, amountGram, time.Now().UTC().Format("2006-01-02 15:04:05"))
+	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
+	adminMsg.ParseMode = "Markdown"
+	b.api.Send(adminMsg)
 }
 
 // BroadcastWithButtonProgress sends messages concurrently with rate limiting and progress callback
