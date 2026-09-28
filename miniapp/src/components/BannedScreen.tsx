@@ -2,7 +2,7 @@ import React from 'react'
 
 export const BannedScreen: React.FC = () => {
   const handleContactSupport = () => {
-    const supportUrl = 'https://t.me/kiopajje'
+    const supportUrl = 'https://t.me/Bonkcs99'
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl)
     } else {
@@ -55,7 +55,7 @@ export const BannedScreen: React.FC = () => {
           onClick={handleContactSupport}
           className="w-full py-4 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
         >
-          <span>💬</span> CONTACT SUPPORT (@kiopajje)
+          <span>💬</span> CONTACT SUPPORT (@Bonkcs99)
         </button>
 
         <button

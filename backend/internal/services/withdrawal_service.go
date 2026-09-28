@@ -52,8 +52,6 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	minUSDT := s.settings.GetFloat(ctx, "min_withdrawal_usdt", 0.05)
 	maxPerDay := s.settings.GetFloat(ctx, "max_withdrawal_per_day_usdt", 100)
 	cooldownHours := s.settings.GetFloat(ctx, "withdrawal_cooldown_hours", 24)
-	minReferrals := s.settings.GetInt(ctx, "withdrawal_min_referrals", 0)
-	minMissions := s.settings.GetInt(ctx, "withdrawal_min_missions", 5)
 
 	// Direct 1:1 currency amount
 	usdtAmount := req.Amount

@@ -198,7 +198,8 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 *Mining* — Generates USDT continuously 24/7. Collect regularly!
 *Referrals* — Invite friends using your Telegram ID link for bonus GHS.
 *Missions* — Complete tasks to earn free GHS.
-*Cash Out* — Fast withdrawal to USDT (BSC) or GRAM.`
+*Cash Out* — Fast withdrawal to USDT (BSC) or GRAM.
+*Support* — Contact @Bonkcs99 for official assistance.`
 
 	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)

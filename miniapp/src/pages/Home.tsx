@@ -176,7 +176,7 @@ export const Home: React.FC = () => {
 
           {/* CS Support Button */}
           <a
-            href="https://t.me/kiopajje"
+            href="https://t.me/Bonkcs99"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2.5 py-1.5 rounded-full border border-emerald-400/20 transition-all active:scale-95"
