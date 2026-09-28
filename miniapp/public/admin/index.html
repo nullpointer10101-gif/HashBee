@@ -2371,11 +2371,26 @@ function filterDeposits() {
 
 async function loadDeposits() {
   const tbody = document.getElementById('depositsBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading deposits...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">💎</span> Loading deposits...</td></tr>';
 
   try {
     const url = API_URL + '/api/admin/deposits?type=' + encodeURIComponent(currentDepositFilter);
     const res = await fetch(url, { headers: authHeaders() });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      let errMsg = 'Server returned status ' + res.status;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson.error) errMsg = errJson.error;
+      } catch (e) {
+        if (res.status === 404) {
+          errMsg = '⏳ Backend deployment in progress on Render (compiling latest code). Please wait 1-2 minutes and click 🔄 Refresh.';
+        }
+      }
+      throw new Error(errMsg);
+    }
+
     const data = await res.json();
     allDepositsList = data.deposits || [];
 
@@ -2391,7 +2406,7 @@ async function loadDeposits() {
 
     filterDeposits();
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:30px;">Error loading deposits: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#fbbf24; padding:30px; font-weight:700;">' + escapeHtml(err.message) + '</td></tr>';
   }
 }
 
