@@ -280,6 +280,325 @@ func (h *AdminHandler) AdjustBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Balance adjusted"})
 }
 
+// GET /api/admin/users/:id/details
+func (h *AdminHandler) GetUserDetail(c *gin.Context) {
+	param := strings.TrimSpace(c.Param("id"))
+	if param == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user id required"})
+		return
+	}
+
+	ctx := c.Request.Context()
+	var u models.User
+	var err error
+
+	if uid, errParse := uuid.Parse(param); errParse == nil {
+		err = h.db.QueryRow(ctx, `
+			SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
+			       last_collect_at, streak_count, last_checkin_at, status, has_collected, has_completed_mission,
+			       last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
+			FROM users WHERE id = $1 LIMIT 1`, uid).Scan(
+			&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
+			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
+	} else if tgID, errTg := strconv.ParseInt(param, 10, 64); errTg == nil {
+		err = h.db.QueryRow(ctx, `
+			SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
+			       last_collect_at, streak_count, last_checkin_at, status, has_collected, has_completed_mission,
+			       last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
+			FROM users WHERE telegram_id = $1 LIMIT 1`, tgID).Scan(
+			&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
+			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
+	} else {
+		err = h.db.QueryRow(ctx, `
+			SELECT id, telegram_id, username, first_name, language, referrer_id, bp, honey_balance, spin_balance,
+			       last_collect_at, streak_count, last_checkin_at, status, has_collected, has_completed_mission,
+			       last_hive_full_notified_at, opted_out_notifications, created_at, updated_at
+			FROM users WHERE LOWER(username) = LOWER($1) LIMIT 1`, param).Scan(
+			&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
+			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
+			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
+			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// 1. Fetch referrer info
+	type ReferrerInfo struct {
+		ID         uuid.UUID `json:"id"`
+		TelegramID int64     `json:"telegram_id"`
+		Username   string    `json:"username"`
+		FirstName  string    `json:"first_name"`
+		CreatedAt  time.Time `json:"created_at"`
+	}
+	var referrer *ReferrerInfo
+	if u.ReferrerID != nil {
+		var ref ReferrerInfo
+		err := h.db.QueryRow(ctx, `SELECT id, telegram_id, username, first_name, created_at FROM users WHERE id = $1`, *u.ReferrerID).
+			Scan(&ref.ID, &ref.TelegramID, &ref.Username, &ref.FirstName, &ref.CreatedAt)
+		if err == nil {
+			referrer = &ref
+		}
+	}
+
+	// 2. Fetch Direct Referrals
+	type DirectReferral struct {
+		ID                  uuid.UUID `json:"id"`
+		TelegramID          int64     `json:"telegram_id"`
+		Username            string    `json:"username"`
+		FirstName           string    `json:"first_name"`
+		BP                  float64   `json:"bp"`
+		HoneyBalance        float64   `json:"honey_balance"`
+		Status              string    `json:"status"`
+		HasCollected        bool      `json:"has_collected"`
+		HasCompletedMission bool      `json:"has_completed_mission"`
+		CreatedAt           time.Time `json:"created_at"`
+	}
+	referrals := make([]DirectReferral, 0)
+	var totalReferrals int
+	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE referrer_id = $1`, u.ID).Scan(&totalReferrals)
+
+	refRows, err := h.db.Query(ctx, `
+		SELECT id, telegram_id, username, first_name, bp, honey_balance, status, has_collected, has_completed_mission, created_at
+		FROM users WHERE referrer_id = $1 ORDER BY created_at DESC LIMIT 50`, u.ID)
+	if err == nil {
+		defer refRows.Close()
+		for refRows.Next() {
+			var dr DirectReferral
+			if err := refRows.Scan(&dr.ID, &dr.TelegramID, &dr.Username, &dr.FirstName, &dr.BP, &dr.HoneyBalance, &dr.Status, &dr.HasCollected, &dr.HasCompletedMission, &dr.CreatedAt); err == nil {
+				referrals = append(referrals, dr)
+			}
+		}
+	}
+	u.ReferralCount = totalReferrals
+
+	// 3. Fetch Deposits / Purchases breakdown
+	type DepositItem struct {
+		ID          uuid.UUID `json:"id"`
+		Type        string    `json:"type"`
+		Amount      float64   `json:"amount"`
+		Currency    string    `json:"currency"`
+		Description *string   `json:"description"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+	deposits := make([]DepositItem, 0)
+	var totalDepositedTON float64
+	var totalDepositedStars float64
+	var totalDepositedGRAM float64
+	var totalDepositedUSD float64
+
+	depRows, err := h.db.Query(ctx, `
+		SELECT id, type, amount, currency, description, created_at
+		FROM transactions
+		WHERE user_id = $1 AND (type ILIKE '%deposit%' OR type ILIKE '%purchase%' OR type ILIKE '%ton%' OR type ILIKE '%star%' OR type = 'bp_purchase' OR type = 'reinvest')
+		ORDER BY created_at DESC LIMIT 50`, u.ID)
+	if err == nil {
+		defer depRows.Close()
+		for depRows.Next() {
+			var d DepositItem
+			if err := depRows.Scan(&d.ID, &d.Type, &d.Amount, &d.Currency, &d.Description, &d.CreatedAt); err == nil {
+				deposits = append(deposits, d)
+				switch strings.ToUpper(d.Currency) {
+				case "TON":
+					totalDepositedTON += d.Amount
+				case "STARS", "STAR":
+					totalDepositedStars += d.Amount
+				case "GRAM":
+					totalDepositedGRAM += d.Amount
+				case "USD", "USDT":
+					totalDepositedUSD += d.Amount
+				}
+			}
+		}
+	}
+
+	// 4. Fetch Withdrawals
+	withdrawals := make([]models.Withdrawal, 0)
+	var totalWithdrawnHoney float64
+	var totalWithdrawnUSD float64
+	wRows, err := h.db.Query(ctx, `
+		SELECT id, user_id, address, network, amount, honey_amount, fee, status, tx_hash, reason, processed_by, created_at, updated_at
+		FROM withdrawals WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, u.ID)
+	if err == nil {
+		defer wRows.Close()
+		for wRows.Next() {
+			var w models.Withdrawal
+			if err := wRows.Scan(&w.ID, &w.UserID, &w.Address, &w.Network, &w.Amount, &w.HoneyAmount, &w.Fee, &w.Status, &w.TxHash, &w.Reason, &w.ProcessedBy, &w.CreatedAt, &w.UpdatedAt); err == nil {
+				withdrawals = append(withdrawals, w)
+				if w.Status == "paid" || w.Status == "approved" {
+					totalWithdrawnHoney += w.HoneyAmount
+					totalWithdrawnUSD += w.Amount
+				}
+			}
+		}
+	}
+
+	// 5. Fetch Recent Transactions
+	txRows, err := h.db.Query(ctx, `
+		SELECT id, type, amount, currency, description, created_at
+		FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, u.ID)
+	recentTransactions := make([]DepositItem, 0)
+	if err == nil {
+		defer txRows.Close()
+		for txRows.Next() {
+			var t DepositItem
+			if err := txRows.Scan(&t.ID, &t.Type, &t.Amount, &t.Currency, &t.Description, &t.CreatedAt); err == nil {
+				recentTransactions = append(recentTransactions, t)
+			}
+		}
+	}
+
+	// 6. Fetch Completed Missions
+	type CompletedMission struct {
+		ID         uuid.UUID  `json:"id"`
+		Title      string     `json:"title"`
+		Type       string     `json:"type"`
+		RewardBP   float64    `json:"reward_bp"`
+		Status     string     `json:"status"`
+		VerifiedAt *time.Time `json:"verified_at"`
+		CreatedAt  time.Time  `json:"created_at"`
+	}
+	completedMissions := make([]CompletedMission, 0)
+	mRows, err := h.db.Query(ctx, `
+		SELECT m.id, m.title, m.type, m.reward_bp, mc.status, mc.verified_at, mc.created_at
+		FROM mission_completions mc
+		JOIN missions m ON m.id = mc.mission_id
+		WHERE mc.user_id = $1 ORDER BY mc.created_at DESC LIMIT 50`, u.ID)
+	if err == nil {
+		defer mRows.Close()
+		for mRows.Next() {
+			var cm CompletedMission
+			if err := mRows.Scan(&cm.ID, &cm.Title, &cm.Type, &cm.RewardBP, &cm.Status, &cm.VerifiedAt, &cm.CreatedAt); err == nil {
+				completedMissions = append(completedMissions, cm)
+			}
+		}
+	}
+
+	// 7. Live Hive State
+	hive := h.userSvc.ComputeHiveStatus(ctx, &u)
+
+	c.JSON(http.StatusOK, gin.H{
+		"user":                  u,
+		"hive":                  hive,
+		"referrer":              referrer,
+		"referrals":             referrals,
+		"total_referrals":       totalReferrals,
+		"deposits":              deposits,
+		"total_deposited_ton":   totalDepositedTON,
+		"total_deposited_stars": totalDepositedStars,
+		"total_deposited_gram":  totalDepositedGRAM,
+		"total_deposited_usd":   totalDepositedUSD,
+		"withdrawals":           withdrawals,
+		"total_withdrawn_honey": totalWithdrawnHoney,
+		"total_withdrawn_usd":   totalWithdrawnUSD,
+		"transactions":          recentTransactions,
+		"missions":              completedMissions,
+	})
+}
+
+// POST /api/admin/users/:id/message
+func (h *AdminHandler) SendDirectMessage(c *gin.Context) {
+	adminID := c.GetString("admin_id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req struct {
+		Message    string `json:"message" binding:"required"`
+		ButtonText string `json:"button_text"`
+		ButtonURL  string `json:"button_url"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var tgID int64
+	var firstName string
+	err = h.db.QueryRow(c.Request.Context(), `SELECT telegram_id, first_name FROM users WHERE id = $1`, userID).Scan(&tgID, &firstName)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if tgID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user has no telegram id"})
+		return
+	}
+
+	if h.bot == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "telegram bot is not configured"})
+		return
+	}
+
+	btnText := strings.TrimSpace(req.ButtonText)
+	if btnText == "" {
+		btnText = "🐝 Open HashBee App"
+	}
+	btnURL := strings.TrimSpace(req.ButtonURL)
+	if btnURL == "" {
+		btnURL = h.cfg.MiniAppURL
+		if btnURL == "" {
+			btnURL = "https://miniapp-five-topaz.vercel.app"
+		}
+	}
+
+	msgText := strings.ReplaceAll(req.Message, "{name}", firstName)
+	sent, failed := h.bot.BroadcastWithButton(c.Request.Context(), msgText, btnText, btnURL, []int64{tgID})
+
+	// Log audit
+	adminUUID, _ := uuid.Parse(adminID)
+	targetType := "user"
+	h.db.Exec(c.Request.Context(),
+		`INSERT INTO audit_logs (id, admin_id, action, target_type, target_id, ip_address, created_at)
+		 VALUES ($1, $2, 'direct_message', $3, $4, $5, NOW())`,
+		uuid.New(), adminUUID, targetType, userID, c.ClientIP())
+
+	if sent > 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "Message sent directly to user Telegram!"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"message": "Telegram attempt finished (user may have blocked bot)", "sent": sent, "failed": failed})
+	}
+}
+
+// POST /api/admin/users/:id/reset-streak
+func (h *AdminHandler) ResetStreak(c *gin.Context) {
+	adminID := c.GetString("admin_id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req struct {
+		StreakCount int `json:"streak_count"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	_, err = h.db.Exec(c.Request.Context(), `UPDATE users SET streak_count = $1, last_checkin_at = NULL, updated_at = NOW() WHERE id = $2`, req.StreakCount, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reset streak"})
+		return
+	}
+
+	adminUUID, _ := uuid.Parse(adminID)
+	targetType := "user"
+	h.db.Exec(c.Request.Context(),
+		`INSERT INTO audit_logs (id, admin_id, action, target_type, target_id, ip_address, created_at)
+		 VALUES ($1, $2, 'reset_streak', $3, $4, $5, NOW())`,
+		uuid.New(), adminUUID, targetType, userID, c.ClientIP())
+
+	c.JSON(http.StatusOK, gin.H{"message": "User streak updated successfully"})
+}
+
 // GET /api/admin/withdrawals
 func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
 	status := c.Query("status")

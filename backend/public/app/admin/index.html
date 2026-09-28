@@ -71,8 +71,19 @@
   .form-input { width: 100%; background: #0c100f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
   .form-input:focus { border-color: var(--accent-gold); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
 
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
-  .modal-card { background: #111715; border: 1px solid var(--border); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .modal-card { background: #111715; border: 1px solid var(--border); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
+  .modal-card-lg { max-width: 980px; }
+
+  .sub-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; overflow-x: auto; }
+  .sub-tab-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .sub-tab-btn:hover { color: #fff; background: #16201c; }
+  .sub-tab-btn.active { color: #f59e0b; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
+
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { background: #121a17; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .chip:hover { color: #fff; border-color: #2b3f36; }
+  .chip.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
 
   /* Telegram Mock Preview */
   .tg-preview-bubble { background: #212d27; border: 1px solid #2e423b; border-radius: 16px; padding: 16px; max-width: 400px; color: #fff; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
@@ -428,12 +439,15 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
 
     <!-- TAB: USERS -->
     <div id="tab-users" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <h2 style="font-size:20px; font-weight:900;">Platform Users</h2>
+          <h2 style="font-size:20px; font-weight:900;">Platform Users Intelligence</h2>
           <span id="usersTotalBadge" class="badge" style="background:#1e2d27; color:#10b981; font-size:12px; font-weight:800;">0 Total</span>
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button onclick="exportUsersCSV()" class="btn btn-secondary" style="padding:8px 12px; font-size:12px;" title="Export currently filtered users to CSV">
+            📥 Export CSV
+          </button>
           <select id="userSortFilter" class="form-input" style="width:160px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
             <option value="created_desc">🕒 Newest First</option>
             <option value="created_asc">⏳ Oldest First</option>
@@ -446,6 +460,7 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="banned">Banned</option>
+            <option value="flagged">Flagged</option>
           </select>
           <select id="userPageSize" class="form-input" style="width:110px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
             <option value="50">50 / page</option>
@@ -453,22 +468,33 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
             <option value="250">250 / page</option>
             <option value="500">500 / page</option>
           </select>
-          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username..." style="width:190px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers(0)">
-          <button onclick="loadUsers(0)" class="btn btn-secondary" style="padding:8px 14px;">🔍 Search</button>
+          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username, name..." style="width:210px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers(0)">
+          <button onclick="loadUsers(0)" class="btn btn-gold" style="padding:8px 14px;">🔍 Search</button>
         </div>
       </div>
+
+      <!-- Quick Filter Chips -->
+      <div class="filter-chips">
+        <button class="chip active" onclick="applyUserChip('', 'created_desc', this)">🌍 All Users</button>
+        <button class="chip" onclick="applyUserChip('', 'ghs_desc', this)">⚡ Top Mining Power (GHS)</button>
+        <button class="chip" onclick="applyUserChip('', 'referrals_desc', this)">👥 Top Promoters / Referrers</button>
+        <button class="chip" onclick="applyUserChip('', 'balance_desc', this)">🍯 Top Honey Holders</button>
+        <button class="chip" onclick="applyUserChip('active', 'created_desc', this)">🟢 Active Miners</button>
+        <button class="chip" onclick="applyUserChip('banned', 'created_desc', this)">🚫 Banned Accounts</button>
+      </div>
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Telegram ID</th>
-              <th>Name & Username</th>
-              <th>GHS Power</th>
-              <th>Referrals</th>
-              <th>Honey Balance</th>
+              <th>User & Profile (Click to Inspect)</th>
+              <th>Mining Power</th>
+              <th>Direct Referrals</th>
+              <th>Mined Balance</th>
               <th>Status</th>
               <th>Joined Date</th>
-              <th>Actions</th>
+              <th style="text-align:right;">Actions</th>
             </tr>
           </thead>
           <tbody id="usersBody">
@@ -490,20 +516,31 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
     <!-- TAB: WITHDRAWALS -->
     <div id="tab-withdrawals" style="display:none;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="font-size:20px; font-weight:900;">Withdrawal Requests</h2>
-        <button onclick="loadWithdrawals()" class="btn btn-secondary">🔄 Refresh</button>
+        <div>
+          <h2 style="font-size:20px; font-weight:900;">Withdrawal Requests Queue</h2>
+          <p style="font-size:13px; color:var(--text-muted);">Click on any user name to inspect full anti-fraud profile and deposit/referral history</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <select id="withdrawalStatusFilter" class="form-input" style="width:140px; padding:8px 10px; font-size:12px;" onchange="loadWithdrawals()">
+            <option value="">All Statuses</option>
+            <option value="pending" selected>Pending</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button onclick="loadWithdrawals()" class="btn btn-secondary">🔄 Refresh</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>User</th>
+              <th>User (Click to Inspect)</th>
               <th>Destination Address</th>
               <th>Amount & Asset</th>
               <th>Honey Mined</th>
               <th>Status</th>
               <th>Requested At</th>
-              <th>Actions</th>
+              <th style="text-align:right;">Actions</th>
             </tr>
           </thead>
           <tbody id="withdrawalsBody">
@@ -523,6 +560,292 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: USER DETAILS FULL 360° INSPECTION -->
+<!-- ========================================================================= -->
+<div id="userDetailModal" class="modal-backdrop">
+  <div class="modal-card modal-card-lg">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div id="uModalAvatar" style="width:48px; height:48px; border-radius:14px; background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:22px; color:#f59e0b;">
+          U
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 id="uModalName" style="font-size:19px; font-weight:900; color:#fff;">User Name</h3>
+            <span id="uModalStatusBadge" class="badge badge-active">ACTIVE</span>
+            <span id="uModalLangBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:10px;">EN</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-muted); margin-top:2px;">
+            <span id="uModalUsername" class="font-mono" style="color:#06b6d4;">@username</span>
+            <span>•</span>
+            <span class="font-mono">TG ID: <strong id="uModalTgId" style="color:#fff;">0</strong></span>
+            <button onclick="copyToClipboard(document.getElementById('uModalTgId').innerText, this)" class="btn" style="background:#16241f; padding:2px 6px; font-size:10px; border-radius:4px; border:1px solid #233830; color:#10b981;">📋 Copy</button>
+            <span>•</span>
+            <span id="uModalJoinedDate" class="font-mono">Joined: -</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="closeModal('userDetailModal')" style="background:#18221e; border:1px solid #263831; color:var(--text-muted); font-size:16px; width:34px; height:34px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; padding:12px; background:#0c110f; border-radius:12px; border:1px solid var(--border); align-items:center; justify-content:space-between;">
+      <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Quick Actions:</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="uModalAdjustBtn" onclick="openAdjustModal()" class="btn btn-gold" style="padding:6px 12px; font-size:11px;">⚡ Adjust Hashrate / Honey</button>
+        <button id="uModalDmBtn" onclick="openDirectMsgModal()" class="btn btn-telegram" style="padding:6px 12px; font-size:11px;">💬 Send Telegram DM</button>
+        <button id="uModalStreakBtn" onclick="resetUserStreakPrompt()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">🔄 Reset Daily Streak</button>
+        <button id="uModalStatusBtn" onclick="toggleSelectedUserStatus()" class="btn btn-danger" style="padding:6px 12px; font-size:11px;">🚫 Ban User</button>
+      </div>
+    </div>
+
+    <!-- Key Metrics Strip -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:20px;">
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">⚡ Hashrate (GHS)</div>
+        <div id="uModalGHS" style="font-size:18px; font-weight:900; color:#10b981; margin-top:2px;">-</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">🍯 Honey Balance</div>
+        <div id="uModalHoney" style="font-size:18px; font-weight:900; color:#f59e0b; margin-top:2px;">-</div>
+        <div id="uModalPendingHoney" style="font-size:10px; color:#34d399; margin-top:2px;">+0.0000 in hive</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">👥 Direct Referrals</div>
+        <div id="uModalRefs" style="font-size:18px; font-weight:900; color:#38bdf8; margin-top:2px;">-</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">💰 Total Deposited</div>
+        <div id="uModalDeposited" style="font-size:18px; font-weight:900; color:#a78bfa; margin-top:2px;">0 TON</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">💸 Total Withdrawn</div>
+        <div id="uModalWithdrawn" style="font-size:18px; font-weight:900; color:#f43f5e; margin-top:2px;">0 TON</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">🎰 Spins & Streak</div>
+        <div id="uModalStreak" style="font-size:18px; font-weight:900; color:#fbbf24; margin-top:2px;">Day 0 • 0 Spins</div>
+      </div>
+    </div>
+
+    <!-- Inner Sub-Tabs -->
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchUserDetailTab('referrals', this)">👥 Referrals & Inviter (<span id="uModalRefCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('deposits', this)">💳 Deposits & Purchases (<span id="uModalDepCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('withdrawals', this)">💸 Withdrawals (<span id="uModalWCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('txs', this)">📜 All Ledger Transactions</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('missions', this)">🎯 Completed Missions</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('fraud', this)">🛡️ Risk & Anti-Fraud</button>
+    </div>
+
+    <!-- Sub-Tab: Referrals -->
+    <div id="uSubTab-referrals">
+      <!-- Inviter (Referrer) Box -->
+      <div id="uModalReferrerBox" style="margin-bottom:16px; padding:14px; border-radius:12px; background:#0e1614; border:1px solid #1a2a24;">
+        <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">👤 Invited By (Referrer):</div>
+        <div id="uModalReferrerContent" style="font-size:13px; color:#fff;">Direct Signup (No Referrer)</div>
+      </div>
+
+      <div style="font-size:13px; font-weight:800; margin-bottom:8px; color:#fff;">👥 Direct Referred Users (L1 Swarm):</div>
+      <div class="table-wrap" style="max-height:300px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Telegram ID</th>
+              <th>Name & Username</th>
+              <th>Joined Date</th>
+              <th>GHS Power</th>
+              <th>Honey Balance</th>
+              <th>Mining Activity</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="uModalReferralsBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No referrals yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Deposits -->
+    <div id="uSubTab-deposits" style="display:none;">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:14px;">
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL TON DEPOSITS</div>
+          <div id="uModalDepTON" style="font-size:16px; font-weight:900; color:#38bdf8;">0.000 TON</div>
+        </div>
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL STARS BOUGHT</div>
+          <div id="uModalDepStars" style="font-size:16px; font-weight:900; color:#fbbf24;">0 ⭐</div>
+        </div>
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL GRAM / USD</div>
+          <div id="uModalDepGRAM" style="font-size:16px; font-weight:900; color:#10b981;">0.000 GRAM</div>
+        </div>
+      </div>
+      <div class="table-wrap" style="max-height:300px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="uModalDepositsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No deposit transactions recorded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Withdrawals -->
+    <div id="uSubTab-withdrawals" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Destination Address</th>
+              <th>Amount</th>
+              <th>Honey Spent</th>
+              <th>Status</th>
+              <th>Tx Hash / Reason</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="uModalWithdrawalsBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">No withdrawal requests found</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Transactions Ledger -->
+    <div id="uSubTab-txs" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="uModalTxsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No transactions found</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Missions -->
+    <div id="uSubTab-missions" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Mission Title</th>
+              <th>Type</th>
+              <th>Reward (GHS)</th>
+              <th>Status</th>
+              <th>Completed At</th>
+            </tr>
+          </thead>
+          <tbody id="uModalMissionsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No missions completed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Risk & Anti-Fraud -->
+    <div id="uSubTab-fraud" style="display:none;">
+      <div id="uModalFraudVerdict" style="padding:16px; border-radius:14px; background:#10221a; border:1px solid #059669; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-weight:900; font-size:15px; color:#34d399;" id="uModalRiskTitle">🛡️ User Legitimacy Score</div>
+          <div class="font-mono" style="font-weight:900; font-size:14px; background:#0c110f; padding:4px 10px; border-radius:6px; color:#fff;" id="uModalRiskScore">100 / 100</div>
+        </div>
+        <div id="uModalRiskReasons" style="font-size:12px; color:#a7f3d0; line-height:1.6;">
+          • Real active miner with verified channel completions.
+        </div>
+      </div>
+      <div style="background:#0c110f; border:1px solid var(--border); border-radius:12px; padding:14px; font-size:12px; color:var(--text-muted);">
+        <div style="font-weight:800; color:#fff; margin-bottom:6px;">Internal Metadata & Database UUID:</div>
+        <div id="uModalUuid" class="font-mono" style="font-size:11px; color:#06b6d4; word-break:break-all;">-</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DIRECT TELEGRAM MESSAGE TO USER -->
+<!-- ========================================================================= -->
+<div id="directMsgModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:17px; font-weight:900; color:#fff;">💬 Send Direct Telegram Message</h3>
+      <button onclick="closeModal('directMsgModal')" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <p id="directMsgTargetLabel" style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Sending message to @username (TG ID: 123456)</p>
+    <div class="form-group">
+      <label class="form-label">Message Content (Markdown Supported)</label>
+      <textarea id="directMsgText" class="form-input font-mono" rows="5" placeholder="Hey {name}, your custom message here..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Button Text</label>
+      <input type="text" id="directMsgBtnText" class="form-input" value="🐝 Open HashBee App">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Button WebApp URL</label>
+      <input type="text" id="directMsgBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button type="button" onclick="closeModal('directMsgModal')" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="directMsgSendBtn" onclick="submitDirectMessage()" class="btn btn-telegram">🚀 Send Message Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADJUST USER BALANCE / GHS -->
+<!-- ========================================================================= -->
+<div id="adjustModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:17px; font-weight:900; color:#fff;">⚡ Adjust User Power / Balance</h3>
+      <button onclick="closeModal('adjustModal')" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <p id="adjustTargetLabel" style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Modifying account for @username</p>
+    <div class="form-group">
+      <label class="form-label">Adjustment Type</label>
+      <select id="adjustType" class="form-input">
+        <option value="bp">⚡ GHS Mining Hashrate (Bee Power)</option>
+        <option value="honey">🍯 Mined Honey Balance</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount (Use negative to subtract, e.g. -10)</label>
+      <input type="number" id="adjustAmount" class="form-input font-mono" step="0.01" value="10">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason / Admin Note</label>
+      <input type="text" id="adjustReason" class="form-input" value="Admin adjustment" placeholder="e.g. Compensation / bonus reward">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button type="button" onclick="closeModal('adjustModal')" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="adjustSubmitBtn" onclick="submitAdjustBalance()" class="btn btn-gold">💾 Save Adjustment</button>
+    </div>
   </div>
 </div>
 
@@ -1310,9 +1633,21 @@ async function testSendAutoBroadcast() {
   }
 }
 
-// 3. USERS (With Full Database-Wide Pagination & Sorting)
+// 3. USERS (With Full Database-Wide Pagination, Sorting & 360° Inspection)
 let currentUserOffset = 0;
 let totalUsersCount = 0;
+let selectedUserId = null;
+let selectedUserTelegramId = null;
+let selectedUserName = '';
+let selectedUserStatus = 'active';
+
+function applyUserChip(status, sort, el) {
+  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (document.getElementById('userStatusFilter')) document.getElementById('userStatusFilter').value = status;
+  if (document.getElementById('userSortFilter')) document.getElementById('userSortFilter').value = sort;
+  loadUsers(0);
+}
 
 function changeUserPage(delta) {
   const limit = parseInt(document.getElementById('userPageSize')?.value || '50');
@@ -1329,7 +1664,7 @@ async function loadUsers(offset = 0) {
   const sort = document.getElementById('userSortFilter')?.value || 'created_desc';
   const limit = parseInt(document.getElementById('userPageSize')?.value || '50');
   const tbody = document.getElementById('usersBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">⚡</span> Loading platform users...</td></tr>';
 
   try {
     const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&sort=' + encodeURIComponent(sort) + '&limit=' + limit + '&offset=' + offset;
@@ -1340,7 +1675,7 @@ async function loadUsers(offset = 0) {
 
     // Update total badge
     const badge = document.getElementById('usersTotalBadge');
-    if (badge) badge.innerText = totalUsersCount + ' Total';
+    if (badge) badge.innerText = totalUsersCount.toLocaleString() + ' Total';
 
     // Update pagination controls
     const from = totalUsersCount > 0 ? offset + 1 : 0;
@@ -1349,7 +1684,7 @@ async function loadUsers(offset = 0) {
     const totalPages = Math.max(1, Math.ceil(totalUsersCount / limit));
 
     const pageInfo = document.getElementById('usersPageInfo');
-    if (pageInfo) pageInfo.innerText = `Showing ${from} - ${to} of ${totalUsersCount} users`;
+    if (pageInfo) pageInfo.innerText = `Showing ${from.toLocaleString()} - ${to.toLocaleString()} of ${totalUsersCount.toLocaleString()} users`;
 
     const pageNum = document.getElementById('usersPageNum');
     if (pageNum) pageNum.innerText = `Page ${currentPage} of ${totalPages}`;
@@ -1361,119 +1696,589 @@ async function loadUsers(offset = 0) {
     if (nextBtn) nextBtn.disabled = to >= totalUsersCount;
 
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No users found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No users found matching current filters.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = list.map(u => `
+    tbody.innerHTML = list.map(u => {
+      const isBanned = u.status === 'banned';
+      const isFlagged = u.status === 'flagged';
+      const badgeClass = isBanned ? 'badge-cancelled' : (isFlagged ? 'badge-waiting' : 'badge-active');
+      const formattedDate = new Date(u.created_at).toLocaleDateString() + ' ' + new Date(u.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const avatarInitial = (u.first_name || u.username || 'U')[0].toUpperCase();
+
+      return `
+        <tr style="cursor:pointer;" class="user-row" onclick="openUserDetailModal('${u.id}')">
+          <td class="font-mono" style="font-weight:700; color:#cbd5e1;" onclick="event.stopPropagation(); openUserDetailModal('${u.id}')">
+            ${u.telegram_id}
+          </td>
+          <td onclick="event.stopPropagation(); openUserDetailModal('${u.id}')">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:28px; height:28px; border-radius:8px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#f59e0b; shrink-0;">
+                ${avatarInitial}
+              </div>
+              <div>
+                <div style="font-weight:800; color:#fff; display:flex; align-items:center; gap:6px;">
+                  <span>${escapeHtml(u.first_name || u.username || 'Anonymous')}</span>
+                  <span class="badge" style="background:#16241f; color:#10b981; font-size:9px; padding:2px 6px;">🔍 Inspect</span>
+                </div>
+                <div class="text-muted font-mono" style="font-size:11px;">@${escapeHtml(u.username || 'none')}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:#10b981; font-weight:900;">${(u.bp || 0).toFixed(2)} GHS</td>
+          <td style="color:#38bdf8; font-weight:800;">
+            <span class="badge" style="background:#0c2233; color:#38bdf8; border:1px solid #1e3a5f;">👥 ${u.referral_count || 0}</span>
+          </td>
+          <td style="color:#f59e0b; font-weight:800;">${(u.honey_balance || 0).toFixed(4)} 🍯</td>
+          <td><span class="badge ${badgeClass}">${u.status || 'active'}</span></td>
+          <td class="font-mono text-muted" style="font-size:11px;">${formattedDate}</td>
+          <td style="text-align:right;" onclick="event.stopPropagation();">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <button onclick="openUserDetailModal('${u.id}')" class="btn btn-gold" style="padding:5px 9px; font-size:11px;">🔍 Inspect</button>
+              <button onclick="openAdjustModal('${u.id}', '${escapeHtml(u.first_name || u.username || '')}', '${escapeHtml(u.username || '')}')" class="btn btn-secondary" style="padding:5px 9px; font-size:11px;">⚡ Adjust</button>
+              <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn ${isBanned ? 'btn-primary' : 'btn-danger'}" style="padding:5px 9px; font-size:11px;">${isBanned ? 'Unban' : 'Ban'}</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading users: ' + err.message + '</td></tr>';
+  }
+}
+
+// 360° USER DETAILS INSPECTION MODAL
+async function openUserDetailModal(userIdOrTgId) {
+  if (!userIdOrTgId) return;
+  document.getElementById('userDetailModal').style.display = 'flex';
+  
+  // Reset tabs to default
+  switchUserDetailTab('referrals');
+
+  // Show loading skeleton in modal
+  document.getElementById('uModalName').innerText = 'Loading Profile...';
+  document.getElementById('uModalUsername').innerText = '@...';
+  document.getElementById('uModalTgId').innerText = '-';
+  document.getElementById('uModalGHS').innerText = '...';
+  document.getElementById('uModalHoney').innerText = '...';
+  document.getElementById('uModalRefs').innerText = '...';
+  document.getElementById('uModalDeposited').innerText = '...';
+  document.getElementById('uModalWithdrawn').innerText = '...';
+  document.getElementById('uModalReferralsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching swarm & referrals...</td></tr>';
+  document.getElementById('uModalDepositsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching deposits...</td></tr>';
+  document.getElementById('uModalWithdrawalsBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching withdrawals...</td></tr>';
+  document.getElementById('uModalTxsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching transactions...</td></tr>';
+  document.getElementById('uModalMissionsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching missions...</td></tr>';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + encodeURIComponent(userIdOrTgId) + '/details', {
+      headers: authHeaders()
+    });
+    if (!res.ok) {
+      throw new Error('User profile not found or server error');
+    }
+    const data = await res.json();
+    renderUserDetailModal(data);
+  } catch (err) {
+    showToast('Failed to load user details: ' + err.message, true);
+    document.getElementById('uModalName').innerText = 'User Inspection Error';
+    document.getElementById('uModalUsername').innerText = err.message;
+  }
+}
+
+function renderUserDetailModal(d) {
+  const u = d.user || {};
+  selectedUserId = u.id;
+  selectedUserTelegramId = u.telegram_id;
+  selectedUserName = u.first_name || u.username || 'Miner';
+  selectedUserStatus = u.status || 'active';
+
+  // Avatar & Header
+  const avatarChar = (u.first_name || u.username || 'U')[0].toUpperCase();
+  document.getElementById('uModalAvatar').innerText = avatarChar;
+  document.getElementById('uModalName').innerText = u.first_name || u.username || 'Anonymous Miner';
+  document.getElementById('uModalUsername').innerText = '@' + (u.username || 'none');
+  document.getElementById('uModalTgId').innerText = u.telegram_id || '0';
+  document.getElementById('uModalLangBadge').innerText = (u.language || 'en').toUpperCase();
+  
+  // Status Badge
+  const badgeEl = document.getElementById('uModalStatusBadge');
+  badgeEl.className = 'badge ' + (u.status === 'banned' ? 'badge-cancelled' : (u.status === 'flagged' ? 'badge-waiting' : 'badge-active'));
+  badgeEl.innerText = (u.status || 'active').toUpperCase();
+
+  // Joined Date & Relative Time
+  const joinedDate = new Date(u.created_at);
+  const daysAgo = Math.max(0, Math.floor((Date.now() - joinedDate.getTime()) / (1000 * 60 * 60 * 24)));
+  document.getElementById('uModalJoinedDate').innerText = `Joined: ${joinedDate.toLocaleDateString()} (${daysAgo}d ago)`;
+
+  // Quick Action Buttons
+  const banBtn = document.getElementById('uModalStatusBtn');
+  if (banBtn) {
+    banBtn.innerText = u.status === 'banned' ? '✅ Unban User' : '🚫 Ban User';
+    banBtn.className = 'btn ' + (u.status === 'banned' ? 'btn-primary' : 'btn-danger');
+  }
+
+  // Key Metrics Strip
+  document.getElementById('uModalGHS').innerText = (u.bp || 0).toFixed(2) + ' GHS';
+  document.getElementById('uModalHoney').innerText = (u.honey_balance || 0).toFixed(4) + ' 🍯';
+  const pendingHoney = d.hive?.pending_honey !== undefined ? d.hive.pending_honey : 0;
+  document.getElementById('uModalPendingHoney').innerText = `+${pendingHoney.toFixed(4)} in hive (${d.hive?.is_full ? 'Full' : 'Mining'})`;
+  document.getElementById('uModalRefs').innerText = (d.total_referrals || u.referral_count || 0) + ' L1 Miners';
+  
+  // Total Deposited
+  const tonDep = d.total_deposited_ton || 0;
+  const starsDep = d.total_deposited_stars || 0;
+  const gramDep = d.total_deposited_gram || 0;
+  document.getElementById('uModalDeposited').innerText = tonDep > 0 ? `${tonDep.toFixed(2)} TON` : (starsDep > 0 ? `${starsDep} Stars` : (gramDep > 0 ? `${gramDep.toFixed(2)} GRAM` : '0 TON'));
+  
+  // Total Withdrawn
+  const wHoney = d.total_withdrawn_honey || 0;
+  const wUsd = d.total_withdrawn_usd || 0;
+  document.getElementById('uModalWithdrawn').innerText = wUsd > 0 ? `$${wUsd.toFixed(2)} (${wHoney.toFixed(1)} 🍯)` : '0.00';
+  
+  // Streak & Spins
+  document.getElementById('uModalStreak').innerText = `Day ${u.streak_count || 0} • ${u.spin_balance || 0} Spins`;
+
+  // Badges count on sub-tabs
+  document.getElementById('uModalRefCountBadge').innerText = d.total_referrals || (d.referrals ? d.referrals.length : 0);
+  document.getElementById('uModalDepCountBadge').innerText = d.deposits ? d.deposits.length : 0;
+  document.getElementById('uModalWCountBadge').innerText = d.withdrawals ? d.withdrawals.length : 0;
+
+  // 1. Render Referrer & Direct Referrals
+  const ref = d.referrer;
+  const refBox = document.getElementById('uModalReferrerContent');
+  if (ref && ref.telegram_id) {
+    refBox.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong style="color:#f59e0b;">${escapeHtml(ref.first_name || ref.username || 'Inviter')}</strong> 
+          <span class="font-mono text-muted" style="font-size:12px;">(@${escapeHtml(ref.username || 'none')})</span>
+          <span class="font-mono" style="font-size:11px; color:#9ca3af; margin-left:6px;">TG ID: ${ref.telegram_id}</span>
+        </div>
+        <button onclick="openUserDetailModal('${ref.id}')" class="btn btn-secondary" style="padding:4px 10px; font-size:11px;">
+          🔍 Inspect Inviter Profile
+        </button>
+      </div>
+    `;
+  } else {
+    refBox.innerHTML = '<span style="color:var(--text-muted);">Direct Signup via Bot / No Referrer</span>';
+  }
+
+  const refsBody = document.getElementById('uModalReferralsBody');
+  const refsList = d.referrals || [];
+  if (refsList.length === 0) {
+    refsBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No direct referrals invited yet.</td></tr>';
+  } else {
+    refsBody.innerHTML = refsList.map(r => `
       <tr>
-        <td class="font-mono" style="font-weight:700;">${u.telegram_id}</td>
+        <td class="font-mono">${r.telegram_id}</td>
         <td>
-          <div style="font-weight:700;">${escapeHtml(u.first_name || '')}</div>
-          <div class="text-muted" style="font-size:11px;">@${escapeHtml(u.username || 'none')}</div>
+          <div style="font-weight:700; color:#fff;">${escapeHtml(r.first_name || r.username || 'Miner')}</div>
+          <div class="text-muted font-mono" style="font-size:11px;">@${escapeHtml(r.username || 'none')}</div>
         </td>
-        <td style="color:#10b981; font-weight:800;">${(u.bp || 0).toFixed(2)} GHS</td>
-        <td style="color:#38bdf8; font-weight:800;"><span class="badge" style="background:#0c2233; color:#38bdf8; border:1px solid #1e3a5f;">👥 ${u.referral_count || 0}</span></td>
-        <td style="color:#f59e0b; font-weight:800;">${(u.honey_balance || 0).toFixed(4)}</td>
-        <td><span class="badge ${u.status === 'banned' ? 'badge-cancelled' : 'badge-active'}">${u.status}</span></td>
-        <td class="font-mono text-muted" style="font-size:11px;">${new Date(u.created_at).toLocaleString()}</td>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(r.created_at).toLocaleDateString()}</td>
+        <td style="color:#10b981; font-weight:800;">${(r.bp || 0).toFixed(2)} GHS</td>
+        <td style="color:#f59e0b; font-weight:800;">${(r.honey_balance || 0).toFixed(2)}</td>
         <td>
-          <div style="display:flex; gap:6px;">
-            <button onclick="adjustUser('${u.id}')" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;">⚡ Adjust</button>
-            <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn ${u.status === 'banned' ? 'btn-primary' : 'btn-danger'}" style="padding:6px 10px; font-size:11px;">${u.status === 'banned' ? 'Unban' : 'Ban'}</button>
-          </div>
+          ${r.has_collected ? '<span style="color:#10b981; font-weight:800;">✅ Active Miner</span>' : '<span style="color:#9ca3af;">⏳ Never Collected</span>'}
+        </td>
+        <td><span class="badge ${r.status === 'banned' ? 'badge-cancelled' : 'badge-active'}">${r.status || 'active'}</span></td>
+        <td>
+          <button onclick="openUserDetailModal('${r.id}')" class="btn btn-secondary" style="padding:4px 8px; font-size:10px;">
+            🔍 Inspect
+          </button>
         </td>
       </tr>
     `).join('');
-  } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+  }
+
+  // 2. Render Deposits & Purchases
+  document.getElementById('uModalDepTON').innerText = `${tonDep.toFixed(3)} TON`;
+  document.getElementById('uModalDepStars').innerText = `${starsDep} ⭐`;
+  document.getElementById('uModalDepGRAM').innerText = `${gramDep.toFixed(3)} GRAM`;
+  
+  const depBody = document.getElementById('uModalDepositsBody');
+  const depList = d.deposits || [];
+  if (depList.length === 0) {
+    depBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No deposit transactions recorded for this user.</td></tr>';
+  } else {
+    depBody.innerHTML = depList.map(dep => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(dep.created_at).toLocaleString()}</td>
+        <td><span class="badge" style="background:#162b24; color:#34d399;">${escapeHtml(dep.type)}</span></td>
+        <td style="font-weight:900; color:#10b981;">+${dep.amount}</td>
+        <td class="font-mono" style="font-weight:800; color:#f59e0b;">${escapeHtml(dep.currency)}</td>
+        <td style="color:#cbd5e1; font-size:12px;">${escapeHtml(dep.description || '-')}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 3. Render Withdrawals
+  const wBody = document.getElementById('uModalWithdrawalsBody');
+  const wList = d.withdrawals || [];
+  if (wList.length === 0) {
+    wBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">No withdrawal requests from this user.</td></tr>';
+  } else {
+    wBody.innerHTML = wList.map(w => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(w.created_at).toLocaleString()}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="font-mono" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(w.address)}</span>
+            <button onclick="copyToClipboard('${escapeHtml(w.address)}', this)" class="btn" style="background:#16241f; padding:2px 6px; font-size:10px; border-radius:4px; color:#10b981;">📋</button>
+            <a href="https://tonscan.org/address/${escapeHtml(w.address)}" target="_blank" class="btn" style="background:#1e293b; padding:2px 6px; font-size:10px; border-radius:4px; color:#38bdf8; text-decoration:none;">↗</a>
+          </div>
+        </td>
+        <td style="font-weight:900; color:#10b981;">${w.amount} ${escapeHtml(w.network || 'GRAM')}</td>
+        <td style="color:#f59e0b;">${w.honey_amount} 🍯</td>
+        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : (w.status === 'rejected' ? 'badge-cancelled' : 'badge-waiting')}">${w.status}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${escapeHtml(w.tx_hash || w.reason || '-')}</td>
+        <td>
+          ${w.status === 'pending' ? `
+            <div style="display:flex; gap:4px;">
+              <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:4px 8px; font-size:10px;">Mark Paid</button>
+              <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:4px 8px; font-size:10px;">Reject</button>
+            </div>
+          ` : `<span>-</span>`}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // 4. Render Ledger Transactions
+  const txBody = document.getElementById('uModalTxsBody');
+  const txList = d.transactions || [];
+  if (txList.length === 0) {
+    txBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No transaction logs found.</td></tr>';
+  } else {
+    txBody.innerHTML = txList.map(tx => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(tx.created_at).toLocaleString()}</td>
+        <td><span class="badge" style="background:#1c2420; color:#e2e8f0;">${escapeHtml(tx.type)}</span></td>
+        <td style="font-weight:800; color:${tx.amount >= 0 ? '#10b981' : '#ef4444'};">${tx.amount >= 0 ? '+' : ''}${tx.amount}</td>
+        <td class="font-mono" style="font-weight:700; color:#f59e0b;">${escapeHtml(tx.currency)}</td>
+        <td style="color:#cbd5e1; font-size:12px;">${escapeHtml(tx.description || '-')}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 5. Render Completed Missions
+  const mBody = document.getElementById('uModalMissionsBody');
+  const mList = d.missions || [];
+  if (mList.length === 0) {
+    mBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No missions completed yet.</td></tr>';
+  } else {
+    mBody.innerHTML = mList.map(m => `
+      <tr>
+        <td style="font-weight:700; color:#fff;">${escapeHtml(m.title)}</td>
+        <td><span class="badge" style="background:#1e2d27;">${escapeHtml(m.type)}</span></td>
+        <td style="font-weight:800; color:#10b981;">+${m.reward_bp} GHS</td>
+        <td><span class="badge badge-active">${escapeHtml(m.status)}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${m.verified_at ? new Date(m.verified_at).toLocaleString() : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 6. Anti-Fraud & Risk Score
+  let score = 0;
+  const reasons = [];
+  if (u.referral_count >= 10) { score += 35; reasons.push(`🔥 High Organic Reach: ${u.referral_count} direct invites.`); }
+  else if (u.referral_count >= 2) { score += 20; reasons.push(`👥 Active Swarm: ${u.referral_count} direct invites.`); }
+
+  if (u.has_collected) { score += 25; reasons.push(`⛏️ Cloud Mining Active: User has harvested Honey from hive.`); }
+  if (u.has_completed_mission) { score += 20; reasons.push(`🎯 Mission Verified: Completed channel joins and sponsor tasks.`); }
+  if (u.bp > 15) { score += 10; reasons.push(`⚡ Hashpower Accumulated: ${u.bp.toFixed(1)} GHS total power.`); }
+  if (daysAgo >= 3) { score += 10; reasons.push(`📅 Account Maturity: Registered ${daysAgo} days ago.`); }
+
+  const riskTitle = document.getElementById('uModalRiskTitle');
+  const riskScore = document.getElementById('uModalRiskScore');
+  const riskBox = document.getElementById('uModalFraudVerdict');
+  riskScore.innerText = `${score} / 100`;
+
+  if (score >= 60) {
+    riskTitle.innerText = '🟢 HIGH LEGITIMACY (REAL ACTIVE PROMOTER)';
+    riskBox.style.background = '#10221a';
+    riskBox.style.borderColor = '#059669';
+  } else if (score >= 35) {
+    riskTitle.innerText = '🔵 MODERATE LEGITIMACY (REGULAR MINER)';
+    riskBox.style.background = '#0d1e26';
+    riskBox.style.borderColor = '#0284c7';
+  } else {
+    riskTitle.innerText = '🟡 LOW ACTIVITY / UNVERIFIED (CHECK CAREFULLY)';
+    riskBox.style.background = '#261b0c';
+    riskBox.style.borderColor = '#d97706';
+  }
+
+  document.getElementById('uModalRiskReasons').innerHTML = reasons.map(r => `<div>• ${r}</div>`).join('') || '<div>• Account recently registered with minimal activity yet.</div>';
+  document.getElementById('uModalUuid').innerText = u.id;
+}
+
+function switchUserDetailTab(tabId, el) {
+  document.querySelectorAll('#userDetailModal .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+  ['referrals', 'deposits', 'withdrawals', 'txs', 'missions', 'fraud'].forEach(t => {
+    const tabEl = document.getElementById('uSubTab-' + t);
+    if (tabEl) tabEl.style.display = (t === tabId) ? 'block' : 'none';
+  });
+  if (el) {
+    el.classList.add('active');
+  } else {
+    const firstBtn = document.querySelector(`#userDetailModal .sub-tab-btn[onclick*="${tabId}"]`);
+    if (firstBtn) firstBtn.classList.add('active');
   }
 }
 
-async function adjustUser(id) {
-  const type = prompt('Adjust type: "bp" (GHS Power) or "honey" (Balance):', 'bp');
-  if (!type) return;
-  const amount = parseFloat(prompt('Enter amount to ADD (or negative to subtract):', '50'));
-  if (isNaN(amount)) return;
+// DIRECT TELEGRAM MESSAGE MODAL
+function openDirectMsgModal(targetUserId, username, tgId, firstName) {
+  const uid = targetUserId || selectedUserId;
+  const uname = username || selectedUserName;
+  const tid = tgId || selectedUserTelegramId;
+  
+  if (!uid) {
+    showToast('Please select a user first', true);
+    return;
+  }
+
+  selectedUserId = uid;
+  document.getElementById('directMsgTargetLabel').innerText = `Sending instant message to ${uname} (TG ID: ${tid})`;
+  document.getElementById('directMsgText').value = `Hey ${uname}, your custom notification from HashBee! 🐝✨`;
+  document.getElementById('directMsgModal').style.display = 'flex';
+}
+
+async function submitDirectMessage() {
+  const msg = document.getElementById('directMsgText').value.trim();
+  const btnText = document.getElementById('directMsgBtnText').value.trim();
+  const btnUrl = document.getElementById('directMsgBtnUrl').value.trim();
+
+  if (!msg) {
+    showToast('Please enter a message', true);
+    return;
+  }
+
+  const btn = document.getElementById('directMsgSendBtn');
+  btn.disabled = true;
+  btn.innerText = 'Sending to Telegram...';
+
   try {
-    const res = await fetch(API_URL + '/api/admin/users/' + id + '/balance', {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/message', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ message: msg, button_text: btnText, button_url: btnUrl })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send message');
+    showToast('🎉 ' + data.message);
+    closeModal('directMsgModal');
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '🚀 Send Message Now';
+  }
+}
+
+// ADJUST BALANCE MODAL
+function openAdjustModal(userId, name, username) {
+  const uid = userId || selectedUserId;
+  const uname = name || username || selectedUserName;
+  if (!uid) {
+    showToast('Please select a user first', true);
+    return;
+  }
+  selectedUserId = uid;
+  document.getElementById('adjustTargetLabel').innerText = `Modifying account parameters for ${uname}`;
+  document.getElementById('adjustModal').style.display = 'flex';
+}
+
+async function submitAdjustBalance() {
+  const type = document.getElementById('adjustType').value;
+  const amount = parseFloat(document.getElementById('adjustAmount').value);
+  const reason = document.getElementById('adjustReason').value.trim();
+
+  if (isNaN(amount) || amount === 0) {
+    showToast('Please enter a valid non-zero amount', true);
+    return;
+  }
+
+  const btn = document.getElementById('adjustSubmitBtn');
+  btn.disabled = true;
+  btn.innerText = 'Updating...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/balance', {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ type: type, amount: amount, reason: 'Admin panel adjust' })
+      body: JSON.stringify({ type: type, amount: amount, reason: reason })
     });
-    if (!res.ok) throw new Error('Adjust failed');
-    showToast('Balance updated!');
+    if (!res.ok) throw new Error('Failed to adjust balance');
+    showToast('✅ Account balance & power updated!');
+    closeModal('adjustModal');
     loadUsers();
+    if (document.getElementById('userDetailModal').style.display === 'flex') {
+      openUserDetailModal(selectedUserId);
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '💾 Save Adjustment';
+  }
+}
+
+// RESET STREAK
+async function resetUserStreakPrompt() {
+  if (!selectedUserId) return;
+  const streakStr = prompt('Enter new daily check-in streak count (0 to reset):', '0');
+  if (streakStr === null || isNaN(parseInt(streakStr))) return;
+  const streak = parseInt(streakStr);
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/reset-streak', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ streak_count: streak })
+    });
+    if (!res.ok) throw new Error('Streak reset failed');
+    showToast(`✅ User streak set to Day ${streak}`);
+    openUserDetailModal(selectedUserId);
   } catch (err) {
     showToast(err.message, true);
   }
 }
 
-async function toggleUserStatus(id, currentStatus) {
-  const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
-  if (!confirm('Change user status to ' + newStatus + '?')) return;
+// TOGGLE STATUS
+async function toggleSelectedUserStatus() {
+  if (!selectedUserId) return;
+  const newStatus = selectedUserStatus === 'banned' ? 'active' : 'banned';
+  if (!confirm(`Are you sure you want to mark this user as ${newStatus.toUpperCase()}?`)) return;
+
   try {
-    const res = await fetch(API_URL + '/api/admin/users/' + id + '/status', {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/status', {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ status: newStatus, reason: 'Admin action' })
+      body: JSON.stringify({ status: newStatus, reason: 'Admin panel moderation' })
     });
-    if (!res.ok) throw new Error('Status update failed');
-    showToast('User status updated to ' + newStatus);
+    if (!res.ok) throw new Error('Failed to update status');
+    showToast(`User status changed to ${newStatus.toUpperCase()}`);
     loadUsers();
+    openUserDetailModal(selectedUserId);
   } catch (err) {
     showToast(err.message, true);
   }
+}
+
+// CSV EXPORT
+function exportUsersCSV() {
+  showToast('⏳ Generating CSV export of users database...');
+  fetch(API_URL + '/api/admin/users?limit=1000', { headers: authHeaders() })
+    .then(r => r.json())
+    .then(data => {
+      const users = data.users || [];
+      if (users.length === 0) {
+        showToast('No user data to export', true);
+        return;
+      }
+      const headers = ['ID', 'Telegram_ID', 'Username', 'First_Name', 'GHS_Power', 'Referral_Count', 'Honey_Balance', 'Streak', 'Status', 'Joined_At'];
+      const rows = users.map(u => [
+        u.id,
+        u.telegram_id,
+        `"${(u.username || '').replace(/"/g, '""')}"`,
+        `"${(u.first_name || '').replace(/"/g, '""')}"`,
+        u.bp || 0,
+        u.referral_count || 0,
+        u.honey_balance || 0,
+        u.streak_count || 0,
+        u.status || 'active',
+        `"${new Date(u.created_at).toISOString()}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `hashbee_users_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`🎉 Exported ${users.length} users to CSV!`);
+    })
+    .catch(err => {
+      showToast('Export failed: ' + err.message, true);
+    });
 }
 
 // 4. WITHDRAWALS
 async function loadWithdrawals() {
+  const filterStatus = document.getElementById('withdrawalStatusFilter')?.value || '';
   const tbody = document.getElementById('withdrawalsBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>';
   try {
-    const res = await fetch(API_URL + '/api/admin/withdrawals', { headers: authHeaders() });
+    const url = API_URL + '/api/admin/withdrawals' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
+    const res = await fetch(url, { headers: authHeaders() });
     const data = await res.json();
     const list = data.withdrawals || [];
+    
+    // Update top pending count
+    const pendingCount = list.filter(w => w.status === 'pending').length;
+    document.getElementById('statWithdrawals').innerText = pendingCount;
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No withdrawal requests found.</td></tr>';
+      return;
+    }
+
     tbody.innerHTML = list.map(w => `
-      <tr>
-        <td>
-          <div style="font-weight:700; color:#fff;">${escapeHtml(w.first_name || '')}</div>
-          <div style="font-size:11px; color:var(--text-muted);">@${escapeHtml(w.username || 'unknown')}</div>
+      <tr style="cursor:pointer;" onclick="openUserDetailModal('${w.user_id}')">
+        <td onclick="event.stopPropagation(); openUserDetailModal('${w.user_id}')">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-weight:800; color:#fff;">${escapeHtml(w.first_name || w.username || 'Miner')}</div>
+            <span class="badge" style="background:#16241f; color:#10b981; font-size:9px; padding:2px 6px;">🔍 Inspect</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); font-mono;">@${escapeHtml(w.username || 'unknown')} • TG: ${w.telegram_id || '-'}</div>
         </td>
-        <td>
+        <td onclick="event.stopPropagation();">
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="font-mono" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(w.address)}">${escapeHtml(w.address)}</span>
             <button onclick="copyToClipboard('${escapeHtml(w.address)}', this)" class="btn" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:4px 8px; font-size:10px; border-radius:6px; cursor:pointer;" title="Click to copy full address">📋 Copy</button>
+            <a href="https://tonscan.org/address/${escapeHtml(w.address)}" target="_blank" class="btn" style="background:#1e293b; color:#38bdf8; padding:4px 8px; font-size:10px; border-radius:6px; text-decoration:none;" title="View on TONScan explorer">↗</a>
           </div>
         </td>
-        <td style="font-weight:800; color:#10b981;">${w.amount} <span style="font-size:10px; color:#38bdf8; font-weight:700;">${w.network === 'USDT_BSC' ? 'USDT (BSC)' : (w.network || 'GRAM')}</span></td>
-        <td>${w.honey_amount}</td>
-        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : 'badge-waiting'}">${w.status}</span></td>
+        <td style="font-weight:900; color:#10b981;">${w.amount} <span style="font-size:10px; color:#38bdf8; font-weight:700;">${w.network === 'USDT_BSC' ? 'USDT (BSC)' : (w.network || 'GRAM')}</span></td>
+        <td style="color:#f59e0b; font-weight:800;">${w.honey_amount} 🍯</td>
+        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : (w.status === 'rejected' ? 'badge-cancelled' : 'badge-waiting')}">${w.status}</span></td>
         <td class="font-mono text-muted" style="font-size:11px;">${new Date(w.created_at).toLocaleString()}</td>
-        <td>
+        <td style="text-align:right;" onclick="event.stopPropagation();">
           ${w.status === 'pending' ? `
-            <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:6px 10px; font-size:10px;">Mark Paid</button>
-            <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:6px 10px; font-size:10px;">Reject</button>
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:6px 10px; font-size:10px;">Mark Paid</button>
+              <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:6px 10px; font-size:10px;">Reject</button>
+            </div>
           ` : `<span>-</span>`}
         </td>
       </tr>
     `).join('');
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error loading withdrawals: ' + err.message + '</td></tr>';
   }
 }
 
 async function updateWithdrawal(id, status) {
-  if (!confirm('Mark withdrawal as ' + status + '?')) return;
+  const reason = status === 'rejected' ? prompt('Enter reason for rejection (Funds will be refunded to user):', 'Anti-fraud check decline') : '';
+  if (status === 'rejected' && reason === null) return;
+  if (!confirm('Mark withdrawal as ' + status.toUpperCase() + '?')) return;
+  
   try {
     const res = await fetch(API_URL + '/api/admin/withdrawals/' + id, {
       method: 'PATCH',
       headers: authHeaders(),
-      body: JSON.stringify({ status: status, reason: 'Admin processed' })
+      body: JSON.stringify({ status: status, reason: reason || 'Admin processed' })
     });
     if (!res.ok) throw new Error('Update failed');
-    showToast('Withdrawal status updated!');
+    showToast('Withdrawal status updated to ' + status.toUpperCase());
     loadWithdrawals();
+    if (document.getElementById('userDetailModal').style.display === 'flex' && selectedUserId) {
+      openUserDetailModal(selectedUserId);
+    }
   } catch (err) {
     showToast(err.message, true);
   }

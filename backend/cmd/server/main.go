@@ -263,8 +263,11 @@ func main() {
 		{
 			adminProtected.GET("/dashboard", adminHandler.Dashboard)
 			adminProtected.GET("/users", adminHandler.ListUsers)
+			adminProtected.GET("/users/:id/details", adminHandler.GetUserDetail)
 			adminProtected.PATCH("/users/:id/status", adminHandler.UpdateUserStatus)
 			adminProtected.PATCH("/users/:id/balance", adminHandler.AdjustBalance)
+			adminProtected.POST("/users/:id/message", adminHandler.SendDirectMessage)
+			adminProtected.POST("/users/:id/reset-streak", adminHandler.ResetStreak)
 			adminProtected.GET("/withdrawals", adminHandler.ListWithdrawals)
 			adminProtected.PATCH("/withdrawals/:id", adminHandler.UpdateWithdrawal)
 			adminProtected.GET("/settings", adminHandler.GetSettings)
