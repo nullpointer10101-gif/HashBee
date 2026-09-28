@@ -118,6 +118,9 @@ func main() {
 		WHERE campaign_id IN (SELECT id FROM campaigns WHERE payment_memo = 'CMP59C71940F2' OR target ILIKE '%linkkiemtienmoney%')
 	`)
 
+	// Ensure rejection_reason column exists
+	_, _ = pool.Exec(ctx, `ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS rejection_reason TEXT;`)
+
 	// Silently refund all existing pending/processing withdrawals back to users' honey balances
 	refundRows, rErr := pool.Query(ctx, `
 		SELECT id, user_id, COALESCE(NULLIF(honey_amount, 0), amount) AS refund_amount 
