@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -116,6 +117,46 @@ func main() {
 		SET status = 'completed', updated_at = NOW() 
 		WHERE campaign_id IN (SELECT id FROM campaigns WHERE payment_memo = 'CMP59C71940F2' OR target ILIKE '%linkkiemtienmoney%')
 	`)
+
+	// Silently refund all existing pending/processing withdrawals back to users' honey balances
+	refundRows, rErr := pool.Query(ctx, `
+		SELECT id, user_id, COALESCE(NULLIF(honey_amount, 0), amount) AS refund_amount 
+		FROM withdrawals 
+		WHERE status IN ('pending', 'processing')
+	`)
+	if rErr == nil {
+		type pendingWith struct {
+			id     uuid.UUID
+			userID uuid.UUID
+			amount float64
+		}
+		var toRefund []pendingWith
+		for refundRows.Next() {
+			var pw pendingWith
+			if err := refundRows.Scan(&pw.id, &pw.userID, &pw.amount); err == nil {
+				toRefund = append(toRefund, pw)
+			}
+		}
+		refundRows.Close()
+
+		for _, pw := range toRefund {
+			_, _ = pool.Exec(ctx, `UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`, pw.amount, pw.userID)
+			refundKey := fmt.Sprintf("refund_silent_%s", pw.id)
+			_, _ = pool.Exec(ctx, `
+				INSERT INTO transactions (id, user_id, type, amount, currency, description, idempotency_key, created_at)
+				VALUES ($1, $2, 'adjustment', $3, 'HONEY', 'Silent withdrawal refund', $4, NOW())
+				ON CONFLICT (idempotency_key) DO NOTHING
+			`, uuid.New(), pw.userID, pw.amount, refundKey)
+			_, _ = pool.Exec(ctx, `
+				UPDATE withdrawals 
+				SET status = 'rejected', rejection_reason = 'System refund - Unlock lifetime cashouts via 1 Mystery Crate or 10 Invites', updated_at = NOW() 
+				WHERE id = $1
+			`, pw.id)
+		}
+		if len(toRefund) > 0 {
+			log.Printf("✅ Silently refunded %d pending/processing withdrawals", len(toRefund))
+		}
+	}
 
 	// Services
 	settingsSvc := services.NewSettingsService(pool)

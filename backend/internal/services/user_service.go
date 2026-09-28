@@ -472,19 +472,40 @@ func parseCheckinRewards(s string) []float64 {
 // GetUserProfile builds a full profile with live hive status
 func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *models.UserProfile {
 	hive := s.ComputeHiveStatus(ctx, user)
+
+	var cratesOpened int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(*) 
+		FROM transactions 
+		WHERE user_id = $1 AND (type IN ('crate_purchase', 'crate_reward', 'crate_open') OR description ILIKE '%crate%')
+	`, user.ID).Scan(&cratesOpened)
+
+	var validInvites int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COALESCE(GREATEST(
+			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1),
+			(SELECT COUNT(*) FROM users WHERE referrer_id = $1)
+		), 0)
+	`, user.ID).Scan(&validInvites)
+
+	canWithdraw := (cratesOpened >= 1 || validInvites >= 10)
+
 	return &models.UserProfile{
-		ID:           user.ID,
-		TelegramID:   user.TelegramID,
-		Username:     user.Username,
-		FirstName:    user.FirstName,
-		BP:           user.BP,
-		HoneyBalance: user.HoneyBalance,
-		SpinBalance:  user.SpinBalance,
-		Hive:         hive,
-		StreakCount:   user.StreakCount,
-		Status:       user.Status,
-		LastCollectAt: user.LastCollectAt,
-		CreatedAt:     user.CreatedAt,
+		ID:                  user.ID,
+		TelegramID:          user.TelegramID,
+		Username:            user.Username,
+		FirstName:           user.FirstName,
+		BP:                  user.BP,
+		HoneyBalance:        user.HoneyBalance,
+		SpinBalance:         user.SpinBalance,
+		Hive:                hive,
+		StreakCount:         user.StreakCount,
+		Status:              user.Status,
+		LastCollectAt:       user.LastCollectAt,
+		CreatedAt:           user.CreatedAt,
+		ReferralCount:       validInvites,
+		CratesOpenedCount:   cratesOpened,
+		CanWithdrawLifetime: canWithdraw,
 	}
 }
 

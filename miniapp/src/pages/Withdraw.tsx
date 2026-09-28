@@ -20,6 +20,7 @@ export const Withdraw: React.FC = () => {
   const [reinvesting, setReinvesting] = useState(false)
   const [history, setHistory] = useState<Withdrawal[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [showQualifyModal, setShowQualifyModal] = useState(false)
   const navigate = useNavigate()
 
   const minWithdrawal = 0.05
@@ -93,6 +94,16 @@ export const Withdraw: React.FC = () => {
       return
     }
 
+    // Check Lifetime Withdrawal Qualification (Open 1 Crate OR 10 Valid Invites)
+    const cratesOpened = user?.crates_opened_count || 0
+    const referralCount = user?.referral_count || 0
+    const isLifetimeQualified = user?.can_withdraw_lifetime || (cratesOpened >= 1 || referralCount >= 10)
+
+    if (!isLifetimeQualified) {
+      setShowQualifyModal(true)
+      return
+    }
+
     setSubmitting(true)
     try {
       await requestWithdrawal(numAmount, wallet.trim(), selectedCrypto)
@@ -105,7 +116,11 @@ export const Withdraw: React.FC = () => {
     } catch (err: any) {
       await refreshUser()
       const errMsg = err?.response?.data?.error || 'Withdrawal failed'
-      toast.error(errMsg)
+      if (errMsg.includes('QUALIFICATION_REQUIRED') || errMsg.includes('Mystery Crate') || errMsg.includes('10 valid invited')) {
+        setShowQualifyModal(true)
+      } else {
+        toast.error(errMsg)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -397,6 +412,111 @@ export const Withdraw: React.FC = () => {
       >
         BACK TO MINER
       </button>
+
+      {/* Qualification Modal Popup */}
+      {showQualifyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121c19] border-2 border-[#93b3a6]/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowQualifyModal(false)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1 rounded-full bg-[#1b2a25] border border-[#2e423b]"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Header Icon & Title */}
+            <div className="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+              🎁
+            </div>
+            
+            <h3 className="text-lg font-black text-stone-100 uppercase tracking-wide">
+              UNLOCK LIFETIME CASHOUT
+            </h3>
+            <p className="text-xs text-stone-300 mt-1 leading-relaxed">
+              To verify your miner wallet & enable unlimited lifetime cashouts, complete <span className="text-[#93b3a6] font-bold">1 of the 2 requirements</span> below:
+            </p>
+
+            {/* Requirement Cards */}
+            <div className="mt-4 space-y-3 text-left">
+              {/* Option 1: Open 1 Mystery Crate (Instant) */}
+              <div className="p-3.5 rounded-2xl bg-[#182622] border border-amber-500/40 hover:border-amber-400 transition-all shadow-md relative overflow-hidden">
+                <div className="absolute top-2 right-2 bg-amber-500/20 text-amber-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-500/30">
+                  ⚡ FASTEST (INSTANT)
+                </div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xl">🎁</span>
+                  <span className="font-extrabold text-xs text-amber-200 uppercase tracking-wide">
+                    Option 1: Open 1 Mystery Crate
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-300 mb-2.5 leading-snug">
+                  Open any Mystery Box (starts from <b>0.5 GRAM</b>) to win instant cash/GHS and unlock unlimited lifetime withdrawals immediately!
+                </p>
+                <button
+                  onClick={() => {
+                    setShowQualifyModal(false)
+                    navigate('/crates')
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 active:scale-95 transition-all"
+                >
+                  <span>🎁 OPEN MYSTERY CRATE (0.5 G)</span>
+                  <span>➔</span>
+                </button>
+              </div>
+
+              {/* Option 2: 10 Valid Referrals */}
+              <div className="p-3.5 rounded-2xl bg-[#182622] border border-[#2e423b] hover:border-[#93b3a6]/50 transition-all shadow-md">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">👥</span>
+                    <span className="font-extrabold text-xs text-stone-200 uppercase tracking-wide">
+                      Option 2: 10 Active Friends
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-black text-[#93b3a6]">
+                    {user?.referral_count || 0}/10
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-300 mb-2 leading-snug">
+                  Invite 10 active friends using your referral link. Free alternative for lifetime verification!
+                </p>
+                
+                {/* Progress Bar */}
+                <div className="w-full bg-[#111a17] rounded-full h-2 mb-2.5 overflow-hidden border border-[#273a33]">
+                  <div
+                    className="bg-[#93b3a6] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, ((user?.referral_count || 0) / 10) * 100)}%` }}
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setShowQualifyModal(false)
+                    navigate('/referrals')
+                  }}
+                  className="w-full py-2.5 rounded-xl zentorno-btn-secondary text-stone-200 font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
+                >
+                  <span>👥 INVITE 10 FRIENDS</span>
+                  <span>➔</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer notice */}
+            <div className="mt-4 pt-3 border-t border-[#1d2b26]">
+              <button
+                onClick={() => setShowQualifyModal(false)}
+                className="text-xs font-bold text-stone-400 hover:text-white uppercase tracking-wider"
+              >
+                Close & Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

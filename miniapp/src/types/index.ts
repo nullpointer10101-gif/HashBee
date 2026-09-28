@@ -16,6 +16,9 @@ export interface User {
   referrer_id?: string
   spin_balance?: number
   status?: string
+  referral_count?: number
+  crates_opened_count?: number
+  can_withdraw_lifetime?: boolean
   created_at: string
 }
 

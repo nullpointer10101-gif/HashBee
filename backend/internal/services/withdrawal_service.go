@@ -97,21 +97,33 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("only earned rewards (mining yield, spins, crates & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check referral gate (disabled by default)
-	if minReferrals > 0 {
-		activeRefs, _ := s.referral.CountActiveReferrals(ctx, userID)
-		if activeRefs < minReferrals {
-			return nil, fmt.Errorf("you need at least %d active referrals to withdraw (you have %d)", minReferrals, activeRefs)
-		}
+	// Check Lifetime Withdrawal Qualification (2 conditions: Open 1 Mystery Box OR 10 Valid Invites)
+	var cratesOpened int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(*) 
+		FROM transactions 
+		WHERE user_id = $1 AND (type IN ('crate_purchase', 'crate_reward', 'crate_open') OR description ILIKE '%crate%')
+	`, userID).Scan(&cratesOpened)
+
+	var validInvites int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COALESCE(GREATEST(
+			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1),
+			(SELECT COUNT(*) FROM users WHERE referrer_id = $1)
+		), 0)
+	`, userID).Scan(&validInvites)
+
+	if cratesOpened < 1 && validInvites < 10 {
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: You must either open 1 Mystery Crate or have at least 10 valid invited friends to unlock lifetime instant cashouts (Current: %d/10 invites, %d crates opened)", validInvites, cratesOpened)
 	}
 
-	// Check mission gate
+	// Check mission gate (at least 3 completed missions)
 	var completedMissions int
 	_ = s.db.QueryRow(ctx,
 		`SELECT COUNT(*) FROM mission_completions WHERE user_id = $1 AND status = 'reward_paid'`,
 		userID).Scan(&completedMissions)
-	if completedMissions < minMissions {
-		return nil, fmt.Errorf("you need at least %d completed missions to withdraw (you have %d)", minMissions, completedMissions)
+	if completedMissions < 3 {
+		return nil, fmt.Errorf("please complete at least 3 quick missions to verify your miner wallet (you have %d/3)", completedMissions)
 	}
 
 	// Check cooldown
