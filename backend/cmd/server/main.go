@@ -161,6 +161,10 @@ func main() {
 		}
 	}
 
+	// Clean up any historical miscategorized BP power transactions so they do not inflate crypto deposit sums
+	_, _ = pool.Exec(ctx, `UPDATE transactions SET type = 'bp_grant' WHERE type = 'deposit' AND currency = 'BP'`)
+	_, _ = pool.Exec(ctx, `UPDATE transactions SET type = 'admin_adjustment' WHERE type = 'adjustment' AND currency = 'BP'`)
+
 	// Services
 	settingsSvc := services.NewSettingsService(pool)
 	userSvc := services.NewUserService(pool, settingsSvc)

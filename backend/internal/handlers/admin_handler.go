@@ -404,15 +404,18 @@ func (h *AdminHandler) GetUserDetail(c *gin.Context) {
 			var d DepositItem
 			if err := depRows.Scan(&d.ID, &d.Type, &d.Amount, &d.Currency, &d.Description, &d.CreatedAt); err == nil {
 				deposits = append(deposits, d)
-				switch strings.ToUpper(d.Currency) {
-				case "TON":
-					totalDepositedTON += d.Amount
-				case "STARS", "STAR":
-					totalDepositedStars += d.Amount
-				case "GRAM":
-					totalDepositedGRAM += d.Amount
-				case "USD", "USDT":
-					totalDepositedUSD += d.Amount
+				// Only accumulate genuine deposits (not in-app crate purchases, crate rewards, or internal reinvestments)
+				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance") && strings.ToUpper(d.Currency) != "BP" {
+					switch strings.ToUpper(d.Currency) {
+					case "TON":
+						totalDepositedTON += d.Amount
+					case "STARS", "STAR":
+						totalDepositedStars += d.Amount
+					case "GRAM":
+						totalDepositedGRAM += d.Amount
+					case "USD", "USDT":
+						totalDepositedUSD += d.Amount
+					}
 				}
 			}
 		}
@@ -1522,7 +1525,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 			t.created_at
 		FROM transactions t
 		LEFT JOIN users u ON u.id = t.user_id
-		WHERE (t.type IN ('deposit', 'deposit_balance', 'campaign_payment') OR t.description ILIKE '%deposit%')
+		WHERE ((t.type = 'deposit' AND t.currency = 'GRAM') OR (t.type = 'campaign_payment' AND t.currency = 'GRAM') OR (t.type = 'deposit_balance' AND t.currency IN ('GRAM', 'USDT')))
 	`
 	var args []interface{}
 	argIdx := 1
@@ -1577,7 +1580,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 	_ = h.db.QueryRow(ctx, `
 		SELECT COUNT(*), COALESCE(SUM(amount), 0)
 		FROM transactions
-		WHERE type IN ('deposit', 'deposit_balance', 'campaign_payment') OR description ILIKE '%deposit%'
+		WHERE ((type = 'deposit' AND currency = 'GRAM') OR (type = 'campaign_payment' AND currency = 'GRAM') OR (type = 'deposit_balance' AND currency IN ('GRAM', 'USDT')))
 	`).Scan(&totalDepositsCount, &totalGramDeposited)
 
 	c.JSON(http.StatusOK, gin.H{
