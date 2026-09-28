@@ -249,8 +249,8 @@ export const fetchSpinStatus = async (): Promise<{
   } catch {
     return {
       spins_today: 0,
-      daily_limit: 20,
-      remaining_today: 20,
+      daily_limit: 10,
+      remaining_today: 10,
       spin_balance: 0,
       can_spin: false,
     }

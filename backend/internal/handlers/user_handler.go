@@ -289,14 +289,14 @@ func (h *UserHandler) SpinClaim(c *gin.Context) {
 		return
 	}
 
-	// Enforce daily limit: strictly max 20 spins per UTC calendar day
+	// Enforce daily limit: strictly max 10 spins per UTC calendar day
 	var spinsToday int
 	_ = tx.QueryRow(ctx,
 		`SELECT COUNT(*) FROM transactions 
 		 WHERE user_id = $1 AND type = 'spin_reward' AND created_at >= DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC')`,
 		user.ID).Scan(&spinsToday)
 
-	const dailySpinLimit = 20
+	const dailySpinLimit = 10
 	if spinsToday >= dailySpinLimit {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":       fmt.Sprintf("Daily spin limit reached (%d/%d used today). Resets daily at 00:00 UTC.", spinsToday, dailySpinLimit),
@@ -378,7 +378,7 @@ func (h *UserHandler) GetSpinStatus(c *gin.Context) {
 	var spinBalance int
 	_ = h.userSvc.GetDB().QueryRow(ctx, `SELECT spin_balance FROM users WHERE id = $1`, user.ID).Scan(&spinBalance)
 
-	const dailySpinLimit = 20
+	const dailySpinLimit = 10
 	remainingToday := dailySpinLimit - spinsToday
 	if remainingToday < 0 {
 		remainingToday = 0

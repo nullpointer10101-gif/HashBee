@@ -47,7 +47,7 @@ export const Spin: React.FC = () => {
     return user?.spin_balance !== undefined ? user.spin_balance : 1
   })
   const [spinsToday, setSpinsToday] = useState<number>(0)
-  const [dailyLimit] = useState<number>(20)
+  const [dailyLimit, setDailyLimit] = useState<number>(10)
   const [recentFriends, setRecentFriends] = useState<ReferralItem[]>([])
   const [isSpinning, setIsSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
@@ -90,6 +90,9 @@ export const Spin: React.FC = () => {
         ])
         if (spinStatus?.spins_today !== undefined) {
           setSpinsToday(spinStatus.spins_today)
+        }
+        if (spinStatus?.daily_limit !== undefined) {
+          setDailyLimit(spinStatus.daily_limit)
         }
         if (spinStatus?.spin_balance !== undefined) {
           setSpinsLeft(spinStatus.spin_balance)
@@ -339,7 +342,7 @@ export const Spin: React.FC = () => {
           <span className="text-2xl animate-pulse">🎡</span>
           <div>
             <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">1 free spin per invite • 20/day limit</p>
+            <p className="text-[11px] text-[#78a591]">1 free spin per invite • 10/day limit</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -394,7 +397,7 @@ export const Spin: React.FC = () => {
               Fast Spinning...
             </span>
           ) : spinsToday >= dailyLimit ? (
-            <span>DAILY LIMIT REACHED (20/20) ⏳</span>
+            <span>DAILY LIMIT REACHED ({dailyLimit}/{dailyLimit}) ⏳</span>
           ) : spinsLeft > 0 ? (
             <span>SPIN NOW ({spinsLeft} Left) 🎰</span>
           ) : (
