@@ -134,7 +134,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [broadcastStatus, setBroadcastStatus] = useState<any>(null)
   const [spinResetLoading, setSpinResetLoading] = useState(false)
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee.onrender.com'
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee1.onrender.com'
   const api = axios.create({
     baseURL: `${API_BASE}/api/admin`,
     headers: { Authorization: `Bearer ${token}` },

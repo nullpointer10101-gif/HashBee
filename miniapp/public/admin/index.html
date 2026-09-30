@@ -126,7 +126,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Backend API URL</label>
-          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee1.onrender.com" placeholder="https://hashbee1.onrender.com">
         </div>
         <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
@@ -956,7 +956,7 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
 <div id="toast"></div>
 
 <script>
-let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.com';
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -1141,7 +1141,7 @@ async function handleLogin(e) {
   const loginId = (document.getElementById('loginId')?.value || '').trim();
   const password = (document.getElementById('loginPw')?.value || '').trim();
   let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
-  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee.onrender.com';
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee1.onrender.com';
   localStorage.setItem('hb_api_url', API_URL);
 
   if (!loginId || !password) {
@@ -1156,7 +1156,7 @@ async function handleLogin(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
     console.log('Attempting login to:', activeUrl + '/api/admin/login');
     const res = await fetch(activeUrl + '/api/admin/login', {
       method: 'POST',
@@ -1330,7 +1330,7 @@ async function handleCreateCampaign(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
     console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
     const res = await fetch(activeUrl + '/api/admin/campaigns', {
       method: 'POST',
