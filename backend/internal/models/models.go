@@ -33,6 +33,7 @@ type User struct {
 	OptedOutNotifications bool       `json:"opted_out_notifications" db:"opted_out_notifications"`
 	HasOpenedApp          bool       `json:"has_opened_app" db:"has_opened_app"`
 	SpinBalance           int        `json:"spin_balance" db:"spin_balance"`
+	OneTimeWithdrawalGranted bool       `json:"one_time_withdrawal_granted" db:"one_time_withdrawal_granted"`
 	CreatedAt             time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at" db:"updated_at"`
 }
@@ -49,21 +50,23 @@ type HiveStatus struct {
 
 // UserProfile is the public user view for the mini app
 type UserProfile struct {
-	ID                  uuid.UUID  `json:"id"`
-	TelegramID          int64      `json:"telegram_id"`
-	Username            string     `json:"username"`
-	FirstName           string     `json:"first_name"`
-	BP                  float64    `json:"bp"`
-	HoneyBalance        float64    `json:"honey_balance"`
-	SpinBalance         int        `json:"spin_balance"`
-	Hive                HiveStatus `json:"hive"`
-	StreakCount         int        `json:"streak_count"`
-	Status              string     `json:"status"`
-	LastCollectAt       time.Time  `json:"last_collect_at"`
-	CreatedAt           time.Time  `json:"created_at"`
-	ReferralCount       int        `json:"referral_count"`
-	CratesOpenedCount   int        `json:"crates_opened_count"`
-	CanWithdrawLifetime bool       `json:"can_withdraw_lifetime"`
+	ID                       uuid.UUID  `json:"id"`
+	TelegramID               int64      `json:"telegram_id"`
+	Username                 string     `json:"username"`
+	FirstName                string     `json:"first_name"`
+	BP                       float64    `json:"bp"`
+	HoneyBalance             float64    `json:"honey_balance"`
+	SpinBalance              int        `json:"spin_balance"`
+	Hive                     HiveStatus `json:"hive"`
+	StreakCount              int        `json:"streak_count"`
+	Status                   string     `json:"status"`
+	LastCollectAt            time.Time  `json:"last_collect_at"`
+	CreatedAt                time.Time  `json:"created_at"`
+	ReferralCount            int        `json:"referral_count"`
+	CratesOpenedCount        int        `json:"crates_opened_count"`
+	FriendCratesOpenedCount  int        `json:"friend_crates_opened_count"`
+	CanWithdrawLifetime      bool       `json:"can_withdraw_lifetime"`
+	OneTimeWithdrawalGranted bool       `json:"one_time_withdrawal_granted"`
 }
 
 // Referral statuses

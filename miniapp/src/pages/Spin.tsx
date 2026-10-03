@@ -318,7 +318,7 @@ export const Spin: React.FC = () => {
 
   // Share referral link to get +1 spin
   const handleShareReferral = () => {
-    const botUser = 'hashbee_bot'
+    const botUser = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
     const refCode = user?.telegram_id || ''
     const refUrl = `https://t.me/${botUser}?start=${refCode}`
     const shareText = encodeURIComponent(`🐝 Spin the Lucky Wheel on HashBee to win USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)

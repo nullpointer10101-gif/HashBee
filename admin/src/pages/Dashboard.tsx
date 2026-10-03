@@ -357,7 +357,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     if (!broadcastMsg.trim()) return toast.error('Message required')
     setBroadcastLoading(true)
     try {
-      const payload: any = { message: broadcastMsg, button_text: broadcastBtn, button_url: 'https://t.me/hashbee_bot/app' }
+      const payload: any = { message: broadcastMsg, button_text: broadcastBtn, button_url: 'https://t.me/hashbe_bot/app' }
       if (broadcastTarget.trim()) { const tid = parseInt(broadcastTarget.trim()); if (!isNaN(tid)) payload.target_telegram_id = tid }
       const res = await api.post('/broadcast', payload)
       setBroadcastStatus({ is_running: true, total: res.data.total, sent: 0, failed: 0, percent: 0, message: 'Starting...' })

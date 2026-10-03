@@ -95,24 +95,31 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("only earned rewards (mining yield, spins, crates & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check Lifetime Withdrawal Qualification (2 conditions: Open 1 Mystery Box OR 10 Valid Invites)
+	// Check Lifetime Withdrawal Qualification (Open 1 Mystery Crate >= 0.5 G OR 1 Friend Opens Crate OR One-Time Granted)
+	var oneTimeGranted bool
+	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
+
 	var cratesOpened int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(*) 
 		FROM transactions 
-		WHERE user_id = $1 AND (type IN ('crate_purchase', 'crate_reward', 'crate_open') OR description ILIKE '%crate%')
+		WHERE user_id = $1 AND type = 'crate_purchase'
 	`, userID).Scan(&cratesOpened)
 
-	var validInvites int
+	var friendCratesOpened int
 	_ = s.db.QueryRow(ctx, `
-		SELECT COALESCE(GREATEST(
-			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1),
-			(SELECT COUNT(*) FROM users WHERE referrer_id = $1)
-		), 0)
-	`, userID).Scan(&validInvites)
+		SELECT COUNT(DISTINCT t.user_id)
+		FROM transactions t
+		WHERE t.user_id IN (
+			SELECT referred_id FROM referrals WHERE referrer_id = $1
+			UNION
+			SELECT id FROM users WHERE referrer_id = $1
+		)
+		AND t.type = 'crate_purchase'
+	`, userID).Scan(&friendCratesOpened)
 
-	if cratesOpened < 1 && validInvites < 10 {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: You must either open 1 Mystery Crate or have at least 10 valid invited friends to unlock lifetime instant cashouts (Current: %d/10 invites, %d crates opened)", validInvites, cratesOpened)
+	if !oneTimeGranted && cratesOpened < 1 && friendCratesOpened < 1 {
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either open 1 Mystery Crate (starts from 0.5 GRAM) or have at least 1 invited friend open a Mystery Crate (Current: %d/1 friend crates, %d crates opened)", friendCratesOpened, cratesOpened)
 	}
 
 	// Check mission gate (at least 3 completed missions)
@@ -165,9 +172,9 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("insufficient balance")
 	}
 
-	// Deduct from balance
+	// Deduct from balance & consume one-time withdrawal grant if active
 	_, err = tx.Exec(ctx,
-		`UPDATE users SET honey_balance = honey_balance - $1, updated_at = NOW() WHERE id = $2`,
+		`UPDATE users SET honey_balance = honey_balance - $1, one_time_withdrawal_granted = FALSE, updated_at = NOW() WHERE id = $2`,
 		req.Amount, userID)
 	if err != nil {
 		return nil, err

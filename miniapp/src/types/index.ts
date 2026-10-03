@@ -18,7 +18,9 @@ export interface User {
   status?: string
   referral_count?: number
   crates_opened_count?: number
+  friend_crates_opened_count?: number
   can_withdraw_lifetime?: boolean
+  one_time_withdrawal_granted?: boolean
   created_at: string
 }
 

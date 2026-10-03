@@ -103,6 +103,11 @@ export const fetchProfile = async (): Promise<User> => {
     ref_code: String(tgId),
     spin_balance: profileData.spin_balance !== undefined ? Number(profileData.spin_balance) : 1,
     created_at: profileData.created_at || new Date().toISOString(),
+    referral_count: Number(profileData.referral_count || 0),
+    crates_opened_count: Number(profileData.crates_opened_count || 0),
+    friend_crates_opened_count: Number(profileData.friend_crates_opened_count || 0),
+    can_withdraw_lifetime: Boolean(profileData.can_withdraw_lifetime),
+    one_time_withdrawal_granted: Boolean(profileData.one_time_withdrawal_granted),
   }
 }
 
@@ -210,7 +215,7 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
 
   return {
     ref_code: refCode,
-    invite_link: referralLink || `https://t.me/hashbee_bot?start=${refCode}`,
+    invite_link: referralLink || `https://t.me/hashbe_bot?start=${refCode}`,
     tier1_count: swarm.level1_count || 0,
     tier2_count: swarm.level2_count || 0,
     tier1_earnings: swarm.level1_honey_earned || 0,

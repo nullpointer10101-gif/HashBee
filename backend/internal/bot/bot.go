@@ -186,6 +186,7 @@ Tap the button below to start earning:`
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
 	reply.ParseMode = "Markdown"
+	reply.DisableWebPagePreview = true
 	reply.ReplyMarkup = keyboard
 
 	b.api.Send(reply)
@@ -207,6 +208,7 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
+	reply.DisableWebPagePreview = true
 	reply.ReplyMarkup = keyboard
 	b.api.Send(reply)
 }
@@ -295,6 +297,7 @@ Your invite link: https://t.me/%s?start=%d`, safeName, botName, referrerTelegram
 
 	msg := tgbotapi.NewMessage(referrerTelegramID, text)
 	msg.ParseMode = "HTML"
+	msg.DisableWebPagePreview = true
 	msg.ReplyMarkup = keyboard
 	b.api.Send(msg)
 }
@@ -392,6 +395,7 @@ func (b *Bot) BroadcastWithButtonProgress(ctx context.Context, text string, butt
 
 				msg := tgbotapi.NewMessage(id, text)
 				msg.ParseMode = "Markdown"
+				msg.DisableWebPagePreview = true
 				msg.ReplyMarkup = keyboard
 
 				if _, err := b.api.Send(msg); err != nil {
@@ -423,6 +427,7 @@ func (b *Bot) Broadcast(text string, telegramIDs []int64) {
 	for _, id := range telegramIDs {
 		msg := tgbotapi.NewMessage(id, text)
 		msg.ParseMode = "Markdown"
+		msg.DisableWebPagePreview = true
 		if _, err := b.api.Send(msg); err != nil {
 			if strings.Contains(err.Error(), "blocked") || strings.Contains(err.Error(), "deactivated") {
 				log.Printf("User %d blocked bot or is deactivated", id)
@@ -525,11 +530,13 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 
 				msg := tgbotapi.NewMessage(r.TelegramID, userMsg)
 				msg.ParseMode = "Markdown"
+				msg.DisableWebPagePreview = true
 				msg.ReplyMarkup = keyboard
 
 				if _, err := b.api.Send(msg); err != nil {
 					// Fallback to plain text if Markdown entity parsing failed
 					msgPlain := tgbotapi.NewMessage(r.TelegramID, userMsg)
+					msgPlain.DisableWebPagePreview = true
 					msgPlain.ReplyMarkup = keyboard
 					if _, err2 := b.api.Send(msgPlain); err2 != nil {
 						atomic.AddInt64(&failedCount, 1)

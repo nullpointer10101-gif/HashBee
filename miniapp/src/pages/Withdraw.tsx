@@ -94,10 +94,11 @@ export const Withdraw: React.FC = () => {
       return
     }
 
-    // Check Lifetime Withdrawal Qualification (Open 1 Crate OR 10 Valid Invites)
+    // Check Lifetime Withdrawal Qualification (Open 1 Crate OR 1 Friend Opens Crate OR 1-Time Granted)
     const cratesOpened = user?.crates_opened_count || 0
-    const referralCount = user?.referral_count || 0
-    const isLifetimeQualified = user?.can_withdraw_lifetime || (cratesOpened >= 1 || referralCount >= 10)
+    const friendCratesOpened = user?.friend_crates_opened_count || 0
+    const isOneTimeGranted = user?.one_time_withdrawal_granted || false
+    const isLifetimeQualified = user?.can_withdraw_lifetime || (cratesOpened >= 1 || friendCratesOpened >= 1 || isOneTimeGranted)
 
     if (!isLifetimeQualified) {
       setShowQualifyModal(true)
@@ -116,7 +117,7 @@ export const Withdraw: React.FC = () => {
     } catch (err: any) {
       await refreshUser()
       const errMsg = err?.response?.data?.error || 'Withdrawal failed'
-      if (errMsg.includes('QUALIFICATION_REQUIRED') || errMsg.includes('Mystery Crate') || errMsg.includes('10 valid invited')) {
+      if (errMsg.includes('QUALIFICATION_REQUIRED') || errMsg.includes('Mystery Crate') || errMsg.includes('friend')) {
         setShowQualifyModal(true)
       } else {
         toast.error(errMsg)
@@ -467,28 +468,28 @@ export const Withdraw: React.FC = () => {
                 </button>
               </div>
 
-              {/* Option 2: 10 Valid Referrals */}
+              {/* Option 2: 1 Friend Opens Crate */}
               <div className="p-3.5 rounded-2xl bg-[#182622] border border-[#2e423b] hover:border-[#93b3a6]/50 transition-all shadow-md">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">👥</span>
                     <span className="font-extrabold text-xs text-stone-200 uppercase tracking-wide">
-                      Option 2: 10 Active Friends
+                      Option 2: 1 Friend Opens Crate
                     </span>
                   </div>
                   <span className="text-[11px] font-black text-[#93b3a6]">
-                    {user?.referral_count || 0}/10
+                    {user?.friend_crates_opened_count || 0}/1
                   </span>
                 </div>
                 <p className="text-[11px] text-stone-300 mb-2 leading-snug">
-                  Invite 10 active friends using your referral link. Free alternative for lifetime verification!
+                  Invite a friend who opens any Mystery Box (starts from <b>0.5 GRAM</b>). Free alternative for lifetime verification!
                 </p>
                 
                 {/* Progress Bar */}
                 <div className="w-full bg-[#111a17] rounded-full h-2 mb-2.5 overflow-hidden border border-[#273a33]">
                   <div
                     className="bg-[#93b3a6] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, ((user?.referral_count || 0) / 10) * 100)}%` }}
+                    style={{ width: `${Math.min(100, ((user?.friend_crates_opened_count || 0) / 1) * 100)}%` }}
                   />
                 </div>
 
@@ -499,7 +500,7 @@ export const Withdraw: React.FC = () => {
                   }}
                   className="w-full py-2.5 rounded-xl zentorno-btn-secondary text-stone-200 font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
                 >
-                  <span>👥 INVITE 10 FRIENDS</span>
+                  <span>👥 INVITE FRIENDS</span>
                   <span>➔</span>
                 </button>
               </div>

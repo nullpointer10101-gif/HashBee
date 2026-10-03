@@ -473,12 +473,27 @@ func parseCheckinRewards(s string) []float64 {
 func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *models.UserProfile {
 	hive := s.ComputeHiveStatus(ctx, user)
 
+	var oneTimeGranted bool
+	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, user.ID).Scan(&oneTimeGranted)
+
 	var cratesOpened int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(*) 
 		FROM transactions 
-		WHERE user_id = $1 AND (type IN ('crate_purchase', 'crate_reward', 'crate_open') OR description ILIKE '%crate%')
+		WHERE user_id = $1 AND type = 'crate_purchase'
 	`, user.ID).Scan(&cratesOpened)
+
+	var friendCratesOpened int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(DISTINCT t.user_id)
+		FROM transactions t
+		WHERE t.user_id IN (
+			SELECT referred_id FROM referrals WHERE referrer_id = $1
+			UNION
+			SELECT id FROM users WHERE referrer_id = $1
+		)
+		AND t.type = 'crate_purchase'
+	`, user.ID).Scan(&friendCratesOpened)
 
 	var validInvites int
 	_ = s.db.QueryRow(ctx, `
@@ -488,24 +503,26 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		), 0)
 	`, user.ID).Scan(&validInvites)
 
-	canWithdraw := (cratesOpened >= 1 || validInvites >= 10)
+	canWithdraw := (oneTimeGranted || cratesOpened >= 1 || friendCratesOpened >= 1)
 
 	return &models.UserProfile{
-		ID:                  user.ID,
-		TelegramID:          user.TelegramID,
-		Username:            user.Username,
-		FirstName:           user.FirstName,
-		BP:                  user.BP,
-		HoneyBalance:        user.HoneyBalance,
-		SpinBalance:         user.SpinBalance,
-		Hive:                hive,
-		StreakCount:         user.StreakCount,
-		Status:              user.Status,
-		LastCollectAt:       user.LastCollectAt,
-		CreatedAt:           user.CreatedAt,
-		ReferralCount:       validInvites,
-		CratesOpenedCount:   cratesOpened,
-		CanWithdrawLifetime: canWithdraw,
+		ID:                       user.ID,
+		TelegramID:               user.TelegramID,
+		Username:                 user.Username,
+		FirstName:                user.FirstName,
+		BP:                       user.BP,
+		HoneyBalance:             user.HoneyBalance,
+		SpinBalance:              user.SpinBalance,
+		Hive:                     hive,
+		StreakCount:              user.StreakCount,
+		Status:                   user.Status,
+		LastCollectAt:            user.LastCollectAt,
+		CreatedAt:                user.CreatedAt,
+		ReferralCount:            validInvites,
+		CratesOpenedCount:        cratesOpened,
+		FriendCratesOpenedCount:  friendCratesOpened,
+		CanWithdrawLifetime:      canWithdraw,
+		OneTimeWithdrawalGranted: oneTimeGranted,
 	}
 }
 

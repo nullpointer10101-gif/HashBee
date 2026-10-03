@@ -209,7 +209,7 @@ func (h *UserHandler) GetSwarm(c *gin.Context) {
 
 	botUsername := h.cfg.BotUsername
 	if botUsername == "" {
-		botUsername = "hashbee_bot"
+		botUsername = "hashbe_bot"
 	}
 	referralLink := fmt.Sprintf("https://t.me/%s?start=%d", botUsername, user.TelegramID)
 
