@@ -122,15 +122,6 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either open 1 Mystery Crate (starts from 0.5 GRAM) or have at least 1 invited friend open a Mystery Crate (Current: %d/1 friend crates, %d crates opened)", friendCratesOpened, cratesOpened)
 	}
 
-	// Check mission gate (at least 3 completed missions)
-	var completedMissions int
-	_ = s.db.QueryRow(ctx,
-		`SELECT COUNT(*) FROM mission_completions WHERE user_id = $1 AND status = 'reward_paid'`,
-		userID).Scan(&completedMissions)
-	if completedMissions < 3 {
-		return nil, fmt.Errorf("please complete at least 3 quick missions to verify your miner wallet (you have %d/3)", completedMissions)
-	}
-
 	// Check cooldown
 	var lastWithdrawal time.Time
 	err = s.db.QueryRow(ctx,
