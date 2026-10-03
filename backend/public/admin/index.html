@@ -1125,6 +1125,19 @@ function copyToClipboard(text, elem) {
   }
 }
 
+function getApiUrl() {
+  let stored = localStorage.getItem('hb_api_url') || '';
+  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1')) {
+    stored = 'https://hashbee1.onrender.com';
+    localStorage.setItem('hb_api_url', stored);
+  }
+  return stored.replace(/\/$/, '');
+}
+
+let API_URL = getApiUrl();
+let token = localStorage.getItem('hb_admin_token') || '';
+let statsInterval = null;
+
 function authHeaders() {
   const currentToken = token || localStorage.getItem('hb_admin_token') || '';
   return {
@@ -1185,19 +1198,30 @@ async function handleLogin(e) {
 }
 
 function initDashboard(admin) {
+  API_URL = getApiUrl();
+  token = localStorage.getItem('hb_admin_token') || token || '';
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('dashboardView').style.display = 'block';
   document.getElementById('authControls').style.display = 'flex';
   document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
   applyTemplate('mining_boost');
+  
   loadStats();
-  setInterval(() => { if (token) loadStats(); }, 15000);
   loadCampaigns();
+
+  if (statsInterval) clearInterval(statsInterval);
+  statsInterval = setInterval(() => {
+    if (token) loadStats();
+  }, 15000);
 }
 
 function logout() {
   token = '';
   localStorage.removeItem('hb_admin_token');
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
   document.getElementById('loginView').style.display = 'block';
   document.getElementById('dashboardView').style.display = 'none';
   document.getElementById('authControls').style.display = 'none';
@@ -1225,7 +1249,13 @@ function switchTab(tabId, el) {
 
 async function loadStats() {
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/dashboard', { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById('statUsers').innerText = data.total_users || 0;
@@ -1239,12 +1269,25 @@ async function loadStats() {
 
 // 1. CAMPAIGNS
 async function loadCampaigns() {
-  const status = document.getElementById('campStatusFilter').value;
+  const statusElem = document.getElementById('campStatusFilter');
+  const status = statusElem ? statusElem.value : 'all';
   const tbody = document.getElementById('campaignsBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
+  }
 
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/campaigns?status=' + encodeURIComponent(status), { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
+    if (!res.ok) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading: HTTP ' + res.status + '</td></tr>';
+      return;
+    }
     const data = await res.json();
     const list = data.campaigns || [];
     
@@ -1729,8 +1772,14 @@ async function loadUsers(offset = 0) {
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">⚡</span> Loading platform users...</td></tr>';
 
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&sort=' + encodeURIComponent(sort) + '&limit=' + limit + '&offset=' + offset;
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     const list = data.users || [];
     totalUsersCount = data.total !== undefined ? data.total : list.length;
@@ -2275,8 +2324,14 @@ async function loadWithdrawals() {
   const tbody = document.getElementById('withdrawalsBody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>';
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/withdrawals' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     const list = data.withdrawals || [];
     
@@ -2374,8 +2429,14 @@ async function loadDeposits() {
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">💎</span> Loading deposits...</td></tr>';
 
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/deposits?type=' + encodeURIComponent(currentDepositFilter);
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     
     if (!res.ok) {
       const errText = await res.text();
@@ -2511,7 +2572,13 @@ async function loadSettings() {
   const form = document.getElementById('settingsForm');
   form.innerHTML = '<p style="color:var(--text-muted);">Loading settings...</p>';
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/settings', { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     let settingsList = [];
     if (Array.isArray(data.settings)) {

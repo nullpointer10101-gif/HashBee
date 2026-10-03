@@ -126,7 +126,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Backend API URL</label>
-          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee1.onrender.com" placeholder="https://hashbee1.onrender.com">
         </div>
         <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
@@ -956,7 +956,7 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
 <div id="toast"></div>
 
 <script>
-let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.com';
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -1125,6 +1125,19 @@ function copyToClipboard(text, elem) {
   }
 }
 
+function getApiUrl() {
+  let stored = localStorage.getItem('hb_api_url') || '';
+  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1')) {
+    stored = 'https://hashbee1.onrender.com';
+    localStorage.setItem('hb_api_url', stored);
+  }
+  return stored.replace(/\/$/, '');
+}
+
+let API_URL = getApiUrl();
+let token = localStorage.getItem('hb_admin_token') || '';
+let statsInterval = null;
+
 function authHeaders() {
   const currentToken = token || localStorage.getItem('hb_admin_token') || '';
   return {
@@ -1141,7 +1154,7 @@ async function handleLogin(e) {
   const loginId = (document.getElementById('loginId')?.value || '').trim();
   const password = (document.getElementById('loginPw')?.value || '').trim();
   let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
-  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee.onrender.com';
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee1.onrender.com';
   localStorage.setItem('hb_api_url', API_URL);
 
   if (!loginId || !password) {
@@ -1156,7 +1169,7 @@ async function handleLogin(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
     console.log('Attempting login to:', activeUrl + '/api/admin/login');
     const res = await fetch(activeUrl + '/api/admin/login', {
       method: 'POST',
@@ -1185,19 +1198,30 @@ async function handleLogin(e) {
 }
 
 function initDashboard(admin) {
+  API_URL = getApiUrl();
+  token = localStorage.getItem('hb_admin_token') || token || '';
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('dashboardView').style.display = 'block';
   document.getElementById('authControls').style.display = 'flex';
   document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
   applyTemplate('mining_boost');
+  
   loadStats();
-  setInterval(() => { if (token) loadStats(); }, 15000);
   loadCampaigns();
+
+  if (statsInterval) clearInterval(statsInterval);
+  statsInterval = setInterval(() => {
+    if (token) loadStats();
+  }, 15000);
 }
 
 function logout() {
   token = '';
   localStorage.removeItem('hb_admin_token');
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
   document.getElementById('loginView').style.display = 'block';
   document.getElementById('dashboardView').style.display = 'none';
   document.getElementById('authControls').style.display = 'none';
@@ -1225,7 +1249,13 @@ function switchTab(tabId, el) {
 
 async function loadStats() {
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/dashboard', { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById('statUsers').innerText = data.total_users || 0;
@@ -1239,12 +1269,25 @@ async function loadStats() {
 
 // 1. CAMPAIGNS
 async function loadCampaigns() {
-  const status = document.getElementById('campStatusFilter').value;
+  const statusElem = document.getElementById('campStatusFilter');
+  const status = statusElem ? statusElem.value : 'all';
   const tbody = document.getElementById('campaignsBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
+  }
 
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/campaigns?status=' + encodeURIComponent(status), { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
+    if (!res.ok) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading: HTTP ' + res.status + '</td></tr>';
+      return;
+    }
     const data = await res.json();
     const list = data.campaigns || [];
     
@@ -1330,7 +1373,7 @@ async function handleCreateCampaign(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
     console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
     const res = await fetch(activeUrl + '/api/admin/campaigns', {
       method: 'POST',
@@ -1729,8 +1772,14 @@ async function loadUsers(offset = 0) {
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">⚡</span> Loading platform users...</td></tr>';
 
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&sort=' + encodeURIComponent(sort) + '&limit=' + limit + '&offset=' + offset;
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     const list = data.users || [];
     totalUsersCount = data.total !== undefined ? data.total : list.length;
@@ -2275,8 +2324,14 @@ async function loadWithdrawals() {
   const tbody = document.getElementById('withdrawalsBody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>';
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/withdrawals' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     const list = data.withdrawals || [];
     
@@ -2374,8 +2429,14 @@ async function loadDeposits() {
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">💎</span> Loading deposits...</td></tr>';
 
   try {
+    API_URL = getApiUrl();
     const url = API_URL + '/api/admin/deposits?type=' + encodeURIComponent(currentDepositFilter);
     const res = await fetch(url, { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     
     if (!res.ok) {
       const errText = await res.text();
@@ -2511,7 +2572,13 @@ async function loadSettings() {
   const form = document.getElementById('settingsForm');
   form.innerHTML = '<p style="color:var(--text-muted);">Loading settings...</p>';
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/settings', { headers: authHeaders() });
+    if (res.status === 401) {
+      showToast('Session expired. Please log in again.', true);
+      logout();
+      return;
+    }
     const data = await res.json();
     let settingsList = [];
     if (Array.isArray(data.settings)) {

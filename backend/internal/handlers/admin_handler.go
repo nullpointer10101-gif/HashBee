@@ -103,7 +103,7 @@ func (h *AdminHandler) Login(c *gin.Context) {
 		Email:   admin.Email,
 		Role:    admin.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(8 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
