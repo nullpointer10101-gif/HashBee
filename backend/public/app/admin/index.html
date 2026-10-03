@@ -1,16 +1,2582 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HashBee Admin Console</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/admin/assets/index-BFAUz2rH.js"></script>
-    <link rel="stylesheet" crossorigin href="/admin/assets/index-ZqV16Tw6.css">
-  </head>
-  <body class="bg-slate-950 text-slate-100 font-sans antialiased">
-    <div id="root"></div>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HashBee Admin Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0d0c;
+    --bg-card: #121816;
+    --bg-card-hover: #17211e;
+    --border: #1e2d27;
+    --accent-gold: #f59e0b;
+    --accent-emerald: #10b981;
+    --accent-cyan: #06b6d4;
+    --accent-red: #ef4444;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+  body { background: var(--bg-primary); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; width: 100%; }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+  
+  header { background: #0e1412; border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; font-size: 20px; letter-spacing: 1px; }
+  .brand-badge { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; }
+  
+  .nav-tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; }
+  .tab-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 10px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .tab-btn:hover { color: #fff; background: #16201c; }
+  .tab-btn.active { color: #000; background: #f59e0b; border-color: #f59e0b; font-weight: 800; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; position: relative; overflow: hidden; }
+  .stat-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-val { font-size: 24px; font-weight: 900; margin-top: 4px; color: #fff; }
+  .stat-accent { height: 3px; position: absolute; bottom: 0; left: 0; right: 0; }
+
+  .table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 14px; border: 1px solid var(--border); background: #0c110f; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+  th { background: #0e1513; padding: 14px 16px; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 14px 16px; border-bottom: 1px solid #141e1a; vertical-align: middle; }
+  tr:hover td { background: var(--bg-card-hover); }
+
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-active { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+  .badge-waiting { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+  .badge-completed { background: rgba(6,182,212,0.15); color: #06b6d4; border: 1px solid rgba(6,182,212,0.3); }
+  .badge-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+  .btn { padding: 8px 14px; border-radius: 10px; font-weight: 800; font-size: 12px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; text-decoration: none; }
+  .btn-primary { background: #10b981; color: #000; }
+  .btn-primary:hover { background: #059669; }
+  .btn-gold { background: #f59e0b; color: #000; }
+  .btn-gold:hover { background: #d97706; }
+  .btn-danger { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: #ef4444; color: #fff; }
+  .btn-secondary { background: #1a2521; color: #e5e7eb; border: 1px solid #283a33; }
+  .btn-secondary:hover { background: #24352f; color: #fff; }
+  .btn-telegram { background: #0088cc; color: #fff; }
+  .btn-telegram:hover { background: #0077b5; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input { width: 100%; background: #0c100f; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--accent-gold); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .modal-card { background: #111715; border: 1px solid var(--border); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8); max-height: 90vh; overflow-y: auto; }
+  .modal-card-lg { max-width: 980px; }
+
+  .sub-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 16px; overflow-x: auto; }
+  .sub-tab-btn { background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .sub-tab-btn:hover { color: #fff; background: #16201c; }
+  .sub-tab-btn.active { color: #f59e0b; background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); }
+
+  .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .chip { background: #121a17; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .chip:hover { color: #fff; border-color: #2b3f36; }
+  .chip.active { background: #f59e0b; color: #000; border-color: #f59e0b; }
+
+  /* Telegram Mock Preview */
+  .tg-preview-bubble { background: #212d27; border: 1px solid #2e423b; border-radius: 16px; padding: 16px; max-width: 400px; color: #fff; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+  .tg-preview-btn { margin-top: 12px; background: #0088cc; color: #fff; border-radius: 10px; padding: 10px 14px; text-align: center; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,0.15); }
+
+  #toast { position: fixed; top: 24px; right: 24px; padding: 14px 22px; border-radius: 12px; font-size: 14px; font-weight: 800; display: none; z-index: 99999; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); }
+  .toast-success { background: #10b981; color: #000; }
+  .toast-error { background: #ef4444; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>🐝 HASHBEE</span>
+    <span class="brand-badge">ADMIN CONTROL</span>
+  </div>
+  <div id="authControls" style="display:none; align-items:center; gap:16px;">
+    <span id="adminEmail" class="font-mono" style="font-size:12px; color:#10b981; background:#12201b; padding:4px 10px; border-radius:6px; border:1px solid #1d332b;"></span>
+    <button onclick="logout()" class="btn btn-secondary" style="padding:6px 12px;">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- LOGIN VIEW -->
+  <div id="loginView" style="max-width:420px; margin:80px auto;">
+    <div class="card" style="box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+      <div style="text-align:center; margin-bottom:24px;">
+        <h2 style="font-weight:900; font-size:22px; margin-bottom:4px;">Admin Portal</h2>
+        <p style="font-size:13px; color:var(--text-muted);">Sign in to manage HashBee Platform</p>
+      </div>
+      <form onsubmit="handleLogin(event); return false;">
+        <div class="form-group">
+          <label class="form-label">Email or Username</label>
+          <input type="text" id="loginId" class="form-input" required placeholder="Enter username or email" autocomplete="off" onkeydown="if(event.key==='Enter')handleLogin(event)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="loginPw" class="form-input" required placeholder="Enter password" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleLogin(event)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Backend API URL</label>
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee.onrender.com" placeholder="https://hashbee.onrender.com">
+        </div>
+        <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="dashboardView" style="display:none;">
+
+    <!-- TOP STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Total Users</div>
+        <div class="stat-val" id="statUsers">-</div>
+        <div class="stat-accent" style="background:#f59e0b;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title" style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+          Online Users
+        </div>
+        <div class="stat-val font-mono" id="statOnlineUsers" style="color:#10b981;">-</div>
+        <div class="stat-accent" style="background:#10b981;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total GHS Mining Power</div>
+        <div class="stat-val" id="statBP" style="color:#10b981;">-</div>
+        <div class="stat-accent" style="background:#10b981;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Active Boost Campaigns</div>
+        <div class="stat-val" id="statActiveCamps" style="color:#06b6d4;">-</div>
+        <div class="stat-accent" style="background:#06b6d4;"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Pending Withdrawals</div>
+        <div class="stat-val" id="statWithdrawals" style="color:#ef4444;">-</div>
+        <div class="stat-accent" style="background:#ef4444;"></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('campaigns', this)">📢 Boost Campaigns</button>
+      <button class="tab-btn" onclick="switchTab('broadcast', this)">🚀 Hype Broadcast</button>
+      <button class="tab-btn" onclick="switchTab('users', this)">👥 Users</button>
+      <button class="tab-btn" onclick="switchTab('withdrawals', this)">💸 Withdrawals</button>
+      <button class="tab-btn" onclick="switchTab('deposits', this)">💎 Deposits</button>
+      <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
+    </div>
+
+    <!-- TAB: CAMPAIGNS -->
+    <div id="tab-campaigns">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:900;">Boost Campaigns Manager</h2>
+          <p style="font-size:13px; color:var(--text-muted);">Manage, activate, or instantly add/delete advertiser campaigns</p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button onclick="openCreateCampaignModal()" class="btn btn-gold">➕ Create New Campaign</button>
+          <select id="campStatusFilter" class="form-input" style="width:170px; padding:8px 12px; font-size:12px;" onchange="loadCampaigns()">
+            <option value="">All Statuses</option>
+            <option value="waiting_for_payment">Waiting for Payment</option>
+            <option value="active">Active (Live)</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button onclick="loadCampaigns()" class="btn btn-secondary">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title & Target URL</th>
+              <th>Type</th>
+              <th>Payment Memo</th>
+              <th>Cost</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="campaignsBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: HYPE BROADCAST -->
+    <div id="tab-broadcast" style="display:none;">
+      <div style="margin-bottom:20px;">
+        <h2 style="font-size:20px; font-weight:900;">Telegram Hype Broadcast</h2>
+        <p style="font-size:13px; color:var(--text-muted);">Send rich announcement templates with one-click app launch buttons to all registered users</p>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; align-items:start;">
+        <!-- Left: Composer -->
+        <div class="card">
+          <h3 style="font-size:16px; font-weight:900; margin-bottom:14px;">📝 Message Composer</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Choose Hype Template</label>
+            <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
+              <option value="custom">✍️ Custom Message</option>
+              <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
+              <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
+              <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
+              <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
+              <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
+              <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
+              <option value="personalized_buzz">👤 Personalized VIP (Hey {name})</option>
+              <option value="viral_20k">🚀 20,000+ Users Record Celebration</option>
+              <option value="mining_boost">⛏️ Double Mining Rate Hype</option>
+              <option value="ghs_drop">🎁 Free 10 GHS Power Gift</option>
+              <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
+              <option value="withdraw_alert">💸 Instant GRAM Withdrawals Live</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Message Content (Markdown Supported)</label>
+            <textarea id="broadcastMsg" class="form-input font-mono" rows="7" style="resize:vertical;" oninput="updatePreview()" placeholder="Type your broadcast message here..."></textarea>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Button Text</label>
+              <input type="text" id="broadcastBtnText" class="form-input" value="🐝 Open HashBee App" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Button WebApp URL</label>
+              <input type="text" id="broadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Target Audience</label>
+            <select id="broadcastAudience" class="form-input" onchange="toggleSpecificTgId(this.value)">
+              <option value="all">🌍 All Active Telegram Users</option>
+              <option value="single">🎯 Test Single Telegram ID</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="specificTgIdWrap" style="display:none;">
+            <label class="form-label">Target Telegram ID</label>
+            <input type="number" id="broadcastTargetTgId" class="form-input font-mono" placeholder="e.g. 6446145632">
+          </div>
+
+          <!-- Live Broadcast Progress Card -->
+          <div id="broadcastProgressBox" style="display:none; margin-top:14px; margin-bottom:10px; padding:14px; border-radius:12px; background:#12211b; border:1px solid #10b981;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-weight:800; font-size:12px; color:#10b981;" id="broadcastStatusText">⚡ Broadcasting in progress...</span>
+              <span class="font-mono" style="font-size:12px; font-weight:800; color:#fff;" id="broadcastNumbers">0 / 0</span>
+            </div>
+            <div style="background:#0b1310; border-radius:999px; height:8px; overflow:hidden; margin-bottom:8px; border:1px solid #1c3328;">
+              <div id="broadcastProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #06b6d4); transition:width 0.3s ease;"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:#9ca3af;">
+              <span>✅ Sent: <b id="broadcastSentCount" style="color:#10b981;">0</b></span>
+              <span>❌ Failed: <b id="broadcastFailedCount" style="color:#ef4444;">0</b></span>
+              <span>📊 Progress: <b id="broadcastPercent" style="color:#06b6d4;">0%</b></span>
+            </div>
+          </div>
+
+          <button onclick="sendBroadcast()" id="sendBroadcastBtn" class="btn btn-telegram" style="width:100%; justify-content:center; padding:14px; font-size:13px; margin-top:8px;">
+            🚀 Send Hype Broadcast Now
+          </button>
+        </div>
+
+        <!-- Right: Live Preview -->
+        <div class="card">
+          <h3 style="font-size:16px; font-weight:900; margin-bottom:14px;">📱 Live Telegram Message Preview</h3>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">This is how your message and interactive button will appear in user chats:</p>
+          
+          <div class="tg-preview-bubble" id="previewBubble">
+            <div id="previewText">🚀 *DOUBLE YOUR MINING POWER!*</div>
+            <div class="tg-preview-btn" id="previewBtn">
+              <span>🐝</span> <span id="previewBtnLabel">Open HashBee App</span>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; padding:14px; border-radius:12px; background:#101714; border:1px solid #1c2b24; font-size:12px; color:#a3b8b0;">
+            <div style="font-weight:800; color:#f59e0b; margin-bottom:4px;">💡 Pro Tips for Telegram Hype:</div>
+            <div>• Use <b>*bold*</b> for headlines and emojis to boost open rates.</div>
+            <div>• Telegram WebApp buttons open directly inside Telegram without asking to switch browsers!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automated Hourly Broadcast Control Card -->
+      <div class="card" style="margin-top:24px; border:1px solid #d97706; background: linear-gradient(180deg, #161a15 0%, #0d120f 100%);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:22px;">⏱️</span>
+              <h3 style="font-size:17px; font-weight:900; color:#fbbf24;">Automated Scheduled Broadcast (Auto-Pilot)</h3>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Automatically broadcast selected announcements to all active users every hour or at custom intervals in the background.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="autoBroadcastStatusBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:12px; font-weight:800; padding:6px 12px;">⏸️ Disabled</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">⚙️ Auto-Pilot Switch</label>
+            <select id="autoBroadcastEnabled" class="form-input" style="font-weight:700;">
+              <option value="false">🔴 Disabled (Don't send automatically)</option>
+              <option value="true">🟢 ENABLED (Send automatically in background)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">⏱️ Broadcast Interval</label>
+            <select id="autoBroadcastInterval" class="form-input font-mono" style="font-weight:700;">
+              <option value="60">⏰ Every 1 Hour (Recommended)</option>
+              <option value="120">⏰ Every 2 Hours</option>
+              <option value="180">⏰ Every 3 Hours</option>
+              <option value="240">⏰ Every 4 Hours</option>
+              <option value="360">⏰ Every 6 Hours</option>
+              <option value="720">⏰ Every 12 Hours (Twice Daily)</option>
+              <option value="1440">⏰ Every 24 Hours (Once Daily)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#fbbf24; font-weight:800;">🎲 Message Rotation Mode</label>
+            <select id="autoBroadcastMode" class="form-input" style="font-weight:700;" onchange="toggleAutoBroadcastMode(this.value)">
+              <option value="rotate" selected>🎲 Smart Random Auto-Rotation (Recommended)</option>
+              <option value="fixed">📌 Fixed Custom Message</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Info box when Smart Random Rotation is active -->
+        <div id="autoBroadcastRotationInfo" style="margin-bottom:16px; padding:12px 16px; border-radius:12px; background:#10221a; border:1px solid #059669; font-size:12px; color:#6ee7b7;">
+          <div style="font-weight:800; color:#34d399; margin-bottom:4px;">🎲 Smart Random Rotation Active:</div>
+          <div>Every hour, the bot automatically selects a <b>different, fresh high-converting message</b> from your top campaigns (Mystery Crates, Mega Wheel Jackpot, Viral Free Spins, Full Hive Alert, Power Multipliers) with dynamic personalized names. Users will never receive the same repetitive message!</div>
+        </div>
+
+        <div id="autoBroadcastFixedOptions" style="display:none;">
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label" style="margin-bottom:0;">Auto-Broadcast Template Preset</label>
+            <button type="button" onclick="applyAutoTemplate(document.getElementById('autoBroadcastTemplateSelect').value)" class="btn" style="background:#27272a; color:#fbbf24; border:1px solid #3f3f46; font-size:11px; padding:4px 10px; font-weight:700;">
+              ⚡ Load Preset Into Box
+            </button>
+          </div>
+          <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
+            <option value="crate_mega_jackpot" selected>📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
+            <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
+            <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
+            <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Dopamine Hype)</option>
+            <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
+            <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
+            <option value="personalized_buzz">👤 Personalized VIP (Hey {name})</option>
+            <option value="viral_20k">🚀 20,000+ Users Record Celebration</option>
+            <option value="mining_boost">⛏️ Double Mining Rate Hype</option>
+            <option value="ghs_drop">🎁 Free 10 GHS Power Gift</option>
+            <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
+            <option value="withdraw_alert">💸 Instant GRAM Withdrawals Live</option>
+            <option value="custom">✍️ Custom Message Below</option>
+          </select>
+        </div>
+
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">🎁 *MYSTERY CRATES ARE LIVE!* 🐝💎
+
+Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
+• 🥉 *Bronze (0.5 G)* ➔ Win up to 2.5 GRAM
+• 🥈 *Silver (1.5 G)* ➔ Win up to 7.5 GRAM
+• 🥇 *Gold (3.0 G)* ➔ Win up to 15.0 GRAM
+• 💎 *Diamond (5.0 G)* ➔ *25 GRAM Jackpot + $20 USDT!*
+
+👇 Open your crate now:</textarea>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Button Text</label>
+            <input type="text" id="autoBroadcastBtnText" class="form-input" value="📦 Unlock Mystery Crates 🎁">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Button WebApp URL</label>
+            <input type="text" id="autoBroadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+          </div>
+        </div>
+        </div> <!-- End of autoBroadcastFixedOptions -->
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:12px; color:#9ca3af;">
+            <span>🕒 Last Sent: <b id="autoBroadcastLastRun" style="color:#fbbf24;">Never</b></span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="testSendAutoBroadcast()" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:12px 18px; font-size:13px; font-weight:800;">
+              ⚡ Test Send 1 Message Now
+            </button>
+            <button type="button" onclick="saveAutoBroadcast()" id="saveAutoBroadcastBtn" class="btn btn-primary" style="padding:12px 24px; font-size:13px; font-weight:800;">
+              💾 Save Automated Broadcast Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: USERS -->
+    <div id="tab-users" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h2 style="font-size:20px; font-weight:900;">Platform Users Intelligence</h2>
+          <span id="usersTotalBadge" class="badge" style="background:#1e2d27; color:#10b981; font-size:12px; font-weight:800;">0 Total</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button onclick="exportUsersCSV()" class="btn btn-secondary" style="padding:8px 12px; font-size:12px;" title="Export currently filtered users to CSV">
+            📥 Export CSV
+          </button>
+          <select id="userSortFilter" class="form-input" style="width:160px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="created_desc">🕒 Newest First</option>
+            <option value="created_asc">⏳ Oldest First</option>
+            <option value="ghs_desc">⚡ Most GHS Power</option>
+            <option value="ghs_asc">🔋 Least GHS Power</option>
+            <option value="referrals_desc">👥 Most Referrals</option>
+            <option value="balance_desc">🍯 Most Honey</option>
+          </select>
+          <select id="userStatusFilter" class="form-input" style="width:120px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+            <option value="flagged">Flagged</option>
+          </select>
+          <select id="userPageSize" class="form-input" style="width:110px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+            <option value="250">250 / page</option>
+            <option value="500">500 / page</option>
+          </select>
+          <input type="text" id="userSearch" class="form-input" placeholder="Search Telegram ID, username, name..." style="width:210px; padding:8px 12px; font-size:12px;" onkeyup="if(event.key==='Enter')loadUsers(0)">
+          <button onclick="loadUsers(0)" class="btn btn-gold" style="padding:8px 14px;">🔍 Search</button>
+        </div>
+      </div>
+
+      <!-- Quick Filter Chips -->
+      <div class="filter-chips">
+        <button class="chip active" onclick="applyUserChip('', 'created_desc', this)">🌍 All Users</button>
+        <button class="chip" onclick="applyUserChip('', 'ghs_desc', this)">⚡ Top Mining Power (GHS)</button>
+        <button class="chip" onclick="applyUserChip('', 'referrals_desc', this)">👥 Top Promoters / Referrers</button>
+        <button class="chip" onclick="applyUserChip('', 'balance_desc', this)">🍯 Top Honey Holders</button>
+        <button class="chip" onclick="applyUserChip('active', 'created_desc', this)">🟢 Active Miners</button>
+        <button class="chip" onclick="applyUserChip('banned', 'created_desc', this)">🚫 Banned Accounts</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Telegram ID</th>
+              <th>User & Profile (Click to Inspect)</th>
+              <th>Mining Power</th>
+              <th>Direct Referrals</th>
+              <th>Mined Balance</th>
+              <th>Status</th>
+              <th>Joined Date</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading users...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+      <div id="usersPagination" style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding:12px 16px; background:#101714; border:1px solid #1c2b24; border-radius:12px; font-size:12px;">
+        <span id="usersPageInfo" style="color:var(--text-muted); font-weight:700;">Showing 0-0 of 0 users</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="usersPrevBtn" onclick="changeUserPage(-1)" class="btn btn-secondary" style="padding:6px 14px; font-size:11px;">◀ Prev</button>
+          <span id="usersPageNum" class="font-mono" style="font-weight:800; color:#fff; padding:0 8px;">Page 1 of 1</span>
+          <button id="usersNextBtn" onclick="changeUserPage(1)" class="btn btn-secondary" style="padding:6px 14px; font-size:11px;">Next ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: WITHDRAWALS -->
+    <div id="tab-withdrawals" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:900;">Withdrawal Requests Queue</h2>
+          <p style="font-size:13px; color:var(--text-muted);">Click on any user name to inspect full anti-fraud profile and deposit/referral history</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <select id="withdrawalStatusFilter" class="form-input" style="width:140px; padding:8px 10px; font-size:12px;" onchange="loadWithdrawals()">
+            <option value="">All Statuses</option>
+            <option value="pending" selected>Pending</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button onclick="loadWithdrawals()" class="btn btn-secondary">🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User (Click to Inspect)</th>
+              <th>Destination Address</th>
+              <th>Amount & Asset</th>
+              <th>Honey Mined</th>
+              <th>Status</th>
+              <th>Requested At</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawalsBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: DEPOSITS -->
+    <div id="tab-deposits" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:22px;">💎</span>
+            <h2 style="font-size:20px; font-weight:900;">User Deposits Ledger</h2>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted);">Real-time verifiable ledger of all miner power & campaign deposits</p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input type="text" id="depositSearchInput" class="form-input" style="width:230px; padding:8px 12px; font-size:12px;" placeholder="Search user, TG ID, hash..." oninput="filterDeposits()">
+          <button onclick="loadDeposits()" class="btn btn-secondary">🔄 Refresh</button>
+          <button onclick="exportDepositsCSV()" class="btn btn-gold">📥 Export CSV</button>
+        </div>
+      </div>
+
+      <!-- Top Summary Cards -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px;">
+        <div style="background:#141f1b; border:1px solid #233830; border-radius:12px; padding:12px 16px;">
+          <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Total Verified Deposits</div>
+          <div id="depTotalCount" style="font-size:20px; font-weight:900; color:#10b981; margin-top:2px;">-</div>
+        </div>
+        <div style="background:#141f1b; border:1px solid #233830; border-radius:12px; padding:12px 16px;">
+          <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Total Volume (GRAM)</div>
+          <div id="depTotalVolumeGram" style="font-size:20px; font-weight:900; color:#fbbf24; margin-top:2px;">-</div>
+        </div>
+        <div style="background:#141f1b; border:1px solid #233830; border-radius:12px; padding:12px 16px;">
+          <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Estimated USD Value</div>
+          <div id="depTotalVolumeUSD" style="font-size:20px; font-weight:900; color:#06b6d4; margin-top:2px;">-</div>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filter-chips">
+        <button class="chip active" id="depChipAll" onclick="setDepositFilter('all', this)">All Deposits</button>
+        <button class="chip" id="depChipMiner" onclick="setDepositFilter('miner', this)">⚡ Miner Power Deposits</button>
+        <button class="chip" id="depChipCamp" onclick="setDepositFilter('campaign', this)">📢 Campaign Ad Payments</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User (Click to Inspect)</th>
+              <th>Type / Purpose</th>
+              <th>Amount Deposited</th>
+              <th>Benefit / Impact</th>
+              <th>Transaction Memo / Hash</th>
+              <th>Date & Time</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="depositsBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading deposits...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: SETTINGS -->
+    <div id="tab-settings" style="display:none;">
+      <div style="max-width:650px;">
+        <h2 style="font-size:20px; font-weight:900; margin-bottom:16px;">System Configuration</h2>
+        <div class="card" id="settingsForm">
+          <p style="color:var(--text-muted);">Loading settings...</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: USER DETAILS FULL 360° INSPECTION -->
+<!-- ========================================================================= -->
+<div id="userDetailModal" class="modal-backdrop">
+  <div class="modal-card modal-card-lg">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:16px; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div id="uModalAvatar" style="width:48px; height:48px; border-radius:14px; background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:22px; color:#f59e0b;">
+          U
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 id="uModalName" style="font-size:19px; font-weight:900; color:#fff;">User Name</h3>
+            <span id="uModalStatusBadge" class="badge badge-active">ACTIVE</span>
+            <span id="uModalLangBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:10px;">EN</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-muted); margin-top:2px;">
+            <span id="uModalUsername" class="font-mono" style="color:#06b6d4;">@username</span>
+            <span>•</span>
+            <span class="font-mono">TG ID: <strong id="uModalTgId" style="color:#fff;">0</strong></span>
+            <button onclick="copyToClipboard(document.getElementById('uModalTgId').innerText, this)" class="btn" style="background:#16241f; padding:2px 6px; font-size:10px; border-radius:4px; border:1px solid #233830; color:#10b981;">📋 Copy</button>
+            <span>•</span>
+            <span id="uModalJoinedDate" class="font-mono">Joined: -</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="closeModal('userDetailModal')" style="background:#18221e; border:1px solid #263831; color:var(--text-muted); font-size:16px; width:34px; height:34px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; padding:12px; background:#0c110f; border-radius:12px; border:1px solid var(--border); align-items:center; justify-content:space-between;">
+      <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Quick Actions:</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="uModalAdjustBtn" onclick="openAdjustModal()" class="btn btn-gold" style="padding:6px 12px; font-size:11px;">⚡ Adjust Hashrate / Honey</button>
+        <button id="uModalDmBtn" onclick="openDirectMsgModal()" class="btn btn-telegram" style="padding:6px 12px; font-size:11px;">💬 Send Telegram DM</button>
+        <button id="uModalStreakBtn" onclick="resetUserStreakPrompt()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">🔄 Reset Daily Streak</button>
+        <button id="uModalStatusBtn" onclick="toggleSelectedUserStatus()" class="btn btn-danger" style="padding:6px 12px; font-size:11px;">🚫 Ban User</button>
+      </div>
+    </div>
+
+    <!-- Key Metrics Strip -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:20px;">
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">⚡ Hashrate (GHS)</div>
+        <div id="uModalGHS" style="font-size:18px; font-weight:900; color:#10b981; margin-top:2px;">-</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">🍯 Honey Balance</div>
+        <div id="uModalHoney" style="font-size:18px; font-weight:900; color:#f59e0b; margin-top:2px;">-</div>
+        <div id="uModalPendingHoney" style="font-size:10px; color:#34d399; margin-top:2px;">+0.0000 in hive</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">👥 Direct Referrals</div>
+        <div id="uModalRefs" style="font-size:18px; font-weight:900; color:#38bdf8; margin-top:2px;">-</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">💰 Total Deposited</div>
+        <div id="uModalDeposited" style="font-size:18px; font-weight:900; color:#a78bfa; margin-top:2px;">0 TON</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">💸 Total Withdrawn</div>
+        <div id="uModalWithdrawn" style="font-size:18px; font-weight:900; color:#f43f5e; margin-top:2px;">0 TON</div>
+      </div>
+      <div style="background:#0e1513; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase;">🎰 Spins & Streak</div>
+        <div id="uModalStreak" style="font-size:18px; font-weight:900; color:#fbbf24; margin-top:2px;">Day 0 • 0 Spins</div>
+      </div>
+    </div>
+
+    <!-- Inner Sub-Tabs -->
+    <div class="sub-tabs">
+      <button class="sub-tab-btn active" onclick="switchUserDetailTab('referrals', this)">👥 Referrals & Inviter (<span id="uModalRefCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('deposits', this)">💳 Deposits & Purchases (<span id="uModalDepCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('withdrawals', this)">💸 Withdrawals (<span id="uModalWCountBadge">0</span>)</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('txs', this)">📜 All Ledger Transactions</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('missions', this)">🎯 Completed Missions</button>
+      <button class="sub-tab-btn" onclick="switchUserDetailTab('fraud', this)">🛡️ Risk & Anti-Fraud</button>
+    </div>
+
+    <!-- Sub-Tab: Referrals -->
+    <div id="uSubTab-referrals">
+      <!-- Inviter (Referrer) Box -->
+      <div id="uModalReferrerBox" style="margin-bottom:16px; padding:14px; border-radius:12px; background:#0e1614; border:1px solid #1a2a24;">
+        <div style="font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">👤 Invited By (Referrer):</div>
+        <div id="uModalReferrerContent" style="font-size:13px; color:#fff;">Direct Signup (No Referrer)</div>
+      </div>
+
+      <div style="font-size:13px; font-weight:800; margin-bottom:8px; color:#fff;">👥 Direct Referred Users (L1 Swarm):</div>
+      <div class="table-wrap" style="max-height:300px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Telegram ID</th>
+              <th>Name & Username</th>
+              <th>Joined Date</th>
+              <th>GHS Power</th>
+              <th>Honey Balance</th>
+              <th>Mining Activity</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="uModalReferralsBody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No referrals yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Deposits -->
+    <div id="uSubTab-deposits" style="display:none;">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:14px;">
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL TON DEPOSITS</div>
+          <div id="uModalDepTON" style="font-size:16px; font-weight:900; color:#38bdf8;">0.000 TON</div>
+        </div>
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL STARS BOUGHT</div>
+          <div id="uModalDepStars" style="font-size:16px; font-weight:900; color:#fbbf24;">0 ⭐</div>
+        </div>
+        <div style="background:#0c110f; border:1px solid var(--border); border-radius:10px; padding:10px;">
+          <div style="font-size:10px; color:var(--text-muted); font-weight:800;">TOTAL GRAM / USD</div>
+          <div id="uModalDepGRAM" style="font-size:16px; font-weight:900; color:#10b981;">0.000 GRAM</div>
+        </div>
+      </div>
+      <div class="table-wrap" style="max-height:300px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="uModalDepositsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No deposit transactions recorded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Withdrawals -->
+    <div id="uSubTab-withdrawals" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Destination Address</th>
+              <th>Amount</th>
+              <th>Honey Spent</th>
+              <th>Status</th>
+              <th>Tx Hash / Reason</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="uModalWithdrawalsBody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">No withdrawal requests found</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Transactions Ledger -->
+    <div id="uSubTab-txs" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="uModalTxsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No transactions found</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Missions -->
+    <div id="uSubTab-missions" style="display:none;">
+      <div class="table-wrap" style="max-height:320px; overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Mission Title</th>
+              <th>Type</th>
+              <th>Reward (GHS)</th>
+              <th>Status</th>
+              <th>Completed At</th>
+            </tr>
+          </thead>
+          <tbody id="uModalMissionsBody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No missions completed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sub-Tab: Risk & Anti-Fraud -->
+    <div id="uSubTab-fraud" style="display:none;">
+      <div id="uModalFraudVerdict" style="padding:16px; border-radius:14px; background:#10221a; border:1px solid #059669; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-weight:900; font-size:15px; color:#34d399;" id="uModalRiskTitle">🛡️ User Legitimacy Score</div>
+          <div class="font-mono" style="font-weight:900; font-size:14px; background:#0c110f; padding:4px 10px; border-radius:6px; color:#fff;" id="uModalRiskScore">100 / 100</div>
+        </div>
+        <div id="uModalRiskReasons" style="font-size:12px; color:#a7f3d0; line-height:1.6;">
+          • Real active miner with verified channel completions.
+        </div>
+      </div>
+      <div style="background:#0c110f; border:1px solid var(--border); border-radius:12px; padding:14px; font-size:12px; color:var(--text-muted);">
+        <div style="font-weight:800; color:#fff; margin-bottom:6px;">Internal Metadata & Database UUID:</div>
+        <div id="uModalUuid" class="font-mono" style="font-size:11px; color:#06b6d4; word-break:break-all;">-</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DIRECT TELEGRAM MESSAGE TO USER -->
+<!-- ========================================================================= -->
+<div id="directMsgModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:17px; font-weight:900; color:#fff;">💬 Send Direct Telegram Message</h3>
+      <button onclick="closeModal('directMsgModal')" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <p id="directMsgTargetLabel" style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Sending message to @username (TG ID: 123456)</p>
+    <div class="form-group">
+      <label class="form-label">Message Content (Markdown Supported)</label>
+      <textarea id="directMsgText" class="form-input font-mono" rows="5" placeholder="Hey {name}, your custom message here..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Button Text</label>
+      <input type="text" id="directMsgBtnText" class="form-input" value="🐝 Open HashBee App">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Button WebApp URL</label>
+      <input type="text" id="directMsgBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button type="button" onclick="closeModal('directMsgModal')" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="directMsgSendBtn" onclick="submitDirectMessage()" class="btn btn-telegram">🚀 Send Message Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ADJUST USER BALANCE / GHS -->
+<!-- ========================================================================= -->
+<div id="adjustModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="font-size:17px; font-weight:900; color:#fff;">⚡ Adjust User Power / Balance</h3>
+      <button onclick="closeModal('adjustModal')" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <p id="adjustTargetLabel" style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Modifying account for @username</p>
+    <div class="form-group">
+      <label class="form-label">Adjustment Type</label>
+      <select id="adjustType" class="form-input">
+        <option value="bp">⚡ GHS Mining Hashrate (Bee Power)</option>
+        <option value="honey">🍯 Mined Honey Balance</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount (Use negative to subtract, e.g. -10)</label>
+      <input type="number" id="adjustAmount" class="form-input font-mono" step="0.01" value="10">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason / Admin Note</label>
+      <input type="text" id="adjustReason" class="form-input" value="Admin adjustment" placeholder="e.g. Compensation / bonus reward">
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button type="button" onclick="closeModal('adjustModal')" class="btn btn-secondary">Cancel</button>
+      <button type="button" id="adjustSubmitBtn" onclick="submitAdjustBalance()" class="btn btn-gold">💾 Save Adjustment</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CREATE CAMPAIGN -->
+<div id="createCampModal" class="modal-backdrop">
+  <div class="modal-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="font-size:18px; font-weight:900;">➕ Create Boost Campaign</h3>
+      <button onclick="closeModal('createCampModal')" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <form onsubmit="handleCreateCampaign(event); return false;">
+      <div class="form-group">
+        <label class="form-label">Campaign Title / Name</label>
+        <input type="text" id="newCampTitle" class="form-input" required placeholder="e.g. Join My Telegram Channel">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Link / Handle</label>
+        <input type="text" id="newCampTarget" class="form-input font-mono" required placeholder="https://t.me/MyChannel or @MyBot">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Campaign Type</label>
+        <select id="newCampType" class="form-input">
+          <option value="channel">Telegram Channel</option>
+          <option value="group">Telegram Group</option>
+          <option value="bot">Telegram Bot</option>
+          <option value="link">Website Link</option>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Total Completions</label>
+          <input type="number" id="newCampCompletions" class="form-input" value="100" min="1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">User Reward (GHS)</label>
+          <input type="number" id="newCampReward" class="form-input" value="0.1" step="0.01" min="0.01" required>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+        <button type="button" onclick="closeModal('createCampModal')" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="createCampSubmitBtn" onclick="handleCreateCampaign(event)" class="btn btn-gold">Publish Live Now</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee.onrender.com';
+let token = localStorage.getItem('hb_admin_token') || '';
+
+const HYPE_TEMPLATES = {
+  crate_mega_jackpot: {
+    msg: `🎁 *MYSTERY CRATES ARE LIVE!* 🐝💎
+
+Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
+• 🥉 *Bronze (0.5 G)* ➔ Win up to 2.5 GRAM
+• 🥈 *Silver (1.5 G)* ➔ Win up to 7.5 GRAM
+• 🥇 *Gold (3.0 G)* ➔ Win up to 15.0 GRAM
+• 💎 *Diamond (5.0 G)* ➔ *25 GRAM Jackpot + $20 USDT!*
+
+👇 Open your crate now:`,
+    btn: '📦 Unlock Mystery Crates 🎁'
+  },
+  crate_bronze_starter: {
+    msg: `📦 *0.5 GRAM STARTER CRATE!* ⚡
+
+Test your luck for just 0.5 GRAM!
+💵 *Real USDT* • 🪙 *Up to 2.5 GRAM* • ⚡ *+5 HASH*
+
+100% instant unboxing with guaranteed rewards!
+
+👇 Tap below to unbox:`,
+    btn: '📦 Open 0.5 G Crate 🚀'
+  },
+  crate_vip_dopamine: {
+    msg: `👑 *25 GRAM CRATE JACKPOT ALERT!* 💎🔥
+
+Hey {name}, High-Roller Crates are loaded!
+🏆 *25.0 GRAM Single Drop Jackpot*
+💵 *$20.00 Instant USDT Cash*
+⚡ *+20 HASH Permanent Mining Speed*
+
+👇 Test your luck today:`,
+    btn: '💎 Play High Roller Crates 👑'
+  },
+  spin_dopamine_jackpot: {
+    msg: `🎡 *LUCKY WHEEL: SPIN & WIN USDT!* 🎁⚡
+
+Hey {name}, your Lucky Wheel turn is ready!
+👑 *1.0 GRAM Jackpot* • 💵 *Real USDT* • ⚡ *Mining Boosts*
+
+🎁 *Invite Friends = +1 Free Spin every time!*
+
+👇 Spin the wheel now:`,
+    btn: '🎡 Spin The Lucky Wheel 🎰'
+  },
+  spin_viral_referrals: {
+    msg: `👥 *1 INVITE = 1 FREE SPIN (UNLIMITED)* 🚀
+
+Want free USDT, GRAM & mining speed?
+Every friend you invite gives you *+1 Free Spin instantly!*
+
+👇 Grab your link & spin:`,
+    btn: '🎡 Get Free Spins 🚀'
+  },
+  spin_vip_drop: {
+    msg: `⚡ *VIP REWARD: FREE TURN WAITING!* 🎡
+
+Hey {name}, you have a turn waiting on the Lucky Honey Wheel!
+Will you hit the *1.0 GRAM Jackpot* or *Real USDT*?
+
+👇 Tap below to spin:`,
+    btn: '🎰 Claim Free Spin ⚡'
+  },
+  personalized_buzz: {
+    msg: `🐝 *HEY {name}, YOUR HIVE IS FULL!* 🍯
+
+Your mining rig has unclaimed Honey waiting.
+Collect your earnings now before your honeycomb capacity caps out!
+
+👇 Collect your harvest:`,
+    btn: '🐝 Collect Honey Now 🚀'
+  },
+  viral_20k: {
+    msg: `🚀 *20,000+ MINERS & GROWING!* 🔥
+
+The Hive is booming! Boost your gains today:
+📦 Unbox Mystery Crates (Up to 25 GRAM!)
+🎡 Spin the Lucky Wheel for USDT
+⛏️ Upgrade your mining speed 24/7
+
+👇 Tap below to jump in:`,
+    btn: '🐝 Open HashBee App 🚀'
+  },
+  mining_boost: {
+    msg: `⛏️ *DOUBLE MINING SPEED ACTIVE!* ⚡
+
+Extraction rates are supercharged across all hives!
+Your bees are mining Honey at maximum speed.
+
+👇 Collect & boost your power:`,
+    btn: '🐝 Open HashBee & Mine ⚡'
+  },
+  ghs_drop: {
+    msg: `🎁 *FREE MINING POWER GIFT!* ⚡
+
+Hey {name}, an extra GHS speed boost is ready for your account!
+Mine more GRAM every second, completely free.
+
+👇 Claim your bonus:`,
+    btn: '🎁 Claim Free GHS Power'
+  },
+  tasks_drop: {
+    msg: `⭐ *NEW HIGH-REWARD MISSIONS LIVE!* 🔥
+
+Complete quick 5-second sponsor tasks to earn instant *+0.1 to +5.0 GHS Mining Power*!
+
+👇 Complete tasks & earn:`,
+    btn: '⭐ Complete Tasks & Earn'
+  },
+  withdraw_alert: {
+    msg: `💸 *INSTANT GRAM & TON PAYOUTS LIVE!* 💎
+
+Mined Honey & Crate/Spin wins can be withdrawn directly to your TON Wallet with zero delay.
+
+👇 Check balance & withdraw:`,
+    btn: '💸 Open HashBee Wallet'
+  }
+};
+
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.className = isErr ? 'toast-error' : 'toast-success';
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+function copyToClipboard(text, elem) {
+  if (!text) return;
+  const copyDone = () => {
+    showToast('📋 Copied Address: ' + text.slice(0, 10) + '...');
+    if (elem) {
+      const origText = elem.innerText;
+      elem.innerText = '✅ Copied!';
+      elem.style.background = 'rgba(16,185,129,0.3)';
+      elem.style.color = '#10b981';
+      setTimeout(() => {
+        elem.innerText = origText;
+        elem.style.background = '';
+        elem.style.color = '';
+      }, 1800);
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(copyDone).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyDone();
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    copyDone();
+  }
+}
+
+function authHeaders() {
+  const currentToken = token || localStorage.getItem('hb_admin_token') || '';
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + currentToken
+  };
+}
+
+async function handleLogin(e) {
+  if (e) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+  }
+  const loginId = (document.getElementById('loginId')?.value || '').trim();
+  const password = (document.getElementById('loginPw')?.value || '').trim();
+  let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee.onrender.com';
+  localStorage.setItem('hb_api_url', API_URL);
+
+  if (!loginId || !password) {
+    showToast('Please enter both username/email and password', true);
+    return false;
+  }
+
+  const btn = document.getElementById('loginBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Signing in...';
+  }
+
+  try {
+    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    console.log('Attempting login to:', activeUrl + '/api/admin/login');
+    const res = await fetch(activeUrl + '/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: loginId, username: loginId, email: loginId, password: password })
+    });
+    const data = await res.json().catch(() => ({}));
+    const authToken = data.token || data.data?.token;
+    if (!res.ok || !authToken) {
+      throw new Error(data.error || 'Invalid credentials');
+    }
+    token = authToken;
+    localStorage.setItem('hb_admin_token', token);
+    showToast('🎉 Login successful!');
+    initDashboard(data.admin || data.data?.admin || { email: loginId });
+  } catch (err) {
+    console.error('Login error:', err);
+    showToast('Login Failed: ' + (err.message || 'Invalid credentials'), true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Login to Dashboard';
+    }
+  }
+  return false;
+}
+
+function initDashboard(admin) {
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('dashboardView').style.display = 'block';
+  document.getElementById('authControls').style.display = 'flex';
+  document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
+  applyTemplate('mining_boost');
+  loadStats();
+  setInterval(() => { if (token) loadStats(); }, 15000);
+  loadCampaigns();
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('hb_admin_token');
+  document.getElementById('loginView').style.display = 'block';
+  document.getElementById('dashboardView').style.display = 'none';
+  document.getElementById('authControls').style.display = 'none';
+}
+
+function switchTab(tabId, el) {
+  document.querySelectorAll('.nav-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+  ['campaigns', 'broadcast', 'users', 'withdrawals', 'deposits', 'settings'].forEach(t => {
+    const tabEl = document.getElementById('tab-' + t);
+    if (tabEl) tabEl.style.display = (t === tabId) ? 'block' : 'none';
+  });
+  if (el) {
+    el.classList.add('active');
+  } else if (typeof event !== 'undefined' && event && event.target) {
+    event.target.classList.add('active');
+  }
+
+  if (tabId === 'campaigns') loadCampaigns();
+  if (tabId === 'users') loadUsers();
+  if (tabId === 'withdrawals') loadWithdrawals();
+  if (tabId === 'deposits') loadDeposits();
+  if (tabId === 'settings') loadSettings();
+  if (tabId === 'broadcast') loadAutoBroadcast();
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch(API_URL + '/api/admin/dashboard', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('statUsers').innerText = data.total_users || 0;
+    if (document.getElementById('statOnlineUsers')) {
+      document.getElementById('statOnlineUsers').innerText = data.online_users !== undefined ? data.online_users : (data.dau || 0);
+    }
+    document.getElementById('statBP').innerText = (data.total_bp || 0).toFixed(1) + ' GHS';
+    document.getElementById('statWithdrawals').innerText = data.pending_withdrawals || 0;
+  } catch (e) {}
+}
+
+// 1. CAMPAIGNS
+async function loadCampaigns() {
+  const status = document.getElementById('campStatusFilter').value;
+  const tbody = document.getElementById('campaignsBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Loading campaigns...</td></tr>';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns?status=' + encodeURIComponent(status), { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.campaigns || [];
+    
+    const activeCount = list.filter(c => c.status === 'active').length;
+    document.getElementById('statActiveCamps').innerText = activeCount;
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No campaigns found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(c => {
+      const isWaiting = c.status === 'waiting_for_payment';
+      const badgeClass = c.status === 'active' ? 'badge-active' : (c.status === 'waiting_for_payment' ? 'badge-waiting' : 'badge-completed');
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:800; color:#fff;">${escapeHtml(c.title || 'Untitled')}</div>
+            <a href="${escapeHtml(c.target)}" target="_blank" class="font-mono" style="font-size:11px; color:#06b6d4; text-decoration:none;">${escapeHtml(c.target)}</a>
+          </td>
+          <td><span class="badge" style="background:#1e2d27;">${escapeHtml(c.type)}</span></td>
+          <td class="font-mono" style="color:#f59e0b; font-weight:700;">${escapeHtml(c.payment_memo || '-')}</td>
+          <td>${(c.cost || 0).toFixed(3)} GRAM</td>
+          <td>${c.done_completions || 0} / ${c.total_completions}</td>
+          <td><span class="badge ${badgeClass}">${c.status}</span></td>
+          <td class="font-mono text-muted" style="font-size:11px;">${new Date(c.created_at).toLocaleString()}</td>
+          <td>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:nowrap;">
+              ${isWaiting ? `
+                <button onclick="activateCampaign('${c.id}')" class="btn btn-primary" style="padding:5px 9px; font-size:11px;">
+                  ⚡ Activate
+                </button>
+              ` : (c.status === 'completed' || c.status === 'finished') ? `
+                <button onclick="setCampaignStatus('${c.id}', 'active')" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ▶️ Reactivate
+                </button>
+              ` : `
+                <button onclick="setCampaignStatus('${c.id}', 'completed')" class="btn" style="background:#064e3b; color:#34d399; border:1px solid #059669; padding:5px 9px; font-size:11px; font-weight:700;">
+                  ✅ Complete
+                </button>
+              `}
+              <button onclick="boostCampaign('${c.id}', ${c.done_completions || 0}, ${c.total_completions || 0})" class="btn" style="background:#451a03; color:#fbbf24; border:1px solid #d97706; padding:5px 9px; font-size:11px; font-weight:700;">
+                ⚡ Boost
+              </button>
+              <button onclick="deleteCampaign('${c.id}')" class="btn btn-danger" style="padding:5px 9px; font-size:11px;">
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading: ' + err.message + '</td></tr>';
+  }
+}
+
+function openCreateCampaignModal() {
+  document.getElementById('createCampModal').style.display = 'flex';
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+async function handleCreateCampaign(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const title = (document.getElementById('newCampTitle')?.value || '').trim();
+  const target = (document.getElementById('newCampTarget')?.value || '').trim();
+  const type = document.getElementById('newCampType')?.value || 'channel';
+  const total_completions = parseInt(document.getElementById('newCampCompletions')?.value) || 100;
+  const reward_bp = parseFloat(document.getElementById('newCampReward')?.value) || 0.1;
+
+  if (!title || !target) {
+    showToast('Please enter both Title and Target URL', true);
+    return;
+  }
+
+  const btn = document.getElementById('createCampSubmitBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Publishing...';
+  }
+
+  try {
+    const activeUrl = API_URL || 'https://hashbee.onrender.com';
+    console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
+    const res = await fetch(activeUrl + '/api/admin/campaigns', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ title, target, type, total_completions, reward_bp })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) {
+        showToast('Session expired. Please log in again.', true);
+        logout();
+        return;
+      }
+      throw new Error(data.error || 'Server error ' + res.status);
+    }
+    showToast('🎉 Campaign created and published live!');
+    closeModal('createCampModal');
+    // Reset form
+    document.getElementById('newCampTitle').value = '';
+    document.getElementById('newCampTarget').value = '';
+    loadCampaigns();
+  } catch (err) {
+    console.error('Create campaign error:', err);
+    showToast('Error: ' + (err.message || 'Network error'), true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Publish Live Now';
+    }
+  }
+}
+
+async function activateCampaign(id) {
+  if (!confirm('Activate this campaign and publish it to the Missions board immediately?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: 'active', admin_notes: 'Manual instant activation by admin' })
+    });
+    if (!res.ok) throw new Error('Failed to activate campaign');
+    showToast('🎉 Campaign activated & published to missions!');
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+
+async function setCampaignStatus(id, newStatus) {
+  const label = newStatus === 'completed' ? 'mark this campaign as COMPLETED' : 'REACTIVATE this campaign';
+  if (!confirm('Are you sure you want to ' + label + '?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: newStatus, admin_notes: 'Status changed to ' + newStatus + ' by admin' })
+    });
+    if (!res.ok) throw new Error('Failed to update status');
+    showToast('✅ Campaign status updated to ' + newStatus.toUpperCase());
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function boostCampaign(id, currentDone, total) {
+  const newDone = prompt('⚡ Boost Campaign Progress:\nEnter new completed count (Current: ' + currentDone + '/' + total + '):', currentDone);
+  if (newDone === null || newDone.trim() === '' || isNaN(parseInt(newDone))) return;
+  const doneVal = parseInt(newDone.trim());
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ done_completions: doneVal })
+    });
+    if (!res.ok) throw new Error('Boost failed');
+    showToast('⚡ Campaign progress updated to ' + doneVal + ' / ' + total);
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function deleteCampaign(id) {
+  if (!confirm('Are you sure you want to permanently delete this campaign and remove its mission?')) return;
+  try {
+    const res = await fetch(API_URL + '/api/admin/campaigns/' + id, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete campaign');
+    showToast('🗑️ Campaign deleted successfully');
+    loadCampaigns();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 2. HYPE BROADCAST
+function applyTemplate(key) {
+  if (HYPE_TEMPLATES[key]) {
+    document.getElementById('broadcastMsg').value = HYPE_TEMPLATES[key].msg;
+    document.getElementById('broadcastBtnText').value = HYPE_TEMPLATES[key].btn;
+  }
+  updatePreview();
+}
+
+function updatePreview() {
+  const msg = document.getElementById('broadcastMsg').value || 'Type your message...';
+  const btn = document.getElementById('broadcastBtnText').value || 'Open App';
+  
+  document.getElementById('previewText').innerText = msg;
+  document.getElementById('previewBtnLabel').innerText = btn;
+}
+
+function toggleSpecificTgId(val) {
+  document.getElementById('specificTgIdWrap').style.display = (val === 'single') ? 'block' : 'none';
+}
+
+let broadcastPollTimer = null;
+
+function startBroadcastPolling() {
+  const box = document.getElementById('broadcastProgressBox');
+  if (box) box.style.display = 'block';
+
+  if (broadcastPollTimer) clearInterval(broadcastPollTimer);
+
+  broadcastPollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(API_URL + '/api/admin/broadcast/status', { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      document.getElementById('broadcastNumbers').innerText = (data.done || 0) + ' / ' + (data.total || 0);
+      document.getElementById('broadcastSentCount').innerText = data.sent || 0;
+      document.getElementById('broadcastFailedCount').innerText = data.failed || 0;
+      document.getElementById('broadcastPercent').innerText = (data.percent || 0) + '%';
+      document.getElementById('broadcastProgressBar').style.width = (data.percent || 0) + '%';
+
+      if (data.is_running) {
+        document.getElementById('broadcastStatusText').innerText = '⚡ Broadcasting in progress (' + (data.percent || 0) + '%)...';
+        document.getElementById('broadcastStatusText').style.color = '#10b981';
+      } else {
+        clearInterval(broadcastPollTimer);
+        broadcastPollTimer = null;
+        document.getElementById('broadcastStatusText').innerText = '🎉 Broadcast Completed! (Sent: ' + (data.sent || 0) + ' / Total: ' + (data.total || 0) + ')';
+        document.getElementById('broadcastStatusText').style.color = '#06b6d4';
+        const btn = document.getElementById('sendBroadcastBtn');
+        if (btn) {
+          btn.innerText = '🚀 Send Hype Broadcast Now';
+          btn.disabled = false;
+        }
+      }
+    } catch (e) {}
+  }, 800);
+}
+
+async function sendBroadcast() {
+  const msg = document.getElementById('broadcastMsg').value.trim();
+  const btnText = document.getElementById('broadcastBtnText').value.trim();
+  const btnUrl = document.getElementById('broadcastBtnUrl').value.trim();
+  const audience = document.getElementById('broadcastAudience').value;
+  const targetTgId = parseInt(document.getElementById('broadcastTargetTgId').value) || 0;
+
+  if (!msg) {
+    showToast('Please enter a message to broadcast', true);
+    return;
+  }
+
+  if (audience === 'single' && !targetTgId) {
+    showToast('Please enter target Telegram ID', true);
+    return;
+  }
+
+  const confirmMsg = audience === 'all'
+    ? 'Are you sure you want to broadcast this message to ALL registered users?'
+    : 'Send test broadcast to Telegram ID: ' + targetTgId + '?';
+
+  if (!confirm(confirmMsg)) return;
+
+  const btn = document.getElementById('sendBroadcastBtn');
+  btn.innerText = '⏳ Broadcasting messages...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/broadcast', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        message: msg,
+        button_text: btnText,
+        button_url: btnUrl,
+        target_telegram_id: audience === 'single' ? targetTgId : 0
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Broadcast failed');
+    showToast('📢 ' + data.message);
+    startBroadcastPolling();
+  } catch (err) {
+    showToast(err.message, true);
+    btn.innerText = '🚀 Send Hype Broadcast Now';
+    btn.disabled = false;
+  }
+}
+
+// Automated Hourly Broadcast Handlers
+function toggleAutoBroadcastMode(mode) {
+  const isRotate = mode === 'rotate' || mode === 'random';
+  const infoEl = document.getElementById('autoBroadcastRotationInfo');
+  const fixedEl = document.getElementById('autoBroadcastFixedOptions');
+  if (infoEl) infoEl.style.display = isRotate ? 'block' : 'none';
+  if (fixedEl) fixedEl.style.display = isRotate ? 'none' : 'block';
+}
+
+function applyAutoTemplate(key) {
+  if (HYPE_TEMPLATES[key]) {
+    document.getElementById('autoBroadcastMsg').value = HYPE_TEMPLATES[key].msg;
+    document.getElementById('autoBroadcastBtnText').value = HYPE_TEMPLATES[key].btn;
+  }
+}
+
+async function loadAutoBroadcast() {
+  try {
+    const res = await fetch(API_URL + '/api/admin/auto-broadcast', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const enabledSel = document.getElementById('autoBroadcastEnabled');
+    if (enabledSel) enabledSel.value = data.enabled ? 'true' : 'false';
+
+    const intSel = document.getElementById('autoBroadcastInterval');
+    if (intSel) intSel.value = (data.interval_minutes || 60).toString();
+
+    const modeSel = document.getElementById('autoBroadcastMode');
+    if (modeSel) {
+      modeSel.value = (data.mode === 'fixed') ? 'fixed' : 'rotate';
+      toggleAutoBroadcastMode(modeSel.value);
+    }
+
+    const tplSel = document.getElementById('autoBroadcastTemplateSelect');
+    if (tplSel && data.template_key) tplSel.value = data.template_key;
+
+    const msgEl = document.getElementById('autoBroadcastMsg');
+    if (msgEl) {
+      if (data.message) {
+        msgEl.value = data.message;
+      } else if (HYPE_TEMPLATES.crate_mega_jackpot) {
+        msgEl.value = HYPE_TEMPLATES.crate_mega_jackpot.msg;
+      }
+    }
+
+    const btnTextEl = document.getElementById('autoBroadcastBtnText');
+    if (btnTextEl) btnTextEl.value = data.button_text || '📦 Unlock Mystery Crates 🎁';
+
+    const btnUrlEl = document.getElementById('autoBroadcastBtnUrl');
+    if (btnUrlEl) btnUrlEl.value = data.button_url || 'https://miniapp-five-topaz.vercel.app';
+
+    const lastRunEl = document.getElementById('autoBroadcastLastRun');
+    if (lastRunEl) {
+      lastRunEl.innerText = data.last_run_at ? new Date(data.last_run_at).toLocaleString() : 'Never (Waiting for next cycle)';
+    }
+
+    const badge = document.getElementById('autoBroadcastStatusBadge');
+    if (badge) {
+      if (data.enabled) {
+        const modeLabel = (data.mode === 'fixed') ? 'Fixed' : '🎲 Random Rotation';
+        badge.innerHTML = '🟢 Active (Every ' + (data.interval_minutes || 60) + ' min • ' + modeLabel + ')';
+        badge.style.background = '#064e3b';
+        badge.style.color = '#34d399';
+      } else {
+        badge.innerHTML = '⏸️ Disabled';
+        badge.style.background = '#1e2d27';
+        badge.style.color = '#9ca3af';
+      }
+    }
+  } catch (err) {
+    console.error('loadAutoBroadcast error:', err);
+  }
+}
+
+async function saveAutoBroadcast() {
+  const enabled = document.getElementById('autoBroadcastEnabled').value === 'true';
+  const interval = parseInt(document.getElementById('autoBroadcastInterval').value) || 60;
+  const mode = document.getElementById('autoBroadcastMode')?.value || 'rotate';
+  const templateKey = document.getElementById('autoBroadcastTemplateSelect').value;
+  const message = document.getElementById('autoBroadcastMsg').value.trim();
+  const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
+  const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
+
+  if (enabled && mode === 'fixed' && !message) {
+    showToast('Please enter a message for automated broadcast', true);
+    return;
+  }
+
+  const btn = document.getElementById('saveAutoBroadcastBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Saving settings...';
+  }
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/auto-broadcast', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        enabled: enabled,
+        interval_minutes: interval,
+        mode: mode,
+        template_key: templateKey,
+        message: message,
+        button_text: buttonText,
+        button_url: buttonUrl
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save auto broadcast');
+    showToast(data.message || '✅ Automated broadcast configuration saved!');
+    loadAutoBroadcast();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '💾 Save Automated Broadcast Settings';
+    }
+  }
+}
+
+async function testSendAutoBroadcast() {
+  const message = document.getElementById('autoBroadcastMsg').value.trim();
+  const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
+  const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
+
+  if (!message) {
+    showToast('Please load or enter a message first', true);
+    return;
+  }
+
+  const tgIdStr = prompt('Enter your Telegram ID to receive instant test message:', '6446145632');
+  if (!tgIdStr || isNaN(parseInt(tgIdStr))) return;
+  const targetId = parseInt(tgIdStr);
+
+  showToast('⏳ Sending test message to ' + targetId + '...');
+  try {
+    const res = await fetch(API_URL + '/api/admin/broadcast', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        message: message,
+        button_text: buttonText,
+        button_url: buttonUrl,
+        target_telegram_id: targetId
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Test broadcast failed');
+    showToast('🎉 Test broadcast sent to Telegram ID ' + targetId + '!');
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 3. USERS (With Full Database-Wide Pagination, Sorting & 360° Inspection)
+let currentUserOffset = 0;
+let totalUsersCount = 0;
+let selectedUserId = null;
+let selectedUserTelegramId = null;
+let selectedUserName = '';
+let selectedUserStatus = 'active';
+
+function applyUserChip(status, sort, el) {
+  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (document.getElementById('userStatusFilter')) document.getElementById('userStatusFilter').value = status;
+  if (document.getElementById('userSortFilter')) document.getElementById('userSortFilter').value = sort;
+  loadUsers(0);
+}
+
+function changeUserPage(delta) {
+  const limit = parseInt(document.getElementById('userPageSize')?.value || '50');
+  const newOffset = currentUserOffset + (delta * limit);
+  if (newOffset >= 0 && newOffset < totalUsersCount) {
+    loadUsers(newOffset);
+  }
+}
+
+async function loadUsers(offset = 0) {
+  currentUserOffset = offset;
+  const search = document.getElementById('userSearch')?.value.trim() || '';
+  const status = document.getElementById('userStatusFilter')?.value || '';
+  const sort = document.getElementById('userSortFilter')?.value || 'created_desc';
+  const limit = parseInt(document.getElementById('userPageSize')?.value || '50');
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">⚡</span> Loading platform users...</td></tr>';
+
+  try {
+    const url = API_URL + '/api/admin/users?search=' + encodeURIComponent(search) + '&status=' + encodeURIComponent(status) + '&sort=' + encodeURIComponent(sort) + '&limit=' + limit + '&offset=' + offset;
+    const res = await fetch(url, { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.users || [];
+    totalUsersCount = data.total !== undefined ? data.total : list.length;
+
+    // Update total badge
+    const badge = document.getElementById('usersTotalBadge');
+    if (badge) badge.innerText = totalUsersCount.toLocaleString() + ' Total';
+
+    // Update pagination controls
+    const from = totalUsersCount > 0 ? offset + 1 : 0;
+    const to = Math.min(offset + list.length, totalUsersCount);
+    const currentPage = Math.floor(offset / limit) + 1;
+    const totalPages = Math.max(1, Math.ceil(totalUsersCount / limit));
+
+    const pageInfo = document.getElementById('usersPageInfo');
+    if (pageInfo) pageInfo.innerText = `Showing ${from.toLocaleString()} - ${to.toLocaleString()} of ${totalUsersCount.toLocaleString()} users`;
+
+    const pageNum = document.getElementById('usersPageNum');
+    if (pageNum) pageNum.innerText = `Page ${currentPage} of ${totalPages}`;
+
+    const prevBtn = document.getElementById('usersPrevBtn');
+    if (prevBtn) prevBtn.disabled = offset === 0;
+
+    const nextBtn = document.getElementById('usersNextBtn');
+    if (nextBtn) nextBtn.disabled = to >= totalUsersCount;
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">No users found matching current filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(u => {
+      const isBanned = u.status === 'banned';
+      const isFlagged = u.status === 'flagged';
+      const badgeClass = isBanned ? 'badge-cancelled' : (isFlagged ? 'badge-waiting' : 'badge-active');
+      const formattedDate = new Date(u.created_at).toLocaleDateString() + ' ' + new Date(u.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const avatarInitial = (u.first_name || u.username || 'U')[0].toUpperCase();
+
+      return `
+        <tr style="cursor:pointer;" class="user-row" onclick="openUserDetailModal('${u.id}')">
+          <td class="font-mono" style="font-weight:700; color:#cbd5e1;" onclick="event.stopPropagation(); openUserDetailModal('${u.id}')">
+            ${u.telegram_id}
+          </td>
+          <td onclick="event.stopPropagation(); openUserDetailModal('${u.id}')">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:28px; height:28px; border-radius:8px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#f59e0b; shrink-0;">
+                ${avatarInitial}
+              </div>
+              <div>
+                <div style="font-weight:800; color:#fff; display:flex; align-items:center; gap:6px;">
+                  <span>${escapeHtml(u.first_name || u.username || 'Anonymous')}</span>
+                  <span class="badge" style="background:#16241f; color:#10b981; font-size:9px; padding:2px 6px;">🔍 Inspect</span>
+                </div>
+                <div class="text-muted font-mono" style="font-size:11px;">@${escapeHtml(u.username || 'none')}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:#10b981; font-weight:900;">${(u.bp || 0).toFixed(2)} GHS</td>
+          <td style="color:#38bdf8; font-weight:800;">
+            <span class="badge" style="background:#0c2233; color:#38bdf8; border:1px solid #1e3a5f;">👥 ${u.referral_count || 0}</span>
+          </td>
+          <td style="color:#f59e0b; font-weight:800;">${(u.honey_balance || 0).toFixed(4)} 🍯</td>
+          <td><span class="badge ${badgeClass}">${u.status || 'active'}</span></td>
+          <td class="font-mono text-muted" style="font-size:11px;">${formattedDate}</td>
+          <td style="text-align:right;" onclick="event.stopPropagation();">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <button onclick="openUserDetailModal('${u.id}')" class="btn btn-gold" style="padding:5px 9px; font-size:11px;">🔍 Inspect</button>
+              <button onclick="openAdjustModal('${u.id}', '${escapeHtml(u.first_name || u.username || '')}', '${escapeHtml(u.username || '')}')" class="btn btn-secondary" style="padding:5px 9px; font-size:11px;">⚡ Adjust</button>
+              <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn ${isBanned ? 'btn-primary' : 'btn-danger'}" style="padding:5px 9px; font-size:11px;">${isBanned ? 'Unban' : 'Ban'}</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error loading users: ' + err.message + '</td></tr>';
+  }
+}
+
+// 360° USER DETAILS INSPECTION MODAL
+async function openUserDetailModal(userIdOrTgId) {
+  if (!userIdOrTgId) return;
+  document.getElementById('userDetailModal').style.display = 'flex';
+  
+  // Reset tabs to default
+  switchUserDetailTab('referrals');
+
+  // Show loading skeleton in modal
+  document.getElementById('uModalName').innerText = 'Loading Profile...';
+  document.getElementById('uModalUsername').innerText = '@...';
+  document.getElementById('uModalTgId').innerText = '-';
+  document.getElementById('uModalGHS').innerText = '...';
+  document.getElementById('uModalHoney').innerText = '...';
+  document.getElementById('uModalRefs').innerText = '...';
+  document.getElementById('uModalDeposited').innerText = '...';
+  document.getElementById('uModalWithdrawn').innerText = '...';
+  document.getElementById('uModalReferralsBody').innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching swarm & referrals...</td></tr>';
+  document.getElementById('uModalDepositsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching deposits...</td></tr>';
+  document.getElementById('uModalWithdrawalsBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching withdrawals...</td></tr>';
+  document.getElementById('uModalTxsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching transactions...</td></tr>';
+  document.getElementById('uModalMissionsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Fetching missions...</td></tr>';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + encodeURIComponent(userIdOrTgId) + '/details', {
+      headers: authHeaders()
+    });
+    if (!res.ok) {
+      throw new Error('User profile not found or server error');
+    }
+    const data = await res.json();
+    renderUserDetailModal(data);
+  } catch (err) {
+    showToast('Failed to load user details: ' + err.message, true);
+    document.getElementById('uModalName').innerText = 'User Inspection Error';
+    document.getElementById('uModalUsername').innerText = err.message;
+  }
+}
+
+function renderUserDetailModal(d) {
+  const u = d.user || {};
+  selectedUserId = u.id;
+  selectedUserTelegramId = u.telegram_id;
+  selectedUserName = u.first_name || u.username || 'Miner';
+  selectedUserStatus = u.status || 'active';
+
+  // Avatar & Header
+  const avatarChar = (u.first_name || u.username || 'U')[0].toUpperCase();
+  document.getElementById('uModalAvatar').innerText = avatarChar;
+  document.getElementById('uModalName').innerText = u.first_name || u.username || 'Anonymous Miner';
+  document.getElementById('uModalUsername').innerText = '@' + (u.username || 'none');
+  document.getElementById('uModalTgId').innerText = u.telegram_id || '0';
+  document.getElementById('uModalLangBadge').innerText = (u.language || 'en').toUpperCase();
+  
+  // Status Badge
+  const badgeEl = document.getElementById('uModalStatusBadge');
+  badgeEl.className = 'badge ' + (u.status === 'banned' ? 'badge-cancelled' : (u.status === 'flagged' ? 'badge-waiting' : 'badge-active'));
+  badgeEl.innerText = (u.status || 'active').toUpperCase();
+
+  // Joined Date & Relative Time
+  const joinedDate = new Date(u.created_at);
+  const daysAgo = Math.max(0, Math.floor((Date.now() - joinedDate.getTime()) / (1000 * 60 * 60 * 24)));
+  document.getElementById('uModalJoinedDate').innerText = `Joined: ${joinedDate.toLocaleDateString()} (${daysAgo}d ago)`;
+
+  // Quick Action Buttons
+  const banBtn = document.getElementById('uModalStatusBtn');
+  if (banBtn) {
+    banBtn.innerText = u.status === 'banned' ? '✅ Unban User' : '🚫 Ban User';
+    banBtn.className = 'btn ' + (u.status === 'banned' ? 'btn-primary' : 'btn-danger');
+  }
+
+  // Key Metrics Strip
+  document.getElementById('uModalGHS').innerText = (u.bp || 0).toFixed(2) + ' GHS';
+  document.getElementById('uModalHoney').innerText = (u.honey_balance || 0).toFixed(4) + ' 🍯';
+  const pendingHoney = d.hive?.pending_honey !== undefined ? d.hive.pending_honey : 0;
+  document.getElementById('uModalPendingHoney').innerText = `+${pendingHoney.toFixed(4)} in hive (${d.hive?.is_full ? 'Full' : 'Mining'})`;
+  document.getElementById('uModalRefs').innerText = (d.total_referrals || u.referral_count || 0) + ' L1 Miners';
+  
+  // Total Deposited
+  const tonDep = d.total_deposited_ton || 0;
+  const starsDep = d.total_deposited_stars || 0;
+  const gramDep = d.total_deposited_gram || 0;
+  document.getElementById('uModalDeposited').innerText = tonDep > 0 ? `${tonDep.toFixed(2)} TON` : (starsDep > 0 ? `${starsDep} Stars` : (gramDep > 0 ? `${gramDep.toFixed(2)} GRAM` : '0 TON'));
+  
+  // Total Withdrawn
+  const wHoney = d.total_withdrawn_honey || 0;
+  const wUsd = d.total_withdrawn_usd || 0;
+  document.getElementById('uModalWithdrawn').innerText = wUsd > 0 ? `$${wUsd.toFixed(2)} (${wHoney.toFixed(1)} 🍯)` : '0.00';
+  
+  // Streak & Spins
+  document.getElementById('uModalStreak').innerText = `Day ${u.streak_count || 0} • ${u.spin_balance || 0} Spins`;
+
+  // Badges count on sub-tabs
+  document.getElementById('uModalRefCountBadge').innerText = d.total_referrals || (d.referrals ? d.referrals.length : 0);
+  document.getElementById('uModalDepCountBadge').innerText = d.deposits ? d.deposits.length : 0;
+  document.getElementById('uModalWCountBadge').innerText = d.withdrawals ? d.withdrawals.length : 0;
+
+  // 1. Render Referrer & Direct Referrals
+  const ref = d.referrer;
+  const refBox = document.getElementById('uModalReferrerContent');
+  if (ref && ref.telegram_id) {
+    refBox.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong style="color:#f59e0b;">${escapeHtml(ref.first_name || ref.username || 'Inviter')}</strong> 
+          <span class="font-mono text-muted" style="font-size:12px;">(@${escapeHtml(ref.username || 'none')})</span>
+          <span class="font-mono" style="font-size:11px; color:#9ca3af; margin-left:6px;">TG ID: ${ref.telegram_id}</span>
+        </div>
+        <button onclick="openUserDetailModal('${ref.id}')" class="btn btn-secondary" style="padding:4px 10px; font-size:11px;">
+          🔍 Inspect Inviter Profile
+        </button>
+      </div>
+    `;
+  } else {
+    refBox.innerHTML = '<span style="color:var(--text-muted);">Direct Signup via Bot / No Referrer</span>';
+  }
+
+  const refsBody = document.getElementById('uModalReferralsBody');
+  const refsList = d.referrals || [];
+  if (refsList.length === 0) {
+    refsBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No direct referrals invited yet.</td></tr>';
+  } else {
+    refsBody.innerHTML = refsList.map(r => `
+      <tr>
+        <td class="font-mono">${r.telegram_id}</td>
+        <td>
+          <div style="font-weight:700; color:#fff;">${escapeHtml(r.first_name || r.username || 'Miner')}</div>
+          <div class="text-muted font-mono" style="font-size:11px;">@${escapeHtml(r.username || 'none')}</div>
+        </td>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(r.created_at).toLocaleDateString()}</td>
+        <td style="color:#10b981; font-weight:800;">${(r.bp || 0).toFixed(2)} GHS</td>
+        <td style="color:#f59e0b; font-weight:800;">${(r.honey_balance || 0).toFixed(2)}</td>
+        <td>
+          ${r.has_collected ? '<span style="color:#10b981; font-weight:800;">✅ Active Miner</span>' : '<span style="color:#9ca3af;">⏳ Never Collected</span>'}
+        </td>
+        <td><span class="badge ${r.status === 'banned' ? 'badge-cancelled' : 'badge-active'}">${r.status || 'active'}</span></td>
+        <td>
+          <button onclick="openUserDetailModal('${r.id}')" class="btn btn-secondary" style="padding:4px 8px; font-size:10px;">
+            🔍 Inspect
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // 2. Render Deposits & Purchases
+  document.getElementById('uModalDepTON').innerText = `${tonDep.toFixed(3)} TON`;
+  document.getElementById('uModalDepStars').innerText = `${starsDep} ⭐`;
+  document.getElementById('uModalDepGRAM').innerText = `${gramDep.toFixed(3)} GRAM`;
+  
+  const depBody = document.getElementById('uModalDepositsBody');
+  const depList = d.deposits || [];
+  if (depList.length === 0) {
+    depBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No deposit transactions recorded for this user.</td></tr>';
+  } else {
+    depBody.innerHTML = depList.map(dep => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(dep.created_at).toLocaleString()}</td>
+        <td><span class="badge" style="background:#162b24; color:#34d399;">${escapeHtml(dep.type)}</span></td>
+        <td style="font-weight:900; color:#10b981;">+${dep.amount}</td>
+        <td class="font-mono" style="font-weight:800; color:#f59e0b;">${escapeHtml(dep.currency)}</td>
+        <td style="color:#cbd5e1; font-size:12px;">${escapeHtml(dep.description || '-')}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 3. Render Withdrawals
+  const wBody = document.getElementById('uModalWithdrawalsBody');
+  const wList = d.withdrawals || [];
+  if (wList.length === 0) {
+    wBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">No withdrawal requests from this user.</td></tr>';
+  } else {
+    wBody.innerHTML = wList.map(w => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(w.created_at).toLocaleString()}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="font-mono" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(w.address)}</span>
+            <button onclick="copyToClipboard('${escapeHtml(w.address)}', this)" class="btn" style="background:#16241f; padding:2px 6px; font-size:10px; border-radius:4px; color:#10b981;">📋</button>
+            <a href="https://tonscan.org/address/${escapeHtml(w.address)}" target="_blank" class="btn" style="background:#1e293b; padding:2px 6px; font-size:10px; border-radius:4px; color:#38bdf8; text-decoration:none;">↗</a>
+          </div>
+        </td>
+        <td style="font-weight:900; color:#10b981;">${w.amount} ${escapeHtml(w.network || 'GRAM')}</td>
+        <td style="color:#f59e0b;">${w.honey_amount} 🍯</td>
+        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : (w.status === 'rejected' ? 'badge-cancelled' : 'badge-waiting')}">${w.status}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${escapeHtml(w.tx_hash || w.reason || '-')}</td>
+        <td>
+          ${w.status === 'pending' ? `
+            <div style="display:flex; gap:4px;">
+              <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:4px 8px; font-size:10px;">Mark Paid</button>
+              <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:4px 8px; font-size:10px;">Reject</button>
+            </div>
+          ` : `<span>-</span>`}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // 4. Render Ledger Transactions
+  const txBody = document.getElementById('uModalTxsBody');
+  const txList = d.transactions || [];
+  if (txList.length === 0) {
+    txBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No transaction logs found.</td></tr>';
+  } else {
+    txBody.innerHTML = txList.map(tx => `
+      <tr>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(tx.created_at).toLocaleString()}</td>
+        <td><span class="badge" style="background:#1c2420; color:#e2e8f0;">${escapeHtml(tx.type)}</span></td>
+        <td style="font-weight:800; color:${tx.amount >= 0 ? '#10b981' : '#ef4444'};">${tx.amount >= 0 ? '+' : ''}${tx.amount}</td>
+        <td class="font-mono" style="font-weight:700; color:#f59e0b;">${escapeHtml(tx.currency)}</td>
+        <td style="color:#cbd5e1; font-size:12px;">${escapeHtml(tx.description || '-')}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 5. Render Completed Missions
+  const mBody = document.getElementById('uModalMissionsBody');
+  const mList = d.missions || [];
+  if (mList.length === 0) {
+    mBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No missions completed yet.</td></tr>';
+  } else {
+    mBody.innerHTML = mList.map(m => `
+      <tr>
+        <td style="font-weight:700; color:#fff;">${escapeHtml(m.title)}</td>
+        <td><span class="badge" style="background:#1e2d27;">${escapeHtml(m.type)}</span></td>
+        <td style="font-weight:800; color:#10b981;">+${m.reward_bp} GHS</td>
+        <td><span class="badge badge-active">${escapeHtml(m.status)}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${m.verified_at ? new Date(m.verified_at).toLocaleString() : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 6. Anti-Fraud & Risk Score
+  let score = 0;
+  const reasons = [];
+  if (u.referral_count >= 10) { score += 35; reasons.push(`🔥 High Organic Reach: ${u.referral_count} direct invites.`); }
+  else if (u.referral_count >= 2) { score += 20; reasons.push(`👥 Active Swarm: ${u.referral_count} direct invites.`); }
+
+  if (u.has_collected) { score += 25; reasons.push(`⛏️ Cloud Mining Active: User has harvested Honey from hive.`); }
+  if (u.has_completed_mission) { score += 20; reasons.push(`🎯 Mission Verified: Completed channel joins and sponsor tasks.`); }
+  if (u.bp > 15) { score += 10; reasons.push(`⚡ Hashpower Accumulated: ${u.bp.toFixed(1)} GHS total power.`); }
+  if (daysAgo >= 3) { score += 10; reasons.push(`📅 Account Maturity: Registered ${daysAgo} days ago.`); }
+
+  const riskTitle = document.getElementById('uModalRiskTitle');
+  const riskScore = document.getElementById('uModalRiskScore');
+  const riskBox = document.getElementById('uModalFraudVerdict');
+  riskScore.innerText = `${score} / 100`;
+
+  if (score >= 60) {
+    riskTitle.innerText = '🟢 HIGH LEGITIMACY (REAL ACTIVE PROMOTER)';
+    riskBox.style.background = '#10221a';
+    riskBox.style.borderColor = '#059669';
+  } else if (score >= 35) {
+    riskTitle.innerText = '🔵 MODERATE LEGITIMACY (REGULAR MINER)';
+    riskBox.style.background = '#0d1e26';
+    riskBox.style.borderColor = '#0284c7';
+  } else {
+    riskTitle.innerText = '🟡 LOW ACTIVITY / UNVERIFIED (CHECK CAREFULLY)';
+    riskBox.style.background = '#261b0c';
+    riskBox.style.borderColor = '#d97706';
+  }
+
+  document.getElementById('uModalRiskReasons').innerHTML = reasons.map(r => `<div>• ${r}</div>`).join('') || '<div>• Account recently registered with minimal activity yet.</div>';
+  document.getElementById('uModalUuid').innerText = u.id;
+}
+
+function switchUserDetailTab(tabId, el) {
+  document.querySelectorAll('#userDetailModal .sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+  ['referrals', 'deposits', 'withdrawals', 'txs', 'missions', 'fraud'].forEach(t => {
+    const tabEl = document.getElementById('uSubTab-' + t);
+    if (tabEl) tabEl.style.display = (t === tabId) ? 'block' : 'none';
+  });
+  if (el) {
+    el.classList.add('active');
+  } else {
+    const firstBtn = document.querySelector(`#userDetailModal .sub-tab-btn[onclick*="${tabId}"]`);
+    if (firstBtn) firstBtn.classList.add('active');
+  }
+}
+
+// DIRECT TELEGRAM MESSAGE MODAL
+function openDirectMsgModal(targetUserId, username, tgId, firstName) {
+  const uid = targetUserId || selectedUserId;
+  const uname = username || selectedUserName;
+  const tid = tgId || selectedUserTelegramId;
+  
+  if (!uid) {
+    showToast('Please select a user first', true);
+    return;
+  }
+
+  selectedUserId = uid;
+  document.getElementById('directMsgTargetLabel').innerText = `Sending instant message to ${uname} (TG ID: ${tid})`;
+  document.getElementById('directMsgText').value = `Hey ${uname}, your custom notification from HashBee! 🐝✨`;
+  document.getElementById('directMsgModal').style.display = 'flex';
+}
+
+async function submitDirectMessage() {
+  const msg = document.getElementById('directMsgText').value.trim();
+  const btnText = document.getElementById('directMsgBtnText').value.trim();
+  const btnUrl = document.getElementById('directMsgBtnUrl').value.trim();
+
+  if (!msg) {
+    showToast('Please enter a message', true);
+    return;
+  }
+
+  const btn = document.getElementById('directMsgSendBtn');
+  btn.disabled = true;
+  btn.innerText = 'Sending to Telegram...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/message', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ message: msg, button_text: btnText, button_url: btnUrl })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send message');
+    showToast('🎉 ' + data.message);
+    closeModal('directMsgModal');
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '🚀 Send Message Now';
+  }
+}
+
+// ADJUST BALANCE MODAL
+function openAdjustModal(userId, name, username) {
+  const uid = userId || selectedUserId;
+  const uname = name || username || selectedUserName;
+  if (!uid) {
+    showToast('Please select a user first', true);
+    return;
+  }
+  selectedUserId = uid;
+  document.getElementById('adjustTargetLabel').innerText = `Modifying account parameters for ${uname}`;
+  document.getElementById('adjustModal').style.display = 'flex';
+}
+
+async function submitAdjustBalance() {
+  const type = document.getElementById('adjustType').value;
+  const amount = parseFloat(document.getElementById('adjustAmount').value);
+  const reason = document.getElementById('adjustReason').value.trim();
+
+  if (isNaN(amount) || amount === 0) {
+    showToast('Please enter a valid non-zero amount', true);
+    return;
+  }
+
+  const btn = document.getElementById('adjustSubmitBtn');
+  btn.disabled = true;
+  btn.innerText = 'Updating...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/balance', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ type: type, amount: amount, reason: reason })
+    });
+    if (!res.ok) throw new Error('Failed to adjust balance');
+    showToast('✅ Account balance & power updated!');
+    closeModal('adjustModal');
+    loadUsers();
+    if (document.getElementById('userDetailModal').style.display === 'flex') {
+      openUserDetailModal(selectedUserId);
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '💾 Save Adjustment';
+  }
+}
+
+// RESET STREAK
+async function resetUserStreakPrompt() {
+  if (!selectedUserId) return;
+  const streakStr = prompt('Enter new daily check-in streak count (0 to reset):', '0');
+  if (streakStr === null || isNaN(parseInt(streakStr))) return;
+  const streak = parseInt(streakStr);
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/reset-streak', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ streak_count: streak })
+    });
+    if (!res.ok) throw new Error('Streak reset failed');
+    showToast(`✅ User streak set to Day ${streak}`);
+    openUserDetailModal(selectedUserId);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// TOGGLE STATUS
+async function toggleSelectedUserStatus() {
+  if (!selectedUserId) return;
+  const newStatus = selectedUserStatus === 'banned' ? 'active' : 'banned';
+  if (!confirm(`Are you sure you want to mark this user as ${newStatus.toUpperCase()}?`)) return;
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/users/' + selectedUserId + '/status', {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: newStatus, reason: 'Admin panel moderation' })
+    });
+    if (!res.ok) throw new Error('Failed to update status');
+    showToast(`User status changed to ${newStatus.toUpperCase()}`);
+    loadUsers();
+    openUserDetailModal(selectedUserId);
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// CSV EXPORT
+function exportUsersCSV() {
+  showToast('⏳ Generating CSV export of users database...');
+  fetch(API_URL + '/api/admin/users?limit=1000', { headers: authHeaders() })
+    .then(r => r.json())
+    .then(data => {
+      const users = data.users || [];
+      if (users.length === 0) {
+        showToast('No user data to export', true);
+        return;
+      }
+      const headers = ['ID', 'Telegram_ID', 'Username', 'First_Name', 'GHS_Power', 'Referral_Count', 'Honey_Balance', 'Streak', 'Status', 'Joined_At'];
+      const rows = users.map(u => [
+        u.id,
+        u.telegram_id,
+        `"${(u.username || '').replace(/"/g, '""')}"`,
+        `"${(u.first_name || '').replace(/"/g, '""')}"`,
+        u.bp || 0,
+        u.referral_count || 0,
+        u.honey_balance || 0,
+        u.streak_count || 0,
+        u.status || 'active',
+        `"${new Date(u.created_at).toISOString()}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `hashbee_users_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`🎉 Exported ${users.length} users to CSV!`);
+    })
+    .catch(err => {
+      showToast('Export failed: ' + err.message, true);
+    });
+}
+
+// 4. WITHDRAWALS
+async function loadWithdrawals() {
+  const filterStatus = document.getElementById('withdrawalStatusFilter')?.value || '';
+  const tbody = document.getElementById('withdrawalsBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">Loading withdrawals...</td></tr>';
+  try {
+    const url = API_URL + '/api/admin/withdrawals' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
+    const res = await fetch(url, { headers: authHeaders() });
+    const data = await res.json();
+    const list = data.withdrawals || [];
+    
+    // Update top pending count
+    const pendingCount = list.filter(w => w.status === 'pending').length;
+    document.getElementById('statWithdrawals').innerText = pendingCount;
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No withdrawal requests found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(w => `
+      <tr style="cursor:pointer;" onclick="openUserDetailModal('${w.user_id}')">
+        <td onclick="event.stopPropagation(); openUserDetailModal('${w.user_id}')">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-weight:800; color:#fff;">${escapeHtml(w.first_name || w.username || 'Miner')}</div>
+            <span class="badge" style="background:#16241f; color:#10b981; font-size:9px; padding:2px 6px;">🔍 Inspect</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); font-mono;">@${escapeHtml(w.username || 'unknown')} • TG: ${w.telegram_id || '-'}</div>
+        </td>
+        <td onclick="event.stopPropagation();">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="font-mono" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(w.address)}">${escapeHtml(w.address)}</span>
+            <button onclick="copyToClipboard('${escapeHtml(w.address)}', this)" class="btn" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); padding:4px 8px; font-size:10px; border-radius:6px; cursor:pointer;" title="Click to copy full address">📋 Copy</button>
+            <a href="https://tonscan.org/address/${escapeHtml(w.address)}" target="_blank" class="btn" style="background:#1e293b; color:#38bdf8; padding:4px 8px; font-size:10px; border-radius:6px; text-decoration:none;" title="View on TONScan explorer">↗</a>
+          </div>
+        </td>
+        <td style="font-weight:900; color:#10b981;">${w.amount} <span style="font-size:10px; color:#38bdf8; font-weight:700;">${w.network === 'USDT_BSC' ? 'USDT (BSC)' : (w.network || 'GRAM')}</span></td>
+        <td style="color:#f59e0b; font-weight:800;">${w.honey_amount} 🍯</td>
+        <td><span class="badge ${w.status === 'paid' ? 'badge-active' : (w.status === 'rejected' ? 'badge-cancelled' : 'badge-waiting')}">${w.status}</span></td>
+        <td class="font-mono text-muted" style="font-size:11px;">${new Date(w.created_at).toLocaleString()}</td>
+        <td style="text-align:right;" onclick="event.stopPropagation();">
+          ${w.status === 'pending' ? `
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              <button onclick="updateWithdrawal('${w.id}', 'paid')" class="btn btn-primary" style="padding:6px 10px; font-size:10px;">Mark Paid</button>
+              <button onclick="updateWithdrawal('${w.id}', 'rejected')" class="btn btn-danger" style="padding:6px 10px; font-size:10px;">Reject</button>
+            </div>
+          ` : `<span>-</span>`}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error loading withdrawals: ' + err.message + '</td></tr>';
+  }
+}
+
+async function updateWithdrawal(id, status) {
+  const reason = status === 'rejected' ? prompt('Enter reason for rejection (Funds will be refunded to user):', 'Anti-fraud check decline') : '';
+  if (status === 'rejected' && reason === null) return;
+  if (!confirm('Mark withdrawal as ' + status.toUpperCase() + '?')) return;
+  
+  try {
+    const res = await fetch(API_URL + '/api/admin/withdrawals/' + id, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: JSON.stringify({ status: status, reason: reason || 'Admin processed' })
+    });
+    if (!res.ok) throw new Error('Update failed');
+    showToast('Withdrawal status updated to ' + status.toUpperCase());
+    loadWithdrawals();
+    if (document.getElementById('userDetailModal').style.display === 'flex' && selectedUserId) {
+      openUserDetailModal(selectedUserId);
+    }
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+// 5. DEPOSITS LEDGER
+let allDepositsList = [];
+let currentDepositFilter = 'all';
+
+function setDepositFilter(type, el) {
+  currentDepositFilter = type;
+  document.querySelectorAll('#tab-deposits .filter-chips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  loadDeposits();
+}
+
+function filterDeposits() {
+  const q = (document.getElementById('depositSearchInput')?.value || '').toLowerCase().trim();
+  renderDepositsTable(allDepositsList.filter(d => {
+    if (!q) return true;
+    return (d.username || '').toLowerCase().includes(q) ||
+      (d.first_name || '').toLowerCase().includes(q) ||
+      String(d.telegram_id || '').includes(q) ||
+      (d.tx_hash || '').toLowerCase().includes(q) ||
+      (d.description || '').toLowerCase().includes(q);
+  }));
+}
+
+async function loadDeposits() {
+  const tbody = document.getElementById('depositsBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;"><span style="display:inline-block; animation:spin 1s linear infinite;">💎</span> Loading deposits...</td></tr>';
+
+  try {
+    const url = API_URL + '/api/admin/deposits?type=' + encodeURIComponent(currentDepositFilter);
+    const res = await fetch(url, { headers: authHeaders() });
+    
+    if (!res.ok) {
+      const errText = await res.text();
+      let errMsg = 'Server returned status ' + res.status;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson.error) errMsg = errJson.error;
+      } catch (e) {
+        if (res.status === 404) {
+          errMsg = '⏳ Backend deployment in progress on Render (compiling latest code). Please wait 1-2 minutes and click 🔄 Refresh.';
+        }
+      }
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+    allDepositsList = data.deposits || [];
+
+    if (document.getElementById('depTotalCount')) {
+      document.getElementById('depTotalCount').innerText = (data.total_count || allDepositsList.length).toLocaleString();
+    }
+    if (document.getElementById('depTotalVolumeGram')) {
+      document.getElementById('depTotalVolumeGram').innerText = ((data.total_gram_deposited || 0).toFixed(2)) + ' GRAM';
+    }
+    if (document.getElementById('depTotalVolumeUSD')) {
+      document.getElementById('depTotalVolumeUSD').innerText = '$' + ((data.total_usdt_equivalent || 0).toFixed(2));
+    }
+
+    filterDeposits();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#fbbf24; padding:30px; font-weight:700;">' + escapeHtml(err.message) + '</td></tr>';
+  }
+}
+
+function renderDepositsTable(list) {
+  const tbody = document.getElementById('depositsBody');
+  if (!list || list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No deposits found matching criteria.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(d => {
+    const isCamp = d.type === 'campaign_payment';
+    const typeBadge = isCamp
+      ? '<span class="badge" style="background:rgba(6,182,212,0.15); color:#06b6d4; border:1px solid rgba(6,182,212,0.3);">📢 CAMPAIGN AD</span>'
+      : '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3);">⚡ MINER POWER</span>';
+
+    const avatarInitial = (d.first_name || d.username || 'U')[0].toUpperCase();
+    const formattedDate = new Date(d.created_at).toLocaleDateString() + ' ' + new Date(d.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    return `
+      <tr style="cursor:pointer;" onclick="openUserDetailModal('${d.user_id}')">
+        <td onclick="event.stopPropagation(); openUserDetailModal('${d.user_id}')">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:28px; height:28px; border-radius:8px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#10b981; shrink-0;">
+              ${avatarInitial}
+            </div>
+            <div>
+              <div style="font-weight:800; color:#fff; display:flex; align-items:center; gap:6px;">
+                <span>${escapeHtml(d.first_name || d.username || 'Miner')}</span>
+                <span class="badge" style="background:#16241f; color:#10b981; font-size:9px; padding:2px 6px;">🔍 Inspect</span>
+              </div>
+              <div class="text-muted font-mono" style="font-size:11px;">@${escapeHtml(d.username || 'none')} • TG: ${d.telegram_id || '-'}</div>
+            </div>
+          </div>
+        </td>
+        <td>${typeBadge}</td>
+        <td style="font-weight:900; color:#fbbf24; font-size:13px;">
+          +${Number(d.amount).toFixed(3)} <span style="font-size:11px; color:#93b3a6;">${escapeHtml(d.currency || 'GRAM')}</span>
+        </td>
+        <td style="color:#cbd5e1; font-size:12px; max-width:240px;">
+          ${escapeHtml(d.description || '-')}
+        </td>
+        <td onclick="event.stopPropagation();">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="font-mono text-muted" style="font-size:11px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(d.tx_hash)}">
+              ${escapeHtml(d.tx_hash || 'TON Direct')}
+            </span>
+            ${d.tx_hash ? `<button onclick="copyToClipboard('${escapeHtml(d.tx_hash)}', this)" class="btn" style="background:rgba(245,158,11,0.15); color:#f59e0b; padding:2px 6px; font-size:10px; border-radius:4px;">📋</button>` : ''}
+          </div>
+        </td>
+        <td class="font-mono text-muted" style="font-size:11px;">${formattedDate}</td>
+        <td style="text-align:right;" onclick="event.stopPropagation();">
+          <button onclick="openUserDetailModal('${d.user_id}')" class="btn btn-gold" style="padding:5px 9px; font-size:11px;">🔍 Inspect</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function exportDepositsCSV() {
+  showToast('⏳ Generating CSV export of deposits...');
+  fetch(API_URL + '/api/admin/deposits?limit=500', { headers: authHeaders() })
+    .then(r => r.json())
+    .then(data => {
+      const deposits = data.deposits || [];
+      if (deposits.length === 0) {
+        showToast('No deposit data to export', true);
+        return;
+      }
+      const headers = ['ID', 'User_ID', 'Username', 'First_Name', 'Telegram_ID', 'Type', 'Amount', 'Currency', 'Tx_Hash', 'Description', 'Date'];
+      const rows = deposits.map(d => [
+        d.id,
+        d.user_id,
+        `"${(d.username || '').replace(/"/g, '""')}"`,
+        `"${(d.first_name || '').replace(/"/g, '""')}"`,
+        d.telegram_id || 0,
+        d.type,
+        d.amount,
+        d.currency,
+        `"${(d.tx_hash || '').replace(/"/g, '""')}"`,
+        `"${(d.description || '').replace(/"/g, '""')}"`,
+        `"${new Date(d.created_at).toISOString()}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `hashbee_deposits_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(`🎉 Exported ${deposits.length} deposits to CSV!`);
+    })
+    .catch(err => {
+      showToast('Export failed: ' + err.message, true);
+    });
+}
+
+// 6. SETTINGS
+async function loadSettings() {
+  const form = document.getElementById('settingsForm');
+  form.innerHTML = '<p style="color:var(--text-muted);">Loading settings...</p>';
+  try {
+    const res = await fetch(API_URL + '/api/admin/settings', { headers: authHeaders() });
+    const data = await res.json();
+    let settingsList = [];
+    if (Array.isArray(data.settings)) {
+      settingsList = data.settings;
+    } else if (data.settings && typeof data.settings === 'object') {
+      settingsList = Object.entries(data.settings).map(([k, v]) => ({ key: k, value: v }));
+    }
+    
+    if (settingsList.length === 0) {
+      form.innerHTML = '<p style="color:var(--text-muted);">No system settings found.</p>';
+      return;
+    }
+
+    let html = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">';
+    for (const s of settingsList) {
+      const k = s.key;
+      const v = s.value !== undefined && s.value !== null ? s.value : '';
+      const desc = s.description || '';
+      html += `
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>${escapeHtml(k)}</span>
+            ${desc ? `<span style="font-size:10px; color:var(--text-muted); font-weight:normal;">${escapeHtml(desc)}</span>` : ''}
+          </label>
+          <input type="text" id="setting_${escapeHtml(k)}" data-key="${escapeHtml(k)}" class="form-input font-mono" value="${escapeHtml(v)}">
+        </div>
+      `;
+    }
+    html += '</div>';
+    html += '<button onclick="saveSettings()" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; margin-top:20px; font-size:13px; font-weight:800;">💾 Save System Settings</button>';
+    form.innerHTML = html;
+  } catch (err) {
+    form.innerHTML = '<p style="color:#ef4444;">Error: ' + err.message + '</p>';
+  }
+}
+
+async function saveSettings() {
+  const inputs = document.querySelectorAll('#settingsForm input');
+  const payload = {};
+  inputs.forEach(i => {
+    const key = i.getAttribute('data-key') || i.id.replace('setting_', '');
+    payload[key] = i.value;
+  });
+  try {
+    const res = await fetch(API_URL + '/api/admin/settings', {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ settings: payload })
+    });
+    if (!res.ok) throw new Error('Failed to save settings');
+    showToast('Settings saved successfully!');
+    loadSettings();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+if (token) {
+  initDashboard({ email: 'admin@hashbee.io' });
+}
+</script>
+</body>
 </html>
