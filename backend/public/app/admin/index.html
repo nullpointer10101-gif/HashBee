@@ -956,7 +956,7 @@ Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
 <div id="toast"></div>
 
 <script>
-let API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.com';
+var API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.com';
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -1134,8 +1134,8 @@ function getApiUrl() {
   return stored.replace(/\/$/, '');
 }
 
-let API_URL = getApiUrl();
-let token = localStorage.getItem('hb_admin_token') || '';
+API_URL = getApiUrl();
+token = localStorage.getItem('hb_admin_token') || '';
 let statsInterval = null;
 
 function authHeaders() {
