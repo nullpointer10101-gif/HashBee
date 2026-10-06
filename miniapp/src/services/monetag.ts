@@ -1,101 +1,86 @@
 /**
- * Monetag SDK Helper for HashBee (Zone 11894371)
- * Enforces strictly:
- * 1. Exactly ONE opening ad on app launch (after 2.5s).
- * 2. Automatic recurring ad every 1 minute (60 seconds).
- * 3. 1-minute cooldown protection to prevent any double ads.
+ * Unified Ad Coordinator for HashBee
+ * Primary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
+ * Fallback: Monetag (Zone 11894371) — ONLY if AdExium fails
  */
+
+export const isAdExiumReady = (): boolean => {
+  return typeof window !== 'undefined' && !!window.adexiumWidget
+}
 
 export const isMonetagReady = (): boolean => {
   return typeof window !== 'undefined' && typeof window.show_11894371 === 'function'
 }
 
 let lastAdTimestamp = 0
-const AD_COOLDOWN_MS = 60_000 // 1 minute (60 seconds)
+const AD_COOLDOWN_MS = 60_000 // 1 minute
 
 /**
- * Show Rewarded / Interstitial Ad with cooldown check
+ * Show Interstitial/Rewarded Ad:
+ * 1. Tries AdExium first
+ * 2. If AdExium fails / not ready, falls back to Monetag
  */
 export const showInterstitialAd = async (force = false): Promise<boolean> => {
-  if (!isMonetagReady()) {
-    console.warn('[Monetag] SDK not ready or adblocker detected')
-    return false
-  }
-
   const now = Date.now()
-  if (!force && (now - lastAdTimestamp < AD_COOLDOWN_MS)) {
+  if (!force && now - lastAdTimestamp < AD_COOLDOWN_MS) {
     const remainingSecs = Math.round((AD_COOLDOWN_MS - (now - lastAdTimestamp)) / 1000)
-    console.log(`[Monetag] Ad skipped to protect UX (cooldown: ${remainingSecs}s left)`)
+    console.log(`[Ads] Ad skipped due to cooldown (${remainingSecs}s left)`)
     return false
   }
 
-  try {
-    lastAdTimestamp = now
-    await window.show_11894371!()
-    console.log('[Monetag] Interstitial ad displayed successfully')
-    return true
-  } catch (err) {
-    console.error('[Monetag] Interstitial ad error/dismissed:', err)
-    return false
+  // 1. Try AdExium (Primary)
+  if (isAdExiumReady()) {
+    try {
+      lastAdTimestamp = now
+      console.log('[Ads] Requesting primary AdExium ad...')
+      window.adexiumWidget.requestAd('interstitial')
+      return true
+    } catch (e) {
+      console.warn('[Ads] AdExium request error, attempting Monetag fallback:', e)
+    }
   }
+
+  // 2. Try Monetag (Fallback)
+  if (isMonetagReady()) {
+    try {
+      lastAdTimestamp = now
+      console.log('[Ads] Showing fallback Monetag ad...')
+      await window.show_11894371!()
+      return true
+    } catch (err) {
+      console.error('[Ads] Monetag fallback error:', err)
+      return false
+    }
+  }
+
+  console.warn('[Ads] Neither AdExium nor Monetag is ready.')
+  return false
 }
 
 export const showRewardedInterstitial = showInterstitialAd
 
-/**
- * Show Rewarded Popup Ad ('pop')
- */
 export const showRewardedPopup = async (): Promise<boolean> => {
-  if (!isMonetagReady()) {
-    console.warn('[Monetag] SDK not ready or adblocker detected')
-    return false
-  }
-
-  try {
-    await window.show_11894371!('pop')
-    return true
-  } catch (err) {
-    console.error('[Monetag] Rewarded Popup error:', err)
-    return false
-  }
+  return showInterstitialAd(true)
 }
 
 let hasInitialized = false
 let periodicTimer: ReturnType<typeof setInterval> | null = null
 
 /**
- * Initialize automatic Monetag Ads:
- * - Shows ONE ad upon opening the app (after 2.5s).
- * - Automatically triggers an ad every 1 minute (60 seconds).
+ * Initialize automatic ads (AdExium primary, Monetag fallback):
+ * - Recurring ad every 2 minutes with cooldown protection
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitialized) return
   hasInitialized = true
 
-  // Helper to wait for SDK and trigger ONE initial opening ad
-  const triggerOpeningAd = (attemptsLeft = 15) => {
-    if (isMonetagReady()) {
-      console.log('[Monetag] SDK detected. Scheduling single opening ad in 2.5s...')
-      setTimeout(() => {
-        showInterstitialAd(true).catch(() => {})
-      }, 2500)
-    } else if (attemptsLeft > 0) {
-      setTimeout(() => triggerOpeningAd(attemptsLeft - 1), 500)
-    }
-  }
-
-  // Start opening ad check
-  triggerOpeningAd()
-
-  // Setup periodic ad trigger every 1 minute (60,000 ms)
+  // Setup recurring ad trigger every 2 minutes
   if (periodicTimer) {
     clearInterval(periodicTimer)
   }
 
   periodicTimer = setInterval(() => {
-    console.log('[Monetag] Triggering scheduled 1-minute recurring ad...')
-    showInterstitialAd().catch((err) => {
-      console.warn('[Monetag] Periodic ad skip/error:', err)
-    })
-  }, 60000) // Exactly 1 minute (60s)
+    console.log('[Ads] Triggering scheduled recurring ad (AdExium primary)...')
+    showInterstitialAd().catch(() => {})
+  }, 120000)
 }
