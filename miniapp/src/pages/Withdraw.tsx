@@ -39,19 +39,6 @@ export const Withdraw: React.FC = () => {
     }
   }, [tabParam])
 
-  // Show qualification modal immediately if user is NOT qualified
-  useEffect(() => {
-    if (!user) return
-    if (activeTab !== 'withdraw') return
-    const cratesOpened = user?.crates_opened_count || 0
-    const friendCratesOpened = user?.friend_crates_opened_count || 0
-    const isOneTimeGranted = user?.one_time_withdrawal_granted || false
-    const isQualified = user?.can_withdraw_lifetime || (cratesOpened >= 1 || friendCratesOpened >= 1 || isOneTimeGranted)
-    if (!isQualified) {
-      setShowQualifyModal(true)
-    }
-  }, [user, activeTab])
-
   // Load history when tab is opened
   useEffect(() => {
     if (activeTab === 'history') {

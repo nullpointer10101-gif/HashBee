@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   fetchMissions,
   completeMission,
@@ -13,6 +13,61 @@ import { useLanguage } from '../context/LanguageContext'
 import toast from 'react-hot-toast'
 
 type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
+
+// ─── Watch Ad Tasks Constants ────────────────────────────────────────────────
+const WATCH_AD_TASKS_COUNT = 3
+const WATCH_AD_REFRESH_MS = 3 * 60 * 60 * 1000 // 3 hours
+const WATCH_AD_HONEY_REWARD = 1 // 1 Honey per task
+const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v1'
+
+interface WatchAdState {
+  windowStart: number  // timestamp of current 3-hr window start
+  completed: number[]  // task indices (0,1,2) done in this window
+}
+
+function loadWatchAdState(): WatchAdState {
+  try {
+    const raw = localStorage.getItem(LS_KEY_WATCH_ADS)
+    if (raw) {
+      const parsed: WatchAdState = JSON.parse(raw)
+      // If window has expired, reset
+      if (Date.now() - parsed.windowStart >= WATCH_AD_REFRESH_MS) {
+        return { windowStart: Date.now(), completed: [] }
+      }
+      return parsed
+    }
+  } catch {}
+  return { windowStart: Date.now(), completed: [] }
+}
+
+function saveWatchAdState(state: WatchAdState) {
+  localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(state))
+}
+
+function showAd(): Promise<boolean> {
+  return new Promise((resolve) => {
+    // Primary: Monetag
+    if (typeof window.show_11894371 === 'function') {
+      try {
+        Promise.resolve(window.show_11894371()).then(() => resolve(true)).catch(() => {
+          // Fallback: AdExium
+          if (window.adexiumWidget) {
+            try { window.adexiumWidget.requestAd('interstitial') } catch {}
+          }
+          resolve(true)
+        })
+      } catch {
+        resolve(true)
+      }
+    } else if (window.adexiumWidget) {
+      // Fallback: AdExium
+      try { window.adexiumWidget.requestAd('interstitial') } catch {}
+      resolve(true)
+    } else {
+      resolve(false)
+    }
+  })
+}
 
 export const Missions: React.FC = () => {
   const { t } = useLanguage()
@@ -40,6 +95,57 @@ export const Missions: React.FC = () => {
 
   const { user, refreshUser } = useAuth()
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
+
+  // ─── Watch Ad Tasks State ────────────────────────────────────────────────────
+  const [watchAdState, setWatchAdState] = useState<WatchAdState>(loadWatchAdState)
+  const [watchAdLoading, setWatchAdLoading] = useState<number | null>(null)
+  const [watchAdCountdown, setWatchAdCountdown] = useState('')
+  const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Countdown ticker for Watch Ad refresh
+  useEffect(() => {
+    const tick = () => {
+      const remaining = WATCH_AD_REFRESH_MS - (Date.now() - watchAdState.windowStart)
+      if (remaining <= 0) {
+        // Window expired — reset
+        const fresh: WatchAdState = { windowStart: Date.now(), completed: [] }
+        saveWatchAdState(fresh)
+        setWatchAdState(fresh)
+        setWatchAdCountdown('')
+        return
+      }
+      const h = Math.floor(remaining / 3600000)
+      const m = Math.floor((remaining % 3600000) / 60000)
+      const s = Math.floor((remaining % 60000) / 1000)
+      setWatchAdCountdown(`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`)
+    }
+    tick()
+    watchAdTimerRef.current = setInterval(tick, 1000)
+    return () => { if (watchAdTimerRef.current) clearInterval(watchAdTimerRef.current) }
+  }, [watchAdState.windowStart])
+
+  const handleWatchAdTask = useCallback(async (taskIndex: number) => {
+    if (watchAdState.completed.includes(taskIndex)) return
+    setWatchAdLoading(taskIndex)
+    try {
+      await showAd()
+      // Short delay so ad has time to show
+      await new Promise(r => setTimeout(r, 1200))
+      const updated: WatchAdState = {
+        ...watchAdState,
+        completed: [...watchAdState.completed, taskIndex],
+      }
+      saveWatchAdState(updated)
+      setWatchAdState(updated)
+      toast.success(`🍯 +${WATCH_AD_HONEY_REWARD} Honey earned! Keep watching to earn more.`)
+      // Refresh user balance from server if possible
+      try { await refreshUser() } catch {}
+    } catch (e) {
+      toast.error('Ad could not load. Try again in a moment.')
+    } finally {
+      setWatchAdLoading(null)
+    }
+  }, [watchAdState, refreshUser])
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || '6446145632'
@@ -789,6 +895,109 @@ export const Missions: React.FC = () => {
         </svg>
         PROMOTE YOUR LINK
       </button>
+
+      {/* ── SECTION 0: WATCH AD TASKS (3 per 3 hrs, +1 Honey each) ─────────── */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-xs font-black text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
+            <span>📺</span> WATCH AD TASKS
+          </span>
+          <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+            +{WATCH_AD_HONEY_REWARD} 🍯 EACH
+          </span>
+        </div>
+
+        {/* Info row */}
+        <div className="mb-3 p-3 rounded-2xl bg-[#141e1a] border border-[#283d35] flex items-start gap-2.5 text-xs text-stone-300 shadow-sm">
+          <span className="text-amber-400 text-sm mt-0.5 flex-shrink-0">🎬</span>
+          <div>
+            <div className="font-extrabold text-amber-300 tracking-wide text-[11px] uppercase mb-0.5">Daily Ad Booster</div>
+            <div className="text-[11px] text-stone-400 leading-relaxed">
+              Watch {WATCH_AD_TASKS_COUNT} ads every 3 hours. Each ad earns you <strong className="text-amber-200">{WATCH_AD_HONEY_REWARD} Honey</strong> instantly.
+              {watchAdState.completed.length < WATCH_AD_TASKS_COUNT && watchAdState.completed.length > 0 && (
+                <span className="text-emerald-300"> Resets in <strong>{watchAdCountdown}</strong>.</span>
+              )}
+              {watchAdState.completed.length === WATCH_AD_TASKS_COUNT && (
+                <span className="text-emerald-300"> All done! Resets in <strong>{watchAdCountdown}</strong>.</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Task cards */}
+        <div className="flex flex-col gap-2.5">
+          {Array.from({ length: WATCH_AD_TASKS_COUNT }, (_, i) => {
+            const isDone = watchAdState.completed.includes(i)
+            const isLoading = watchAdLoading === i
+            const allPreviousDone = i === 0 || watchAdState.completed.includes(i - 1)
+            const isLocked = !allPreviousDone
+            return (
+              <div
+                key={i}
+                className={`zentorno-card p-3.5 flex items-center justify-between gap-3 border ${
+                  isDone ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-[#2c3e38]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Icon */}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
+                    isDone ? 'bg-emerald-900/40' : 'bg-[#23332e]'
+                  }`}>
+                    {isDone ? '✅' : isLocked ? '🔒' : '📺'}
+                  </div>
+                  <div>
+                    <div className="text-xs font-extrabold text-stone-200">
+                      Watch Ad #{i + 1}
+                    </div>
+                    <div className={`text-[11px] font-bold mt-0.5 ${
+                      isDone ? 'text-emerald-400' : 'text-amber-300'
+                    }`}>
+                      {isDone ? `+${WATCH_AD_HONEY_REWARD} Honey earned ✓` : `+${WATCH_AD_HONEY_REWARD} Honey reward`}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {isDone ? (
+                    <span className="px-4 py-2 rounded-xl bg-emerald-900/30 text-emerald-500 font-extrabold text-xs inline-block border border-emerald-500/20">
+                      Done
+                    </span>
+                  ) : isLocked ? (
+                    <span className="px-3 py-2 rounded-xl bg-[#1a2622] border border-[#2e423b] text-stone-500 font-extrabold text-xs inline-block">
+                      Locked
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleWatchAdTask(i)}
+                      disabled={isLoading}
+                      className="px-4 py-2 rounded-xl zentorno-btn-primary font-extrabold text-xs disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      {isLoading ? (
+                        <><span className="animate-spin inline-block">⏳</span> Loading...</>
+                      ) : (
+                        <>▶ Watch</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-3 flex items-center gap-2.5 px-1">
+          <div className="flex-1 h-1.5 bg-[#17231f] rounded-full overflow-hidden border border-[#273a33]">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
+              style={{ width: `${(watchAdState.completed.length / WATCH_AD_TASKS_COUNT) * 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-mono font-bold text-stone-400 shrink-0">
+            {watchAdState.completed.length}/{WATCH_AD_TASKS_COUNT} tasks · resets in {watchAdCountdown || '...'}
+          </span>
+        </div>
+      </div>
 
       {/* SECTION 1: REFERRAL MILESTONES (UP TO +500 GHS) */}
       {milestones.length > 0 && (

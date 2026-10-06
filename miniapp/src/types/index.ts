@@ -98,3 +98,13 @@ export interface LeaderboardEntry {
   bee_power: number
   honey_balance: number
 }
+
+declare global {
+  interface Window {
+    show_11894371?: (type?: string) => Promise<void> | void
+    adexiumWidget?: any
+    AdexiumWidget?: any
+    TGAdsWidget?: any
+    Telegram?: any
+  }
+}
