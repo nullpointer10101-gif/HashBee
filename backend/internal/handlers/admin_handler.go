@@ -1219,93 +1219,105 @@ type AutoBroadcastTemplate struct {
 
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
+		Key: "watch_ads_boost",
+		Message: `📺 *FREE HONEY & HASHRATE BOOST IS LIVE!* 🐝⚡
+
+Hey {name}, earn free Honey & boost your mining power without spending anything:
+• 🎬 3 Daily Ad Tasks refreshing every 3 hours
+• 🍯 +1.0 Honey reward per 15-second ad
+• ⚡ Free Hashrate boost to speed up your harvest
+• ⏱️ Refreshes automatically every 3 hours 24/7
+
+💰 100% Free • Direct Balance Credit • Withdrawable on TON & BSC!
+
+👇 Watch your 3 daily ads and boost your gains:`,
+		ButtonText: "📺 Watch Ads & Earn Honey 🍯",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
 		Key: "crate_god_jackpot",
-		Message: `⚡ *CYBER GOD 25.0 GRAM JACKPOT UNLOCKED!* 👁️🔥
+		Message: `📦 *MYSTERY CRATES LIVE: 25.0 GRAM GRAND PRIZE!* 💎🔥
 
-Miners are pulling 99 OVR Football Cards & +25.00 GRAM Supreme Drops!
-💎 Pure GRAM Token Instant Drops
-⚽ FIFA-Style Pack Walkouts
-👑 Guaranteed Top Drop within 2-3 Opens!
+Unbox guaranteed real crypto cashouts, instant GRAM tokens & permanent Hashrate:
+• 🥉 Bronze (0.50 G) ➔ Up to 2.50 GRAM + Hashrate
+• 🥈 Silver (1.50 G) ➔ Up to 7.50 GRAM + Hashrate
+• 🥇 Gold (3.00 G) ➔ Up to 15.00 GRAM + Hashrate
+• 💎 Diamond (5.00 G) ➔ 25.00 GRAM Jackpot + $20 USDT!
 
-Payment Verified ✅
-Instant TON Blockchain Transfer Confirmed!
+⚡ Opening just 1 crate verifies your wallet for Unlimited Lifetime Withdrawals!
 
-👇 Open your Cyber God Pack now:`,
-		ButtonText: "👁️ Unlock Cyber God Pack 👑",
+👇 Unbox your mystery crate now:`,
+		ButtonText: "📦 Unlock Mystery Crates 🎁",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "crate_bronze_hash",
-		Message: `📦 *0.5 GRAM MINER PACK: 1.00 GRAM TOP PRIZE!* ⚡
+		Message: `🥉 *0.50 GRAM STARTER CRATE: INSTANT WIN!* ⚡🎁
 
-Supercharge your cloud mining for just 0.50 GRAM!
-⚡ Win +25 GHS to +100 GHS Permanent Hashpower
-💎 Top Prize: +1.00 GRAM Direct Payout!
+Start small and win big with the 0.50 GRAM Starter Box!
+💵 Real USDT & GRAM Cash directly credited
+⚡ +5 to +25 GHS Permanent Mining Power
+🔓 Instant Lifetime Cashout Verification unlocked upon open!
 
-Payment Verified ✅
-Guaranteed Hashrate & GRAM Drops on Every Open!
+100% transparent on-chain mechanics with guaranteed rewards on every drop.
 
-👇 Tap below to unlock:`,
-		ButtonText: "📦 Open 0.5 G Miner Pack 🚀",
+👇 Tap below to test your luck:`,
+		ButtonText: "📦 Open 0.5 G Crate 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "payouts_completed",
-		Message: `💸 *DAILY WITHDRAWALS PROCESSED & CREDITED!* 💎🎉
+		Message: `💸 *INSTANT ON-CHAIN CASHOUTS ARE LIVE!* 💎⚡
 
-Over 450+ Miner Payouts have been dispatched to TON Wallets!
-Check your wallet or withdraw your mined GRAM right now!
+Over 1,200+ miner withdrawals have been processed directly on-chain!
+Cash out your mined Honey, Spin wins, and Crate prizes:
+• 💎 GRAM Network (TON Blockchain) – Instant transfer
+• 💵 USDT (BNB Smart Chain BEP-20) – Fast & low fees
+• 🛡️ Minimum Cashout: Only 0.05 GRAM / USDT!
 
-Payment Verified ✅
-Status: 100% On-Chain Confirmed
-
-👇 Check your balance & withdraw:`,
-		ButtonText: "💎 Check Balance & Payouts 💸",
+👇 Check your balance & request cashout:`,
+		ButtonText: "💸 Open HashBee Wallet 💎",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "fever_2x_rush",
-		Message: `🔥 *15-MIN LUCKY FEVER ACTIVE: 2X JACKPOT RUSH!* ⏱️⚡
+		Message: `🔥 *2X HASHRATE POWER SURGE ACTIVE!* ⚡🔥
 
-Drop rates for 96+ OVR Football Cards & GRAM Jackpots are DOUBLED!
-• 🥉 Bronze ➔ +1.00 G + 100 GHS
-• 🥈 Silver ➔ +5.00 G Mega Drop
-• 👑 Gold ➔ +10.00 G VIP Drop
-• 👁️ Cyber God ➔ +25.00 G Supreme Drop
+Cloud mining hashpower is currently accelerated across all active hives!
+Your bees are extracting Honey at top speeds 24 hours a day.
 
-Payment Verified ✅
-Instant Credit Direct to Account!
+• 🍯 Maximize your harvest before storage caps out
+• ⚡ Reinvest your Honey (1 USDT = +50 GHS) for permanent boosts
 
-👇 Claim 2X Fever Luck:`,
-		ButtonText: "🔥 Claim 2X Lucky Fever ⚡",
+👇 Collect & supercharge your miner:`,
+		ButtonText: "🐝 Open HashBee & Mine ⚡",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "spin_viral_referrals",
-		Message: `👥 *UNLIMITED FREE SPINS & REWARDS!* 🚀💎
+		Message: `👥 *INVITE FRIENDS = UNLIMITED FREE SPINS & GHS!* 🚀💎
 
-Every single friend you invite gives you:
-🎁 +1 Free Spin on the Lucky Honey Wheel
-⚡ +3 GHS Permanent Mining Speed
+Boost your passive earnings with HashBee's 2-Tier Referral System:
+• 🎁 +1 Free Lucky Wheel Spin per referral
+• ⚡ +5.0 GHS Mining Power per active friend
+• 🍯 10% Tier 1 + 5% Tier 2 Commission on all honey mined
+• 🏆 Milestone bonuses up to +500 GHS Mining Power!
 
-Payment Verified ✅
-100% Real Instant Withdrawals!
-
-👇 Invite friends & spin:`,
+👇 Grab your personal invite link:`,
 		ButtonText: "👥 Get Free Spins & Mine 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "personalized_buzz",
-		Message: `🐝 *HEY {name}, YOUR HONEYCOMB IS AT FULL CAPACITY!* 🍯⚡
+		Message: `🐝 *HEY {name}, YOUR HONEYCOMB IS FULL!* 🍯⚡
 
-Your bees have mined maximum GRAM rewards!
-Collect now before your honeycomb storage fills up.
+Your cloud mining rig has reached maximum capacity and accumulated unclaimed Honey.
+Collect your earnings now so your swarm can continue mining at 100% speed!
 
-Payment Verified ✅
-Direct One-Tap Harvest!
+• 🍯 Current Unclaimed Honey ready to harvest
+• ⚡ Reinvest balance to unlock up to +50 GHS mining power
 
-👇 Collect your earnings:`,
+👇 Tap to harvest your Honey:`,
 		ButtonText: "🐝 Collect My GRAM Now 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
