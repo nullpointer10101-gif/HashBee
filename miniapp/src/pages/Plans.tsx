@@ -302,55 +302,46 @@ export const Plans: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-[#0f172a] pb-28 pt-3 px-4 max-w-md mx-auto relative select-none font-sans">
-      {/* Live Social Proof Activity Ticker */}
-      <div className="relative z-10 mb-3 bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <span className="w-2 h-2 rounded-full bg-[#00d68f] animate-ping flex-shrink-0" />
-          <span className="text-[10px] font-black text-[#0088ff] uppercase tracking-wider flex-shrink-0">
-            LIVE 24H YIELD
-          </span>
-          <span className="text-[11px] text-slate-600 truncate">
-            <b className="text-slate-900">{LIVE_ACTIVITIES[tickerIndex].user}</b> {LIVE_ACTIVITIES[tickerIndex].action} (
-            <span className="text-[#059669] font-bold">{LIVE_ACTIVITIES[tickerIndex].returnG}</span>)
-          </span>
-        </div>
-        <span className="text-[9px] text-slate-400 flex-shrink-0 ml-1.5">{LIVE_ACTIVITIES[tickerIndex].time}</span>
-      </div>
+      {/* ── TOP HERO HEADER: LUXURY DARK COSMIC CYBER SHOWCASE ── */}
+      <div className="p-5 mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0f19] via-[#1a1438] to-[#0f172a] text-white border border-indigo-500/30 shadow-xl">
+        {/* Glowing Nebula Highlights */}
+        <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-500/25 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Top Header Card (Vivid Blue) */}
-      <div className="mine-hero-card p-4.5 mb-3.5 relative overflow-hidden">
-        <div className="flex items-center justify-between mb-3">
+        {/* Top Title & Wallet Row */}
+        <div className="flex items-start justify-between gap-2 relative z-10 mb-3">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-extrabold text-white tracking-wide uppercase">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-lg font-black tracking-wide text-white uppercase drop-shadow-sm">
                 NFT Miners Market
               </h1>
-              <span className="text-[9px] bg-white text-[#0052d4] px-2 py-0.5 rounded-full font-black tracking-wider">
+              <span className="text-[9px] bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 px-2 py-0.5 rounded-full font-black tracking-wider shadow">
                 24H CYCLE
               </span>
             </div>
-            <p className="text-[11px] text-white/80 font-medium mt-0.5">
+            <p className="text-[11px] text-slate-300 font-medium mt-1">
               Guaranteed daily returns • Instant payout on maturity
             </p>
           </div>
-          <div className="px-3 py-1.5 bg-black/25 backdrop-blur-md rounded-2xl text-right">
-            <span className="text-[8px] text-white/70 block uppercase font-extrabold tracking-wider">Wallet</span>
-            <span className="text-xs font-black text-[#00f090] font-mono">{userBalance.toFixed(4)} G</span>
+
+          <div className="px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 text-right shrink-0">
+            <span className="text-[8px] text-slate-300 block uppercase font-extrabold tracking-wider leading-none">Wallet</span>
+            <span className="text-xs sm:text-sm font-black text-[#00f090] font-mono mt-0.5 block">{userBalance.toFixed(4)} G</span>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-white/20 text-center">
-          <div className="bg-black/20 rounded-xl p-2 backdrop-blur-md">
-            <div className="text-[9px] text-white/70 uppercase font-bold">Active Miners</div>
+        {/* 3 Metrics Row */}
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10 text-center relative z-10">
+          <div className="bg-white/5 rounded-2xl p-2 backdrop-blur-md border border-white/10">
+            <div className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Active Miners</div>
             <div className="text-xs font-black text-white font-mono mt-0.5">{activePlans.length} Running</div>
           </div>
-          <div className="bg-black/20 rounded-xl p-2 backdrop-blur-md">
-            <div className="text-[9px] text-white/70 uppercase font-bold">Cycle</div>
+          <div className="bg-white/5 rounded-2xl p-2 backdrop-blur-md border border-white/10">
+            <div className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Contract Cycle</div>
             <div className="text-xs font-black text-[#00f090] mt-0.5">Exact 24H</div>
           </div>
-          <div className="bg-black/20 rounded-xl p-2 backdrop-blur-md">
-            <div className="text-[9px] text-white/70 uppercase font-bold">Total Claimed</div>
+          <div className="bg-white/5 rounded-2xl p-2 backdrop-blur-md border border-white/10">
+            <div className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Total Claimed</div>
             <div className="text-xs font-black text-white font-mono mt-0.5">
               +{plansOverview?.total_earned_gram ? plansOverview.total_earned_gram.toFixed(2) : '0.00'} G
             </div>
@@ -362,9 +353,9 @@ export const Plans: React.FC = () => {
       <div className="mine-card p-4 mb-3.5">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-            24H LIVE PROFIT CALCULATOR
+            PROFIT ESTIMATOR
           </span>
-          <span className="text-[9px] font-extrabold text-[#7c3aed] bg-purple-50 px-2 py-0.5 rounded-full">
+          <span className="text-[9px] font-extrabold text-[#7c3aed] bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
             AUTO-COMPOUNDING
           </span>
         </div>

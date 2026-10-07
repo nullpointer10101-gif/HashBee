@@ -152,50 +152,50 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* ── CARD 1: TOTAL BALANCE (LUXURY OCEAN BLUE HERO WITH DYNAMIC CRYSTAL LIGHT) ── */}
-      <div className="mine-hero-card p-5 mb-3.5 relative overflow-hidden">
-        {/* Dynamic Glowing Mesh in Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.3)_0%,transparent_60%)] pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none" />
+      {/* ── CARD 1: TOTAL BALANCE (LUXURY OBSIDIAN & EMERALD/GOLD CYBER VAULT) ── */}
+      <div className="p-5 mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f1d] via-[#111c38] to-[#071329] text-white border border-cyan-500/25 shadow-xl">
+        {/* Dynamic Multi-Color Glowing Mesh */}
+        <div className="absolute -top-10 -right-10 w-36 h-36 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex items-center justify-between relative z-10">
+        <div className="flex items-center justify-between relative z-10 mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-sm shadow-sm">
+            <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center justify-center text-sm shadow-sm">
               💳
             </div>
-            <span className="text-[11px] font-black tracking-widest text-white/90 uppercase">
+            <span className="text-[11px] font-black tracking-widest text-slate-300 uppercase">
               TOTAL BALANCE
             </span>
           </div>
 
           {/* NFT Balance Badge */}
-          <div className="px-3 py-1 rounded-xl bg-black/35 backdrop-blur-md text-right border border-white/15">
-            <span className="text-[8px] font-bold text-white/70 uppercase block leading-none">NFT POWER</span>
-            <span className="text-xs font-black text-[#00f090] font-mono mt-0.5 block">{ghs.toFixed(0)} <span className="text-[9px] text-white/80 font-sans">GHS</span></span>
+          <div className="px-3 py-1 rounded-xl bg-white/10 backdrop-blur-md text-right border border-white/15">
+            <span className="text-[8px] font-bold text-slate-300 uppercase block leading-none">MINING POWER</span>
+            <span className="text-xs font-black text-[#00f090] font-mono mt-0.5 block">{ghs.toFixed(0)} <span className="text-[9px] text-white/70 font-sans">GHS</span></span>
           </div>
         </div>
 
         {/* Large Balance Display */}
-        <div className="mt-3.5 flex items-baseline gap-2 relative z-10">
-          <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight drop-shadow-sm">
+        <div className="my-3 flex items-baseline gap-2 relative z-10">
+          <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight drop-shadow">
             {userBalance.toFixed(4)}
           </span>
-          <span className="px-2.5 py-0.5 rounded-lg bg-black/30 border border-white/20 text-white font-black text-xs font-mono">
+          <span className="px-2.5 py-0.5 rounded-lg bg-white/15 border border-white/20 text-white font-black text-xs font-mono">
             USDT
           </span>
         </div>
 
         {/* Bottom Row */}
-        <div className="mt-4 flex items-center justify-between pt-1 relative z-10">
-          <div className="px-3 py-1.5 rounded-xl bg-black/30 backdrop-blur-md border border-white/15 flex items-center gap-1.5 text-xs text-white">
+        <div className="flex items-center justify-between pt-2 border-t border-white/10 relative z-10">
+          <div className="px-3 py-1.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 flex items-center gap-1.5 text-xs text-white">
             <span className="text-[#00f090] font-black">↑</span>
-            <span className="text-white/80 font-semibold text-[11px]">Yield:</span>
+            <span className="text-slate-300 font-semibold text-[11px]">Yield:</span>
             <span className="text-[#00f090] font-black font-mono text-[11px]">+{earningsPerDay.toFixed(4)} USDT/d</span>
           </div>
 
           <button
             onClick={() => navigate('/withdraw')}
-            className="px-4 py-1.5 rounded-xl bg-white text-[#0052d4] hover:bg-slate-100 text-xs font-black flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#0088ff] to-[#00c6ff] text-white hover:brightness-110 text-xs font-black flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
           >
             <span>Withdraw</span>
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
@@ -210,10 +210,10 @@ export const Home: React.FC = () => {
         {/* Top Header Row */}
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-xs">
+            <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-bold">
               ⬡
             </div>
-            <h2 className="text-sm font-extrabold text-[#0f172a] uppercase tracking-wide">
+            <h2 className="text-xs sm:text-sm font-black text-[#0f172a] uppercase tracking-wide">
               Your Active NFT Miner
             </h2>
           </div>
@@ -236,13 +236,13 @@ export const Home: React.FC = () => {
               }}
             />
             {/* Holographic corner badge */}
-            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-[8px] font-black text-amber-300 border border-amber-400/30">
+            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-[8px] font-black text-amber-300 border border-amber-400/30 font-mono">
               LVL 1
             </div>
           </div>
 
           {/* Details Column */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm sm:text-base font-black text-slate-950 truncate">
                 Starter Bee Miner
@@ -252,16 +252,15 @@ export const Home: React.FC = () => {
               </span>
             </div>
             
-            <p className="text-[11px] font-extrabold text-[#0088ff] flex items-center gap-1.5 mt-1">
-              <span className="inline-block animate-bounce">⚡</span> 
-              <span>Auto-Mining:</span>
-              <span className="font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 text-[#0066ff]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-600">Auto-Mining:</span>
+              <span className="font-mono bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 text-[#0066ff] text-xs font-black">
                 {ghs} GHS
               </span>
-            </p>
+            </div>
 
-            <div className="text-[10px] text-slate-500 font-semibold mt-1">
-              Contract: <b className="text-slate-800">24H Guaranteed Auto-Cycle</b>
+            <div className="text-[10px] text-slate-500 font-semibold">
+              Contract: <b className="text-slate-800">24H Guaranteed Cycle</b>
             </div>
           </div>
         </div>

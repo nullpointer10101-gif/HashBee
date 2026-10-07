@@ -215,19 +215,23 @@ export const Withdraw: React.FC = () => {
 
       {activeTab === 'withdraw' ? (
         <>
-          {/* Balance Card (Vivid Blue Hero Card) */}
-          <div className="mine-hero-card p-5 mb-3.5 text-center">
-            <div className="text-[10px] font-extrabold text-white/80 uppercase tracking-widest">
-              AVAILABLE WALLET BALANCE
+          {/* Balance Card (Luxury Dark Emerald & Gold Cyber Vault) */}
+          <div className="p-5 mb-4 rounded-3xl bg-gradient-to-br from-[#061512] via-[#0d2920] to-[#041a15] text-white border border-emerald-500/30 shadow-xl relative overflow-hidden text-center">
+            {/* Ambient Glow */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-teal-400/15 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="text-[10px] font-black text-emerald-300 uppercase tracking-widest relative z-10">
+              AVAILABLE CASHOUT BALANCE
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-white mt-1 mb-4 font-mono">
-              {userUsdtBalance} <span className="text-base text-[#00f090] font-sans">USDT</span>
+            <div className="text-3xl sm:text-4xl font-black text-white mt-1.5 mb-4 font-mono relative z-10 drop-shadow">
+              {userUsdtBalance} <span className="text-base text-[#00f090] font-sans font-extrabold">USDT</span>
             </div>
 
             <button
               onClick={handleReinvest}
               disabled={reinvesting}
-              className="w-full py-3 rounded-xl btn-primary-amber font-black text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 hover:brightness-105 relative z-10"
             >
               <span>⚡</span>
               <span>{reinvesting ? 'REINVESTING...' : 'REINVEST TO MINING POWER (1 USDT = 50 GHS)'}</span>
