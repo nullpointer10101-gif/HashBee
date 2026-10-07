@@ -320,25 +320,18 @@ func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (str
 	if len(shortHash) > 16 {
 		shortHash = shortHash[:8] + "..." + shortHash[len(shortHash)-8:]
 	}
+	msg := fmt.Sprintf(`🐝 <b>HashBee Instant Payout Confirmed</b> ✅
 
-	msg := fmt.Sprintf(`🐝 <b>HASHBEE 24H INSTANT CASHOUT PROOF</b> 💸
-
-🎉 <b>Congratulations to miner:</b> <code>%s</code>
-💰 <b>Received:</b> <code>+%.4f GRAM ($%.2f)</code>
-⚡ <b>Mining Plan:</b> %s
-🔗 <b>Network:</b> %s
-⏱️ <b>Settlement:</b> Instant 24H Maturity
-
-🔍 <b>Verified On-Chain Transaction:</b>
-<a href="%s">View Transaction on %s ↗</a>
-
-🚀 <i>Activate your 24H High-Yield Miner & withdraw instantly:</i>`,
-		userHandle,
+💸 <b>Amount:</b> <b>+%.2f GRAM</b> ($%.2f USD)
+👤 <b>Miner:</b> <code>%s</code>
+⚡ <b>Plan:</b> %s
+🌐 <b>Tx Proof:</b> <a href="%s">%s (%s ↗)</a>`,
 		data.Amount,
 		usdVal,
+		userHandle,
 		planName,
-		data.Network,
 		data.TxURL,
+		shortHash,
 		data.ExplorerName,
 	)
 
