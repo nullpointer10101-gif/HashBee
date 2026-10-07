@@ -49,26 +49,12 @@ function showAd(): Promise<boolean> {
     // 1. PRIMARY: AdExium
     if (window.adexiumWidget) {
       try {
-        console.log('[Missions] Requesting primary AdExium ad...')
+        console.log('[Missions] Requesting AdExium ad...')
         window.adexiumWidget.requestAd('interstitial')
         resolve(true)
         return
       } catch (err) {
-        console.warn('[Missions] AdExium error, falling back to Monetag:', err)
-      }
-    }
-
-    // 2. FALLBACK: Monetag (only if AdExium fails)
-    if (typeof window.show_11894371 === 'function') {
-      try {
-        console.log('[Missions] Requesting fallback Monetag ad...')
-        Promise.resolve(window.show_11894371!())
-          .then(() => resolve(true))
-          .catch(() => resolve(true))
-        return
-      } catch {
-        resolve(true)
-        return
+        console.warn('[Missions] AdExium error:', err)
       }
     }
 

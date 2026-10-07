@@ -114,19 +114,14 @@ export const Plans: React.FC = () => {
   }
 
   const handle1ClickTonkeeper = (plan: PlanTier) => {
-    const deepLink = getTonkeeperDeepLink(plan)
     const universalLink = getTonkeeperUniversalLink(plan)
 
-    // Attempt native app deep link first, with fallback to universal link
     try {
-      window.location.href = deepLink
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
-          window.Telegram.WebApp.openLink(universalLink)
-        } else {
-          window.open(universalLink, '_blank')
-        }
-      }, 500)
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(universalLink, { try_instant_view: false })
+      } else {
+        window.open(universalLink, '_blank')
+      }
     } catch (e) {
       window.open(universalLink, '_blank')
     }

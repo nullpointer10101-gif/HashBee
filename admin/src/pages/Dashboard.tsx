@@ -90,28 +90,28 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   // Broadcast state
   const SPIN_TEMPLATES = [
     {
-      id: 'crate_god_jackpot',
-      label: '👁️ 25.0 G Cyber God Jackpot',
-      message: '⚡ *CYBER GOD 25.0 GRAM JACKPOT UNLOCKED!* 👁️🔥\n\nMiners are pulling 99 OVR Football Cards & +25.00 GRAM Supreme Drops!\n💎 Pure GRAM Token Instant Drops\n⚽ FIFA-Style Pack Walkouts\n👑 Guaranteed Top Drop within 2-3 Opens!\n\nPayment Verified ✅\nInstant TON Blockchain Transfer Confirmed!\n\n👇 Open your Cyber God Pack now:',
-      button: '👁️ Unlock Cyber God Pack 👑',
+      id: 'plan_standard_53pct',
+      label: '⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit)',
+      message: '⚡ *24H DAILY MINING CONTRACT ACTIVE!* 🍯🔥\n\nLock 1.30 TON today ➔ Receive guaranteed 2.00 GRAM payout in 24 hours!\n💰 +53.8% Pure Guaranteed Profit\n🛡️ Automatic On-Chain Smart Contract Maturity\n⚡ Instant 1-Click Payouts Confirmed\n\nPayment Verified ✅\nStatus: 100% Instant Lifetime Cashout Unlock!\n\n👇 Activate your 24h Mining Plan now:',
+      button: '⚡ Activate 1.30 TON Plan (+53.8%) 🚀',
     },
     {
-      id: 'crate_bronze_hash',
-      label: '📦 0.5 G Starter (1.0 G Top)',
-      message: '📦 *0.5 GRAM MINER PACK: 1.00 GRAM TOP PRIZE!* ⚡\n\nSupercharge your cloud mining for just 0.50 GRAM!\n⚡ Win +25 GHS to +100 GHS Permanent Hashpower\n💎 Top Prize: +1.00 GRAM Direct Payout!\n\nPayment Verified ✅\nGuaranteed Hashrate & GRAM Drops on Every Open!\n\n👇 Tap below to unlock:',
-      button: '📦 Open 0.5 G Miner Pack 🚀',
+      id: 'plan_starter_trial',
+      label: '🐝 0.70 TON ➔ 0.80 G Starter Trial',
+      message: '🐝 *0.70 TON STARTER MINER TRIAL!* ⚡💎\n\nSpecial 1-Per-Account Starter Pack!\nPay 0.70 TON ➔ Receive 0.80 GRAM next day guaranteed!\n\nPayment Verified ✅\nUnlocks Lifetime Instant Withdrawals for your Account!\n\n👇 Activate Starter Plan:',
+      button: '🐝 Activate 0.70 TON Starter Plan 🚀',
+    },
+    {
+      id: 'plan_queen_whale',
+      label: '👑 3.00 TON ➔ 4.00 G Royal Queen',
+      message: '👑 *ROYAL QUEEN MINER CONTRACT: 4.00 GRAM DAILY!* 💎⚡\n\nMaximum power yield contract:\nPay 3.00 TON ➔ Receive 4.00 GRAM payout in exactly 24 hours!\n\nPayment Verified ✅\nInstant Blockchain Settlement!\n\n👇 Activate Royal Queen Contract:',
+      button: '👑 Activate Royal Queen Plan 💎',
     },
     {
       id: 'payouts_completed',
       label: '💸 Payouts Proof & Verified',
       message: '💸 *DAILY WITHDRAWALS PROCESSED & CREDITED!* 💎🎉\n\nOver 450+ Miner Payouts have been dispatched to TON Wallets!\nCheck your wallet or withdraw your mined GRAM right now!\n\nPayment Verified ✅\nStatus: 100% On-Chain Confirmed\n\n👇 Check your balance & withdraw:',
       button: '💎 Check Balance & Payouts 💸',
-    },
-    {
-      id: 'fever_2x_rush',
-      label: '🔥 15-Min Lucky Fever 2X',
-      message: '🔥 *15-MIN LUCKY FEVER ACTIVE: 2X JACKPOT RUSH!* ⏱️⚡\n\nDrop rates for 96+ OVR Football Cards & GRAM Jackpots are DOUBLED!\n• 🥉 Bronze ➔ +1.00 G + 100 GHS\n• 🥈 Silver ➔ +5.00 G Mega Drop\n• 👑 Gold ➔ +10.00 G VIP Drop\n• 👁️ Cyber God ➔ +25.00 G Supreme Drop\n\nPayment Verified ✅\nInstant Credit Direct to Account!\n\n👇 Claim 2X Fever Luck:',
-      button: '🔥 Claim 2X Lucky Fever ⚡',
     },
     {
       id: 'spin_viral_invite',

@@ -230,24 +230,24 @@ export const Home: React.FC = () => {
         </button>
       </div>
 
-      {/* 🎁 MYSTERY LOOT CRATES CALLOUT BANNER */}
+      {/* 🍯 24H DAILY YIELD PLANS CALLOUT BANNER */}
       <div
-        onClick={() => navigate('/crates')}
-        className="cursor-pointer mb-4 p-4 rounded-3xl bg-gradient-to-r from-[#2c1d0a] via-[#3a270d] to-[#201507] border border-amber-500/50 shadow-[0_4px_25px_rgba(245,158,11,0.15)] flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-amber-400"
+        onClick={() => navigate('/plans')}
+        className="cursor-pointer mb-4 p-4 rounded-3xl bg-gradient-to-r from-[#1a2d26] via-[#152a22] to-[#0f1f19] border-2 border-emerald-500/40 shadow-[0_4px_25px_rgba(16,185,129,0.2)] flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-emerald-400"
       >
         <div className="flex items-center gap-3">
-          <span className="text-3xl animate-pulse">🎁</span>
+          <span className="text-3xl animate-bounce">🍯</span>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-black text-amber-300 uppercase tracking-wider">Mystery Crates</span>
-              <span className="text-[8px] bg-gradient-to-r from-cyan-400 to-indigo-500 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">👁️ CYBER GOD</span>
-              <span className="text-[8px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">0.5G - 5G</span>
+              <span className="text-xs font-black text-emerald-300 uppercase tracking-wider">Daily Yield Plans</span>
+              <span className="text-[8px] bg-emerald-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">24H CYCLES</span>
+              <span className="text-[8px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">+53.8% PROFIT</span>
             </div>
-            <p className="text-[11px] text-amber-200/90 font-medium mt-0.5">FUT Card Walkouts • Win up to +25.00 GRAM Jackpot!</p>
+            <p className="text-[11px] text-emerald-200/90 font-medium mt-0.5">Deposit TON ➔ Receive Guaranteed GRAM Return Next Day!</p>
           </div>
         </div>
-        <button className="bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 px-3.5 py-2 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110 shrink-0">
-          OPEN ➔
+        <button className="bg-gradient-to-r from-emerald-400 to-teal-400 text-stone-950 px-3.5 py-2 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110 shrink-0">
+          PLANS ➔
         </button>
       </div>
 

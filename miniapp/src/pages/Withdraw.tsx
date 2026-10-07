@@ -417,7 +417,7 @@ export const Withdraw: React.FC = () => {
       {/* Qualification Modal Popup */}
       {showQualifyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121c19] border-2 border-[#93b3a6]/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+          <div className="bg-[#121c19] border-2 border-emerald-500/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center">
             {/* Close Button */}
             <button
               onClick={() => setShowQualifyModal(false)}
@@ -429,52 +429,52 @@ export const Withdraw: React.FC = () => {
             </button>
 
             {/* Header Icon & Title */}
-            <div className="w-14 h-14 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
-              🎁
+            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+              🍯
             </div>
             
             <h3 className="text-lg font-black text-stone-100 uppercase tracking-wide">
-              UNLOCK LIFETIME CASHOUT
+              UNLOCK INSTANT CASHOUT
             </h3>
             <p className="text-xs text-stone-300 mt-1 leading-relaxed">
-              To verify your miner wallet & enable unlimited lifetime cashouts, complete <span className="text-[#93b3a6] font-bold">1 of the 2 requirements</span> below:
+              Kindly purchase any <span className="text-emerald-400 font-bold">24H Mining Plan</span> (or invite 1 friend who activates a plan) before withdrawing:
             </p>
 
             {/* Requirement Cards */}
             <div className="mt-4 space-y-3 text-left">
-              {/* Option 1: Open 1 Mystery Crate (Instant) */}
-              <div className="p-3.5 rounded-2xl bg-[#182622] border border-amber-500/40 hover:border-amber-400 transition-all shadow-md relative overflow-hidden">
-                <div className="absolute top-2 right-2 bg-amber-500/20 text-amber-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-500/30">
-                  ⚡ FASTEST (INSTANT)
+              {/* Option 1: Activate 1 Mining Plan (Instant) */}
+              <div className="p-3.5 rounded-2xl bg-[#182622] border border-emerald-500/40 hover:border-emerald-400 transition-all shadow-md relative overflow-hidden">
+                <div className="absolute top-2 right-2 bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  ⚡ INSTANT CASHOUT UNLOCK
                 </div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xl">🎁</span>
-                  <span className="font-extrabold text-xs text-amber-200 uppercase tracking-wide">
-                    Option 1: Open 1 Mystery Crate
+                  <span className="text-xl">⚡</span>
+                  <span className="font-extrabold text-xs text-emerald-200 uppercase tracking-wide">
+                    Option 1: Activate 1 Mining Plan
                   </span>
                 </div>
                 <p className="text-[11px] text-stone-300 mb-2.5 leading-snug">
-                  Open any Mystery Box (starts from <b>0.5 GRAM</b>) to win instant cash/GHS and unlock unlimited lifetime withdrawals immediately!
+                  Activate any 24h Daily Yield Plan (starts from <b>0.70 TON</b>) to earn guaranteed daily profit & unlock unlimited lifetime withdrawals!
                 </p>
                 <button
                   onClick={() => {
                     setShowQualifyModal(false)
-                    navigate('/crates')
+                    navigate('/plans')
                   }}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 active:scale-95 transition-all"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 active:scale-95 transition-all"
                 >
-                  <span>🎁 OPEN MYSTERY CRATE (0.5 G)</span>
+                  <span>⚡ ACTIVATE MINER PLAN (0.70 TON)</span>
                   <span>➔</span>
                 </button>
               </div>
 
-              {/* Option 2: 1 Friend Opens Crate */}
+              {/* Option 2: 1 Friend Activates Plan */}
               <div className="p-3.5 rounded-2xl bg-[#182622] border border-[#2e423b] hover:border-[#93b3a6]/50 transition-all shadow-md">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">👥</span>
                     <span className="font-extrabold text-xs text-stone-200 uppercase tracking-wide">
-                      Option 2: 1 Friend Opens Crate
+                      Option 2: 1 Friend Activates Plan
                     </span>
                   </div>
                   <span className="text-[11px] font-black text-[#93b3a6]">
@@ -482,7 +482,7 @@ export const Withdraw: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-stone-300 mb-2 leading-snug">
-                  Invite a friend who opens any Mystery Box (starts from <b>0.5 GRAM</b>). Free alternative for lifetime verification!
+                  Invite a friend who activates any Daily Mining Plan (starts from <b>0.70 TON</b>) for 100% free lifetime verification!
                 </p>
                 
                 {/* Progress Bar */}
@@ -496,7 +496,7 @@ export const Withdraw: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowQualifyModal(false)
-                    navigate('/referrals')
+                    navigate('/earn')
                   }}
                   className="w-full py-2.5 rounded-xl zentorno-btn-secondary text-stone-200 font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
                 >

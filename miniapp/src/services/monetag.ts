@@ -1,24 +1,17 @@
 /**
- * Unified Ad Coordinator for HashBee
- * Primary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
- * Fallback: Monetag (Zone 11894371) — ONLY if AdExium fails
+ * Exclusive Ad Coordinator for HashBee
+ * Provider: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
  */
 
 export const isAdExiumReady = (): boolean => {
   return typeof window !== 'undefined' && !!window.adexiumWidget
 }
 
-export const isMonetagReady = (): boolean => {
-  return typeof window !== 'undefined' && typeof window.show_11894371 === 'function'
-}
-
 let lastAdTimestamp = 0
 const AD_COOLDOWN_MS = 60_000 // 1 minute
 
 /**
- * Show Interstitial/Rewarded Ad:
- * 1. Tries AdExium first
- * 2. If AdExium fails / not ready, falls back to Monetag
+ * Show Interstitial/Rewarded Ad using AdExium exclusively
  */
 export const showInterstitialAd = async (force = false): Promise<boolean> => {
   const now = Date.now()
@@ -28,32 +21,20 @@ export const showInterstitialAd = async (force = false): Promise<boolean> => {
     return false
   }
 
-  // 1. Try AdExium (Primary)
+  // AdExium Exclusive
   if (isAdExiumReady()) {
     try {
       lastAdTimestamp = now
-      console.log('[Ads] Requesting primary AdExium ad...')
+      console.log('[Ads] Requesting AdExium interstitial ad...')
       window.adexiumWidget.requestAd('interstitial')
       return true
     } catch (e) {
-      console.warn('[Ads] AdExium request error, attempting Monetag fallback:', e)
-    }
-  }
-
-  // 2. Try Monetag (Fallback)
-  if (isMonetagReady()) {
-    try {
-      lastAdTimestamp = now
-      console.log('[Ads] Showing fallback Monetag ad...')
-      await window.show_11894371!()
-      return true
-    } catch (err) {
-      console.error('[Ads] Monetag fallback error:', err)
+      console.warn('[Ads] AdExium request error:', e)
       return false
     }
   }
 
-  console.warn('[Ads] Neither AdExium nor Monetag is ready.')
+  console.warn('[Ads] AdExium widget not yet initialized.')
   return false
 }
 
@@ -67,7 +48,7 @@ let hasInitialized = false
 let periodicTimer: ReturnType<typeof setInterval> | null = null
 
 /**
- * Initialize automatic ads (AdExium primary, Monetag fallback):
+ * Initialize automatic AdExium ads:
  * - Recurring ad every 2 minutes with cooldown protection
  */
 export const initMonetagAutoAds = () => {
@@ -80,7 +61,7 @@ export const initMonetagAutoAds = () => {
   }
 
   periodicTimer = setInterval(() => {
-    console.log('[Ads] Triggering scheduled recurring ad (AdExium primary)...')
+    console.log('[Ads] Triggering scheduled AdExium ad...')
     showInterstitialAd().catch(() => {})
   }, 120000)
 }

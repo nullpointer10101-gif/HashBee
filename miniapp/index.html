@@ -17,27 +17,10 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- AdExium Official Monetization Script (HashBee TMA Only) — PRIMARY AD -->
+    <!-- AdExium Official Monetization Script (Exclusive Ad Provider) -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
 
-    <!-- Monetag Telegram Mini App SDK (Zone 11894371) — FALLBACK AD ONLY -->
-    <script src="https://libtl.com/sdk.js" data-zone="11894371" data-sdk="show_11894371"></script>
-
     <script type="text/javascript">
-      // --- Fallback: Monetag (ONLY triggered if AdExium fails) ---
-      function triggerMonetagFallback() {
-        try {
-          if (typeof window.show_11894371 === 'function') {
-            console.log('[Monetag] Triggering fallback ad...');
-            window.show_11894371();
-          } else {
-            console.warn('[Monetag] SDK not available');
-          }
-        } catch(e) {
-          console.error('[Monetag] Fallback error:', e);
-        }
-      }
-
       document.addEventListener('DOMContentLoaded', function() {
         try {
           if (window.Telegram?.WebApp) {
@@ -46,7 +29,7 @@
           }
         } catch(e) {}
 
-        // --- PRIMARY: AdExium ---
+        // --- EXCLUSIVE: AdExium ---
         try {
           const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
           if (WidgetClass) {
@@ -66,7 +49,6 @@
                 }
               } catch(err) {
                 console.error('[AdExium] displayAd error:', err);
-                triggerMonetagFallback();
               }
             });
 
@@ -74,15 +56,12 @@
               console.log('[AdExium] Ad closed');
             });
 
-            // --- Fallback to Monetag if AdExium has no ad or fails ---
             adexiumWidget.on('noAdFound', function() {
-              console.warn('[AdExium] noAdFound — falling back to Monetag...');
-              triggerMonetagFallback();
+              console.log('[AdExium] noAdFound');
             });
 
             adexiumWidget.on('requestAdError', function(e) {
-              console.warn('[AdExium] requestAdError — falling back to Monetag:', e);
-              triggerMonetagFallback();
+              console.warn('[AdExium] requestAdError:', e);
             });
 
             // Request primary AdExium ad after brief render delay
@@ -91,17 +70,12 @@
                 console.log('[AdExium] Requesting initial interstitial ad for HashBee...');
                 adexiumWidget.requestAd('interstitial');
               } catch(e) {
-                console.warn('[AdExium] requestAd error — falling back to Monetag:', e);
-                triggerMonetagFallback();
+                console.warn('[AdExium] requestAd error:', e);
               }
             }, 800);
-          } else {
-            console.warn('[AdExium] SDK not available — falling back to Monetag...');
-            setTimeout(triggerMonetagFallback, 800);
           }
         } catch(e) {
-          console.error('[AdExium] Initialization error — falling back to Monetag:', e);
-          setTimeout(triggerMonetagFallback, 800);
+          console.error('[AdExium] Initialization error:', e);
         }
       });
     </script>
