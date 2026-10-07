@@ -443,21 +443,24 @@ export const Plans: React.FC = () => {
 
       {/* Tab 1: Available Plans Store */}
       {activeTab === 'store' && (
-        <div className="space-y-3.5 relative z-10">
+        <div className="space-y-4 relative z-10">
           {availablePlans.map((plan, index) => {
             const isStarter = plan.id === 'starter'
             const isDouble = plan.id === 'matrix'
             const isMythic = plan.id === 'apex'
             const isLegendary = plan.id === 'titan'
+            const isEpic = plan.id === 'queen'
 
-            // Dynamic card tint
+            // Dynamic card tint & glow
             const cardTintClass = isDouble
-              ? 'card-tint-red'
+              ? 'card-tint-red border-pink-300'
               : isMythic
-              ? 'card-tint-amber'
+              ? 'card-tint-amber border-amber-300'
               : isLegendary
-              ? 'card-tint-emerald'
-              : 'card-tint-blue'
+              ? 'card-tint-emerald border-emerald-300'
+              : isEpic
+              ? 'card-tint-purple border-purple-300'
+              : 'card-tint-blue border-blue-300'
 
             const buttonClass = isDouble
               ? 'btn-primary-red'
@@ -465,87 +468,118 @@ export const Plans: React.FC = () => {
               ? 'btn-primary-amber'
               : isLegendary
               ? 'btn-primary-emerald'
+              : isEpic
+              ? 'btn-primary-purple'
               : 'btn-primary-blue'
+
+            const glowClass = isDouble
+              ? 'glow-ring-pink'
+              : isMythic
+              ? 'glow-ring-gold'
+              : isLegendary
+              ? 'glow-ring-emerald'
+              : isEpic
+              ? 'glow-ring-purple'
+              : isStarter
+              ? 'glow-ring-violet'
+              : 'glow-ring-blue'
 
             return (
               <motion.div
                 key={plan.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 + index * 0.04 }}
-                className={`${cardTintClass} p-4.5 relative shadow-md`}
+                className={`${cardTintClass} p-4.5 relative shadow-lg rounded-3xl overflow-hidden`}
               >
                 {/* Header Tag Bar */}
                 <div className="flex items-center justify-between mb-3">
                   <span
-                    className={`px-3 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
+                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
                       isDouble
-                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                        ? 'bg-rose-100 text-rose-900 border border-rose-300'
                         : isMythic
-                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        ? 'bg-amber-100 text-amber-950 border border-amber-300'
                         : isLegendary
-                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                        : 'bg-purple-100 text-[#7c3aed] border border-purple-200'
+                        ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+                        : isEpic
+                        ? 'bg-purple-100 text-purple-950 border border-purple-300'
+                        : 'bg-blue-100 text-blue-950 border border-blue-300'
                     }`}
                   >
                     {plan.badge}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white font-mono shadow-sm">
+                  <span className="px-2.5 py-1 rounded-full text-[9px] font-black bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-mono shadow-sm">
                     +{plan.profit_percent.toFixed(1)}% NET 24H ROI
                   </span>
                 </div>
 
-                {/* Plan Info */}
-                <div className="flex items-center gap-3 mb-3.5">
-                  <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-3xl shrink-0 shadow-md">
+                {/* Plan Info with Large 3D Preview Frame */}
+                <div className="flex items-center gap-3.5 mb-3.5 bg-white/80 p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+                  {/* Large 3D NFT Frame */}
+                  <div className={`w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden shrink-0 shadow-md ${glowClass} bg-slate-900 flex items-center justify-center relative group`}>
                     {(plan as any).image ? (
                       <img
                         src={(plan as any).image}
                         alt={plan.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => {
                           (e.target as HTMLElement).style.display = 'none'
                         }}
                       />
                     ) : (
-                      <span>{plan.icon}</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-3xl">
+                        <span>{plan.icon}</span>
+                        <span className="text-[8px] font-black text-white/80 uppercase font-mono mt-0.5">3D NFT</span>
+                      </div>
                     )}
+                    
+                    {/* Corner Tag */}
+                    <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-[8px] font-black text-white font-mono">
+                      {plan.cost_gram}T
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-950 uppercase tracking-tight">
+
+                  {/* Title & Description */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base font-black text-slate-950 uppercase tracking-tight truncate">
                       {plan.name}
                     </h3>
-                    <p className="text-[11px] text-slate-600 font-medium leading-snug mt-0.5">
-                      Pay <span className="text-slate-950 font-bold">{plan.cost_gram.toFixed(2)} TON</span> ➔ Receive{' '}
-                      <span className="text-[#0088ff] font-black">
+                    <p className="text-[11px] text-slate-600 font-semibold leading-tight mt-1">
+                      Pay <span className="text-slate-950 font-black">{plan.cost_gram.toFixed(2)} TON</span> ➔ Receive{' '}
+                      <span className="text-[#0088ff] font-black underline decoration-blue-300">
                         {plan.return_gram.toFixed(2)} GRAM
-                      </span>{' '}
-                      in 24 Hours
+                      </span>
                     </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200">
+                        Exact 24H Maturity
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Return Grid Breakdown */}
-                <div className="grid grid-cols-3 gap-1.5 bg-white/90 rounded-2xl p-2.5 border border-slate-200/80 mb-3.5 text-center shadow-sm">
+                <div className="grid grid-cols-3 gap-1.5 bg-white/95 rounded-2xl p-2.5 border border-slate-200/90 mb-3.5 text-center shadow-sm">
                   <div>
-                    <div className="text-[8px] text-slate-400 uppercase font-black">Deposit</div>
-                    <div className="text-xs font-black text-slate-900 font-mono">{plan.cost_gram.toFixed(2)} TON</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-black">You Pay</div>
+                    <div className="text-xs sm:text-sm font-black text-slate-900 font-mono mt-0.5">{plan.cost_gram.toFixed(2)} TON</div>
                   </div>
                   <div className="border-x border-slate-200">
-                    <div className="text-[8px] text-slate-400 uppercase font-black">24H Payout</div>
-                    <div className="text-xs font-black text-[#0088ff] font-mono">
-                      {plan.return_gram.toFixed(2)} GRAM
+                    <div className="text-[8px] text-slate-400 uppercase font-black">24H Return</div>
+                    <div className="text-xs sm:text-sm font-black text-[#0088ff] font-mono mt-0.5">
+                      {plan.return_gram.toFixed(2)} G
                     </div>
                   </div>
                   <div>
                     <div className="text-[8px] text-slate-400 uppercase font-black">Net Profit</div>
-                    <div className="text-xs font-black text-emerald-600 font-mono">+{plan.profit_gram.toFixed(2)} G</div>
+                    <div className="text-xs sm:text-sm font-black text-emerald-600 font-mono mt-0.5">+{plan.profit_gram.toFixed(2)} G</div>
                   </div>
                 </div>
 
                 {/* Action Button */}
                 {isStarter && plansOverview?.can_buy_starter === false ? (
-                  <div className="w-full py-2.5 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs text-center">
+                  <div className="w-full py-3 rounded-2xl bg-slate-200 text-slate-600 font-black text-xs text-center uppercase tracking-wider">
                     ✓ 1-TIME TRIAL COMPLETED
                   </div>
                 ) : (

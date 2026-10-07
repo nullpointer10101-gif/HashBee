@@ -154,8 +154,42 @@ export const Withdraw: React.FC = () => {
         </p>
       </div>
 
+      {/* ── LIVE WITHDRAWAL PROOFS BANNER (DIRECT TELEGRAM CHANNEL LINK) ── */}
+      <div className="mine-card p-3.5 mb-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-2 border-indigo-400/40 relative overflow-hidden shadow-lg">
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0088ff] to-[#00d68f] flex items-center justify-center text-xl shrink-0 shadow-md">
+              💎
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs sm:text-sm font-black text-white uppercase tracking-tight">
+                  Live Payout Proofs
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[8px] font-black uppercase">
+                  VERIFIED
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-300 font-medium mt-0.5">
+                14,800+ Instant Payouts broadcasted on ledger
+              </p>
+            </div>
+          </div>
+
+          <a
+            href="https://t.me/HashBeePayouts"
+            target="_blank"
+            rel="noreferrer"
+            className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#0088ff] to-[#00c6ff] text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md active:scale-95 transition-all shrink-0 hover:brightness-110"
+          >
+            <span>PROOFS</span>
+            <span>➔</span>
+          </a>
+        </div>
+      </div>
+
       {/* Tabs Switcher */}
-      <div className="flex bg-white p-1 rounded-2xl border border-slate-200 mb-4 shadow-sm">
+      <div className="flex bg-white p-1 rounded-2xl border border-slate-200 mb-3.5 shadow-sm">
         <button
           onClick={() => switchTab('withdraw')}
           className={`flex-1 py-2 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
