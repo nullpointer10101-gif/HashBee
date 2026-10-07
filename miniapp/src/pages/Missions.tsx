@@ -52,26 +52,34 @@ function showAd(): Promise<boolean> {
       }
     }
 
-    // Safety timeout: 4 seconds for AdExium response
+    // Safety timeout: 12 seconds for AdExium response & presentation
     const timer = setTimeout(() => {
+      console.log('[Missions] AdExium timeout reached, fallback triggered')
       done(false)
-    }, 4000)
+    }, 12000)
 
-    // 1. Try AdExium Interstitial/Rewarded
+    // 1. Try AdExium Interstitial/Rewarded Video
     try {
-      const adex =
-        typeof window !== 'undefined'
-          ? (window as any).adexiumWidget ||
-            ((window as any).AdexiumWidget || (window as any).TGAdsWidget
-              ? new ((window as any).AdexiumWidget || (window as any).TGAdsWidget)({
-                  wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-                  adFormat: 'interstitial',
-                })
-              : null)
-          : null
+      let adex = (window as any).adexiumWidget
+      if (!adex && typeof (window as any).initAdexium === 'function') {
+        adex = (window as any).initAdexium()
+      }
+      if (!adex) {
+        const WidgetClass = (window as any).AdexiumWidget || (window as any).TGAdsWidget
+        if (WidgetClass) {
+          const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData)
+          adex = new WidgetClass({
+            wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
+            adFormat: 'interstitial',
+            debug: !isInsideTg,
+          })
+          ;(window as any).adexiumWidget = adex
+        }
+      }
 
       if (adex && typeof adex.requestAd === 'function') {
         const handleReceived = (ad: any) => {
+          console.log('[Missions] AdExium adReceived! Displaying now...')
           try {
             if (typeof adex.displayAd === 'function') {
               adex.displayAd(ad)
@@ -82,18 +90,28 @@ function showAd(): Promise<boolean> {
         }
 
         const handleClosed = () => {
+          console.log('[Missions] AdExium adClosed -> User completed view')
+          cleanup()
+          clearTimeout(timer)
+          done(true)
+        }
+
+        const handleCompleted = () => {
+          console.log('[Missions] AdExium adPlaybackCompleted')
           cleanup()
           clearTimeout(timer)
           done(true)
         }
 
         const handleNoAd = () => {
+          console.log('[Missions] AdExium noAdFound from network')
           cleanup()
           clearTimeout(timer)
           done(false)
         }
 
-        const handleError = () => {
+        const handleError = (err: any) => {
+          console.warn('[Missions] AdExium requestAdError:', err)
           cleanup()
           clearTimeout(timer)
           done(false)
@@ -104,6 +122,7 @@ function showAd(): Promise<boolean> {
             try {
               adex.off('adReceived', handleReceived)
               adex.off('adClosed', handleClosed)
+              adex.off('adPlaybackCompleted', handleCompleted)
               adex.off('noAdFound', handleNoAd)
               adex.off('requestAdError', handleError)
             } catch {}
@@ -113,11 +132,26 @@ function showAd(): Promise<boolean> {
         if (typeof adex.on === 'function') {
           adex.on('adReceived', handleReceived)
           adex.on('adClosed', handleClosed)
+          adex.on('adPlaybackCompleted', handleCompleted)
           adex.on('noAdFound', handleNoAd)
           adex.on('requestAdError', handleError)
         }
 
-        adex.requestAd('interstitial')
+        console.log('[Missions] Requesting AdExium interstitial rewarded...')
+        adex.requestAd('interstitial', true).then((ads: any) => {
+          if (Array.isArray(ads) && ads.length > 0) {
+            try {
+              if (typeof adex.displayAd === 'function') {
+                adex.displayAd(ads)
+              }
+            } catch (e) {
+              console.warn('[Missions] displayAd promise resolution error:', e)
+            }
+          }
+        }).catch((err: any) => {
+          console.warn('[Missions] requestAd promise error:', err)
+        })
+
         return
       }
     } catch (err) {
@@ -995,87 +1029,160 @@ export const Missions: React.FC = () => {
       </div>
 
       {/* ── IN-APP BOOSTER AD VIDEO PLAYER MODAL ── */}
-      {showInAppAdModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#0f172a] border border-blue-500/40 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl relative overflow-hidden text-center">
-            {/* Ambient Background Glow */}
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-blue-600/30 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-indigo-600/30 rounded-full blur-2xl pointer-events-none" />
+      {showInAppAdModal && (() => {
+        const sponsors = [
+          {
+            title: 'TON Cyber Cloud Miner',
+            tag: 'FEATURED SPONSOR',
+            desc: 'Unlock ultra high-speed TON & USDT cloud hashrate with 0% fees.',
+            icon: '⚡',
+            gradient: 'from-blue-600 via-indigo-600 to-slate-900',
+            glow: 'rgba(59,130,246,0.35)',
+            btnText: '🚀 Explore Sponsor Node',
+            btnUrl: 'https://t.me/hashbe_bot',
+          },
+          {
+            title: 'Toncoin Liquid Staking Pool',
+            tag: 'VERIFIED PARTNER',
+            desc: 'Stake TON on-chain and earn high-yield daily mining distributions.',
+            icon: '💎',
+            gradient: 'from-sky-500 via-blue-600 to-slate-900',
+            glow: 'rgba(14,165,233,0.35)',
+            btnText: '💎 View Staking Pool',
+            btnUrl: 'https://ton.org',
+          },
+          {
+            title: 'HashBee ASIC Queen Swarm',
+            tag: 'OFFICIAL AD NETWORK',
+            desc: 'Supercharge your daily revenue with 100 GHS enterprise ASIC rigs.',
+            icon: '🐝',
+            gradient: 'from-amber-500 via-orange-600 to-slate-900',
+            glow: 'rgba(245,158,11,0.35)',
+            btnText: '🐝 Boost Hashrate Now',
+            btnUrl: 'https://t.me/hashbe_bot',
+          },
+          {
+            title: 'Telegram Web3 Payout Network',
+            tag: 'LIVE SPONSOR',
+            desc: 'Direct automated on-chain TON & USDT payouts straight to your wallet.',
+            icon: '🚀',
+            gradient: 'from-emerald-500 via-teal-600 to-slate-900',
+            glow: 'rgba(16,185,129,0.35)',
+            btnText: '📢 Live Proofs Channel',
+            btnUrl: 'https://t.me/HashBeePayouts',
+          },
+        ]
+        const currentSponsor = sponsors[(adPlayingTaskIndex ?? 0) % sponsors.length]
 
-            <div className="flex items-center justify-between mb-3 relative z-10">
-              <span className="text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-full">
-                🎬 HashBee Booster Video
-              </span>
-              <span className="text-xs font-mono font-bold text-amber-400">
-                {inAppAdCountdown > 0 ? `⏳ ${inAppAdCountdown}s remaining` : '✅ Ready to Claim'}
-              </span>
-            </div>
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+            <div className="bg-[#0b1120] border border-blue-500/40 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl relative overflow-hidden text-center">
+              {/* Ambient Background Glow */}
+              <div
+                className="absolute -top-12 -right-12 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-all duration-700"
+                style={{ backgroundColor: currentSponsor.glow }}
+              />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Video Player Display Container */}
-            <div className="relative w-full aspect-video rounded-2xl bg-slate-900/90 border border-slate-700/80 overflow-hidden flex flex-col items-center justify-center mb-4 p-4 shadow-inner">
-              <div className="w-14 h-14 rounded-full bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-2xl mb-2 animate-bounce">
-                ⛏️
+              {/* Header Badges */}
+              <div className="flex items-center justify-between mb-3 relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-300 border border-blue-500/40 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  🎬 {currentSponsor.tag}
+                </span>
+                <span className="text-xs font-mono font-black text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-lg">
+                  {inAppAdCountdown > 0 ? `⏳ ${inAppAdCountdown}s` : '✅ Complete'}
+                </span>
               </div>
-              <div className="text-xs font-extrabold text-blue-300">
-                HashBee Cloud Miner Network
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1 max-w-[220px]">
-                Supporting high-speed TON & USDT cloud hashrate pools
-              </p>
 
-              {/* Live Progress Bar */}
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear"
-                  style={{ width: `${((5 - inAppAdCountdown) / 5) * 100}%` }}
-                />
-              </div>
-            </div>
+              {/* Dynamic Video Ad Player Screen */}
+              <div className={`relative w-full aspect-video rounded-2xl bg-gradient-to-br ${currentSponsor.gradient} border border-white/15 overflow-hidden flex flex-col items-center justify-center mb-4 p-4 shadow-2xl relative group`}>
+                {/* Live Scanline / Grid overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
 
-            <div className="mb-4">
-              <div className="text-sm font-black text-white">
-                Watching Booster Ad #{(adPlayingTaskIndex ?? 0) + 1}
-              </div>
-              <div className="text-xs text-emerald-400 font-bold mt-0.5">
-                Reward: +{WATCH_AD_POWER_REWARD} GHS Mining Power
-              </div>
-            </div>
+                {/* Animated Badge & Icon */}
+                <div className="relative z-10 w-16 h-16 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl mb-2.5 shadow-lg animate-pulse">
+                  <span>{currentSponsor.icon}</span>
+                  <div className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-red-500 text-[8px] font-black uppercase tracking-widest text-white rounded-full">
+                    AD
+                  </div>
+                </div>
 
-            {/* Action Button */}
-            {inAppAdCanClaim ? (
+                <div className="relative z-10 text-sm font-black text-white tracking-wide drop-shadow-md">
+                  {currentSponsor.title}
+                </div>
+                <p className="relative z-10 text-[11px] text-slate-200/90 mt-1 max-w-[240px] leading-snug font-medium drop-shadow-sm">
+                  {currentSponsor.desc}
+                </p>
+
+                {/* Optional sponsor direct link */}
+                <a
+                  href={currentSponsor.btnUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="relative z-10 mt-2.5 text-[10px] font-extrabold text-white bg-white/15 hover:bg-white/25 border border-white/30 px-3 py-1 rounded-full transition-all flex items-center gap-1 shadow-sm"
+                >
+                  {currentSponsor.btnText} →
+                </a>
+
+                {/* Live Video Timeline Progress Bar */}
+                <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/60 backdrop-blur-sm">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-emerald-400 transition-all duration-1000 ease-linear shadow-glow"
+                    style={{ width: `${((5 - inAppAdCountdown) / 5) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Reward Info */}
+              <div className="mb-4">
+                <div className="text-sm font-black text-white flex items-center justify-center gap-1.5">
+                  <span>Watching Booster Video #{(adPlayingTaskIndex ?? 0) + 1}</span>
+                </div>
+                <div className="text-xs text-emerald-400 font-extrabold mt-0.5 flex items-center justify-center gap-1">
+                  <span>🎁 Reward:</span>
+                  <span className="text-amber-300 font-black">+{WATCH_AD_POWER_REWARD} GHS Mining Power</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              {inAppAdCanClaim ? (
+                <button
+                  onClick={async () => {
+                    if (adPlayingTaskIndex !== null) {
+                      await completeAdReward(adPlayingTaskIndex)
+                    }
+                    setShowInAppAdModal(false)
+                    setAdPlayingTaskIndex(null)
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/35 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>🎉</span>
+                  <span>Claim +{WATCH_AD_POWER_REWARD} GHS Mining Reward</span>
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-3.5 rounded-2xl bg-slate-800/90 text-slate-400 font-bold text-xs uppercase tracking-wider cursor-not-allowed border border-slate-700/80 flex items-center justify-center gap-2"
+                >
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  <span>Streaming Sponsor Video ({inAppAdCountdown}s)...</span>
+                </button>
+              )}
+
               <button
-                onClick={async () => {
-                  if (adPlayingTaskIndex !== null) {
-                    await completeAdReward(adPlayingTaskIndex)
-                  }
+                onClick={() => {
                   setShowInAppAdModal(false)
                   setAdPlayingTaskIndex(null)
                 }}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
+                className="mt-3 text-[11px] text-slate-400 hover:text-slate-200 font-bold"
               >
-                🎉 Claim +{WATCH_AD_POWER_REWARD} GHS Reward
+                Cancel & Close
               </button>
-            ) : (
-              <button
-                disabled
-                className="w-full py-3 rounded-2xl bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wider cursor-not-allowed border border-slate-700"
-              >
-                Please wait ({inAppAdCountdown}s)...
-              </button>
-            )}
-
-            <button
-              onClick={() => {
-                setShowInAppAdModal(false)
-                setAdPlayingTaskIndex(null)
-              }}
-              className="mt-3 text-[11px] text-slate-400 hover:text-slate-200 font-bold"
-            >
-              Cancel & Close
-            </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

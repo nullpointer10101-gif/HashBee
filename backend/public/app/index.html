@@ -17,7 +17,8 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- AdExium Official Monetization Script (Exclusive Ad Provider) -->
+    <!-- AdExium Stylesheet & Official Monetization Script -->
+    <link rel="stylesheet" href="https://cdn.tgads.space/assets/css/style.min.css?ver=1.81" />
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js" id="adexium-script"></script>
 
     <script type="text/javascript">
@@ -27,9 +28,11 @@
         try {
           const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
           if (WidgetClass) {
+            const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData);
             const adex = new WidgetClass({
               wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-              adFormat: 'interstitial'
+              adFormat: 'interstitial',
+              debug: !isInsideTg
             });
             
             adex.on('adReceived', function(ad) {
@@ -48,7 +51,7 @@
             });
 
             adex.on('noAdFound', function() {
-              console.log('[AdExium] noAdFound');
+              console.log('[AdExium] noAdFound from network');
             });
 
             adex.on('requestAdError', function(e) {
@@ -77,7 +80,17 @@
         if (adex && typeof adex.requestAd === 'function') {
           try {
             console.log('[AdExium] Requesting ad (' + format + ')...');
-            adex.requestAd(format);
+            adex.requestAd(format, true).then(function(ads) {
+              if (Array.isArray(ads) && ads.length > 0) {
+                try {
+                  if (typeof adex.displayAd === 'function') {
+                    adex.displayAd(ads);
+                  }
+                } catch(e) {}
+              }
+            }).catch(function(err) {
+              console.warn('[AdExium] requestAd async error:', err);
+            });
             return true;
           } catch(e) {
             console.warn('[AdExium] requestAd error:', e);
@@ -100,7 +113,7 @@
         // Trigger opening ad after brief render
         setTimeout(function() {
           window.requestAdexiumAd('interstitial');
-        }, 600);
+        }, 800);
       });
 
       // Periodic check in case CDN script loads asynchronously
@@ -117,10 +130,10 @@
         }
       }, 500);
     </script>
-    <script type="module" crossorigin src="/assets/index-Bh9REDgV.js"></script>
+    <script type="module" crossorigin src="/assets/index-BG6FWdBA.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-B0sXmqWz.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-5j4nD7dR.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-C_mXwT_w.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-ySHn7ERQ.css">
   </head>
   <body>
     <div id="root"></div>
