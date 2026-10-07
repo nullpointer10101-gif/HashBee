@@ -44,7 +44,24 @@ function saveWatchAdState(state: WatchAdState) {
 
 function showAd(): Promise<boolean> {
   return new Promise((resolve) => {
-    if (window.adexiumWidget) {
+    // 1. Try Monetag interstitial
+    if (typeof (window as any).show_8985160 === 'function') {
+      try {
+        (window as any)
+          .show_8985160()
+          .then(() => resolve(true))
+          .catch((err: any) => {
+            console.warn('[Missions] Monetag ad error:', err)
+            resolve(false)
+          })
+        return
+      } catch (e) {
+        console.warn('[Missions] Monetag call error:', e)
+      }
+    }
+
+    // 2. Try AdExium Widget
+    if (window.adexiumWidget && typeof window.adexiumWidget.requestAd === 'function') {
       try {
         window.adexiumWidget.requestAd('interstitial')
         resolve(true)
@@ -53,6 +70,8 @@ function showAd(): Promise<boolean> {
         console.warn('[Missions] AdExium error:', err)
       }
     }
+
+    // No ad provider currently active or available
     resolve(false)
   })
 }
@@ -122,10 +141,19 @@ export const Missions: React.FC = () => {
       if (watchAdState.completed.includes(taskIndex)) return
       if (watchAdVerifyingIndex !== null) return
 
+      toast.loading('Loading sponsored video ad...', { id: 'ad-load' })
+      let adPlayed = false
       try {
-        await showAd()
+        adPlayed = await showAd()
       } catch (err) {
-        console.warn('Ad playback note:', err)
+        console.warn('Ad playback error:', err)
+      } finally {
+        toast.dismiss('ad-load')
+      }
+
+      if (!adPlayed) {
+        toast.error('⚠️ Ad not available right now. Please try again in a few moments!')
+        return
       }
 
       const countdownSec = 15
