@@ -163,11 +163,13 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-md flex flex-col items-center justify-center px-4 py-6 text-center select-none overflow-y-auto font-sans">
       <div className="mine-card max-w-sm w-full p-5 sm:p-6 text-center relative overflow-hidden shadow-2xl bg-white border border-slate-200">
         {/* Robot Miner Avatar */}
-        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-sky-200 bg-sky-50 mx-auto mb-3 shadow-md flex items-center justify-center text-3xl">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-sky-200 bg-sky-50 mx-auto mb-3 shadow-md flex items-center justify-center text-3xl relative">
+          <span className="absolute inset-0 flex items-center justify-center text-3xl">🤖</span>
           <img
             src={robotMinerImg}
             alt="Crypto Mine"
-            className="w-full h-full object-cover"
+            loading="eager"
+            className="w-full h-full object-cover relative z-10"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none'
             }}

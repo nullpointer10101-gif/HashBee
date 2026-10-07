@@ -458,6 +458,7 @@ export const Home: React.FC = () => {
           <img
             src={inviteBannerImg}
             alt="Invite Friends"
+            loading="eager"
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none'
