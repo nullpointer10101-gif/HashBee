@@ -49,8 +49,8 @@ type ViralBountyRequest struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-// Global campaign launch epoch (Oct 1, 2026)
-var CampaignLaunchEpoch = time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+// Global campaign launch epoch (Oct 7, 2026 18:00:00 UTC)
+var CampaignLaunchEpoch = time.Date(2026, 10, 7, 18, 0, 0, 0, time.UTC)
 
 func (s *ViralBountyService) EnsureTable(ctx context.Context) error {
 	_, err := s.db.Exec(ctx, `
@@ -81,8 +81,8 @@ func (s *ViralBountyService) GetUserBountyInfo(ctx context.Context, userID uuid.
 	}
 
 	// Calculate personal 7-day timer
-	// For users registered before campaign launch, their 7 days start from CampaignLaunchEpoch.
-	// For users registering after campaign launch, their 7 days start from userCreatedAt.
+	// For existing users, their 7 days start from CampaignLaunchEpoch (Oct 7, 2026 18:00:00 UTC).
+	// For new users who sign up after CampaignLaunchEpoch, their 7 days start from userCreatedAt.
 	var userCampaignStart time.Time
 	if userCreatedAt.Before(CampaignLaunchEpoch) {
 		userCampaignStart = CampaignLaunchEpoch
@@ -99,14 +99,14 @@ func (s *ViralBountyService) GetUserBountyInfo(ctx context.Context, userID uuid.
 		isExpired = true
 	}
 
-	// Count direct referrals (level 1 referrals or users directly referred)
+	// Count valid referrals created during the active 7-day campaign window
 	var refCount int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COALESCE(GREATEST(
-			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1),
-			(SELECT COUNT(*) FROM users WHERE referrer_id = $1)
+			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1 AND created_at >= $2 AND created_at <= $3),
+			(SELECT COUNT(*) FROM users WHERE referrer_id = $1 AND created_at >= $2 AND created_at <= $3)
 		), 0)
-	`, userID).Scan(&refCount)
+	`, userID, userCampaignStart, deadline).Scan(&refCount)
 
 	if userTelegramID == 6446145632 {
 		refCount = 20
