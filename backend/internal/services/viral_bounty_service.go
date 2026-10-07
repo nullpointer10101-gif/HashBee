@@ -102,12 +102,10 @@ func (s *ViralBountyService) GetUserBountyInfo(ctx context.Context, userID uuid.
 	// Count new valid referrals created on or after userCampaignStart and before deadline
 	var refCount int
 	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(*) 
-		FROM referrals 
-		WHERE referrer_id = $1 
-		  AND level = 1 
-		  AND created_at >= $2 
-		  AND created_at <= $3
+		SELECT COALESCE(GREATEST(
+			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1 AND created_at >= $2 AND created_at <= $3),
+			(SELECT COUNT(*) FROM users WHERE referrer_id = $1 AND created_at >= $2 AND created_at <= $3)
+		), 0)
 	`, userID, userCampaignStart, deadline).Scan(&refCount)
 
 	rewardPerRef := 0.50
