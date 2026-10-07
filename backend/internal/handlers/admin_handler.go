@@ -1220,106 +1220,94 @@ type AutoBroadcastTemplate struct {
 
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
+		Key: "ton_deposit_boost",
+		Message: `⚡ *BOOST YOUR MINING SPEED* ⚡
+
+Deposit TON to upgrade your miner:
+💎 *1 TON = 520 GHS Hashrate*
+⚡ Min Deposit: *0.50 TON*
+📈 Instant on-chain credit & 24/7 passive earnings!
+
+👇 Upgrade your hashrate now:`,
+		ButtonText: "💎 Boost Mining Power ⚡",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
 		Key: "watch_ads_boost",
-		Message: `📺 *FREE HONEY & HASHRATE BOOST IS LIVE!* 🐝⚡
+		Message: `📺 *FREE HASHRATE BOOST IS LIVE!* ⚡
 
-Hey {name}, earn free Honey & boost your mining power without spending anything:
-• 🎬 3 Daily Ad Tasks refreshing every 3 hours
-• 🍯 +1.0 Honey reward per 15-second ad
-• ⚡ Free Hashrate boost to speed up your harvest
-• ⏱️ Refreshes automatically every 3 hours 24/7
+Boost your cloud miner 100% free:
+• 🎬 Watch 3 daily booster ads
+• ⚡ Earn *+1 GHS Mining Power* per ad
+• 🔄 Tasks refresh every 3 hours
 
-💰 100% Free • Direct Balance Credit • Withdrawable on TON & BSC!
-
-👇 Watch your 3 daily ads and boost your gains:`,
-		ButtonText: "📺 Watch Ads & Earn Honey 🍯",
+👇 Watch ads & claim bonus GHS:`,
+		ButtonText: "📺 Watch Ads & Boost ⚡",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "crate_god_jackpot",
-		Message: `📦 *MYSTERY CRATES LIVE: 25.0 GRAM GRAND PRIZE!* 💎🔥
+		Key: "nft_cloud_miners",
+		Message: `🤖 *NFT CLOUD MINERS ACTIVE!* ⚡
 
-Unbox guaranteed real crypto cashouts, instant GRAM tokens & permanent Hashrate:
-• 🥉 Bronze (0.50 G) ➔ Up to 2.50 GRAM + Hashrate
-• 🥈 Silver (1.50 G) ➔ Up to 7.50 GRAM + Hashrate
-• 🥇 Gold (3.00 G) ➔ Up to 15.00 GRAM + Hashrate
-• 💎 Diamond (5.00 G) ➔ 25.00 GRAM Jackpot + $20 USDT!
+Deploy high-power AI mining rigs:
+• ⚡ Up to *52,000 GHS* mining speed
+• 💎 Daily passive USDT earnings 24/7
+• 🛡️ Direct on-chain TON smart contracts
 
-⚡ Opening just 1 crate verifies your wallet for Unlimited Lifetime Withdrawals!
-
-👇 Unbox your mystery crate now:`,
-		ButtonText: "📦 Unlock Mystery Crates 🎁",
+👇 Explore NFT Miners:`,
+		ButtonText: "🤖 View NFT Miners 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "crate_bronze_hash",
-		Message: `🥉 *0.50 GRAM STARTER CRATE: INSTANT WIN!* ⚡🎁
+		Key: "spin_wheel_daily",
+		Message: `🎡 *CLAIM YOUR DAILY FREE SPIN!* 🎁
 
-Start small and win big with the 0.50 GRAM Starter Box!
-💵 Real USDT & GRAM Cash directly credited
-⚡ +5 to +25 GHS Permanent Mining Power
-🔓 Instant Lifetime Cashout Verification unlocked upon open!
+Spin the Lucky Wheel today to win:
+• 💵 Real USDT Cash Credits
+• ⚡ Bonus GHS Mining Power
+• 🎁 Free spins for every invited friend!
 
-100% transparent on-chain mechanics with guaranteed rewards on every drop.
-
-👇 Tap below to test your luck:`,
-		ButtonText: "📦 Open 0.5 G Crate 🚀",
+👇 Test your luck now:`,
+		ButtonText: "🎡 Spin Lucky Wheel 🎁",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "payouts_completed",
-		Message: `💸 *INSTANT ON-CHAIN CASHOUTS ARE LIVE!* 💎⚡
+		Key: "instant_payouts",
+		Message: `💸 *INSTANT CASHOUTS ARE LIVE!* 💎
 
-Over 1,200+ miner withdrawals have been processed directly on-chain!
-Cash out your mined Honey, Spin wins, and Crate prizes:
-• 💎 GRAM Network (TON Blockchain) – Instant transfer
-• 💵 USDT (BNB Smart Chain BEP-20) – Fast & low fees
-• 🛡️ Minimum Cashout: Only 0.05 GRAM / USDT!
+Cash out your mined earnings directly:
+• 💵 Fast withdrawals to USDT (BSC BEP-20) & TON
+• 🛡️ Zero withdrawal fees
+• 📢 Live payment proofs: @HashBeePayouts
 
-👇 Check your balance & request cashout:`,
-		ButtonText: "💸 Open HashBee Wallet 💎",
+👇 Cash out your balance:`,
+		ButtonText: "💸 Withdraw Earnings 💎",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "fever_2x_rush",
-		Message: `🔥 *2X HASHRATE POWER SURGE ACTIVE!* ⚡🔥
+		Key: "referral_power",
+		Message: `👥 *EARN +3 GHS PER INVITED FRIEND!* 🚀
 
-Cloud mining hashpower is currently accelerated across all active hives!
-Your bees are extracting Honey at top speeds 24 hours a day.
+Invite friends and grow your swarm:
+• ⚡ *+3 GHS Mining Power* per active referral
+• 🍯 *10% Tier 1 + 5% Tier 2* mining commission
+• 🎡 +1 Free Lucky Wheel Spin per invite!
 
-• 🍯 Maximize your harvest before storage caps out
-• ⚡ Reinvest your Honey (1 USDT = +50 GHS) for permanent boosts
-
-👇 Collect & supercharge your miner:`,
-		ButtonText: "🐝 Open HashBee & Mine ⚡",
+👇 Copy your referral link:`,
+		ButtonText: "👥 Invite & Earn GHS 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "spin_viral_referrals",
-		Message: `👥 *INVITE FRIENDS = UNLIMITED FREE SPINS & GHS!* 🚀💎
+		Key: "harvest_alert",
+		Message: `⛏️ *HEY {name}, COLLECT YOUR MINING!* 🐝
 
-Boost your passive earnings with HashBee's 2-Tier Referral System:
-• 🎁 +1 Free Lucky Wheel Spin per referral
-• ⚡ +5.0 GHS Mining Power per active friend
-• 🍯 10% Tier 1 + 5% Tier 2 Commission on all honey mined
-• 🏆 Milestone bonuses up to +500 GHS Mining Power!
+Your cloud miner has accumulated pending earnings:
+• ⚡ Mining continuously 24/7
+• 🍯 Collect before storage reaches capacity
+• 📈 Keep your mining rig running at full speed!
 
-👇 Grab your personal invite link:`,
-		ButtonText: "👥 Get Free Spins & Mine 🚀",
-		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
-	},
-	{
-		Key: "personalized_buzz",
-		Message: `🐝 *HEY {name}, YOUR HONEYCOMB IS FULL!* 🍯⚡
-
-Your cloud mining rig has reached maximum capacity and accumulated unclaimed Honey.
-Collect your earnings now so your swarm can continue mining at 100% speed!
-
-• 🍯 Current Unclaimed Honey ready to harvest
-• ⚡ Reinvest balance to unlock up to +50 GHS mining power
-
-👇 Tap to harvest your Honey:`,
-		ButtonText: "🐝 Collect My GRAM Now 🚀",
+👇 Harvest your rewards:`,
+		ButtonText: "⛏️ Harvest My Mined USDT 🚀",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 }
@@ -1340,7 +1328,7 @@ func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
 	lastRun, _ := h.settings.Get(ctx, "auto_broadcast_last_run_at")
 
 	if btnText == "" {
-		btnText = "📦 Unlock Mystery Crates 🎁"
+		btnText = "🐝 Open HashBee Miner 🚀"
 	}
 	if btnURL == "" {
 		btnURL = "https://miniapp-five-topaz.vercel.app"
