@@ -166,7 +166,7 @@ export const ViralBountyWidget: React.FC = () => {
 
           {/* Quick Timer Pill */}
           <div className="relative z-10 bg-black/40 px-1.5 py-0.5 rounded-full text-[8px] font-mono font-bold text-yellow-300">
-            {timeLeft.days}d {timeLeft.hours}h
+            {bounty?.is_expired ? 'Ended' : `${timeLeft.days}d ${timeLeft.hours}h`}
           </div>
         </div>
       </div>
@@ -208,26 +208,32 @@ export const ViralBountyWidget: React.FC = () => {
             <div className="p-3 rounded-2xl bg-slate-900/90 border border-amber-500/30 mb-4 text-center relative z-10">
               <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 mb-2 flex items-center justify-center gap-1">
                 <span>⏱️</span>
-                <span>YOUR 7-DAY EVENT TIMER</span>
+                <span>{bounty?.is_expired ? 'EVENT PERIOD CONCLUDED' : 'YOUR 7-DAY EVENT TIMER'}</span>
               </div>
-              <div className="grid grid-cols-4 gap-1.5 font-mono text-center">
-                <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
-                  <div className="text-base font-black text-white">{String(timeLeft.days).padStart(2, '0')}</div>
-                  <div className="text-[8px] text-slate-400 uppercase font-sans">Days</div>
+              {bounty?.is_expired ? (
+                <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300 font-medium">
+                  ⏳ Your 7-day viral bounty window has concluded for this account.
                 </div>
-                <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
-                  <div className="text-base font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
-                  <div className="text-[8px] text-slate-400 uppercase font-sans">Hours</div>
+              ) : (
+                <div className="grid grid-cols-4 gap-1.5 font-mono text-center">
+                  <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+                    <div className="text-base font-black text-white">{String(timeLeft.days).padStart(2, '0')}</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-sans">Days</div>
+                  </div>
+                  <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+                    <div className="text-base font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-sans">Hours</div>
+                  </div>
+                  <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+                    <div className="text-base font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-sans">Mins</div>
+                  </div>
+                  <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+                    <div className="text-base font-black text-amber-400">{String(timeLeft.seconds).padStart(2, '0')}</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-sans">Secs</div>
+                  </div>
                 </div>
-                <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
-                  <div className="text-base font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</div>
-                  <div className="text-[8px] text-slate-400 uppercase font-sans">Mins</div>
-                </div>
-                <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700">
-                  <div className="text-base font-black text-amber-400">{String(timeLeft.seconds).padStart(2, '0')}</div>
-                  <div className="text-[8px] text-slate-400 uppercase font-sans">Secs</div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Progress Card */}
