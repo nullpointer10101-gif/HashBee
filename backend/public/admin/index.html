@@ -431,6 +431,72 @@ Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
           </div>
         </div>
       </div>
+
+      <!-- Automated Channel Payout Mirror Control Card -->
+      <div class="card" style="margin-top:24px; border:1px solid #10b981; background: linear-gradient(180deg, #12201b 0%, #0d1613 100%);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:22px;">💸</span>
+              <h3 style="font-size:17px; font-weight:900; color:#34d399;">Payouts Channel Auto-Mirror (Live Telegram Proofs)</h3>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Scrapes real on-chain transaction hashes from external payout channels and instantly converts them into authentic HashBee 24H mining payout proofs in your Telegram channel.
+            </p>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span id="payoutMirrorStatusBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:12px; font-weight:800; padding:6px 12px;">⏸️ Inactive</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label" style="color:#34d399; font-weight:800;">⚙️ Auto-Mirror Switch</label>
+            <select id="payoutMirrorEnabled" class="form-input" style="font-weight:700;">
+              <option value="false">🔴 Disabled (Don't mirror posts)</option>
+              <option value="true">🟢 ENABLED (Auto-watch & mirror every 45s)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#34d399; font-weight:800;">📡 Source Proof Channel</label>
+            <input type="text" id="payoutMirrorSource" class="form-input font-mono" value="https://t.me/s/AiLabRobotPayouts" placeholder="https://t.me/s/AiLabRobotPayouts">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color:#34d399; font-weight:800;">📢 Target HashBee Channel</label>
+            <input type="text" id="payoutMirrorTarget" class="form-input font-mono" value="@HashBeePayouts" placeholder="@YourPayoutsChannel or -100...">
+          </div>
+        </div>
+
+        <div style="background:#0a120f; border:1px solid #1a3328; border-radius:12px; padding:14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; gap:20px; font-size:12px; color:#9ca3af; flex-wrap:wrap;">
+            <span>🆔 Last Synced Post ID: <b id="payoutMirrorLastId" class="font-mono" style="color:#fbbf24;">-</b></span>
+            <span>🕒 Last Checked: <b id="payoutMirrorLastChecked" style="color:#34d399;">-</b></span>
+            <span>📊 Status: <b id="payoutMirrorHealth" style="color:#38bdf8;">Idle</b></span>
+          </div>
+          <div style="font-size:11px; color:#6ee7b7; background:#0e2e22; padding:4px 10px; border-radius:6px; border:1px solid #059669;">
+            💡 Note: Make sure your Telegram Bot is added as an <b>Admin with Post Messages permission</b> in the target channel!
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="font-size:12px; color:#9ca3af;">
+            <span>🔄 Auto-checks source channel every <b>45 seconds</b> in background.</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="testPayoutMirror()" id="testPayoutMirrorBtn" class="btn" style="background:#1e293b; color:#38bdf8; border:1px solid #0284c7; padding:12px 18px; font-size:13px; font-weight:800;">
+              🧪 Send Test Proof Post
+            </button>
+            <button type="button" onclick="syncPayoutMirror()" id="syncPayoutMirrorBtn" class="btn" style="background:#065f46; color:#34d399; border:1px solid #059669; padding:12px 18px; font-size:13px; font-weight:800;">
+              ⚡ Sync Now
+            </button>
+            <button type="button" onclick="savePayoutMirrorConfig()" id="savePayoutMirrorBtn" class="btn btn-primary" style="padding:12px 24px; font-size:13px; font-weight:800;">
+              💾 Save Mirror Settings
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- TAB: USERS -->
@@ -1321,7 +1387,10 @@ function switchTab(tabId, el) {
   if (tabId === 'withdrawals') loadWithdrawals();
   if (tabId === 'deposits') loadDeposits();
   if (tabId === 'settings') loadSettings();
-  if (tabId === 'broadcast') loadAutoBroadcast();
+  if (tabId === 'broadcast') {
+    loadAutoBroadcast();
+    loadPayoutMirrorStatus();
+  }
 }
 
 async function loadStats() {
@@ -1812,6 +1881,133 @@ async function testSendAutoBroadcast() {
     showToast('🎉 Test broadcast sent to Telegram ID ' + targetId + '!');
   } catch (err) {
     showToast(err.message, true);
+  }
+}
+
+// Payout Mirror Handlers
+async function loadPayoutMirrorStatus() {
+  try {
+    const res = await fetch(API_URL + '/api/admin/payout-mirror/status', { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const enEl = document.getElementById('payoutMirrorEnabled');
+    if (enEl) enEl.value = data.enabled ? 'true' : 'false';
+
+    const srcEl = document.getElementById('payoutMirrorSource');
+    if (srcEl && data.source_url) srcEl.value = data.source_url;
+
+    const tgtEl = document.getElementById('payoutMirrorTarget');
+    if (tgtEl && data.target_channel) tgtEl.value = data.target_channel;
+
+    const lastIdEl = document.getElementById('payoutMirrorLastId');
+    if (lastIdEl) lastIdEl.innerText = data.last_post_id ? '#' + data.last_post_id : '0';
+
+    const badge = document.getElementById('payoutMirrorStatusBadge');
+    if (badge) {
+      if (data.enabled) {
+        badge.innerHTML = '🟢 Active Watching (45s)';
+        badge.style.background = '#064e3b';
+        badge.style.color = '#34d399';
+      } else {
+        badge.innerHTML = '⏸️ Disabled';
+        badge.style.background = '#1e2d27';
+        badge.style.color = '#9ca3af';
+      }
+    }
+
+    const healthEl = document.getElementById('payoutMirrorHealth');
+    if (healthEl) {
+      healthEl.innerText = data.enabled ? 'Running (Active Watcher)' : 'Standby';
+    }
+
+    const lastCheckedEl = document.getElementById('payoutMirrorLastChecked');
+    if (lastCheckedEl) {
+      lastCheckedEl.innerText = new Date().toLocaleTimeString();
+    }
+  } catch (err) {
+    console.error('loadPayoutMirrorStatus error:', err);
+  }
+}
+
+async function savePayoutMirrorConfig() {
+  const enabled = document.getElementById('payoutMirrorEnabled').value === 'true';
+  const source = document.getElementById('payoutMirrorSource').value.trim();
+  const target = document.getElementById('payoutMirrorTarget').value.trim();
+
+  const btn = document.getElementById('savePayoutMirrorBtn');
+  btn.disabled = true;
+  btn.innerText = 'Saving...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/payout-mirror/config', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        enabled: enabled,
+        source_url: source,
+        target_channel: target
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save mirror config');
+    showToast('✅ Payout Mirror configuration saved!');
+    loadPayoutMirrorStatus();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '💾 Save Mirror Settings';
+  }
+}
+
+async function syncPayoutMirror() {
+  const btn = document.getElementById('syncPayoutMirrorBtn');
+  btn.disabled = true;
+  btn.innerText = '⚡ Syncing Proofs...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/payout-mirror/sync', {
+      method: 'POST',
+      headers: authHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Sync failed');
+    showToast('🎉 ' + data.message + (data.processed ? ` (${data.processed} proofs posted)` : ''));
+    loadPayoutMirrorStatus();
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '⚡ Sync Now';
+  }
+}
+
+async function testPayoutMirror() {
+  const target = document.getElementById('payoutMirrorTarget').value.trim();
+  if (!target) {
+    showToast('Please enter a target channel first', true);
+    return;
+  }
+
+  const btn = document.getElementById('testPayoutMirrorBtn');
+  btn.disabled = true;
+  btn.innerText = '🧪 Sending Test Post...';
+
+  try {
+    const res = await fetch(API_URL + '/api/admin/payout-mirror/test', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ target_channel: target })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Test failed');
+    showToast('💎 ' + data.message);
+  } catch (err) {
+    showToast(err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '🧪 Send Test Proof Post';
   }
 }
 

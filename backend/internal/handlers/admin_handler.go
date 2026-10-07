@@ -30,17 +30,18 @@ type BotBroadcaster interface {
 }
 
 type AdminHandler struct {
-	cfg         *config.Config
-	db          *pgxpool.Pool
-	userSvc     *services.UserService
-	settings    *services.SettingsService
-	campaignSvc *services.CampaignService
-	withdrawSvc *services.WithdrawalService
-	bot         BotBroadcaster
+	cfg          *config.Config
+	db           *pgxpool.Pool
+	userSvc      *services.UserService
+	settings     *services.SettingsService
+	campaignSvc  *services.CampaignService
+	withdrawSvc  *services.WithdrawalService
+	payoutMirror *services.PayoutMirrorService
+	bot          BotBroadcaster
 }
 
-func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.UserService, settings *services.SettingsService, campaignSvc *services.CampaignService, withdrawSvc *services.WithdrawalService, bot BotBroadcaster) *AdminHandler {
-	return &AdminHandler{cfg: cfg, db: db, userSvc: userSvc, settings: settings, campaignSvc: campaignSvc, withdrawSvc: withdrawSvc, bot: bot}
+func NewAdminHandler(cfg *config.Config, db *pgxpool.Pool, userSvc *services.UserService, settings *services.SettingsService, campaignSvc *services.CampaignService, withdrawSvc *services.WithdrawalService, payoutMirror *services.PayoutMirrorService, bot BotBroadcaster) *AdminHandler {
+	return &AdminHandler{cfg: cfg, db: db, userSvc: userSvc, settings: settings, campaignSvc: campaignSvc, withdrawSvc: withdrawSvc, payoutMirror: payoutMirror, bot: bot}
 }
 
 // POST /api/admin/login
@@ -1601,5 +1602,74 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 		"total_gram_deposited":  totalGramDeposited,
 		"total_usdt_equivalent": totalGramDeposited,
 	})
+}
+
+// GET /api/admin/payout-mirror/status
+func (h *AdminHandler) GetPayoutMirrorStatus(c *gin.Context) {
+	if h.payoutMirror == nil {
+		c.JSON(http.StatusOK, gin.H{"enabled": false, "status": "payout mirror service not initialized"})
+		return
+	}
+	status := h.payoutMirror.GetStatus(c.Request.Context())
+	c.JSON(http.StatusOK, status)
+}
+
+// POST /api/admin/payout-mirror/config
+func (h *AdminHandler) UpdatePayoutMirrorConfig(c *gin.Context) {
+	if h.payoutMirror == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "payout mirror service not initialized"})
+		return
+	}
+	var req struct {
+		SourceChannel string `json:"source_channel"`
+		TargetChannel string `json:"target_channel"`
+		Enabled       bool   `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.payoutMirror.UpdateConfig(c.Request.Context(), req.SourceChannel, req.TargetChannel, req.Enabled)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Payout mirror configuration updated successfully"})
+}
+
+// POST /api/admin/payout-mirror/sync
+func (h *AdminHandler) SyncPayoutMirror(c *gin.Context) {
+	if h.payoutMirror == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "payout mirror service not initialized"})
+		return
+	}
+	newCount, err := h.payoutMirror.SyncOnce(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "synced_posts": newCount, "message": fmt.Sprintf("Successfully processed and mirrored %d new payout proofs", newCount)})
+}
+
+// POST /api/admin/payout-mirror/test
+func (h *AdminHandler) TestPayoutMirror(c *gin.Context) {
+	if h.payoutMirror == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "payout mirror service not initialized"})
+		return
+	}
+	var req struct {
+		TargetChannel string `json:"target_channel"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	err := h.payoutMirror.SendTestProof(c.Request.Context(), req.TargetChannel)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to send test payout proof: %v (Make sure bot is added as Administrator to channel)", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Test payout proof sent successfully to channel!"})
 }
 

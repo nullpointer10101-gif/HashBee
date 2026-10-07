@@ -134,6 +134,17 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [broadcastStatus, setBroadcastStatus] = useState<any>(null)
   const [spinResetLoading, setSpinResetLoading] = useState(false)
 
+  // Payout Mirror state
+  const [payoutMirrorConfig, setPayoutMirrorConfig] = useState({
+    enabled: false,
+    source_url: 'https://t.me/s/AiLabRobotPayouts',
+    target_channel: '@HashBeePayouts',
+    last_post_id: 0,
+  })
+  const [payoutMirrorLoading, setPayoutMirrorLoading] = useState(false)
+  const [payoutMirrorSyncing, setPayoutMirrorSyncing] = useState(false)
+  const [payoutMirrorTesting, setPayoutMirrorTesting] = useState(false)
+
   const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee1.onrender.com'
   const api = axios.create({
     baseURL: `${API_BASE}/api/admin`,
@@ -303,6 +314,9 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     if (activeTab === 'users') {
       loadUsers()
     }
+    if (activeTab === 'broadcast') {
+      loadPayoutMirrorStatus()
+    }
   }, [activeTab, usersSort, usersStatusFilter])
 
   useEffect(() => {
@@ -372,6 +386,66 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     try { const res = await api.post('/spin-reset'); toast.success(res.data.message || 'Spin epoch reset permanently!') }
     catch (err: any) { toast.error(err?.response?.data?.error || 'Spin reset failed') }
     finally { setSpinResetLoading(false) }
+  }
+
+  const loadPayoutMirrorStatus = async () => {
+    setPayoutMirrorLoading(true)
+    try {
+      const res = await api.get('/payout-mirror/status')
+      setPayoutMirrorConfig(res.data)
+    } catch (err: any) {
+      console.error('Failed to load payout mirror status:', err)
+    } finally {
+      setPayoutMirrorLoading(false)
+    }
+  }
+
+  const handleSavePayoutMirror = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPayoutMirrorLoading(true)
+    try {
+      const res = await api.post('/payout-mirror/config', {
+        enabled: payoutMirrorConfig.enabled,
+        source_url: payoutMirrorConfig.source_url,
+        target_channel: payoutMirrorConfig.target_channel,
+      })
+      toast.success(res.data?.message || 'Payout mirror settings saved!')
+      loadPayoutMirrorStatus()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Failed to save payout mirror config')
+    } finally {
+      setPayoutMirrorLoading(false)
+    }
+  }
+
+  const handleSyncPayoutMirror = async () => {
+    setPayoutMirrorSyncing(true)
+    try {
+      const res = await api.post('/payout-mirror/sync')
+      toast.success(`🎉 ${res.data?.message || 'Synced proofs!'}`)
+      loadPayoutMirrorStatus()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Sync failed')
+    } finally {
+      setPayoutMirrorSyncing(false)
+    }
+  }
+
+  const handleTestPayoutMirror = async () => {
+    if (!payoutMirrorConfig.target_channel) {
+      return toast.error('Please specify target channel')
+    }
+    setPayoutMirrorTesting(true)
+    try {
+      const res = await api.post('/payout-mirror/test', {
+        target_channel: payoutMirrorConfig.target_channel
+      })
+      toast.success(`💎 ${res.data?.message || 'Test proof sent!'}`)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Test failed')
+    } finally {
+      setPayoutMirrorTesting(false)
+    }
   }
 
   // Anti-fraud legitimacy calculator
@@ -838,6 +912,96 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Payouts Channel Auto-Mirror Card */}
+            <div className="mt-6 bg-slate-900 border border-emerald-500/40 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💸</span>
+                    <h3 className="text-lg font-bold text-emerald-400">Payouts Channel Auto-Mirror (Live Proofs)</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Scrapes live payout hashes from external source channels and posts branded 24H HashBee payout proofs to your channel.
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-extrabold ${payoutMirrorConfig.enabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                  {payoutMirrorConfig.enabled ? '🟢 Active Watching (45s)' : '⏸️ Disabled'}
+                </span>
+              </div>
+
+              <form onSubmit={handleSavePayoutMirror} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-emerald-400 uppercase block mb-1.5">Auto-Mirror Switch</label>
+                    <select
+                      value={payoutMirrorConfig.enabled ? 'true' : 'false'}
+                      onChange={(e) => setPayoutMirrorConfig({ ...payoutMirrorConfig, enabled: e.target.value === 'true' })}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 font-bold focus:outline-none focus:border-emerald-500"
+                    >
+                      <option value="false">🔴 Disabled (Don't mirror)</option>
+                      <option value="true">🟢 ENABLED (Auto-watch & mirror)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-emerald-400 uppercase block mb-1.5">Source Channel</label>
+                    <input
+                      type="text"
+                      value={payoutMirrorConfig.source_url}
+                      onChange={(e) => setPayoutMirrorConfig({ ...payoutMirrorConfig, source_url: e.target.value })}
+                      placeholder="https://t.me/s/AiLabRobotPayouts"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-emerald-400 uppercase block mb-1.5">Target HashBee Channel</label>
+                    <input
+                      type="text"
+                      value={payoutMirrorConfig.target_channel}
+                      onChange={(e) => setPayoutMirrorConfig({ ...payoutMirrorConfig, target_channel: e.target.value })}
+                      placeholder="@HashBeePayouts or -100..."
+                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex gap-4">
+                    <span>Last Synced Post: <strong className="text-amber-400 font-mono">#{payoutMirrorConfig.last_post_id || 0}</strong></span>
+                    <span>Status: <strong className={payoutMirrorConfig.enabled ? 'text-emerald-400' : 'text-slate-500'}>{payoutMirrorConfig.enabled ? 'Running' : 'Standby'}</strong></span>
+                  </div>
+                  <span className="text-[11px] text-emerald-400/80">💡 Ensure bot has Admin "Post Messages" permission in target channel</span>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleTestPayoutMirror}
+                    disabled={payoutMirrorTesting}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 border border-cyan-500/40 text-cyan-300 font-bold text-xs hover:bg-slate-700 transition-all"
+                  >
+                    {payoutMirrorTesting ? '🧪 Sending...' : '🧪 Send Test Proof Post'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSyncPayoutMirror}
+                    disabled={payoutMirrorSyncing}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-950 border border-emerald-500/60 text-emerald-300 font-bold text-xs hover:bg-emerald-900 transition-all"
+                  >
+                    {payoutMirrorSyncing ? '⚡ Syncing...' : '⚡ Sync Now'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={payoutMirrorLoading}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+                  >
+                    {payoutMirrorLoading ? 'Saving...' : '💾 Save Mirror Settings'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

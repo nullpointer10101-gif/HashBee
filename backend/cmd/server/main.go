@@ -207,15 +207,16 @@ func main() {
 
 	// Deposit Watcher Service
 	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
-	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
-	depositSvc.StartWatcher(ctx, 15*time.Second)
+	// Payout Mirror Service (Auto-mirrors on-chain proofs from AiLabRobotPayouts)
+	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
+	payoutMirrorSvc.StartWatcher(ctx, 45*time.Second)
 
 	// Handlers
 	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc, tgBot)
 	missionHandler := handlers.NewMissionHandler(missionSvc, referralSvc)
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)
-	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc, tgBot)
+	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc, payoutMirrorSvc, tgBot)
 
 	// Gin router
 	r := gin.New()
@@ -381,6 +382,10 @@ func main() {
 			adminProtected.GET("/auto-broadcast", adminHandler.GetAutoBroadcast)
 			adminProtected.POST("/auto-broadcast", adminHandler.SetAutoBroadcast)
 			adminProtected.POST("/spin-reset", adminHandler.SpinReset)
+			adminProtected.GET("/payout-mirror/status", adminHandler.GetPayoutMirrorStatus)
+			adminProtected.POST("/payout-mirror/config", adminHandler.UpdatePayoutMirrorConfig)
+			adminProtected.POST("/payout-mirror/sync", adminHandler.SyncPayoutMirror)
+			adminProtected.POST("/payout-mirror/test", adminHandler.TestPayoutMirror)
 		}
 	}
 

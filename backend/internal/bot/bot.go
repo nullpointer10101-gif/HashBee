@@ -559,3 +559,53 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 	wg.Wait()
 	return int(sentCount), int(failedCount)
 }
+
+// SendChannelPayoutProof posts a formatted payout confirmation to a Telegram channel
+func (b *Bot) SendChannelPayoutProof(channelTarget string, htmlText string, btnText string, btnURL string) error {
+	if b == nil || b.api == nil {
+		return fmt.Errorf("bot is not initialized")
+	}
+
+	channelTarget = strings.TrimSpace(channelTarget)
+	if channelTarget == "" {
+		return fmt.Errorf("channel target is empty")
+	}
+
+	if btnText == "" {
+		btnText = "🐝 Open HashBee Miner 🚀"
+	}
+	if btnURL == "" {
+		btnURL = b.getFreshMiniAppURL()
+	}
+
+	keyboard := newWebAppKeyboard(btnText, btnURL)
+
+	// Check if target is a numerical chat ID (e.g. -1001234567890) or @channel_username
+	var msg tgbotapi.MessageConfig
+	if chatID, err := strconv.ParseInt(channelTarget, 10, 64); err == nil {
+		msg = tgbotapi.NewMessage(chatID, htmlText)
+	} else {
+		if !strings.HasPrefix(channelTarget, "@") {
+			channelTarget = "@" + channelTarget
+		}
+		msg = tgbotapi.NewMessageToChannel(channelTarget, htmlText)
+	}
+
+	msg.ParseMode = "HTML"
+	msg.DisableWebPagePreview = false
+	msg.ReplyMarkup = keyboard
+
+	_, err := b.api.Send(msg)
+	if err != nil {
+		// Try Markdown fallback if HTML fails
+		msg.ParseMode = ""
+		_, err2 := b.api.Send(msg)
+		if err2 != nil {
+			return fmt.Errorf("failed to send to channel %s: %w", channelTarget, err)
+		}
+	}
+
+	log.Printf("📢 [Bot] Successfully posted payout proof to channel %s", channelTarget)
+	return nil
+}
+
