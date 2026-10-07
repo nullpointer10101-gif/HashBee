@@ -14,7 +14,6 @@ import toast from 'react-hot-toast'
 
 type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
-// ─── Watch Ad Tasks Constants ────────────────────────────────────────────────
 const WATCH_AD_TASKS_COUNT = 3
 const WATCH_AD_REFRESH_MS = 3 * 60 * 60 * 1000 // 3 hours
 const WATCH_AD_HONEY_REWARD = 1
@@ -69,15 +68,11 @@ export const Missions: React.FC = () => {
   const [publishing, setPublishing] = useState(false)
   const [verifyingPayment, setVerifyingPayment] = useState(false)
 
-  // New Campaign Form State
   const [promoType, setPromoType] = useState<'link' | 'channel' | 'group' | 'bot'>('link')
   const [promoTarget, setPromoTarget] = useState('')
   const [promoCompletions, setPromoCompletions] = useState<number>(500)
-
-  // Selected Campaign to Pay
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
 
-  // Copy state
   const [copiedAmount, setCopiedAmount] = useState(false)
   const [copiedAddr, setCopiedAddr] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
@@ -85,7 +80,6 @@ export const Missions: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
 
-  // ─── Watch Ad Tasks State ────────────────────────────────────────────────────
   const [watchAdState, setWatchAdState] = useState<WatchAdState>(loadWatchAdState)
   const [watchAdVerifyingIndex, setWatchAdVerifyingIndex] = useState<number | null>(null)
   const [watchAdSecondsLeft, setWatchAdSecondsLeft] = useState<number>(0)
@@ -93,7 +87,6 @@ export const Missions: React.FC = () => {
   const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const watchAdVerifyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Countdown ticker for Watch Ad 3-hour refresh
   useEffect(() => {
     const updateCountdown = () => {
       const now = Date.now()
@@ -124,7 +117,6 @@ export const Missions: React.FC = () => {
     }
   }, [watchAdState.windowStart])
 
-  // Watch Ad action handler
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
       if (watchAdState.completed.includes(taskIndex)) return
@@ -164,7 +156,7 @@ export const Missions: React.FC = () => {
             // fallback
           }
 
-          toast.success(`🎉 +${WATCH_AD_HONEY_REWARD} Honey added to balance!`)
+          toast.success(`🎉 +${WATCH_AD_HONEY_REWARD} USDT added to balance!`)
           await refreshUser()
         }
       }, 1000)
@@ -254,7 +246,7 @@ export const Missions: React.FC = () => {
   }
 
   const handleShare = () => {
-    const text = '⛏️ Join HashBee & get 50 GHS Power! Start mining GRAM & withdraw instantly!'
+    const text = '⛏️ Join Crypto Mine & get 50 GHS Power! Start mining USDT!'
     const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(inviteLink) + '&text=' + encodeURIComponent(text)
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(shareUrl)
@@ -293,7 +285,7 @@ export const Missions: React.FC = () => {
         reward_bp: 0.5,
         pay_with_balance: true,
       })
-      toast.success('🎉 Campaign Activated Instantly! Your project is now live.')
+      toast.success('🎉 Campaign Activated Instantly!')
       await refreshUser()
       await loadMissions()
       await loadCampaigns()
@@ -386,10 +378,10 @@ export const Missions: React.FC = () => {
       await refreshUser()
       await loadCampaigns()
       if (res?.credited && res.credited > 0) {
-        toast.success('🎉 Payment verified! Campaign is now live.')
+        toast.success('🎉 Payment verified! Campaign is live.')
         setView('campaigns')
       } else {
-        toast.success('Blockchain scan complete. Active campaigns appear automatically.')
+        toast.success('Scan complete. Active campaigns appear automatically.')
         setView('campaigns')
       }
     } catch (err: any) {
@@ -408,30 +400,30 @@ export const Missions: React.FC = () => {
     const campMemo = selectedCampaign.payment_memo || 'CMP' + selectedCampaign.id.replace(/\D/g, '').slice(-6)
 
     return (
-      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
         <div className="text-center mb-4">
-          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+          <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
             CAMPAIGN INVOICE
           </h1>
-          <p className="text-[11px] text-[#84948c] mt-0.5">
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Complete TON payment to launch your task
           </p>
         </div>
 
-        <div className="lux-card p-4 mb-3 space-y-3">
+        <div className="mine-card p-4 mb-3 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-[#84948c] uppercase">Amount to Send</span>
-            <span className="text-sm font-black text-white font-mono">{cost.toFixed(2)} TON</span>
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase">Amount to Send</span>
+            <span className="text-sm font-black text-slate-900 font-mono">{cost.toFixed(2)} TON</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold text-[#84948c] uppercase">Target Users</span>
-            <span className="text-xs font-bold text-[#00f090] font-mono">{selectedCampaign.total_completions} Users</span>
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase">Target Users</span>
+            <span className="text-xs font-bold text-[#0088ff] font-mono">{selectedCampaign.total_completions} Users</span>
           </div>
         </div>
 
         {/* Deposit Address */}
-        <div className="lux-card p-3.5 mb-3">
-          <label className="text-[9px] font-extrabold text-[#84948c] uppercase block mb-1">
+        <div className="mine-card p-3.5 mb-3">
+          <label className="text-[9px] font-extrabold text-slate-400 uppercase block mb-1">
             Deposit Address
           </label>
           <div className="flex items-center gap-1.5">
@@ -439,7 +431,7 @@ export const Missions: React.FC = () => {
               type="text"
               readOnly
               value={depositAddress}
-              className="flex-1 bg-[#080c0a] text-[10px] text-white font-mono px-2.5 py-2 rounded-xl border border-[#17241d] outline-none truncate select-all"
+              className="flex-1 bg-[#f8fafc] text-[10px] text-slate-900 font-mono px-2.5 py-2 rounded-xl border border-slate-200 outline-none truncate select-all"
             />
             <button
               onClick={() => {
@@ -448,7 +440,7 @@ export const Missions: React.FC = () => {
                 toast.success('Address copied!')
                 setTimeout(() => setCopiedAddr(false), 2000)
               }}
-              className="px-3 py-2 btn-surface text-xs font-bold rounded-xl"
+              className="px-3 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200"
             >
               {copiedAddr ? '✓' : 'Copy'}
             </button>
@@ -456,8 +448,8 @@ export const Missions: React.FC = () => {
         </div>
 
         {/* Memo */}
-        <div className="lux-card p-3.5 mb-3.5">
-          <label className="text-[9px] font-extrabold text-[#00f090] uppercase block mb-1 font-bold">
+        <div className="mine-card p-3.5 mb-3.5">
+          <label className="text-[9px] font-extrabold text-[#7c3aed] uppercase block mb-1 font-bold">
             Payment Memo (REQUIRED)
           </label>
           <div className="flex items-center gap-1.5">
@@ -465,7 +457,7 @@ export const Missions: React.FC = () => {
               type="text"
               readOnly
               value={campMemo}
-              className="flex-1 bg-[#080c0a] text-[11px] text-[#00f090] font-mono font-bold px-2.5 py-2 rounded-xl border border-[#00f090]/40 outline-none select-all"
+              className="flex-1 bg-[#f8fafc] text-[11px] text-[#7c3aed] font-mono font-bold px-2.5 py-2 rounded-xl border border-purple-200 outline-none select-all"
             />
             <button
               onClick={() => {
@@ -474,7 +466,7 @@ export const Missions: React.FC = () => {
                 toast.success('Memo copied!')
                 setTimeout(() => setCopiedMemo(false), 2000)
               }}
-              className="px-3 py-2 bg-[#00f090]/15 text-[#00f090] text-xs font-bold rounded-xl border border-[#00f090]/30"
+              className="px-3 py-2 bg-purple-100 text-[#7c3aed] text-xs font-bold rounded-xl"
             >
               {copiedMemo ? '✓' : 'Copy'}
             </button>
@@ -484,7 +476,7 @@ export const Missions: React.FC = () => {
         {/* Actions */}
         <button
           onClick={() => handlePayInTonkeeper(selectedCampaign)}
-          className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider mb-2.5 shadow-lg flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider mb-2.5 shadow-md flex items-center justify-center gap-2"
         >
           <span>💎 1-CLICK PAY IN TONKEEPER</span>
         </button>
@@ -492,14 +484,14 @@ export const Missions: React.FC = () => {
         <button
           onClick={() => handleVerifyCampaignPayment(selectedCampaign)}
           disabled={verifyingPayment}
-          className="w-full py-3.5 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-800 font-extrabold text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2 border border-slate-200"
         >
           {verifyingPayment ? 'CHECKING BLOCKCHAIN...' : '✓ I HAVE PAID (VERIFY NOW)'}
         </button>
 
         <button
           onClick={() => setView('campaigns')}
-          className="w-full py-3 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs uppercase tracking-wider"
+          className="w-full py-3 rounded-xl bg-white text-slate-500 font-bold text-xs uppercase tracking-wider border border-slate-200"
         >
           BACK
         </button>
@@ -510,19 +502,19 @@ export const Missions: React.FC = () => {
   // VIEW 3: NEW CAMPAIGN
   if (view === 'new_campaign') {
     return (
-      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
         <div className="text-center mb-4">
-          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+          <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
             Create Campaign
           </h1>
-          <p className="text-[11px] text-[#84948c] mt-0.5">
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Promote to thousands of active crypto users
           </p>
         </div>
 
-        <div className="lux-card p-4.5 mb-3.5 space-y-4">
+        <div className="mine-card p-4.5 mb-3.5 space-y-4">
           <div>
-            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-2">
+            <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
               Promo Category
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -538,8 +530,8 @@ export const Missions: React.FC = () => {
                   onClick={() => setPromoType(item.id as any)}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     promoType === item.id
-                      ? 'bg-white text-black font-extrabold border-white shadow-md'
-                      : 'bg-[#080c0a] text-[#84948c] border-[#17241d]'
+                      ? 'bg-[#0088ff] text-white font-extrabold border-[#0088ff] shadow-sm'
+                      : 'bg-[#f8fafc] text-slate-600 border-slate-200'
                   }`}
                 >
                   <span className="text-xs">{item.label}</span>
@@ -549,7 +541,7 @@ export const Missions: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
               Destination URL or @Username
             </label>
             <input
@@ -557,12 +549,12 @@ export const Missions: React.FC = () => {
               placeholder="https://... or @channel"
               value={promoTarget}
               onChange={(e) => setPromoTarget(e.target.value)}
-              className="w-full lux-input px-3.5 py-3 text-xs outline-none"
+              className="w-full mine-input px-3.5 py-2.5 text-xs outline-none"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-1">
+            <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">
               Completions (Min 500 Users = 0.50 GRAM)
             </label>
             <div className="grid grid-cols-3 gap-1.5 mb-2">
@@ -573,8 +565,8 @@ export const Missions: React.FC = () => {
                   onClick={() => setPromoCompletions(num)}
                   className={`py-2 px-1 rounded-xl text-xs transition-all border ${
                     promoCompletions === num
-                      ? 'bg-white text-black font-black border-white shadow-sm'
-                      : 'bg-[#080c0a] text-[#84948c] border-[#17241d]'
+                      ? 'bg-[#0088ff] text-white font-black border-[#0088ff] shadow-sm'
+                      : 'bg-[#f8fafc] text-slate-600 border-slate-200'
                   }`}
                 >
                   {num} Users
@@ -584,14 +576,14 @@ export const Missions: React.FC = () => {
           </div>
 
           {/* Invoice Summary */}
-          <div className="bg-[#080c0a] rounded-xl p-3.5 border border-[#17241d] space-y-1.5">
+          <div className="bg-[#f8fafc] rounded-xl p-3.5 border border-slate-200 space-y-1.5">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-[#84948c]">Target Reach:</span>
-              <span className="font-bold text-white">{promoCompletions} Users</span>
+              <span className="text-slate-500">Target Reach:</span>
+              <span className="font-bold text-slate-900">{promoCompletions} Users</span>
             </div>
-            <div className="flex justify-between items-center text-xs border-t border-[#17241d] pt-1.5">
-              <span className="font-extrabold text-white uppercase text-[10px]">Total Cost:</span>
-              <span className="font-black text-sm text-[#00f090] font-mono">{calculatedCost} GRAM</span>
+            <div className="flex justify-between items-center text-xs border-t border-slate-200 pt-1.5">
+              <span className="font-extrabold text-slate-900 uppercase text-[10px]">Total Cost:</span>
+              <span className="font-black text-sm text-[#0088ff] font-mono">{calculatedCost} GRAM</span>
             </div>
           </div>
 
@@ -599,7 +591,7 @@ export const Missions: React.FC = () => {
             <button
               onClick={handlePayWithBalance}
               disabled={publishing}
-              className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2"
             >
               <span>⚡ PAY WITH BALANCE ({user.honey_balance.toFixed(4)} GRAM)</span>
             </button>
@@ -608,7 +600,7 @@ export const Missions: React.FC = () => {
           <button
             onClick={handlePublishCampaign}
             disabled={publishing}
-            className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2"
           >
             <span>💎 PAY VIA TONKEEPER ({calculatedCost} TON)</span>
           </button>
@@ -616,7 +608,7 @@ export const Missions: React.FC = () => {
 
         <button
           onClick={() => setView('campaigns')}
-          className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider"
+          className="w-full py-3 rounded-xl bg-white text-slate-600 font-extrabold text-xs uppercase tracking-wider border border-slate-200"
         >
           BACK
         </button>
@@ -627,30 +619,30 @@ export const Missions: React.FC = () => {
   // VIEW 2: CAMPAIGNS LIST
   if (view === 'campaigns') {
     return (
-      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
         <div className="text-center mb-4">
-          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+          <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
             Promote Channel & Links
           </h1>
-          <p className="text-[11px] text-[#84948c] mt-0.5">
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Broadcast tasks to thousands of active miners
           </p>
         </div>
 
         <button
           onClick={() => setView('new_campaign')}
-          className="w-full mb-3.5 py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
+          className="w-full mb-3.5 py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2"
         >
           <span>+ CREATE NEW CAMPAIGN</span>
         </button>
 
         {loadingCampaigns ? (
-          <div className="text-center py-8 text-[#84948c] text-xs animate-pulse">Loading campaigns...</div>
+          <div className="text-center py-8 text-slate-400 text-xs animate-pulse">Loading campaigns...</div>
         ) : campaigns.length === 0 ? (
-          <div className="lux-card p-6 text-center mb-4">
+          <div className="mine-card p-6 text-center mb-4">
             <div className="text-2xl mb-1">📢</div>
-            <div className="text-xs font-bold text-white">No campaigns created yet</div>
-            <p className="text-[11px] text-[#84948c] mt-1">
+            <div className="text-xs font-bold text-slate-800">No campaigns created yet</div>
+            <p className="text-[11px] text-slate-400 mt-1">
               Promote your channel, bot, group, or link to thousands of active miners.
             </p>
           </div>
@@ -661,14 +653,14 @@ export const Missions: React.FC = () => {
               const isFinished = camp.status === 'finished' || camp.status === 'completed' || camp.done_completions >= camp.total_completions
 
               return (
-                <div key={camp.id} className="lux-card p-3.5 flex items-center justify-between gap-3">
+                <div key={camp.id} className="mine-card p-3.5 flex items-center justify-between gap-3">
                   <div className="truncate flex-1">
-                    <div className="text-xs font-black text-white truncate">{camp.title || camp.target}</div>
-                    <div className="text-[10px] text-[#84948c] mt-0.5">
+                    <div className="text-xs font-black text-slate-900 truncate">{camp.title || camp.target}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
                       {isWaiting ? (
-                        <span className="text-amber-400 font-bold">Waiting for payment</span>
+                        <span className="text-amber-500 font-bold">Waiting for payment</span>
                       ) : isFinished ? (
-                        <span className="text-[#00f090] font-bold">✓ Completed ({camp.total_completions}/{camp.total_completions})</span>
+                        <span className="text-[#059669] font-bold">✓ Completed ({camp.total_completions}/{camp.total_completions})</span>
                       ) : (
                         <span>{camp.done_completions}/{camp.total_completions} completions</span>
                       )}
@@ -681,7 +673,7 @@ export const Missions: React.FC = () => {
                         setSelectedCampaign(camp)
                         setView('pay_campaign')
                       }}
-                      className="px-3 py-1.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-sm"
+                      className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-sm"
                     >
                       Pay
                     </button>
@@ -694,7 +686,7 @@ export const Missions: React.FC = () => {
 
         <button
           onClick={() => setView('tasks')}
-          className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider"
+          className="w-full py-3 rounded-xl bg-white text-slate-600 font-extrabold text-xs uppercase tracking-wider border border-slate-200"
         >
           ← BACK TO TASKS
         </button>
@@ -704,12 +696,12 @@ export const Missions: React.FC = () => {
 
   // VIEW 1: TASKS
   return (
-    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
       <div className="text-center mb-4">
-        <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+        <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
           Tasks & Missions
         </h1>
-        <p className="text-[11px] text-[#84948c] mt-0.5">
+        <p className="text-[11px] text-slate-400 mt-0.5">
           Complete daily tasks to boost your computing power
         </p>
       </div>
@@ -720,7 +712,7 @@ export const Missions: React.FC = () => {
           setView('campaigns')
           loadCampaigns()
         }}
-        className="w-full mb-3.5 py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm"
+        className="w-full mb-3.5 py-3 rounded-xl bg-white border border-slate-200 text-[#0f172a] font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:border-slate-300 active:scale-95"
       >
         <span>📢</span>
         <span>PROMOTE YOUR LINK OR CHANNEL</span>
@@ -729,10 +721,10 @@ export const Missions: React.FC = () => {
       {/* ── SECTION 0: WATCH AD TASKS ─────────── */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span>📺</span> WATCH AD REWARDS
           </span>
-          <span className="text-[9px] font-extrabold text-[#00f090] bg-[#00f090]/10 px-2 py-0.5 rounded-full border border-[#00f090]/25">
+          <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full">
             +{WATCH_AD_HONEY_REWARD} USDT EACH
           </span>
         </div>
@@ -745,16 +737,16 @@ export const Missions: React.FC = () => {
             const isLocked = !isDone && !allPreviousDone
 
             return (
-              <div key={i} className="lux-card p-3.5 flex items-center justify-between gap-3">
+              <div key={i} className="mine-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0">
                     {isDone ? '✅' : isVerifying ? '⏱️' : isLocked ? '🔒' : '📺'}
                   </div>
                   <div>
-                    <div className="text-xs font-black text-white">
+                    <div className="text-xs font-black text-slate-900">
                       Watch Booster Ad #{i + 1}
                     </div>
-                    <div className="text-[10px] text-[#00f090] font-bold mt-0.5">
+                    <div className="text-[10px] text-[#059669] font-bold mt-0.5">
                       {isDone ? `+${WATCH_AD_HONEY_REWARD} USDT Claimed ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s)` : `+${WATCH_AD_HONEY_REWARD} USDT Reward`}
                     </div>
                   </div>
@@ -762,22 +754,22 @@ export const Missions: React.FC = () => {
 
                 <div className="shrink-0">
                   {isDone ? (
-                    <span className="px-2.5 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-[10px]">
+                    <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-[10px]">
                       ✓ Done
                     </span>
                   ) : isVerifying ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-400 font-extrabold text-xs">
+                    <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-extrabold text-xs">
                       {watchAdSecondsLeft}s
                     </span>
                   ) : isLocked ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-white/5 text-[#4d5c54] font-extrabold text-xs">
+                    <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-extrabold text-xs">
                       Locked
                     </span>
                   ) : (
                     <button
                       onClick={() => handleWatchAdTask(i)}
                       disabled={watchAdVerifyingIndex !== null}
-                      className="px-4 py-2 rounded-xl btn-white font-black text-xs uppercase"
+                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase"
                     >
                       ▶ Watch
                     </button>
@@ -793,10 +785,10 @@ export const Missions: React.FC = () => {
       {milestones.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <span>👥</span> HASHRATE MILESTONES
             </span>
-            <span className="text-[9px] font-extrabold text-white bg-white/10 px-2 py-0.5 rounded-full">
+            <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
               BONUS POWER
             </span>
           </div>
@@ -809,16 +801,16 @@ export const Missions: React.FC = () => {
               const percent = mission.is_completed ? 100 : Math.min(100, Math.round((progress / count) * 100))
 
               return (
-                <div key={mission.id} className="lux-card p-3.5 flex flex-col gap-2">
+                <div key={mission.id} className="mine-card p-3.5 flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 min-w-[48px] px-2 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center gap-1 text-white font-black text-xs shrink-0">
+                      <div className="h-8 min-w-[48px] px-2 rounded-xl bg-purple-50 text-[#7c3aed] flex items-center justify-center gap-1 font-black text-xs shrink-0">
                         <span>{count}</span>
                         <span className="text-[10px]">👥</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-black text-white truncate">{mission.title}</div>
-                        <div className="text-[10px] font-bold text-[#00f090] mt-0.5">
+                        <div className="text-xs font-black text-slate-900 truncate">{mission.title}</div>
+                        <div className="text-[10px] font-bold text-[#059669] mt-0.5">
                           +{mission.reward_power} GHS MINING POWER
                         </div>
                       </div>
@@ -826,21 +818,21 @@ export const Missions: React.FC = () => {
 
                     <div className="shrink-0">
                       {mission.is_completed ? (
-                        <span className="px-3 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs">
+                        <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
                           DONE ✓
                         </span>
                       ) : isEligible ? (
                         <button
                           onClick={() => handleClaimMilestone(mission)}
                           disabled={actionId === mission.id}
-                          className="px-3.5 py-1.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-md"
+                          className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md"
                         >
                           {actionId === mission.id ? '...' : `CLAIM +${mission.reward_power} GHS`}
                         </button>
                       ) : (
                         <button
                           onClick={handleShare}
-                          className="px-3 py-1.5 rounded-xl btn-surface text-white font-bold text-xs"
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs"
                         >
                           INVITE
                         </button>
@@ -849,13 +841,13 @@ export const Missions: React.FC = () => {
                   </div>
 
                   <div className="w-full flex items-center gap-2 pt-0.5">
-                    <div className="flex-1 h-1.5 bg-[#080c0a] rounded-full overflow-hidden border border-[#17241d]">
+                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#00f090] transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-[#00d68f] to-[#0088ff] transition-all duration-300"
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <span className="text-[9px] font-mono text-[#84948c] shrink-0">
+                    <span className="text-[9px] font-mono text-slate-400 shrink-0">
                       {progress}/{count} ({percent}%)
                     </span>
                   </div>
@@ -869,29 +861,29 @@ export const Missions: React.FC = () => {
       {/* SECTION 2: PROMOTED TASKS */}
       <div>
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span>⚡</span> PARTNER MISSIONS
           </span>
-          <span className="text-[9px] font-bold text-[#84948c]">+0.1 GHS EACH</span>
+          <span className="text-[9px] font-bold text-slate-400">+0.1 GHS EACH</span>
         </div>
 
         {loading ? (
-          <div className="text-center py-6 text-[#84948c] text-xs animate-pulse">Loading tasks...</div>
+          <div className="text-center py-6 text-slate-400 text-xs animate-pulse">Loading tasks...</div>
         ) : sponsored.length === 0 ? (
-          <div className="text-center py-6 text-[#84948c] text-xs font-bold">
+          <div className="text-center py-6 text-slate-400 text-xs font-bold">
             ✨ All tasks completed! Check back soon for new tasks.
           </div>
         ) : (
           <div className="space-y-2">
             {sponsored.map((mission) => (
-              <div key={mission.id} className="lux-card p-3.5 flex items-center justify-between gap-3">
+              <div key={mission.id} className="mine-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0">
                     ⚡
                   </div>
                   <div>
-                    <div className="text-xs font-black text-white">{mission.title}</div>
-                    <div className="text-[10px] text-[#00f090] font-bold mt-0.5">
+                    <div className="text-xs font-black text-slate-900">{mission.title}</div>
+                    <div className="text-[10px] text-[#059669] font-bold mt-0.5">
                       +{mission.reward_power} GHS
                     </div>
                   </div>
@@ -899,14 +891,14 @@ export const Missions: React.FC = () => {
 
                 <div>
                   {mission.is_completed ? (
-                    <span className="px-3 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs">
+                    <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
                       Done
                     </span>
                   ) : (
                     <button
                       onClick={() => handleSponsoredAction(mission)}
                       disabled={actionId === mission.id}
-                      className="px-3.5 py-1.5 rounded-xl btn-white font-black text-xs uppercase"
+                      className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase"
                     >
                       {actionId === mission.id ? '...' : `+${mission.reward_power} GHS`}
                     </button>

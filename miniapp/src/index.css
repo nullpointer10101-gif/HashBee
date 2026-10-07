@@ -5,29 +5,27 @@
 @tailwind utilities;
 
 :root {
-  --bg-main: #060807;
-  --bg-card: #0d110f;
-  --bg-card-hover: #121815;
-  --bg-surface: #141c18;
-  --border-subtle: #1a241f;
-  --border-active: #2a3d34;
-  --accent-white: #ffffff;
-  --accent-emerald: #00f090;
-  --accent-mint: #10b981;
-  --accent-cyan: #06b6d4;
-  --text-main: #f8fafc;
-  --text-muted: #84948c;
-  --text-dim: #4d5c54;
+  --bg-main: #f4f7fb;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --accent-blue: #0066ff;
+  --accent-cyan: #00d2ff;
+  --accent-emerald: #10b981;
+  --accent-mint: #00d68f;
+  --accent-purple: #8b5cf6;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-main);
+  background-color: #f4f7fb;
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(0, 240, 144, 0.04) 0%, transparent 60%),
-    radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
-  color: var(--text-main);
+    radial-gradient(circle at 50% 0%, rgba(0, 150, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
+  color: #0f172a;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
   user-select: none;
@@ -35,155 +33,106 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Minimalist Luxury Cards */
-.lux-card {
-  background: linear-gradient(180deg, #0e1411 0%, #080c0a 100%);
-  border: 1px solid #17241d;
-  border-radius: 24px;
-  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.7);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.lux-card:hover {
-  border-color: #243a2e;
-}
-
-.lux-card-glass {
-  background: rgba(14, 20, 17, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 24px;
-}
-
-/* High Contrast Pure White Minimalist Button */
-.btn-white {
+/* Crypto Mine White Cards */
+.mine-card {
   background: #ffffff;
-  color: #040706;
-  font-weight: 800;
-  border-radius: 16px;
-  border: 1px solid #ffffff;
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-white:hover {
-  background: #f1f5f3;
-  box-shadow: 0 6px 25px rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+.mine-card:hover {
+  box-shadow: 0 8px 25px -4px rgba(15, 23, 42, 0.08);
 }
 
-.btn-white:active {
+/* Blue Gradient Balance Card */
+.mine-hero-card {
+  background: linear-gradient(135deg, #0052d4 0%, #4364f7 50%, #00c6ff 100%);
+  border-radius: 24px;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 82, 212, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.mine-hero-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Mint Gradient Claim Button Bar */
+.claim-bar-btn {
+  background: linear-gradient(135deg, #00d68f 0%, #00c6ff 100%);
+  color: #042f20;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 214, 143, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.claim-bar-btn:active {
   transform: scale(0.98);
 }
 
-/* Radiant Cyber Emerald Button */
-.btn-emerald {
-  background: linear-gradient(135deg, #00f090 0%, #059669 100%);
-  color: #030806;
+/* Primary Action Buttons */
+.btn-primary-blue {
+  background: linear-gradient(135deg, #0052d4 0%, #00c6ff 100%);
+  color: #ffffff;
   font-weight: 800;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 240, 144, 0.25);
+  box-shadow: 0 4px 15px rgba(0, 82, 212, 0.25);
   transition: all 0.2s ease;
 }
 
-.btn-emerald:hover {
-  background: linear-gradient(135deg, #34d399 0%, #00f090 100%);
-  box-shadow: 0 6px 28px rgba(0, 240, 144, 0.4);
+.btn-primary-blue:hover {
+  opacity: 0.95;
   transform: translateY(-1px);
 }
 
-.btn-emerald:active {
+.btn-primary-blue:active {
   transform: scale(0.98);
 }
 
-/* Minimalist Secondary Surface Button */
-.btn-surface {
-  background: #0d1411;
-  color: #d1ded8;
-  font-weight: 700;
-  border: 1px solid #1a2a21;
+.btn-primary-purple {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  color: #ffffff;
+  font-weight: 800;
   border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);
   transition: all 0.2s ease;
 }
 
-.btn-surface:hover {
-  background: #141f1a;
-  color: #ffffff;
-  border-color: #273f32;
-}
-
-.btn-surface:active {
-  transform: scale(0.98);
-}
-
-/* Minimalist Clean Input */
-.lux-input {
-  background: #080c0a;
-  border: 1px solid #192720;
-  border-radius: 14px;
-  color: #ffffff;
+/* Clean Input */
+.mine-input {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  color: #0f172a;
   font-family: 'JetBrains Mono', monospace;
   transition: all 0.2s ease;
 }
 
-.lux-input:focus-within {
-  border-color: #00f090;
-  box-shadow: 0 0 15px rgba(0, 240, 144, 0.15);
-}
-
-/* Legacy utility overrides for backward compatibility */
-.zentorno-card {
-  background: linear-gradient(180deg, #0e1411 0%, #080c0a 100%);
-  border: 1px solid #17241d;
-  border-radius: 24px;
-}
-
-.zentorno-input {
-  background-color: #080c0a;
-  border: 1px solid #192720;
-  border-radius: 14px;
-  color: #f8fafc;
-}
-
-.zentorno-btn-primary {
+.mine-input:focus-within {
+  border-color: #0066ff;
   background: #ffffff;
-  color: #040706;
-  font-weight: 800;
-  border-radius: 16px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
 }
 
-.zentorno-btn-primary:hover {
-  background: #f1f5f3;
-  transform: translateY(-1px);
-}
-
-.zentorno-btn-secondary {
-  background: #0d1411;
-  border: 1px solid #1a2a21;
-  color: #d1ded8;
-  font-weight: 700;
-  border-radius: 16px;
-  transition: all 0.2s ease;
-}
-
-.zentorno-btn-secondary:hover {
-  background: #141f1a;
-  color: #ffffff;
-  border-color: #273f32;
-}
-
-/* Custom Minimalist Scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 3px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1a2820;
+  background: #cbd5e1;
   border-radius: 4px;
 }
