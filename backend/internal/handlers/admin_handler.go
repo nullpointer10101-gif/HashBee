@@ -1622,6 +1622,7 @@ func (h *AdminHandler) UpdatePayoutMirrorConfig(c *gin.Context) {
 	}
 	var req struct {
 		SourceChannel string `json:"source_channel"`
+		SourceURL     string `json:"source_url"`
 		TargetChannel string `json:"target_channel"`
 		Enabled       bool   `json:"enabled"`
 	}
@@ -1630,7 +1631,12 @@ func (h *AdminHandler) UpdatePayoutMirrorConfig(c *gin.Context) {
 		return
 	}
 
-	err := h.payoutMirror.UpdateConfig(c.Request.Context(), req.SourceChannel, req.TargetChannel, req.Enabled)
+	src := req.SourceChannel
+	if src == "" {
+		src = req.SourceURL
+	}
+
+	err := h.payoutMirror.UpdateConfig(c.Request.Context(), src, req.TargetChannel, req.Enabled)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
