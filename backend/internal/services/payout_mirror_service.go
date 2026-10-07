@@ -14,24 +14,27 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"hashbee/internal/bot"
 )
+
+type ProofSender interface {
+	SendChannelPayoutProof(channelTarget string, htmlText string, btnText string, btnURL string) error
+}
 
 type PayoutMirrorService struct {
 	db          *pgxpool.Pool
 	settings    *SettingsService
-	bot         *bot.Bot
+	sender      ProofSender
 	httpClient  *http.Client
 	mu          sync.Mutex
 	lastSyncAt  time.Time
 	totalSynced int
 }
 
-func NewPayoutMirrorService(db *pgxpool.Pool, settings *SettingsService, bot *bot.Bot) *PayoutMirrorService {
+func NewPayoutMirrorService(db *pgxpool.Pool, settings *SettingsService, sender ProofSender) *PayoutMirrorService {
 	return &PayoutMirrorService{
 		db:         db,
 		settings:   settings,
-		bot:        bot,
+		sender:     sender,
 		httpClient: &http.Client{Timeout: 15 * time.Second},
 	}
 }
@@ -152,8 +155,8 @@ func (s *PayoutMirrorService) SyncOnce(ctx context.Context) (int, error) {
 		// Build HashBee styled payout proof message
 		hashBeeMsg, btnText, btnURL := s.formatHashBeePayoutProof(p)
 
-		if s.bot != nil {
-			err := s.bot.SendChannelPayoutProof(targetChannel, hashBeeMsg, btnText, btnURL)
+		if s.sender != nil {
+			err := s.sender.SendChannelPayoutProof(targetChannel, hashBeeMsg, btnText, btnURL)
 			if err != nil {
 				log.Printf("⚠️  [PayoutMirror] Error sending payout proof for post %d to %s: %v", p.PostID, targetChannel, err)
 			} else {
@@ -343,8 +346,8 @@ func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (str
 
 // SendTestProof dispatches an instant real test payout proof using the latest live scraped transaction
 func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel string) error {
-	if s.bot == nil {
-		return fmt.Errorf("telegram bot is not initialized")
+	if s.sender == nil {
+		return fmt.Errorf("proof sender (telegram bot) is not initialized")
 	}
 
 	if targetChannel == "" {
@@ -363,7 +366,7 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 				if len(posts) > 0 {
 					latest := posts[len(posts)-1]
 					msg, btnText, btnURL := s.formatHashBeePayoutProof(latest)
-					return s.bot.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
+					return s.sender.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
 				}
 			}
 		}
@@ -381,7 +384,7 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 	}
 
 	msg, btnText, btnURL := s.formatHashBeePayoutProof(testData)
-	return s.bot.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
+	return s.sender.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
 }
 
 // GetStatus returns the current live status and metrics of the Payout Mirror service
