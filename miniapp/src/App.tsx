@@ -53,6 +53,7 @@ const AppContent: React.FC = () => {
         <Route path="/spin" element={<Spin />} />
         <Route path="/earn" element={<Referrals />} />
         <Route path="/tasks" element={<Missions />} />
+        <Route path="/missions" element={<Missions />} />
         <Route path="/withdraw" element={<Withdraw />} />
       </Routes>
       <Navbar />
