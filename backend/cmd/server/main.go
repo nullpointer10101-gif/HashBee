@@ -207,6 +207,9 @@ func main() {
 
 	// Deposit Watcher Service
 	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
+	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
+	depositSvc.StartWatcher(ctx, 30*time.Second)
+
 	// Payout Mirror Service (Auto-mirrors on-chain proofs from AiLabRobotPayouts)
 	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
 	payoutMirrorSvc.StartWatcher(ctx, 45*time.Second)
