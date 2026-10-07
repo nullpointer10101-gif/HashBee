@@ -223,7 +223,7 @@ export const Home: React.FC = () => {
 
         {/* Miner Profile */}
         <div className="flex items-center gap-3 mb-3.5">
-          <div className="relative w-15 h-15 rounded-2xl overflow-hidden shadow-md flex-shrink-0 border-2 border-[#0284c7]/30 bg-gradient-to-br from-[#0284c7] to-[#0369a1] flex items-center justify-center text-3xl">
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden shadow-md flex-shrink-0 border-2 border-[#0284c7]/30 bg-gradient-to-br from-[#0284c7] to-[#0369a1] flex items-center justify-center text-3xl">
             <img
               src={robotMinerImg}
               alt="Miner Avatar"
@@ -232,54 +232,54 @@ export const Home: React.FC = () => {
                 (e.target as HTMLElement).style.display = 'none'
               }}
             />
-            <div className="absolute bottom-0 inset-x-0 bg-[#7c3aed]/90 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider shadow">
+            <div className="absolute bottom-0 inset-x-0 bg-[#7c3aed] text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider shadow">
               Level 1
             </div>
           </div>
 
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="text-sm font-extrabold text-[#0f172a]">
+              <h3 className="text-sm font-extrabold text-[#0f172a] truncate">
                 Free Starter Miner
               </h3>
-              <span className="px-2 py-0.2 rounded-full bg-[#f3e8ff] text-[#7c3aed] text-[9px] font-black uppercase">
+              <span className="px-2 py-0.5 rounded-full bg-[#f3e8ff] text-[#7c3aed] text-[9px] font-black uppercase tracking-wider">
                 COMMON
               </span>
             </div>
-            <p className="text-[11px] font-semibold text-[#0088ff] flex items-center gap-1 mt-0.5">
-              <span>⚡</span> Auto-Mining Hashrate Active ({ghs} GHS)
+            <p className="text-[11px] font-bold text-[#0088ff] flex items-center gap-1 mt-0.5 truncate">
+              <span>⚡</span> Auto-Mining Active ({ghs} GHS)
             </p>
           </div>
         </div>
 
         {/* 3 Stats Row */}
-        <div className="grid grid-cols-3 gap-2 bg-[#f8fafc] border border-slate-100 rounded-2xl p-2.5 text-center mb-3">
-          <div>
-            <div className="text-[10px] text-slate-400 font-bold flex items-center justify-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
-              Daily Reward
+        <div className="grid grid-cols-3 gap-1 bg-[#f8fafc] border border-slate-200/80 rounded-2xl p-2.5 text-center mb-3">
+          <div className="px-1">
+            <div className="text-[9px] text-slate-500 font-bold flex items-center justify-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] flex-shrink-0"></span>
+              <span className="truncate">Daily</span>
             </div>
-            <div className="text-xs font-black text-[#0f172a] font-mono mt-0.5">
-              {earningsPerDay.toFixed(4)} USDT
-            </div>
-          </div>
-
-          <div className="border-x border-slate-200">
-            <div className="text-[10px] text-slate-400 font-bold flex items-center justify-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0088ff]"></span>
-              Total Claim
-            </div>
-            <div className="text-xs font-black text-[#0f172a] font-mono mt-0.5">
-              {userBalance.toFixed(4)} USDT
+            <div className="text-[11px] sm:text-xs font-black text-[#0f172a] font-mono mt-0.5 truncate">
+              {earningsPerDay.toFixed(4)}
             </div>
           </div>
 
-          <div>
-            <div className="text-[10px] text-slate-400 font-bold flex items-center justify-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6]"></span>
-              Mining Cycle
+          <div className="border-x border-slate-200 px-1">
+            <div className="text-[9px] text-slate-500 font-bold flex items-center justify-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0088ff] flex-shrink-0"></span>
+              <span className="truncate">Total Claim</span>
             </div>
-            <div className="text-xs font-black text-[#0f172a] mt-0.5">
+            <div className="text-[11px] sm:text-xs font-black text-[#0f172a] font-mono mt-0.5 truncate">
+              {userBalance.toFixed(4)}
+            </div>
+          </div>
+
+          <div className="px-1">
+            <div className="text-[9px] text-slate-500 font-bold flex items-center justify-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6] flex-shrink-0"></span>
+              <span className="truncate">Cycle</span>
+            </div>
+            <div className="text-[11px] sm:text-xs font-black text-[#0f172a] mt-0.5 truncate">
               24 Hours
             </div>
           </div>
@@ -289,7 +289,7 @@ export const Home: React.FC = () => {
         <div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 font-bold mb-1.5">
             <span>Mining Duration</span>
-            <span className="font-extrabold text-[#0f172a]">{cycleHours}h {cycleMins}m / 24 Hours</span>
+            <span className="font-extrabold text-[#0f172a]">{cycleHours}h {cycleMins}m / 24h</span>
           </div>
           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
             <div
@@ -303,49 +303,42 @@ export const Home: React.FC = () => {
       {/* ── CARD 3: CLAIM MINING (VIBRANT MINT GRADIENT BAR) ── */}
       <div
         onClick={handleClaim}
-        className="claim-bar-btn p-4 mb-3.5 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition-all"
+        className="claim-bar-btn p-3.5 sm:p-4 mb-3.5 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition-all"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-10 h-10 rounded-2xl bg-black/10 flex items-center justify-center text-xl shrink-0">
             ⚔️
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-sm font-black text-[#042f20] leading-tight">
               Claim Mining
             </div>
-            <div className="text-xs font-extrabold text-[#042f20]/80 font-mono mt-0.5">
+            <div className="text-[11px] font-black text-[#042f20]/90 font-mono mt-0.5 truncate">
               +{pendingBalance.toFixed(6)} USDT Mining
             </div>
           </div>
         </div>
 
-        <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#042f20] font-black text-sm">
+        <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#042f20] font-black text-sm shrink-0 ml-2">
           ➔
         </div>
       </div>
 
       {/* ── 3 VIBRANT ACTION GRID CARDS: DEPOSIT / WITHDRAW / REFERRAL ── */}
-      <div className="grid grid-cols-3 gap-2.5 mb-3.5">
+      <div className="grid grid-cols-3 gap-2 mb-3.5">
         {/* Deposit Card (Emerald Green) */}
         <div
           onClick={() => setShowDepositModal(true)}
-          className="card-tint-emerald p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-emerald-400 active:scale-95 transition-all min-h-[105px]"
+          className="card-tint-emerald p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-emerald-400 active:scale-95 transition-all min-h-[96px]"
         >
-          {/* Subtle Coin watermark */}
-          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-emerald-600">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
-            </svg>
-          </div>
-
           <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-emerald-950">Deposit</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center text-sm font-black shadow-md">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center text-xs font-black shadow-md">
               +
             </div>
           </div>
-          <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-extrabold inline-block shadow-sm">
+          <div className="mt-2 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[9px] sm:text-[10px] font-extrabold inline-block shadow-sm truncate max-w-full">
               Add USDT
             </span>
           </div>
@@ -354,23 +347,16 @@ export const Home: React.FC = () => {
         {/* Withdraw Card (Ruby Red / Rose) */}
         <div
           onClick={() => navigate('/withdraw')}
-          className="card-tint-red p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-rose-400 active:scale-95 transition-all min-h-[105px]"
+          className="card-tint-red p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-rose-400 active:scale-95 transition-all min-h-[96px]"
         >
-          {/* Subtle Chart watermark */}
-          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-rose-600">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zM16.2 13H19v6h-2.8z" />
-            </svg>
-          </div>
-
           <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-rose-950">Withdraw</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center text-xs font-black shadow-md">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center text-xs font-black shadow-md">
               ↓
             </div>
           </div>
-          <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-extrabold inline-block shadow-sm">
+          <div className="mt-2 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-rose-100 border border-rose-300 text-rose-900 text-[9px] sm:text-[10px] font-extrabold inline-block shadow-sm truncate max-w-full">
               Get Profit
             </span>
           </div>
@@ -379,23 +365,16 @@ export const Home: React.FC = () => {
         {/* Referral Card (Royal Purple) */}
         <div
           onClick={() => navigate('/earn')}
-          className="card-tint-purple p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-purple-400 active:scale-95 transition-all min-h-[105px]"
+          className="card-tint-purple p-2.5 sm:p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-purple-400 active:scale-95 transition-all min-h-[96px]"
         >
-          {/* Subtle Users watermark */}
-          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-purple-600">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-            </svg>
-          </div>
-
           <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-purple-950">Referral</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-xs font-black shadow-md">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-xs font-black shadow-md">
               👥
             </div>
           </div>
-          <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-purple-100 border border-purple-300 text-purple-800 text-[10px] font-extrabold inline-block shadow-sm">
+          <div className="mt-2 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-purple-100 border border-purple-300 text-purple-900 text-[9px] sm:text-[10px] font-extrabold inline-block shadow-sm truncate max-w-full">
               Invite & Earn
             </span>
           </div>
@@ -407,19 +386,19 @@ export const Home: React.FC = () => {
         {/* Lucky Spin (Amber / Gold) */}
         <div
           onClick={() => navigate('/spin')}
-          className="card-tint-amber p-3.5 relative overflow-hidden cursor-pointer hover:border-amber-400 active:scale-95 transition-all"
+          className="card-tint-amber p-3 relative overflow-hidden cursor-pointer hover:border-amber-400 active:scale-95 transition-all"
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-base shadow-sm">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-sm shadow-sm">
               🎰
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[9px] font-black uppercase">
+            <span className="px-1.5 py-0.5 rounded-full bg-amber-200/90 text-amber-950 text-[8px] font-black uppercase">
               HOT JACKPOT
             </span>
           </div>
           <h4 className="text-xs font-extrabold text-amber-950">Lucky Wheel Spin</h4>
-          <p className="text-[10px] text-amber-800 font-semibold mt-0.5">Win up to 25 GRAM / USDT</p>
-          <div className="mt-2.5 flex items-center gap-1 text-[10px] font-black text-amber-700">
+          <p className="text-[10px] text-amber-900 font-semibold mt-0.5">Win up to 25 GRAM</p>
+          <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-amber-800">
             <span>SPIN NOW</span>
             <span>➔</span>
           </div>
@@ -428,19 +407,19 @@ export const Home: React.FC = () => {
         {/* Missions & Tasks (Electric Blue / Cyan) */}
         <div
           onClick={() => navigate('/missions')}
-          className="card-tint-blue p-3.5 relative overflow-hidden cursor-pointer hover:border-blue-400 active:scale-95 transition-all"
+          className="card-tint-blue p-3 relative overflow-hidden cursor-pointer hover:border-blue-400 active:scale-95 transition-all"
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-base shadow-sm">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-sm shadow-sm">
               🎯
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 text-[9px] font-black uppercase">
+            <span className="px-1.5 py-0.5 rounded-full bg-blue-200/90 text-blue-950 text-[8px] font-black uppercase">
               FREE GHS
             </span>
           </div>
           <h4 className="text-xs font-extrabold text-blue-950">Daily Missions</h4>
-          <p className="text-[10px] text-blue-800 font-semibold mt-0.5">Watch ads & earn power</p>
-          <div className="mt-2.5 flex items-center gap-1 text-[10px] font-black text-[#0066ff]">
+          <p className="text-[10px] text-blue-900 font-semibold mt-0.5">Watch ads & earn power</p>
+          <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-[#0066ff]">
             <span>COMPLETE</span>
             <span>➔</span>
           </div>
@@ -461,20 +440,20 @@ export const Home: React.FC = () => {
               (e.target as HTMLElement).style.display = 'none'
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/50 to-transparent flex items-center justify-between p-4">
-            <div className="max-w-[70%]">
-              <span className="px-2 py-0.5 rounded-full bg-indigo-500/80 text-white text-[8px] font-black uppercase tracking-wider backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-transparent flex items-center justify-between p-4">
+            <div className="max-w-[72%] pr-2">
+              <span className="px-2 py-0.5 rounded-full bg-indigo-500 text-white text-[8px] font-black uppercase tracking-wider backdrop-blur-sm">
                 VIRAL HASHRATE BOOST
               </span>
-              <h4 className="text-base font-black text-white leading-tight mt-1 drop-shadow-sm">
+              <h4 className="text-sm sm:text-base font-black text-white leading-tight mt-1 drop-shadow-sm">
                 Invite Friends & Earn
               </h4>
-              <p className="text-[10px] text-indigo-100 font-semibold mt-0.5">
+              <p className="text-[10px] text-indigo-100 font-semibold mt-0.5 line-clamp-1">
                 Instant +3 GHS per friend + milestone rewards!
               </p>
             </div>
 
-            <div className="w-9 h-9 rounded-full bg-white text-[#7c3aed] flex items-center justify-center font-black text-sm shadow-md shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-[#7c3aed] flex items-center justify-center font-black text-sm shadow-md shrink-0">
               ➔
             </div>
           </div>
