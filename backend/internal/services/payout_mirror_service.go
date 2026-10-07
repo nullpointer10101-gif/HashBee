@@ -85,7 +85,7 @@ func (s *PayoutMirrorService) SyncOnce(ctx context.Context) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	sourceURL := s.settings.Get(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts")
+	sourceURL := s.settings.GetString(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts")
 	if sourceURL == "" {
 		sourceURL = "https://t.me/s/AiLabRobotPayouts"
 	}
@@ -96,7 +96,7 @@ func (s *PayoutMirrorService) SyncOnce(ctx context.Context) (int, error) {
 		sourceURL = "https://t.me/s/" + clean
 	}
 
-	targetChannel := s.settings.Get(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
+	targetChannel := s.settings.GetString(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
 	if targetChannel == "" {
 		targetChannel = "@HashBeePayouts"
 	}
@@ -351,11 +351,11 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 	}
 
 	if targetChannel == "" {
-		targetChannel = s.settings.Get(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
+		targetChannel = s.settings.GetString(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
 	}
 
 	// Fetch 1 live post from AiLabRobotPayouts
-	sourceURL := s.settings.Get(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts")
+	sourceURL := s.settings.GetString(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts")
 	req, err := http.NewRequestWithContext(ctx, "GET", sourceURL, nil)
 	if err == nil {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -394,8 +394,8 @@ func (s *PayoutMirrorService) GetStatus(ctx context.Context) map[string]interfac
 
 	return map[string]interface{}{
 		"enabled":        s.settings.GetBool(ctx, "payout_mirror_enabled", true),
-		"source_channel": s.settings.Get(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts"),
-		"target_channel": s.settings.Get(ctx, "payout_mirror_target_channel", "@HashBeePayouts"),
+		"source_channel": s.settings.GetString(ctx, "payout_mirror_source", "https://t.me/s/AiLabRobotPayouts"),
+		"target_channel": s.settings.GetString(ctx, "payout_mirror_target_channel", "@HashBeePayouts"),
 		"last_post_id":   s.settings.GetInt(ctx, "payout_mirror_last_post_id", 0),
 		"last_sync_at":   s.lastSyncAt,
 		"total_synced":   s.totalSynced,

@@ -67,6 +67,14 @@ func (s *SettingsService) GetBool(ctx context.Context, key string, defaultVal bo
 	return b
 }
 
+func (s *SettingsService) GetString(ctx context.Context, key string, defaultVal string) string {
+	v, err := s.Get(ctx, key)
+	if err != nil || v == "" {
+		return defaultVal
+	}
+	return v
+}
+
 func (s *SettingsService) Set(ctx context.Context, key, value string) error {
 	_, err := s.db.Exec(ctx,
 		`INSERT INTO settings (key, value, updated_at) VALUES ($1, $2, NOW())
