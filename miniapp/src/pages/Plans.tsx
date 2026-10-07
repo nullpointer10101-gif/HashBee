@@ -11,6 +11,7 @@ import {
 } from '../services/api'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
+import { NftMinerAvatar } from '../components/NftMinerAvatar'
 import robotMinerImg from '../assets/images/robot_miner.jpg'
 import cyberWorkerImg from '../assets/images/cyber_worker_miner.jpg'
 
@@ -507,29 +508,8 @@ export const Plans: React.FC = () => {
 
                 {/* Plan Info with Large 3D Preview Frame */}
                 <div className="flex items-center gap-3.5 mb-3.5 bg-white/80 p-3 rounded-2xl border border-slate-200/80 shadow-sm">
-                  {/* Large 3D NFT Frame */}
-                  <div className={`w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden shrink-0 shadow-md ${glowClass} bg-slate-900 flex items-center justify-center relative group`}>
-                    {(plan as any).image ? (
-                      <img
-                        src={(plan as any).image}
-                        alt={plan.name}
-                        className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-3xl">
-                        <span>{plan.icon}</span>
-                        <span className="text-[8px] font-black text-white/80 uppercase font-mono mt-0.5">3D NFT</span>
-                      </div>
-                    )}
-                    
-                    {/* Corner Tag */}
-                    <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-[8px] font-black text-white font-mono">
-                      {plan.cost_gram}T
-                    </div>
-                  </div>
+                  {/* Robust 3D NFT Frame */}
+                  <NftMinerAvatar planId={plan.id} size="lg" badgeText={`${plan.cost_gram}T`} />
 
                   {/* Title & Description */}
                   <div className="flex-1 min-w-0">

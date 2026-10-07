@@ -45,8 +45,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     setTimeout(() => setCopiedAddr(false), 2500)
   }
 
-  const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
-  const totalGhsPower = numDeposit * 50 * 1.05
+  const minTonDeposit = 0.5
+  const numDeposit = Math.max(minTonDeposit, parseFloat(depositAmount) || minTonDeposit)
+  const totalGhsPower = numDeposit * 520
   const modalEarningsPerDay = totalGhsPower * 0.0005
   const modalEarningsPerMonth = modalEarningsPerDay * 30
 
@@ -110,8 +111,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               <div className="mine-input p-3 flex items-center justify-between">
                 <input
                   type="number"
-                  min="0.1"
-                  step="0.1"
+                  min="0.5"
+                  step="0.5"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   className="w-full bg-transparent text-lg font-black text-slate-900 outline-none font-mono"
@@ -121,7 +122,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 </span>
               </div>
               <div className="text-[9px] text-slate-400 font-medium mt-1">
-                Minimum deposit: 0.10 TON
+                Minimum deposit: 0.50 TON
               </div>
             </div>
 
@@ -130,10 +131,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 ESTIMATED POWER
               </div>
               <div className="text-2xl font-black text-slate-900 mt-0.5 font-mono">
-                {totalGhsPower.toFixed(1)} <span className="text-xs font-bold text-[#0088ff]">GHS</span>
+                {totalGhsPower.toFixed(0)} <span className="text-xs font-bold text-[#0088ff]">GHS</span>
               </div>
               <div className="text-[10px] font-bold text-[#059669] mt-0.5">
-                ⚡ +5% deposit power bonus applied!
+                ⚡ 1 TON = 520 GHS Mining Hashrate
               </div>
             </div>
 

@@ -212,8 +212,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// 2. Minimum regular deposit: 0.10 GRAM
-			if amountGram < 0.10 {
+			// 2. Minimum regular deposit: 0.50 GRAM
+			if amountGram < 0.50 {
 				continue
 			}
 
@@ -435,8 +435,8 @@ func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64
 		return false, fmt.Errorf("user %d not found in database", telegramID)
 	}
 
-	// Rate: 1 GRAM = 50 GHS, +5% bonus = 52.5 GHS per 1 GRAM
-	powerGained := amountGram * 50.0 * 1.05
+	// Rate: 1 TON = 520 GHS
+	powerGained := amountGram * 520.0
 
 	// 3. Update user both spendable balance (for crates / miner) and hashrate (for cloud mining)
 	newHoney := currentHoney + amountGram

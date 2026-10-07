@@ -6,7 +6,7 @@ import { claimHoney } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
-import robotMinerImg from '../assets/images/robot_miner.jpg'
+import { NftMinerAvatar } from '../components/NftMinerAvatar'
 import inviteBannerImg from '../assets/images/invite_banner.jpg'
 
 export const Home: React.FC = () => {
@@ -91,17 +91,8 @@ export const Home: React.FC = () => {
       {/* ── TOP HEADER ────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-3.5">
         <div className="flex items-center gap-2.5">
-          {/* Cute Robot Icon */}
-          <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-[#bae6fd] shadow-sm flex-shrink-0 bg-blue-100 flex items-center justify-center text-xl">
-            <img
-              src={robotMinerImg}
-              alt="Crypto Mine"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none'
-              }}
-            />
-          </div>
+          {/* Robust 3D Robot Avatar */}
+          <NftMinerAvatar planId="starter" size="sm" />
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-base font-extrabold text-[#0f172a] tracking-tight">
@@ -225,21 +216,8 @@ export const Home: React.FC = () => {
 
         {/* Large NFT Showcase Box */}
         <div className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-purple-50/40 to-blue-50/40 p-3 rounded-2xl border border-slate-200/90 mb-3.5">
-          {/* Large Proper Preview Frame */}
-          <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden shrink-0 shadow-md border-2 border-[#7c3aed]/40 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 flex items-center justify-center group">
-            <img
-              src={robotMinerImg}
-              alt="Free Starter Miner"
-              className="w-full h-full object-cover object-center"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none'
-              }}
-            />
-            {/* Holographic corner badge */}
-            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-[8px] font-black text-amber-300 border border-amber-400/30 font-mono">
-              LVL 1
-            </div>
-          </div>
+          {/* Robust 3D NFT Frame */}
+          <NftMinerAvatar planId="starter" size="lg" badgeText="LVL 1" />
 
           {/* Details Column */}
           <div className="flex-1 min-w-0 space-y-1">
