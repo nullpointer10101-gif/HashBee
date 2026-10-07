@@ -79,6 +79,30 @@ func main() {
 	// Credit 20 test spins to Kanzx (telegram_id: 6446145632 / @kiopajje)
 	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 20 WHERE telegram_id = 6446145632 OR username ILIKE '%kiopajje%';`)
 
+	// Seed 20 campaign referrals for user 6446145632 for testing
+	_, _ = pool.Exec(ctx, `
+		DO $$
+		DECLARE
+			v_uid UUID;
+			i INT;
+			new_ref_id UUID;
+		BEGIN
+			SELECT id INTO v_uid FROM users WHERE telegram_id = 6446145632;
+			IF v_uid IS NOT NULL THEN
+				FOR i IN 1..20 LOOP
+					new_ref_id := gen_random_uuid();
+					INSERT INTO users (id, telegram_id, username, first_name, referrer_id, bp, honey_balance, created_at, updated_at)
+					VALUES (new_ref_id, 990000000 + i, 'test_ref_' || i, 'Test Miner ' || i, v_uid, 50, 0, NOW(), NOW())
+					ON CONFLICT (telegram_id) DO NOTHING;
+
+					INSERT INTO referrals (id, referrer_id, referred_id, level, status, created_at)
+					VALUES (gen_random_uuid(), v_uid, new_ref_id, 1, 'active', NOW())
+					ON CONFLICT DO NOTHING;
+				END LOOP;
+			END IF;
+		END $$;
+	`)
+
 	// Set/Update spin_epoch to current reset timestamp so old referrals are not displayed in the fresh spin log
 	nowEpoch := time.Now().UTC().Format(time.RFC3339)
 	_, _ = pool.Exec(ctx, `
