@@ -445,7 +445,7 @@ Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
             </p>
           </div>
           <div style="display:flex; align-items:center; gap:10px;">
-            <span id="payoutMirrorStatusBadge" class="badge" style="background:#1e2d27; color:#9ca3af; font-size:12px; font-weight:800; padding:6px 12px;">⏸️ Inactive</span>
+            <span id="payoutMirrorStatusBadge" class="badge" style="background:#064e3b; color:#34d399; font-size:12px; font-weight:800; padding:6px 12px;">🟢 Active Watching (45s)</span>
           </div>
         </div>
 
@@ -453,8 +453,8 @@ Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
           <div class="form-group">
             <label class="form-label" style="color:#34d399; font-weight:800;">⚙️ Auto-Mirror Switch</label>
             <select id="payoutMirrorEnabled" class="form-input" style="font-weight:700;">
+              <option value="true" selected>🟢 ENABLED (Auto-watch & mirror every 45s)</option>
               <option value="false">🔴 Disabled (Don't mirror posts)</option>
-              <option value="true">🟢 ENABLED (Auto-watch & mirror every 45s)</option>
             </select>
           </div>
 
@@ -1351,6 +1351,8 @@ function initDashboard(admin) {
   
   loadStats();
   loadCampaigns();
+  loadPayoutMirrorStatus();
+  loadAutoBroadcast();
 
   if (statsInterval) clearInterval(statsInterval);
   statsInterval = setInterval(() => {

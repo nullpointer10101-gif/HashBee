@@ -114,6 +114,11 @@ func main() {
 		VALUES ('welcome_bonus_bp', '2', 'GHS welcome bonus for users who join via referral', NOW())
 		ON CONFLICT (key) DO UPDATE SET value = '2', updated_at = NOW();
 	`)
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('payout_mirror_enabled', 'true', 'Auto-mirror payout proofs to Telegram channel', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW();
+	`)
 
 
 	// Startup campaign completions boost for the 2 tasks to approx 200
