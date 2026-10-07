@@ -69,7 +69,7 @@ let periodicTimer: ReturnType<typeof setInterval> | null = null
 
 /**
  * Initialize automatic AdExium ads:
- * - Recurring ad every 2 minutes with cooldown protection
+ * - Recurring ad every 1.5 minutes (90 seconds)
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitialized) return
@@ -80,14 +80,14 @@ export const initMonetagAutoAds = () => {
     showInterstitialAd(true).catch(() => {})
   }, 1000)
 
-  // Setup recurring ad trigger every 2 minutes
+  // Setup recurring ad trigger every 1.5 minutes (90,000 ms)
   if (periodicTimer) {
     clearInterval(periodicTimer)
   }
 
   periodicTimer = setInterval(() => {
-    console.log('[Ads] Triggering scheduled AdExium ad...')
-    showInterstitialAd().catch(() => {})
-  }, 120000)
+    console.log('[Ads] Triggering scheduled AdExium ad (every 1.5 mins)...')
+    showInterstitialAd(true).catch(() => {})
+  }, 90000) // 1.5 minutes
 }
 
