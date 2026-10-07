@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext'
 import {
   fetchPlans,
   fetchMyPlans,
-  buyPlan,
   claimPlan,
   checkDeposit,
   PlanTier,
@@ -11,12 +10,10 @@ import {
   PlansOverview,
 } from '../services/api'
 import toast from 'react-hot-toast'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export const Plans: React.FC = () => {
   const { user, refreshUser } = useAuth()
-  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState<'store' | 'active' | 'history'>('store')
   const [plansOverview, setPlansOverview] = useState<PlansOverview | null>(null)
@@ -24,24 +21,23 @@ export const Plans: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  // Confirmation & Deposit Modals
+  // Plan Deposit / Payment Modal
   const [selectedPlan, setSelectedPlan] = useState<PlanTier | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showDepositModal, setShowDepositModal] = useState(false)
-  const [checkingDeposit, setCheckingDeposit] = useState(false)
+  const [showPayModal, setShowPayModal] = useState(false)
+  const [checkingPayment, setCheckingPayment] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
 
   const DEPOSIT_WALLET = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
-  const userTelegramId = user?.telegram_id || (window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? String(window.Telegram.WebApp.initDataUnsafe.user.id) : '')
-  const depositMemo = `HB_${userTelegramId}`
+  const userTelegramId =
+    user?.telegram_id ||
+    (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+      ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
+      : '')
 
   const loadData = async () => {
     try {
-      const [overviewData, userPlansData] = await Promise.all([
-        fetchPlans(),
-        fetchMyPlans(),
-      ])
+      const [overviewData, userPlansData] = await Promise.all([fetchPlans(), fetchMyPlans()])
       setPlansOverview(overviewData)
       setMyPlans(userPlansData)
     } catch (err: any) {
@@ -90,40 +86,80 @@ export const Plans: React.FC = () => {
     return `${String(h).padStart(2, '0')}h : ${String(m).padStart(2, '0')}m : ${String(s).padStart(2, '0')}s`
   }
 
-  const handleOpenConfirm = (plan: PlanTier) => {
+  // Open direct payment modal with Tonkeeper deep link & copyable MEMO
+  const handleOpenPayment = (plan: PlanTier) => {
     if (!plan.can_purchase) {
       toast.error('This starter plan is limited to 1 purchase per account.')
       return
     }
-    const currentBal = Number(user?.honey_balance || 0)
-    if (currentBal < plan.cost_gram) {
-      setSelectedPlan(plan)
-      setShowDepositModal(true)
-      return
-    }
     setSelectedPlan(plan)
-    setShowConfirmModal(true)
+    setShowPayModal(true)
   }
 
-  const handleBuyPlan = async () => {
-    if (!selectedPlan) return
-    setActionLoading(selectedPlan.id)
+  // Generate memo and Tonkeeper links
+  const getPlanMemo = (planId: string) => {
+    return `PLAN_${planId.toUpperCase()}_HB_${userTelegramId}`
+  }
+
+  const getTonkeeperDeepLink = (plan: PlanTier) => {
+    const nanoAmount = Math.round(plan.cost_gram * 1e9)
+    const memo = getPlanMemo(plan.id)
+    return `ton://transfer/${DEPOSIT_WALLET}?amount=${nanoAmount}&text=${encodeURIComponent(memo)}`
+  }
+
+  const getTonkeeperUniversalLink = (plan: PlanTier) => {
+    const nanoAmount = Math.round(plan.cost_gram * 1e9)
+    const memo = getPlanMemo(plan.id)
+    return `https://app.tonkeeper.com/transfer/${DEPOSIT_WALLET}?amount=${nanoAmount}&text=${encodeURIComponent(memo)}`
+  }
+
+  const handle1ClickTonkeeper = (plan: PlanTier) => {
+    const deepLink = getTonkeeperDeepLink(plan)
+    const universalLink = getTonkeeperUniversalLink(plan)
+
+    // Attempt native app deep link first, with fallback to universal link
     try {
-      const res = await buyPlan(selectedPlan.id)
-      toast.success(res.message || '🎉 Mining Plan activated successfully!', { duration: 4000 })
-      setShowConfirmModal(false)
-      setSelectedPlan(null)
-      await Promise.all([loadData(), refreshUser()])
-      setActiveTab('active')
-    } catch (err: any) {
-      const errMsg = err.response?.data?.error || err.message || 'Failed to buy plan'
-      toast.error(errMsg)
-      if (err.response?.data?.needs_deposit) {
-        setShowConfirmModal(false)
-        setShowDepositModal(true)
+      window.location.href = deepLink
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openLink) {
+          window.Telegram.WebApp.openLink(universalLink)
+        } else {
+          window.open(universalLink, '_blank')
+        }
+      }, 500)
+    } catch (e) {
+      window.open(universalLink, '_blank')
+    }
+  }
+
+  const handleVerifyPayment = async () => {
+    setCheckingPayment(true)
+    try {
+      const prevActiveCount = myPlans.filter((p) => p.status === 'active').length
+      const res = await checkDeposit()
+      const [newOverview, updatedPlans] = await Promise.all([fetchPlans(), fetchMyPlans(), refreshUser()])
+      setPlansOverview(newOverview)
+      setMyPlans(updatedPlans)
+
+      const newActiveCount = updatedPlans.filter((p) => p.status === 'active').length
+
+      if (newActiveCount > prevActiveCount || res?.credited > 0) {
+        toast.success('🎉 Blockchain deposit confirmed! Your 24-hour Mining Plan is now active!', {
+          duration: 5000,
+          icon: '⚡',
+        })
+        setShowPayModal(false)
+        setActiveTab('active')
+      } else {
+        toast('No new TON payment detected yet. Please ensure you sent the exact amount with MEMO.', {
+          icon: '⏳',
+          duration: 4000,
+        })
       }
+    } catch (err: any) {
+      toast.error('Deposit check failed. Please wait a few seconds after sending and try again.')
     } finally {
-      setActionLoading(null)
+      setCheckingPayment(false)
     }
   }
 
@@ -141,29 +177,8 @@ export const Plans: React.FC = () => {
     }
   }
 
-  const handleCheckDeposit = async () => {
-    setCheckingDeposit(true)
-    try {
-      const res = await checkDeposit()
-      if (res.credited_count > 0 || res.new_honey_balance) {
-        toast.success(`✅ Deposit confirmed! Credited ${res.credited_count} transaction(s).`)
-        setShowDepositModal(false)
-        await Promise.all([loadData(), refreshUser()])
-      } else {
-        toast('No new blockchain deposit detected yet. Please ensure you sent TON with the exact MEMO.', {
-          icon: '⏳',
-        })
-      }
-    } catch (err: any) {
-      toast.error('Deposit check failed. Please try again in a few seconds.')
-    } finally {
-      setCheckingDeposit(false)
-    }
-  }
-
   const activePlans = myPlans.filter((p) => p.status === 'active')
   const completedPlans = myPlans.filter((p) => p.status === 'claimed')
-
   const userBalance = Number(user?.honey_balance || 0)
 
   return (
@@ -187,26 +202,24 @@ export const Plans: React.FC = () => {
                   24H CYCLES
                 </span>
               </h1>
-              <p className="text-[11px] text-stone-400">Lock GRAM today • Receive guaranteed profit next day</p>
+              <p className="text-[11px] text-stone-400">Direct TON activation • Guaranteed next-day returns</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowDepositModal(true)}
-            className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-black font-black text-xs rounded-xl shadow-lg shadow-emerald-950 flex items-center gap-1 active:scale-95 transition-all"
-          >
-            <span>+ DEPOSIT</span>
-          </button>
+          <div className="px-2.5 py-1 bg-emerald-950/60 border border-emerald-500/30 rounded-xl text-right">
+            <span className="text-[9px] text-stone-400 block uppercase font-bold">Balance</span>
+            <span className="text-xs font-black text-emerald-400">{userBalance.toFixed(4)} G</span>
+          </div>
         </div>
 
-        {/* Balance & Stats Bar */}
+        {/* Stats Bar */}
         <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-center">
-          <div className="bg-[#0e1614]/80 rounded-xl p-2 border border-white/5">
-            <div className="text-[10px] text-stone-400 uppercase font-semibold">Your Balance</div>
-            <div className="text-xs font-black text-emerald-400 truncate">{userBalance.toFixed(4)} G</div>
-          </div>
           <div className="bg-[#0e1614]/80 rounded-xl p-2 border border-white/5">
             <div className="text-[10px] text-stone-400 uppercase font-semibold">Active Plans</div>
             <div className="text-xs font-black text-amber-400">{activePlans.length} Running</div>
+          </div>
+          <div className="bg-[#0e1614]/80 rounded-xl p-2 border border-white/5">
+            <div className="text-[10px] text-stone-400 uppercase font-semibold">Duration</div>
+            <div className="text-xs font-black text-emerald-400">24 Hours</div>
           </div>
           <div className="bg-[#0e1614]/80 rounded-xl p-2 border border-white/5">
             <div className="text-[10px] text-stone-400 uppercase font-semibold">Total Claimed</div>
@@ -228,7 +241,7 @@ export const Plans: React.FC = () => {
           }`}
         >
           <span>🛒</span>
-          <span>AVAILABLE PLANS</span>
+          <span>PLANS STORE</span>
         </button>
         <button
           onClick={() => setActiveTab('active')}
@@ -271,7 +284,6 @@ export const Plans: React.FC = () => {
                 : 'bg-[#151a17]/60 border-stone-800 opacity-75'
             }`}
           >
-            {/* Badges */}
             <div className="flex items-center justify-between mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 tracking-wider">
                 ⚡ 1 PER ACCOUNT TRIAL
@@ -290,33 +302,31 @@ export const Plans: React.FC = () => {
                   Starter Bee Miner
                 </h3>
                 <p className="text-[11px] text-stone-400">
-                  Deposit <span className="text-amber-300 font-bold">0.70 GRAM</span> ➔ Receive{' '}
+                  Pay <span className="text-amber-300 font-bold">0.70 TON</span> ➔ Receive{' '}
                   <span className="text-emerald-400 font-bold">0.80 GRAM</span> next day
                 </p>
               </div>
             </div>
 
-            {/* Metrics Box */}
             <div className="grid grid-cols-3 gap-1.5 bg-[#0e0a06]/80 rounded-xl p-2.5 border border-white/5 mb-3 text-center">
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Cost</div>
-                <div className="text-xs font-black text-amber-300">0.70 GRAM</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Payment</div>
+                <div className="text-xs font-black text-amber-300">0.70 TON</div>
               </div>
               <div className="border-x border-white/10">
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Next Day Return</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Return (24h)</div>
                 <div className="text-xs font-black text-emerald-400">0.80 GRAM</div>
               </div>
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Profit (24h)</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Net Profit</div>
                 <div className="text-xs font-black text-emerald-300">+0.10 G</div>
               </div>
             </div>
 
-            {/* Action Button */}
             {plansOverview?.can_buy_starter !== false ? (
               <button
                 onClick={() =>
-                  handleOpenConfirm({
+                  handleOpenPayment({
                     id: 'starter',
                     name: 'Starter Bee Miner',
                     subtitle: 'Fast 24h trial pack — high conversion entry miner',
@@ -334,10 +344,9 @@ export const Plans: React.FC = () => {
                     accent_color: '#f59e0b',
                   })
                 }
-                disabled={actionLoading === 'starter'}
                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs tracking-wider uppercase shadow-lg shadow-amber-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
               >
-                <span>ACTIVATE FOR 0.70 GRAM</span>
+                <span>⚡ ACTIVATE (0.70 TON)</span>
                 <span>➔</span>
               </button>
             ) : (
@@ -354,7 +363,6 @@ export const Plans: React.FC = () => {
             transition={{ duration: 0.25 }}
             className="relative rounded-2xl p-4 bg-gradient-to-b from-[#0f271f] via-[#0d1d18] to-[#091511] border-2 border-emerald-500/50 shadow-xl shadow-emerald-950/40"
           >
-            {/* Badges */}
             <div className="flex items-center justify-between mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 tracking-wider animate-pulse">
                 🔥 BEST VALUE & POPULAR
@@ -376,32 +384,30 @@ export const Plans: React.FC = () => {
                   </span>
                 </h3>
                 <p className="text-[11px] text-stone-300">
-                  Deposit <span className="text-emerald-300 font-bold">1.30 GRAM</span> ➔ Receive{' '}
+                  Pay <span className="text-emerald-300 font-bold">1.30 TON</span> ➔ Receive{' '}
                   <span className="text-emerald-400 font-bold text-xs">2.00 GRAM</span> next day
                 </p>
               </div>
             </div>
 
-            {/* Metrics Box */}
             <div className="grid grid-cols-3 gap-1.5 bg-[#08120e]/90 rounded-xl p-2.5 border border-emerald-500/20 mb-3 text-center">
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Cost</div>
-                <div className="text-xs font-black text-white">1.30 GRAM</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Payment</div>
+                <div className="text-xs font-black text-white">1.30 TON</div>
               </div>
               <div className="border-x border-emerald-500/20">
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Next Day Return</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Return (24h)</div>
                 <div className="text-xs font-black text-emerald-400 text-sm">2.00 GRAM</div>
               </div>
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Profit (24h)</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Net Profit</div>
                 <div className="text-xs font-black text-emerald-300">+0.70 G</div>
               </div>
             </div>
 
-            {/* Action Button */}
             <button
               onClick={() =>
-                handleOpenConfirm({
+                handleOpenPayment({
                   id: 'standard',
                   name: 'Standard Worker Miner',
                   subtitle: 'Best value daily yield contract with massive returns',
@@ -419,10 +425,9 @@ export const Plans: React.FC = () => {
                   accent_color: '#10b981',
                 })
               }
-              disabled={actionLoading === 'standard'}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs tracking-wider uppercase shadow-lg shadow-emerald-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
             >
-              <span>ACTIVATE FOR 1.30 GRAM</span>
+              <span>⚡ ACTIVATE (1.30 TON)</span>
               <span>➔</span>
             </button>
           </motion.div>
@@ -434,7 +439,6 @@ export const Plans: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="relative rounded-2xl p-4 bg-gradient-to-b from-[#23122c] via-[#1a0c21] to-[#110716] border border-purple-500/40 shadow-lg shadow-purple-950/30"
           >
-            {/* Badges */}
             <div className="flex items-center justify-between mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 tracking-wider">
                 👑 ROYAL WHALE MINER
@@ -456,32 +460,30 @@ export const Plans: React.FC = () => {
                   </span>
                 </h3>
                 <p className="text-[11px] text-stone-300">
-                  Deposit <span className="text-purple-300 font-bold">3.00 GRAM</span> ➔ Receive{' '}
+                  Pay <span className="text-purple-300 font-bold">3.00 TON</span> ➔ Receive{' '}
                   <span className="text-emerald-400 font-bold text-xs">4.00 GRAM</span> next day
                 </p>
               </div>
             </div>
 
-            {/* Metrics Box */}
             <div className="grid grid-cols-3 gap-1.5 bg-[#0f0714]/80 rounded-xl p-2.5 border border-purple-500/20 mb-3 text-center">
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Cost</div>
-                <div className="text-xs font-black text-purple-200">3.00 GRAM</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Payment</div>
+                <div className="text-xs font-black text-purple-200">3.00 TON</div>
               </div>
               <div className="border-x border-purple-500/20">
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Next Day Return</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Return (24h)</div>
                 <div className="text-xs font-black text-emerald-400 text-sm">4.00 GRAM</div>
               </div>
               <div>
-                <div className="text-[9px] text-stone-400 uppercase font-semibold">Profit (24h)</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold">Net Profit</div>
                 <div className="text-xs font-black text-emerald-300">+1.00 G</div>
               </div>
             </div>
 
-            {/* Action Button */}
             <button
               onClick={() =>
-                handleOpenConfirm({
+                handleOpenPayment({
                   id: 'queen',
                   name: 'Royal Queen Miner',
                   subtitle: 'Maximum power mining contract with guaranteed 4.00 GRAM payout',
@@ -499,19 +501,19 @@ export const Plans: React.FC = () => {
                   accent_color: '#a855f7',
                 })
               }
-              disabled={actionLoading === 'queen'}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-purple-500 hover:from-purple-500 hover:to-pink-500 text-white font-black text-xs tracking-wider uppercase shadow-lg shadow-purple-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
             >
-              <span>ACTIVATE FOR 3.00 GRAM</span>
+              <span>⚡ ACTIVATE (3.00 TON)</span>
               <span>➔</span>
             </button>
           </motion.div>
 
-          {/* Guarantee & Withdrawal info banner */}
+          {/* Guarantee info banner */}
           <div className="bg-[#121c19] border border-white/10 rounded-xl p-3 text-center">
             <p className="text-[11px] text-stone-300 leading-relaxed">
-              🛡️ <span className="font-bold text-white">Guaranteed Returns:</span> All yields are calculated on exact
-              24-hour cycles. Activating any mining plan qualifies your account for instant lifetime cashouts!
+              🛡️ <span className="font-bold text-white">Direct TON Activation:</span> Plans require external TON
+              blockchain payments and automatically unlock guaranteed returns after 24 hours. Activating any plan also
+              qualifies your account for lifetime withdrawals!
             </p>
           </div>
         </div>
@@ -525,7 +527,7 @@ export const Plans: React.FC = () => {
               <span className="text-4xl mb-2 block">⏳</span>
               <h3 className="text-sm font-bold text-white mb-1">No Active Plans Running</h3>
               <p className="text-xs text-stone-400 mb-4">
-                Choose a plan to start earning guaranteed daily GRAM returns.
+                Activate a plan to start earning guaranteed 24-hour daily GRAM returns.
               </p>
               <button
                 onClick={() => setActiveTab('store')}
@@ -641,92 +643,53 @@ export const Plans: React.FC = () => {
         </div>
       )}
 
-      {/* Confirmation Modal */}
+      {/* Plan Payment & 1-Click Tonkeeper Modal */}
       <AnimatePresence>
-        {showConfirmModal && selectedPlan && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        {showPayModal && selectedPlan && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#151f1c] border border-emerald-500/30 rounded-2xl p-5 w-full max-w-sm shadow-2xl text-center"
+              className="bg-[#151f1c] border border-emerald-500/40 rounded-2xl p-5 w-full max-w-sm shadow-2xl"
             >
-              <div className="text-4xl mb-2">{selectedPlan.icon}</div>
-              <h3 className="text-base font-black text-white mb-1">Activate {selectedPlan.name}</h3>
-              <p className="text-xs text-stone-300 mb-4">
-                Lock <span className="font-bold text-amber-300">{selectedPlan.cost_gram.toFixed(2)} GRAM</span> for 24
-                hours to receive{' '}
-                <span className="font-bold text-emerald-400">{selectedPlan.return_gram.toFixed(2)} GRAM</span> guaranteed.
-              </p>
-
-              <div className="bg-[#0e1614] rounded-xl p-3 border border-white/5 mb-4 text-left space-y-1.5 text-xs">
-                <div className="flex justify-between text-stone-400">
-                  <span>Investment:</span>
-                  <span className="font-bold text-white">{selectedPlan.cost_gram.toFixed(2)} GRAM</span>
-                </div>
-                <div className="flex justify-between text-stone-400">
-                  <span>Return in 24h:</span>
-                  <span className="font-bold text-emerald-400">{selectedPlan.return_gram.toFixed(2)} GRAM</span>
-                </div>
-                <div className="flex justify-between text-stone-400">
-                  <span>Net Profit:</span>
-                  <span className="font-bold text-emerald-300">
-                    +{(selectedPlan.return_gram - selectedPlan.cost_gram).toFixed(2)} GRAM
-                  </span>
-                </div>
-                <div className="flex justify-between text-stone-400 pt-1 border-t border-white/5">
-                  <span>Your Current Balance:</span>
-                  <span className="font-bold text-white">{userBalance.toFixed(4)} GRAM</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-stone-800 text-stone-300 font-bold text-xs"
-                >
-                  CANCEL
-                </button>
-                <button
-                  onClick={handleBuyPlan}
-                  disabled={actionLoading === selectedPlan.id}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs shadow-lg shadow-emerald-950"
-                >
-                  {actionLoading === selectedPlan.id ? 'ACTIVATING...' : 'CONFIRM & LOCK'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Deposit Modal */}
-      <AnimatePresence>
-        {showDepositModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[#151f1c] border border-amber-500/30 rounded-2xl p-5 w-full max-w-sm shadow-2xl"
-            >
+              {/* Modal Header */}
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-black text-white flex items-center gap-1.5">
-                  <span>⚡</span> Deposit TON / GRAM
-                </h3>
-                <button onClick={() => setShowDepositModal(false)} className="text-stone-400 text-sm font-bold">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{selectedPlan.icon}</span>
+                  <div>
+                    <h3 className="text-sm font-black text-white">{selectedPlan.name}</h3>
+                    <p className="text-[10px] text-emerald-400 font-bold">
+                      Pay {selectedPlan.cost_gram.toFixed(2)} TON ➔ Get {selectedPlan.return_gram.toFixed(2)} GRAM in
+                      24h
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setShowPayModal(false)} className="text-stone-400 text-sm font-bold p-1">
                   ✕
                 </button>
               </div>
 
-              <p className="text-[11px] text-stone-300 mb-3 leading-relaxed">
-                Send TON from any wallet (Tonkeeper, Telegram Wallet, Bybit). Deposits credit to your GRAM balance
-                automatically within seconds!
-              </p>
+              {/* 1-Click Tonkeeper Button */}
+              <button
+                onClick={() => handle1ClickTonkeeper(selectedPlan)}
+                className="w-full py-3 mb-3.5 rounded-xl bg-gradient-to-r from-blue-500 via-sky-400 to-blue-600 hover:from-blue-400 hover:to-sky-300 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-blue-950 active:scale-98 transition-all flex items-center justify-center gap-2"
+              >
+                <span>💎</span>
+                <span>1-CLICK TONKEEPER PAY ({selectedPlan.cost_gram.toFixed(2)} TON)</span>
+              </button>
+
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-px bg-white/10 flex-1" />
+                <span className="text-[10px] font-bold text-stone-400 uppercase">OR PAY MANUALLY</span>
+                <div className="h-px bg-white/10 flex-1" />
+              </div>
 
               {/* Deposit Address */}
               <div className="bg-[#0e1614] rounded-xl p-2.5 border border-white/5 mb-2.5">
-                <div className="text-[9px] text-stone-400 uppercase font-semibold mb-1">Deposit Address (TON)</div>
+                <div className="text-[9px] text-stone-400 uppercase font-semibold mb-1">
+                  Destination Wallet Address (TON)
+                </div>
                 <div className="text-[11px] font-mono text-emerald-400 break-all select-all font-semibold">
                   {DEPOSIT_WALLET}
                 </div>
@@ -734,7 +697,7 @@ export const Plans: React.FC = () => {
                   onClick={() => {
                     navigator.clipboard.writeText(DEPOSIT_WALLET)
                     setCopiedAddress(true)
-                    toast.success('Address copied!')
+                    toast.success('Wallet address copied!')
                     setTimeout(() => setCopiedAddress(false), 2000)
                   }}
                   className="mt-1.5 w-full py-1 rounded bg-stone-800 hover:bg-stone-700 text-[10px] font-bold text-stone-200 transition-all"
@@ -744,15 +707,16 @@ export const Plans: React.FC = () => {
               </div>
 
               {/* MEMO (CRITICAL) */}
-              <div className="bg-amber-950/30 rounded-xl p-2.5 border border-amber-500/40 mb-3">
+              <div className="bg-amber-950/40 rounded-xl p-2.5 border border-amber-500/50 mb-3.5">
                 <div className="flex items-center justify-between">
-                  <div className="text-[9px] text-amber-300 uppercase font-black">Required Comment / MEMO</div>
-                  <span className="text-[9px] bg-red-500/20 text-red-300 px-1 py-0.2 rounded font-bold">MUST INCLUDE</span>
+                  <div className="text-[9px] text-amber-300 uppercase font-black">Mandatory Plan Comment / MEMO</div>
+                  <span className="text-[9px] bg-red-500/20 text-red-300 px-1 py-0.2 rounded font-bold">REQUIRED</span>
                 </div>
-                <div className="text-xs font-mono font-black text-amber-300 my-1">{depositMemo}</div>
+                <div className="text-xs font-mono font-black text-amber-300 my-1">{getPlanMemo(selectedPlan.id)}</div>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(depositMemo)
+                    const memo = getPlanMemo(selectedPlan.id)
+                    navigator.clipboard.writeText(memo)
                     setCopiedMemo(true)
                     toast.success('MEMO copied!')
                     setTimeout(() => setCopiedMemo(false), 2000)
@@ -763,12 +727,13 @@ export const Plans: React.FC = () => {
                 </button>
               </div>
 
+              {/* Verify Payment Button */}
               <button
-                onClick={handleCheckDeposit}
-                disabled={checkingDeposit}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black text-xs shadow-lg shadow-emerald-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
+                onClick={handleVerifyPayment}
+                disabled={checkingPayment}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black font-black text-xs shadow-lg shadow-emerald-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
               >
-                {checkingDeposit ? 'CHECKING BLOCKCHAIN...' : '⚡ I HAVE SENT FUNDS / CHECK NOW'}
+                {checkingPayment ? 'VERIFYING BLOCKCHAIN...' : '⚡ I HAVE SENT PAYMENT / ACTIVATE PLAN'}
               </button>
             </motion.div>
           </div>

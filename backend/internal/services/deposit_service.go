@@ -212,15 +212,21 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// 2. Minimum regular miner deposit for GHS power: 0.10 GRAM
+			// 2. Minimum regular deposit: 0.10 GRAM
 			if amountGram < 0.10 {
 				continue
 			}
 
-			// Determine target user strictly from Telegram ID in memo (e.g., HB_123456789, CRATE_123456789, 123456789)
+			// Determine target user strictly from Telegram ID in memo
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
-			for _, pfx := range []string{"HB_", "HB", "CRATE_", "CRATE", "CR_", "GHS_", "GHS", "USER_"} {
+			for _, pfx := range []string{
+				"PLAN_STARTER_HB_", "PLAN_STARTER_HB", "PLAN_STARTER_", "PLAN_STARTER",
+				"PLAN_STANDARD_HB_", "PLAN_STANDARD_HB", "PLAN_STANDARD_", "PLAN_STANDARD",
+				"PLAN_QUEEN_HB_", "PLAN_QUEEN_HB", "PLAN_QUEEN_", "PLAN_QUEEN",
+				"PLAN_HB_", "PLAN_HB", "PLAN_", "PLAN",
+				"HB_", "HB", "CRATE_", "CRATE", "CR_", "GHS_", "GHS", "USER_",
+			} {
 				if strings.HasPrefix(strings.ToUpper(cleanComment), pfx) {
 					cleanComment = strings.TrimSpace(cleanComment[len(pfx):])
 					break
@@ -235,7 +241,43 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
-			// Credit atomically
+			// Check if this deposit is for a Yield Plan
+			upperComment := strings.ToUpper(strings.TrimSpace(comment))
+			var isPlanDeposit bool
+			var planID string
+			if strings.HasPrefix(upperComment, "PLAN_STARTER") {
+				isPlanDeposit = true
+				planID = "starter"
+			} else if strings.HasPrefix(upperComment, "PLAN_STANDARD") {
+				isPlanDeposit = true
+				planID = "standard"
+			} else if strings.HasPrefix(upperComment, "PLAN_QUEEN") {
+				isPlanDeposit = true
+				planID = "queen"
+			} else if strings.HasPrefix(upperComment, "PLAN_") {
+				isPlanDeposit = true
+				if amountGram >= 3.0 {
+					planID = "queen"
+				} else if amountGram >= 1.3 {
+					planID = "standard"
+				} else {
+					planID = "starter"
+				}
+			}
+
+			if isPlanDeposit {
+				activated, err := s.activatePlanViaDeposit(ctx, targetTelegramID, planID, amountGram, eventId)
+				if err != nil {
+					log.Printf("⚠️  [DepositService] Error activating plan %s for user %d: %v", planID, targetTelegramID, err)
+					continue
+				}
+				if activated {
+					creditedCount++
+					continue
+				}
+			}
+
+			// Credit regular miner deposit atomically
 			credited, err := s.creditUserDeposit(ctx, targetTelegramID, amountGram, eventId)
 			if err != nil {
 				log.Printf("⚠️  [DepositService] Error crediting deposit %s for user %d: %v", eventId, targetTelegramID, err)
@@ -249,6 +291,92 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 	}
 
 	return creditedCount, nil
+}
+
+func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID int64, planID string, amountGram float64, eventID string) (bool, error) {
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback(ctx)
+
+	// Idempotency check
+	var existingTx string
+	err = tx.QueryRow(ctx, "SELECT id FROM transactions WHERE idempotency_key = $1", eventID).Scan(&existingTx)
+	if err == nil {
+		return false, nil // already processed
+	}
+
+	var userID uuid.UUID
+	err = tx.QueryRow(ctx, "SELECT id FROM users WHERE telegram_id = $1 FOR UPDATE", telegramID).Scan(&userID)
+	if err != nil {
+		return false, fmt.Errorf("user %d not found in database", telegramID)
+	}
+
+	var planName string
+	var costGRAM, returnGRAM float64
+	var maxPerAccount int
+
+	switch planID {
+	case "starter":
+		planName = "Starter Bee Miner"
+		costGRAM = 0.70
+		returnGRAM = 0.80
+		maxPerAccount = 1
+	case "queen":
+		planName = "Royal Queen Miner"
+		costGRAM = 3.00
+		returnGRAM = 4.00
+		maxPerAccount = 0
+	default:
+		planID = "standard"
+		planName = "Standard Worker Miner"
+		costGRAM = 1.30
+		returnGRAM = 2.00
+		maxPerAccount = 0
+	}
+
+	if maxPerAccount > 0 {
+		var pastPurchases int
+		_ = tx.QueryRow(ctx, "SELECT COUNT(*) FROM user_plans WHERE user_id = $1 AND plan_id = $2", userID, planID).Scan(&pastPurchases)
+		if pastPurchases >= maxPerAccount {
+			// fallback to standard plan
+			planID = "standard"
+			planName = "Standard Worker Miner"
+			costGRAM = 1.30
+			returnGRAM = 2.00
+		}
+	}
+
+	now := time.Now().UTC()
+	durationSec := 86400
+	maturesAt := now.Add(time.Duration(durationSec) * time.Second)
+	newPlanID := uuid.New()
+
+	// Insert into user_plans
+	_, err = tx.Exec(ctx,
+		`INSERT INTO user_plans (id, user_id, plan_id, plan_name, cost_gram, return_gram, duration_seconds, status, started_at, matures_at, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $8)`,
+		newPlanID, userID, planID, planName, costGRAM, returnGRAM, durationSec, now, maturesAt)
+	if err != nil {
+		return false, fmt.Errorf("failed to insert plan record: %w", err)
+	}
+
+	// Insert transaction
+	_, err = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at)
+		 VALUES ($1, $2, 'plan_purchase', $3, 'GRAM', $4, $5, NOW())`,
+		uuid.New(), userID, costGRAM, eventID, fmt.Sprintf("Blockchain Plan Activation: %s (24h Yield Contract)", planName))
+	if err != nil {
+		return false, fmt.Errorf("failed to insert transaction: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+
+	log.Printf("🎉 [DepositService] Activated %s for user %d via blockchain tx %s!", planName, telegramID, eventID)
+	return true, nil
 }
 
 func (s *DepositService) creditUserDeposit(ctx context.Context, telegramID int64, amountGram float64, eventID string) (bool, error) {
