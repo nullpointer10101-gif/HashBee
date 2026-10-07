@@ -221,6 +221,9 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
 			for _, pfx := range []string{
+				"PLAN_MATRIX_HB_", "PLAN_MATRIX_HB", "PLAN_MATRIX_", "PLAN_MATRIX",
+				"PLAN_APEX_HB_", "PLAN_APEX_HB", "PLAN_APEX_", "PLAN_APEX",
+				"PLAN_TITAN_HB_", "PLAN_TITAN_HB", "PLAN_TITAN_", "PLAN_TITAN",
 				"PLAN_STARTER_HB_", "PLAN_STARTER_HB", "PLAN_STARTER_", "PLAN_STARTER",
 				"PLAN_STANDARD_HB_", "PLAN_STANDARD_HB", "PLAN_STANDARD_", "PLAN_STANDARD",
 				"PLAN_QUEEN_HB_", "PLAN_QUEEN_HB", "PLAN_QUEEN_", "PLAN_QUEEN",
@@ -244,7 +247,16 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			// Check if this deposit is for a Yield Plan
 			var isPlanDeposit bool
 			var planID string
-			if strings.HasPrefix(upperComment, "PLAN_STARTER") {
+			if strings.HasPrefix(upperComment, "PLAN_MATRIX") {
+				isPlanDeposit = true
+				planID = "matrix"
+			} else if strings.HasPrefix(upperComment, "PLAN_APEX") {
+				isPlanDeposit = true
+				planID = "apex"
+			} else if strings.HasPrefix(upperComment, "PLAN_TITAN") {
+				isPlanDeposit = true
+				planID = "titan"
+			} else if strings.HasPrefix(upperComment, "PLAN_STARTER") {
 				isPlanDeposit = true
 				planID = "starter"
 			} else if strings.HasPrefix(upperComment, "PLAN_STANDARD") {
@@ -255,7 +267,13 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				planID = "queen"
 			} else if strings.HasPrefix(upperComment, "PLAN_") {
 				isPlanDeposit = true
-				if amountGram >= 3.0 {
+				if amountGram >= 25.0 {
+					planID = "matrix"
+				} else if amountGram >= 12.0 {
+					planID = "apex"
+				} else if amountGram >= 6.0 {
+					planID = "titan"
+				} else if amountGram >= 3.0 {
 					planID = "queen"
 				} else if amountGram >= 1.3 {
 					planID = "standard"
@@ -317,16 +335,31 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	var maxPerAccount int
 
 	switch planID {
+	case "matrix":
+		planName = "Infinite Mega Whale Matrix"
+		costGRAM = 25.00
+		returnGRAM = 50.00
+		maxPerAccount = 0
+	case "apex":
+		planName = "Apex Sovereign God Hive"
+		costGRAM = 12.00
+		returnGRAM = 22.00
+		maxPerAccount = 0
+	case "titan":
+		planName = "Cyber Titan Hive"
+		costGRAM = 6.00
+		returnGRAM = 10.00
+		maxPerAccount = 0
+	case "queen":
+		planName = "Royal Queen Miner"
+		costGRAM = 3.00
+		returnGRAM = 4.50
+		maxPerAccount = 0
 	case "starter":
 		planName = "Starter Bee Miner"
 		costGRAM = 0.70
 		returnGRAM = 0.80
 		maxPerAccount = 1
-	case "queen":
-		planName = "Royal Queen Miner"
-		costGRAM = 3.00
-		returnGRAM = 4.00
-		maxPerAccount = 0
 	default:
 		planID = "standard"
 		planName = "Standard Worker Miner"
