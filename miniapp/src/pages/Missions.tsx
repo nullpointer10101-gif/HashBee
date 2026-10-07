@@ -452,15 +452,14 @@ export const Missions: React.FC = () => {
       await refreshUser()
       await loadCampaigns()
       if (res?.credited && res.credited > 0) {
-        toast.success('🎉 Payment verified! Campaign is live.')
+        toast.success('🎉 Payment verified! Campaign is live.', { duration: 5000 })
         setView('campaigns')
       } else {
-        toast.success('Scan complete. Active campaigns appear automatically.')
-        setView('campaigns')
+        toast.error('⚠️ No payment detected yet on the TON blockchain. Please ensure you sent the TON with the required memo and try again!', { duration: 6000 })
       }
     } catch (err: any) {
       toast.dismiss('camp-verify')
-      toast.error('Payment confirmation takes 5–15 seconds on TON.')
+      toast.error('⚠️ Payment confirmation takes 5–15 seconds on TON. Please try again!')
     } finally {
       setVerifyingPayment(false)
     }
@@ -558,9 +557,9 @@ export const Missions: React.FC = () => {
         <button
           onClick={() => handleVerifyCampaignPayment(selectedCampaign)}
           disabled={verifyingPayment}
-          className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-800 font-extrabold text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2 border border-slate-200"
+          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#b91c1c] hover:from-[#b91c1c] hover:to-[#dc2626] text-white font-black text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2 shadow-lg shadow-red-500/25 active:scale-95 transition-all border border-red-400"
         >
-          {verifyingPayment ? 'CHECKING BLOCKCHAIN...' : '✓ I HAVE PAID (VERIFY NOW)'}
+          {verifyingPayment ? 'CHECKING TON BLOCKCHAIN...' : '✓ I HAVE SENT PAYMENT — VERIFY NOW'}
         </button>
 
         <button

@@ -75,15 +75,15 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       toast.dismiss('verify-dep')
       await refreshUser()
       if (res?.credited && res.credited > 0) {
-        toast.success(`🎉 Credited ${res.credited} deposit(s)! Computing power upgraded!`)
+        toast.success(`🎉 Credited ${res.credited} deposit(s)! Computing power upgraded!`, { duration: 5000 })
         onSuccess?.()
         onClose()
       } else {
-        toast.success('Blockchain scan complete! Any detected transfers are credited.')
+        toast.error('⚠️ No deposit detected yet on the TON blockchain. Please ensure you sent the TON with the required memo and try again!', { duration: 6000 })
       }
     } catch (err: any) {
       toast.dismiss('verify-dep')
-      toast.error('TON transfers arrive in 5–15 seconds!')
+      toast.error('⚠️ Could not verify deposit right now. TON transfers take 5–15 seconds to confirm. Please try again!')
     } finally {
       setVerifying(false)
     }
@@ -237,9 +237,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             <button
               onClick={handleVerifyDeposit}
               disabled={verifying}
-              className="w-full py-3 rounded-xl bg-slate-100 text-slate-800 font-extrabold text-xs uppercase tracking-wider mb-2 border border-slate-200"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#b91c1c] hover:from-[#b91c1c] hover:to-[#dc2626] text-white font-black text-xs uppercase tracking-wider mb-2 shadow-lg shadow-red-500/25 active:scale-95 transition-all border border-red-400 flex items-center justify-center gap-1.5"
             >
-              {verifying ? 'VERIFYING...' : '✓ I HAVE PAID — VERIFY'}
+              {verifying ? 'VERIFYING TON BLOCKCHAIN...' : '✓ I HAVE SENT PAYMENT — VERIFY NOW'}
             </button>
 
             <button

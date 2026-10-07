@@ -243,17 +243,15 @@ export const Plans: React.FC = () => {
       await refreshUser()
       await loadData()
       if (res?.credited && res.credited > 0) {
-        toast.success(`🎉 Payment verified! Your ${selectedPlan?.name || '24h'} miner is running!`)
+        toast.success(`🎉 ${res.credited} TON payment verified! Your ${selectedPlan?.name || '24h'} miner is now running!`, { duration: 5000 })
         setShowPayModal(false)
         setActiveTab('active')
       } else {
-        toast.success('Scan complete. Confirmed plan deposits are activated automatically!')
-        setShowPayModal(false)
-        setActiveTab('active')
+        toast.error('⚠️ No payment detected yet on the TON blockchain. Please ensure you sent the exact TON amount with the required memo and try again in a few seconds!', { duration: 6000 })
       }
     } catch (err: any) {
       toast.dismiss('verify-plan')
-      toast.error('TON transactions take 5–15 seconds to confirm. Please check in a moment!')
+      toast.error('⚠️ Could not verify payment right now. TON transfers take 5–15 seconds to confirm. Please try again!')
     } finally {
       setCheckingPayment(false)
     }
@@ -798,12 +796,18 @@ export const Plans: React.FC = () => {
               <button
                 onClick={handleVerifyPayment}
                 disabled={checkingPayment}
-                className="w-full py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#b91c1c] hover:from-[#b91c1c] hover:to-[#dc2626] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-500/30 active:scale-95 transition-all border border-red-400"
               >
                 {checkingPayment ? (
-                  <span>VERIFYING TON BLOCKCHAIN...</span>
+                  <>
+                    <span className="animate-spin text-sm">⏳</span>
+                    <span>VERIFYING TON BLOCKCHAIN...</span>
+                  </>
                 ) : (
-                  <span>✓ I HAVE SENT PAYMENT — VERIFY NOW</span>
+                  <>
+                    <span>✓</span>
+                    <span>I HAVE SENT PAYMENT — VERIFY NOW</span>
+                  </>
                 )}
               </button>
             </motion.div>
