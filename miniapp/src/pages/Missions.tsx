@@ -15,9 +15,9 @@ import toast from 'react-hot-toast'
 type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
 const WATCH_AD_TASKS_COUNT = 3
-const WATCH_AD_REFRESH_MS = 3 * 60 * 60 * 1000 // 3 hours
+const WATCH_AD_REFRESH_MS = 2 * 60 * 60 * 1000 // 2 hours
 const WATCH_AD_POWER_REWARD = 1 // 1 GHS Mining Power
-const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v1'
+const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v2'
 
 interface WatchAdState {
   windowStart: number
@@ -30,12 +30,16 @@ function loadWatchAdState(): WatchAdState {
     if (raw) {
       const parsed: WatchAdState = JSON.parse(raw)
       if (Date.now() - parsed.windowStart >= WATCH_AD_REFRESH_MS) {
-        return { windowStart: Date.now(), completed: [] }
+        const fresh = { windowStart: Date.now(), completed: [] }
+        localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(fresh))
+        return fresh
       }
       return parsed
     }
   } catch {}
-  return { windowStart: Date.now(), completed: [] }
+  const fresh = { windowStart: Date.now(), completed: [] }
+  localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(fresh))
+  return fresh
 }
 
 function saveWatchAdState(state: WatchAdState) {
@@ -197,6 +201,33 @@ export const Missions: React.FC = () => {
   const [adPlayingTaskIndex, setAdPlayingTaskIndex] = useState<number | null>(null)
   const [inAppAdCountdown, setInAppAdCountdown] = useState(5)
   const [inAppAdCanClaim, setInAppAdCanClaim] = useState(false)
+
+  // 2-Hour Watch Ad Refresh Timer Ticker
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = Date.now()
+      const elapsed = now - watchAdState.windowStart
+      if (elapsed >= WATCH_AD_REFRESH_MS) {
+        // 2 hours passed! Reset tasks
+        const fresh: WatchAdState = { windowStart: now, completed: [] }
+        setWatchAdState(fresh)
+        saveWatchAdState(fresh)
+        setWatchAdCountdown('02:00:00')
+      } else {
+        const remainingSec = Math.max(0, Math.floor((WATCH_AD_REFRESH_MS - elapsed) / 1000))
+        const hours = Math.floor(remainingSec / 3600)
+        const mins = Math.floor((remainingSec % 3600) / 60)
+        const secs = remainingSec % 60
+        setWatchAdCountdown(
+          `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        )
+      }
+    }
+
+    updateCountdown()
+    const timer = setInterval(updateCountdown, 1000)
+    return () => clearInterval(timer)
+  }, [watchAdState.windowStart])
 
   useEffect(() => {
     let adInterval: any = null
@@ -836,15 +867,21 @@ export const Missions: React.FC = () => {
         </div>
       </div>
 
-      {/* ── SECTION 0: WATCH AD TASKS ─────────── */}
+      {/* ── SECTION 0: WATCH AD TASKS (REFRESH EVERY 2 HOURS) ─────────── */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2 px-1">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span>📺</span> WATCH AD REWARDS
           </span>
-          <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-            +{WATCH_AD_POWER_REWARD} GHS EACH
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-mono font-extrabold text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>Resets in {watchAdCountdown || '02:00:00'}</span>
+            </span>
+            <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+              +{WATCH_AD_POWER_REWARD} GHS
+            </span>
+          </div>
         </div>
 
         <div className="space-y-2">
