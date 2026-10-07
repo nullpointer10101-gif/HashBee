@@ -255,6 +255,39 @@ export const ViralBountyWidget: React.FC = () => {
               </div>
             </div>
 
+            {/* ── TRUST & LIVE ON-CHAIN PAYOUT PROOFS CARD ── */}
+            <div
+              onClick={() => {
+                const proofUrl = 'https://t.me/HashBeePayouts'
+                if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
+                  window.Telegram.WebApp.openTelegramLink(proofUrl)
+                } else {
+                  window.open(proofUrl, '_blank')
+                }
+              }}
+              className="p-3 rounded-2xl bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 mb-4 cursor-pointer hover:border-emerald-400 active:scale-[0.98] transition-all relative z-10 group"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-sm text-emerald-400 shrink-0">
+                    🛡️
+                  </div>
+                  <div>
+                    <div className="text-xs font-black text-white flex items-center gap-1.5">
+                      <span>100% Guaranteed On-Chain Payouts</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    </div>
+                    <div className="text-[10px] text-emerald-300/90 font-medium">
+                      Live TON blockchain payout proofs & receipts
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/20 px-2 py-1 rounded-lg border border-emerald-500/30 shrink-0 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
+                  PROOF →
+                </span>
+              </div>
+            </div>
+
             {/* Share Actions */}
             <div className="space-y-2 mb-4 relative z-10">
               <button
