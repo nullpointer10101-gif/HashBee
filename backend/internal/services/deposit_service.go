@@ -242,7 +242,6 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			}
 
 			// Check if this deposit is for a Yield Plan
-			upperComment := strings.ToUpper(strings.TrimSpace(comment))
 			var isPlanDeposit bool
 			var planID string
 			if strings.HasPrefix(upperComment, "PLAN_STARTER") {

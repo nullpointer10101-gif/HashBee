@@ -1,0 +1,7 @@
+{
+  "name": "hashbee-root",
+  "private": true,
+  "scripts": {
+    "build": "cd miniapp && npm install && npm run build"
+  }
+}
