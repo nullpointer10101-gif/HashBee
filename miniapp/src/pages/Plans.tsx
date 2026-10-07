@@ -753,12 +753,12 @@ export const Plans: React.FC = () => {
       {/* Direct Payment / Activation Modal */}
       <AnimatePresence>
         {showPayModal && selectedPlan && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-lg p-3 sm:p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-gradient-to-b from-[#1c2924] via-[#141f1b] to-[#0c1411] border-2 border-emerald-500/50 rounded-3xl p-4.5 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md bg-gradient-to-b from-[#1c2924] via-[#141f1b] to-[#0c1411] border-2 border-emerald-500/50 rounded-3xl p-4 shadow-2xl relative max-h-[82vh] overflow-y-auto my-auto"
             >
               {/* Close Button */}
               <button
