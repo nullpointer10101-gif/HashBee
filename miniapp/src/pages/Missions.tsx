@@ -52,42 +52,26 @@ function showAd(): Promise<boolean> {
       }
     }
 
-    // Safety timeout: if no ad responds in 6.5 seconds, mark as unavailable
+    // Safety timeout: 4 seconds for AdExium response
     const timer = setTimeout(() => {
       done(false)
-    }, 6500)
-
-    const tryMonetag = () => {
-      if (typeof (window as any).show_8985160 === 'function') {
-        try {
-          (window as any)
-            .show_8985160()
-            .then(() => {
-              clearTimeout(timer)
-              done(true)
-            })
-            .catch((err: any) => {
-              console.warn('[Missions] Monetag ad error:', err)
-              clearTimeout(timer)
-              done(false)
-            })
-          return
-        } catch (e) {
-          console.warn('[Missions] Monetag exception:', e)
-        }
-      }
-      clearTimeout(timer)
-      done(false)
-    }
+    }, 4000)
 
     // 1. Try AdExium Interstitial/Rewarded
-    const adex = typeof window !== 'undefined' ? (window as any).adexiumWidget : null
-    if (adex && typeof adex.requestAd === 'function') {
-      try {
-        let adDisplayed = false
+    try {
+      const adex =
+        typeof window !== 'undefined'
+          ? (window as any).adexiumWidget ||
+            ((window as any).AdexiumWidget || (window as any).TGAdsWidget
+              ? new ((window as any).AdexiumWidget || (window as any).TGAdsWidget)({
+                  wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
+                  adFormat: 'interstitial',
+                })
+              : null)
+          : null
 
+      if (adex && typeof adex.requestAd === 'function') {
         const handleReceived = (ad: any) => {
-          adDisplayed = true
           try {
             if (typeof adex.displayAd === 'function') {
               adex.displayAd(ad)
@@ -105,12 +89,14 @@ function showAd(): Promise<boolean> {
 
         const handleNoAd = () => {
           cleanup()
-          tryMonetag()
+          clearTimeout(timer)
+          done(false)
         }
 
         const handleError = () => {
           cleanup()
-          tryMonetag()
+          clearTimeout(timer)
+          done(false)
         }
 
         const cleanup = () => {
@@ -133,13 +119,14 @@ function showAd(): Promise<boolean> {
 
         adex.requestAd('interstitial')
         return
-      } catch (err) {
-        console.warn('[Missions] AdExium request error:', err)
       }
+    } catch (err) {
+      console.warn('[Missions] AdExium request error:', err)
     }
 
-    // 2. Fallback to Monetag if AdExium isn't available
-    tryMonetag()
+    // If AdExium is not available
+    clearTimeout(timer)
+    done(false)
   })
 }
 
@@ -171,35 +158,45 @@ export const Missions: React.FC = () => {
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
   const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // In-app interactive booster ad video player fallback
+  const [showInAppAdModal, setShowInAppAdModal] = useState(false)
+  const [adPlayingTaskIndex, setAdPlayingTaskIndex] = useState<number | null>(null)
+  const [inAppAdCountdown, setInAppAdCountdown] = useState(5)
+  const [inAppAdCanClaim, setInAppAdCanClaim] = useState(false)
+
   useEffect(() => {
-    const updateCountdown = () => {
-      const now = Date.now()
-      const elapsed = now - watchAdState.windowStart
-      const remainingMs = Math.max(0, WATCH_AD_REFRESH_MS - elapsed)
-
-      if (remainingMs === 0) {
-        const fresh: WatchAdState = { windowStart: Date.now(), completed: [] }
-        setWatchAdState(fresh)
-        saveWatchAdState(fresh)
-        setWatchAdCountdown('')
-        return
-      }
-
-      const totalSec = Math.floor(remainingMs / 1000)
-      const hrs = Math.floor(totalSec / 3600)
-      const mins = Math.floor((totalSec % 3600) / 60)
-      const secs = totalSec % 60
-      setWatchAdCountdown(
-        `${hrs > 0 ? `${hrs}h ` : ''}${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
-      )
+    let adInterval: any = null
+    if (showInAppAdModal && inAppAdCountdown > 0) {
+      adInterval = setInterval(() => {
+        setInAppAdCountdown((prev) => {
+          if (prev <= 1) {
+            setInAppAdCanClaim(true)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
     }
-
-    updateCountdown()
-    watchAdTimerRef.current = setInterval(updateCountdown, 1000)
     return () => {
-      if (watchAdTimerRef.current) clearInterval(watchAdTimerRef.current)
+      if (adInterval) clearInterval(adInterval)
     }
-  }, [watchAdState.windowStart])
+  }, [showInAppAdModal, inAppAdCountdown])
+
+  const completeAdReward = async (taskIndex: number) => {
+    setWatchAdState((prev) => {
+      const nextCompleted = [...new Set([...prev.completed, taskIndex])]
+      const updated: WatchAdState = { ...prev, completed: nextCompleted }
+      saveWatchAdState(updated)
+      return updated
+    })
+
+    try {
+      await completeMission(`watch_ad_${taskIndex + 1}`)
+    } catch {}
+
+    toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
+    await refreshUser()
+  }
 
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
@@ -207,7 +204,7 @@ export const Missions: React.FC = () => {
       if (watchAdLoadingIndex !== null) return
 
       setWatchAdLoadingIndex(taskIndex)
-      toast.loading('🎬 Requesting video ad...', { id: 'ad-load' })
+      toast.loading('🎬 Launching video booster ad...', { id: 'ad-load' })
 
       let adPlayed = false
       try {
@@ -219,27 +216,16 @@ export const Missions: React.FC = () => {
         setWatchAdLoadingIndex(null)
       }
 
-      if (!adPlayed) {
-        toast.error('⚠️ Ad is not available right now. Please try again in a few moments!')
+      if (adPlayed) {
+        await completeAdReward(taskIndex)
         return
       }
 
-      // Ad successfully watched! Grant reward immediately
-      setWatchAdState((prev) => {
-        const nextCompleted = [...new Set([...prev.completed, taskIndex])]
-        const updated: WatchAdState = { ...prev, completed: nextCompleted }
-        saveWatchAdState(updated)
-        return updated
-      })
-
-      try {
-        await completeMission(`watch_ad_${taskIndex + 1}`)
-      } catch {
-        // Fallback
-      }
-
-      toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
-      await refreshUser()
+      // If network ad is pending / blocked, launch interactive in-app booster player
+      setAdPlayingTaskIndex(taskIndex)
+      setInAppAdCountdown(5)
+      setInAppAdCanClaim(false)
+      setShowInAppAdModal(true)
     },
     [watchAdState.completed, watchAdLoadingIndex, refreshUser]
   )
@@ -779,17 +765,42 @@ export const Missions: React.FC = () => {
         </p>
       </div>
 
-      {/* Top Banner Button: PROMOTE YOUR LINK */}
-      <button
+      {/* Top Banner: PROMOTE YOUR LINK OR CHANNEL */}
+      <div
         onClick={() => {
           setView('campaigns')
           loadCampaigns()
         }}
-        className="w-full mb-3.5 py-3 rounded-xl bg-white border border-slate-200 text-[#0f172a] font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm hover:border-slate-300 active:scale-95"
+        className="relative overflow-hidden mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#6366f1] via-[#4f46e5] to-[#2563eb] text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/30 cursor-pointer active:scale-[0.98] transition-transform"
       >
-        <span>📢</span>
-        <span>PROMOTE YOUR LINK OR CHANNEL</span>
-      </button>
+        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner border border-white/30 shrink-0">
+              📢
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/30">
+                  🔥 PROMOTER HUB
+                </span>
+              </div>
+              <div className="text-sm font-black text-white mt-1 leading-tight">
+                Promote Your Channel or Link
+              </div>
+              <div className="text-[11px] text-indigo-100 font-medium mt-0.5">
+                Reach thousands of active crypto miners instantly
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0">
+            <span className="px-3 py-1.5 rounded-xl bg-white text-[#4f46e5] font-black text-xs shadow-md uppercase tracking-wider flex items-center gap-1 hover:bg-indigo-50">
+              <span>LAUNCH</span>
+              <span>→</span>
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* ── SECTION 0: WATCH AD TASKS ─────────── */}
       <div className="mb-4">
@@ -982,6 +993,89 @@ export const Missions: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ── IN-APP BOOSTER AD VIDEO PLAYER MODAL ── */}
+      {showInAppAdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+          <div className="bg-[#0f172a] border border-blue-500/40 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl relative overflow-hidden text-center">
+            {/* Ambient Background Glow */}
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-blue-600/30 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-indigo-600/30 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-full">
+                🎬 HashBee Booster Video
+              </span>
+              <span className="text-xs font-mono font-bold text-amber-400">
+                {inAppAdCountdown > 0 ? `⏳ ${inAppAdCountdown}s remaining` : '✅ Ready to Claim'}
+              </span>
+            </div>
+
+            {/* Video Player Display Container */}
+            <div className="relative w-full aspect-video rounded-2xl bg-slate-900/90 border border-slate-700/80 overflow-hidden flex flex-col items-center justify-center mb-4 p-4 shadow-inner">
+              <div className="w-14 h-14 rounded-full bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-2xl mb-2 animate-bounce">
+                ⛏️
+              </div>
+              <div className="text-xs font-extrabold text-blue-300">
+                HashBee Cloud Miner Network
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1 max-w-[220px]">
+                Supporting high-speed TON & USDT cloud hashrate pools
+              </p>
+
+              {/* Live Progress Bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-800">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear"
+                  style={{ width: `${((5 - inAppAdCountdown) / 5) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-sm font-black text-white">
+                Watching Booster Ad #{(adPlayingTaskIndex ?? 0) + 1}
+              </div>
+              <div className="text-xs text-emerald-400 font-bold mt-0.5">
+                Reward: +{WATCH_AD_POWER_REWARD} GHS Mining Power
+              </div>
+            </div>
+
+            {/* Action Button */}
+            {inAppAdCanClaim ? (
+              <button
+                onClick={async () => {
+                  if (adPlayingTaskIndex !== null) {
+                    await completeAdReward(adPlayingTaskIndex)
+                  }
+                  setShowInAppAdModal(false)
+                  setAdPlayingTaskIndex(null)
+                }}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/30 active:scale-95 transition-all"
+              >
+                🎉 Claim +{WATCH_AD_POWER_REWARD} GHS Reward
+              </button>
+            ) : (
+              <button
+                disabled
+                className="w-full py-3 rounded-2xl bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-wider cursor-not-allowed border border-slate-700"
+              >
+                Please wait ({inAppAdCountdown}s)...
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                setShowInAppAdModal(false)
+                setAdPlayingTaskIndex(null)
+              }}
+              className="mt-3 text-[11px] text-slate-400 hover:text-slate-200 font-bold"
+            >
+              Cancel & Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
