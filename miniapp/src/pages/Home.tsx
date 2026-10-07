@@ -54,7 +54,7 @@ export const Home: React.FC = () => {
   const copyMemo = () => {
     navigator.clipboard.writeText(userMemo)
     setCopiedMemo(true)
-    toast.success('Memo copied! Paste this in your transfer comment.')
+    toast.success('Memo copied!')
     setTimeout(() => setCopiedMemo(false), 2500)
   }
 
@@ -107,7 +107,7 @@ export const Home: React.FC = () => {
       setShowPayModal(false)
     } catch (err: any) {
       toast.dismiss('verify-dep')
-      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
+      toast.error('Could not verify yet. TON transfers arrive in 5–15 seconds!')
     } finally {
       setVerifying(false)
     }
@@ -125,7 +125,7 @@ export const Home: React.FC = () => {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
       }
       const res = await claimHoney()
-      toast.success(`🎉 Claimed +${res.claimed.toFixed(7)} USDT!`)
+      toast.success(`🎉 Claimed +${res.claimed.toFixed(4)} USDT!`)
       setPendingBalance(0)
       await refreshUser()
     } catch (err: any) {
@@ -137,19 +137,17 @@ export const Home: React.FC = () => {
 
   // Add GHS calculations
   const numDeposit = Math.max(0.1, parseFloat(depositAmount) || 0.1)
-  // Rate: 1 GRAM = 50 GHS, +5% bonus = 52.5 GHS per 1 GRAM
   const totalGhsPower = numDeposit * 50 * 1.05
   const modalEarningsPerDay = totalGhsPower * 0.0005
   const modalEarningsPerSecond = modalEarningsPerDay / 86400
   const modalEarningsPerWeek = modalEarningsPerDay * 7
   const modalEarningsPerMonth = modalEarningsPerDay * 30
 
-  // IF LOADING, SHOW BEAUTIFUL LOADING SPINNER INSTEAD OF BLANK SCREEN
   if (loading || !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
-        <div className="w-12 h-12 border-4 border-[#93b3a6] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-sm font-extrabold text-[#93b3a6] uppercase tracking-wider animate-pulse">
+        <div className="w-10 h-10 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-xs font-bold text-emerald-400 uppercase tracking-widest animate-pulse">
           Starting Cloud Miner...
         </p>
       </div>
@@ -157,394 +155,320 @@ export const Home: React.FC = () => {
   }
 
   return (
-    <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      {/* Centered Page Header with Language Switcher & Support Link */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-extrabold text-stone-100 uppercase tracking-wider">
-          {t('mining_dashboard', 'MINING DASHBOARD')}
-        </h1>
+    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen">
+      {/* Sleek Minimalist Top Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-black text-emerald-400 text-sm">
+            ⚡
+          </div>
+          <div>
+            <div className="text-sm font-black text-white leading-tight">
+              {user.first_name || user.username || 'Miner'}
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] text-emerald-400/90 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>TON Mainnet Active</span>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center gap-1.5">
-          {/* Language Switcher Option Left to CS Support */}
           <button
             onClick={() => setShowLangModal(true)}
-            className="flex items-center gap-1 text-[11px] font-extrabold text-stone-200 bg-[#1e2d27] hover:bg-[#283d35] px-2.5 py-1.5 rounded-full border border-[#334d42] transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-300 bg-[#0e1613] hover:bg-[#14201c] px-2.5 py-1.5 rounded-xl border border-[#1b2b24] transition-all"
             title="Change Language"
           >
-            <span className="text-xs">{currentLanguage.flag}</span>
-            <span className="uppercase tracking-wider">{currentLanguage.code}</span>
+            <span>{currentLanguage.flag}</span>
+            <span className="uppercase">{currentLanguage.code}</span>
           </button>
 
-          {/* CS Support Button */}
           <a
             href="https://t.me/Bonkcs99"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 px-2.5 py-1.5 rounded-full border border-emerald-400/20 transition-all active:scale-95"
+            className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 transition-all"
           >
             <span>🎧</span>
-            <span>{t('support', 'Support')}</span>
+            <span>Support</span>
           </a>
         </div>
       </div>
 
-      {/* Card 1: TOTAL GHS POWER */}
-      <div className="zentorno-card p-5 mb-4 text-center">
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">{t('total_ghs_power', 'TOTAL GHS POWER')}</div>
-        <div className="text-3xl font-black text-stone-100 mt-1">
-          {ghs.toLocaleString()} GHS
-        </div>
-        <div className="text-xs font-semibold text-stone-400 mt-1">
-          +{earningsPerSecond.toFixed(8)} USDT/second
-        </div>
-
-        {/* Side-by-Side Buttons */}
-        <div className="flex gap-2.5 mt-5">
-          <button
-            onClick={() => setShowAddGhsModal(true)}
-            className="flex-1 py-3 rounded-2xl zentorno-btn-primary font-extrabold text-xs uppercase tracking-wider shadow-md"
-          >{t('add_ghs', 'ADD GHS')}</button>
-          <button
-            onClick={() => navigate('/tasks')}
-            className="flex-1 py-3 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
-          >{t('free_ghs', 'FREE GHS')}</button>
-        </div>
-      </div>
-
-      {/* 🎡 LUCKY WHEEL CALLOUT BANNER */}
-      <div
-        onClick={() => navigate('/spin')}
-        className="cursor-pointer mb-3 p-4 rounded-3xl bg-gradient-to-r from-[#1b382b] via-[#244b3a] to-[#1b382b] border border-[#346b53] shadow-xl flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-amber-400/60"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-3xl animate-bounce">🎡</span>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-amber-300 uppercase tracking-wider">Lucky Wheel</span>
-              <span className="text-[9px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">FREE SPINS</span>
-            </div>
-            <p className="text-[11px] text-stone-300 font-medium mt-0.5">Spin for USDT, GRAM & Hashrate!</p>
-          </div>
-        </div>
-        <button className="bg-amber-400 text-stone-950 px-3.5 py-1.5 rounded-xl font-black text-xs uppercase shadow-md hover:bg-amber-300">
-          SPIN ➔
-        </button>
-      </div>
-
-      {/* 🍯 24H DAILY YIELD PLANS CALLOUT BANNER */}
-      <div
-        onClick={() => navigate('/plans')}
-        className="cursor-pointer mb-4 p-4 rounded-3xl bg-gradient-to-r from-[#1a2d26] via-[#152a22] to-[#0f1f19] border-2 border-emerald-500/40 shadow-[0_4px_25px_rgba(16,185,129,0.2)] flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-emerald-400"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-3xl animate-bounce">🍯</span>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-black text-emerald-300 uppercase tracking-wider">Daily Yield Plans</span>
-              <span className="text-[8px] bg-emerald-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full shadow">24H CYCLES</span>
-              <span className="text-[8px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.5 rounded-full">+53.8% PROFIT</span>
-            </div>
-            <p className="text-[11px] text-emerald-200/90 font-medium mt-0.5">Deposit TON ➔ Receive Guaranteed GRAM Return Next Day!</p>
-          </div>
-        </div>
-        <button className="bg-gradient-to-r from-emerald-400 to-teal-400 text-stone-950 px-3.5 py-2 rounded-xl font-black text-xs uppercase shadow-md hover:brightness-110 shrink-0">
-          PLANS ➔
-        </button>
-      </div>
-
-      {/* Card 2: YOUR BALANCE & PENDING BALANCE */}
-      <div className="zentorno-card p-5 mb-4 text-center">
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">{t('your_balance', 'YOUR BALANCE')}</div>
-        <div className="text-3xl font-black text-stone-100 mt-1">
-          {user.honey_balance.toFixed(7)} USDT
+      {/* Hero Card: LIVE MINING BALANCE */}
+      <div className="zentorno-card p-5 mb-3.5 relative overflow-hidden">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f85]">
+            Live Mining Balance
+          </span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-extrabold text-emerald-400 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            LIVE
+          </span>
         </div>
 
-        <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>{t('pending_balance_live', 'PENDING BALANCE (LIVE)')}</span>
-        </div>
-        <div className="text-2xl font-black text-stone-100 mt-1 font-mono tracking-tight">
-          {pendingBalance.toFixed(8)} USDT
-        </div>
-        <div className="text-[11px] font-bold text-[#86a397] mt-0.5">
-          ⚡ {t('cloud_active', '24/7 Cloud Mining Active')} (+{earningsPerSecond.toFixed(8)} USDT/sec)
+        {/* Big Counter */}
+        <div className="mt-2 text-3xl font-extrabold text-white font-mono tracking-tight flex items-baseline gap-1.5">
+          <span>{pendingBalance.toFixed(7)}</span>
+          <span className="text-xs font-black text-emerald-400 font-sans">USDT</span>
         </div>
 
-        {/* CLAIM BALANCE Primary Button */}
+        <div className="text-[11px] font-medium text-[#7a8f85] mt-0.5 flex items-center gap-1">
+          <span>Wallet Balance:</span>
+          <strong className="text-slate-200 font-mono">{user.honey_balance.toFixed(4)} USDT</strong>
+        </div>
+
+        {/* Claim Button */}
         <button
           onClick={handleClaim}
           disabled={pendingBalance < 0.01 || claiming}
-          className={`w-full mt-5 py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-md ${
+          className={`w-full mt-4 py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all shadow-md ${
             pendingBalance >= 0.01
-              ? 'zentorno-btn-primary active:scale-95'
-              : 'bg-[#1b2623] text-stone-600 border border-[#253530] cursor-not-allowed'
+              ? 'zentorno-btn-primary'
+              : 'bg-[#101714] text-[#4f6158] border border-[#1a2620] cursor-not-allowed'
           }`}
         >
-          {claiming ? t('claiming', 'CLAIMING...') : pendingBalance >= 0.01 ? t('claim_balance', 'CLAIM BALANCE') : t('claim_min', 'CLAIM (MIN 0.01)')}
+          {claiming ? 'Claiming...' : pendingBalance >= 0.01 ? '⚡ Harvest to Wallet' : 'Harvest (Min 0.01 USDT)'}
         </button>
       </div>
 
-      {/* Card 3: HISTORY Outline Button */}
+      {/* Card 2: ACTIVE HASHRATE (GHS) */}
+      <div className="zentorno-card p-4 mb-3.5 flex items-center justify-between">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[#7a8f85]">
+            Active Hashrate
+          </div>
+          <div className="text-2xl font-black text-white mt-0.5 font-mono">
+            {ghs.toLocaleString()} <span className="text-xs font-black text-emerald-400 font-sans">GHS</span>
+          </div>
+          <div className="text-[10px] text-[#7a8f85] mt-0.5">
+            +{earningsPerSecond.toFixed(8)} USDT/sec
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddGhsModal(true)}
+            className="px-3.5 py-2 rounded-xl zentorno-btn-primary text-xs font-extrabold uppercase shadow-sm"
+          >
+            + Add GHS
+          </button>
+          <button
+            onClick={() => navigate('/tasks')}
+            className="px-3 py-2 rounded-xl zentorno-btn-secondary text-xs font-bold uppercase"
+          >
+            Free
+          </button>
+        </div>
+      </div>
+
+      {/* 🍯 24H DAILY YIELD PLANS CALLOUT */}
+      <div
+        onClick={() => navigate('/plans')}
+        className="cursor-pointer mb-3 p-4 rounded-2xl bg-gradient-to-r from-[#0d1f18] to-[#0a1712] border border-emerald-500/40 shadow-lg flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-emerald-400"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+            🍯
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-black text-white uppercase tracking-wide">24H Yield Plans</span>
+              <span className="text-[8px] bg-emerald-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full">
+                +53.8% PROFIT
+              </span>
+            </div>
+            <p className="text-[11px] text-[#8fa69c] font-medium mt-0.5">
+              1.30 TON ➔ Receive 2.00 GRAM Next Day
+            </p>
+          </div>
+        </div>
+        <span className="text-emerald-400 font-black text-xs shrink-0">
+          View ➔
+        </span>
+      </div>
+
+      {/* 🎡 LUCKY WHEEL CALLOUT */}
+      <div
+        onClick={() => navigate('/spin')}
+        className="cursor-pointer mb-3.5 p-3.5 rounded-2xl bg-[#0e1512] border border-[#1c2c24] flex items-center justify-between transition-all duration-200 active:scale-98 hover:border-amber-400/50"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-lg shrink-0">
+            🎡
+          </div>
+          <div>
+            <div className="text-xs font-black text-white uppercase tracking-wide flex items-center gap-1.5">
+              <span>Lucky Wheel Spin</span>
+              <span className="text-[8px] bg-amber-400 text-stone-950 font-black px-1.5 py-0.2 rounded-full">FREE</span>
+            </div>
+            <p className="text-[10.5px] text-[#7a8f85] font-medium mt-0.5">
+              Win USDT, GRAM & Power boosts
+            </p>
+          </div>
+        </div>
+        <span className="text-amber-400 font-black text-xs shrink-0">
+          Spin ➔
+        </span>
+      </div>
+
+      {/* Payout History Link */}
       <button
         onClick={() => navigate('/withdraw?tab=history')}
-        className="w-full py-4 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-xl zentorno-btn-secondary text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5"
       >
-        <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-3.5 h-3.5 text-[#7a8f85]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>{t('history', 'HISTORY')}</button>
+        </svg>
+        <span>View Transaction History</span>
+      </button>
 
       {/* ======================================================== */}
-      {/* 🚀 EXACT ADD GHS MODAL (ZENTORNO CLONE)                  */}
+      {/* 🚀 MINIMALIST ADD GHS MODAL                              */}
       {/* ======================================================== */}
       {showAddGhsModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3">
-          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
-            {/* Header */}
-            <div className="text-center mb-5 relative">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0e1512] border border-[#1f3128] rounded-3xl w-full max-w-sm p-5 text-white shadow-2xl relative">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-black uppercase tracking-wider">Add Hashrate (GHS)</h2>
               <button
                 onClick={() => setShowAddGhsModal(false)}
-                className="absolute left-0 top-0 text-stone-400 hover:text-white p-1"
+                className="w-7 h-7 rounded-full bg-[#16221c] text-[#7a8f85] hover:text-white flex items-center justify-center font-bold text-xs"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
+                ✕
               </button>
-              <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS</h2>
             </div>
 
-            {/* Input: Amount to deposit (GRAM) */}
-            <div className="mb-4">
-              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">{t('amount_to_deposit', 'Amount to deposit (GRAM)')}</label>
-              <div className="zentorno-input p-3.5 flex items-center justify-between">
+            <div className="mb-3.5">
+              <label className="text-[10px] font-bold text-[#7a8f85] uppercase tracking-wider block mb-1">
+                Deposit Amount (GRAM)
+              </label>
+              <div className="zentorno-input p-3 flex items-center justify-between">
                 <input
                   type="number"
                   min="0.1"
                   step="0.1"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full bg-transparent text-xl font-black text-stone-100 focus:outline-none"
+                  className="w-full bg-transparent text-xl font-bold font-mono text-white focus:outline-none"
                 />
-                <span className="text-xs font-black text-stone-400 ml-2 whitespace-nowrap">
-                  GRAM
-                </span>
-              </div>
-              <div className="text-[10px] text-stone-400 font-semibold mt-1">
-                {t('min_deposit', 'Minimum deposit: 0.10 GRAM')}
+                <span className="text-xs font-extrabold text-emerald-400 ml-2">GRAM</span>
               </div>
             </div>
 
-            {/* +5% First Deposit Bonus Banner */}
-            <div className="bg-[#8ba89c] text-[#0f1614] rounded-2xl py-3 px-4 text-center mb-4 font-black text-xs uppercase tracking-wide shadow-sm">
-              {t('first_deposit_bonus', '+5% first deposit bonus!')}
-            </div>
-
-            {/* Card: YOU WILL GET */}
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 text-center mb-4">
-              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
-                YOU WILL GET
+            <div className="border border-[#1a2a22] bg-[#090f0c] rounded-2xl p-3.5 mb-4 text-center">
+              <div className="text-[9px] font-bold text-[#7a8f85] uppercase tracking-widest">
+                Estimated Power Output
               </div>
-              <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider mt-1">
-                TOTAL GHS POWER
+              <div className="text-2xl font-black text-emerald-400 font-mono mt-0.5">
+                +{totalGhsPower.toFixed(1)} GHS
               </div>
-              <div className="text-3xl font-black text-stone-100 mt-1">
-                {totalGhsPower.toFixed(1)} GHS
-              </div>
-              <div className="text-[11px] font-bold text-[#86a397] mt-1 flex items-center justify-center gap-1">
-                🎁 +5% first deposit bonus applied!
+              <div className="text-[10px] text-[#7a8f85] mt-1">
+                Yield: ~{modalEarningsPerDay.toFixed(4)} GRAM/day (+5% bonus applied)
               </div>
             </div>
 
-            {/* Card: POTENTIAL EARNINGS (2x2 Grid) */}
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
-              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest text-center mb-3">
-                POTENTIAL EARNINGS
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* PER SECOND */}
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER SECOND
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
-                    {modalEarningsPerSecond.toFixed(8)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-
-                {/* PER DAY */}
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER DAY
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerDay.toFixed(4)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-
-                {/* PER WEEK */}
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER WEEK
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerWeek.toFixed(4)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-
-                {/* PER MONTH */}
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER MONTH
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerMonth.toFixed(2)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-              </div>
-
-              {/* Footnote */}
-              <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
-                These GHS last 30 days. Earnings: 0.0500 GRAM per day per 100 GHS (0.50 GRAM / 1,000 GHS).
-              </div>
-            </div>
-
-            {/* Buttons: PAY ORDER & BACK */}
             <button
               onClick={() => {
                 setShowAddGhsModal(false)
                 setShowPayModal(true)
               }}
-              className="w-full py-4 rounded-2xl bg-[#8ba89c] hover:bg-[#9cb8ac] text-[#0f1614] font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2 shadow-md"
             >
-              PAY ORDER
-            </button>
-
-            <button
-              onClick={() => setShowAddGhsModal(false)}
-              className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
-            >
-              BACK
+              Continue to Payment
             </button>
           </div>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* 💳 PAY ORDER MODAL (TON / GRAM AUTOMATIC)                 */}
+      {/* 💳 MINIMALIST PAYMENT ORDER MODAL                        */}
       {/* ======================================================== */}
       {showPayModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3">
-          <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
-            <div className="text-center mb-3">
-              <h2 className="text-lg font-black uppercase tracking-wider">PAYMENT ORDER</h2>
-              <p className="text-xs text-stone-400 mt-0.5">Send exact GRAM on TON Blockchain</p>
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0e1512] border border-[#1f3128] rounded-3xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-5 text-white shadow-2xl relative">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-black uppercase tracking-wider">Payment Order</h2>
+              <button
+                onClick={() => setShowPayModal(false)}
+                className="w-7 h-7 rounded-full bg-[#16221c] text-[#7a8f85] hover:text-white flex items-center justify-center font-bold text-xs"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-3.5 mb-3 space-y-2.5">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-stone-400">Network</span>
-                <span className="text-xs font-black text-[#93b3a6] bg-[#1f2d28] px-2 py-0.5 rounded-lg border border-[#2e423b]">
-                  TON / GRAM
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-stone-400">Amount</span>
-                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} GRAM</span>
+            <div className="border border-[#1a2a22] bg-[#090f0c] rounded-2xl p-3.5 mb-3 space-y-2.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#7a8f85]">Amount</span>
+                <span className="font-extrabold text-white font-mono text-sm">{numDeposit.toFixed(2)} GRAM</span>
               </div>
 
-              {/* Deposit Address */}
-              <div className="border-t border-[#253530] pt-2.5">
-                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1">
-                  Official Deposit Address
-                </div>
+              <div className="border-t border-[#16221c] pt-2">
+                <span className="text-[10px] font-bold text-[#7a8f85] uppercase block mb-1">Deposit Address</span>
                 <div className="zentorno-input p-2 flex items-center justify-between gap-1.5">
-                  <span className="text-[10px] font-mono text-stone-200 truncate flex-1">
-                    {depositAddress}
-                  </span>
+                  <span className="text-[10px] font-mono text-slate-300 truncate flex-1">{depositAddress}</span>
                   <button
                     onClick={copyDepositAddress}
-                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-[11px] shrink-0"
+                    className="px-2 py-1 bg-emerald-500 text-stone-950 rounded-lg font-extrabold text-[10px]"
                   >
-                    {copiedAddr ? 'COPIED!' : 'COPY'}
+                    {copiedAddr ? 'COPIED' : 'COPY'}
                   </button>
                 </div>
               </div>
 
-              {/* REQUIRED COMMENT / MEMO */}
-              <div className="bg-[#241c10] border border-[#543b18] rounded-xl p-2.5">
+              {/* Memo */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
-                    REQUIRED MEMO / COMMENT
-                  </span>
-                  <span className="text-[9px] font-bold text-amber-400">MUST INCLUDE</span>
+                  <span className="text-[10px] font-extrabold text-amber-300 uppercase">Required Memo</span>
+                  <span className="text-[9px] font-bold text-amber-400">DO NOT OMIT</span>
                 </div>
                 <div className="zentorno-input p-2 flex items-center justify-between gap-1.5 border-amber-500/40">
-                  <span className="text-xs font-mono font-black text-amber-300">
-                    {userMemo}
-                  </span>
+                  <span className="text-xs font-mono font-black text-amber-300">{userMemo}</span>
                   <button
                     onClick={copyMemo}
-                    className="p-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-lg font-black text-[11px] shrink-0"
+                    className="px-2 py-1 bg-amber-400 text-stone-950 rounded-lg font-black text-[10px]"
                   >
-                    {copiedMemo ? 'COPIED!' : 'COPY MEMO'}
+                    {copiedMemo ? 'COPIED' : 'COPY'}
                   </button>
-                </div>
-                <div className="text-[9.5px] text-amber-200/80 font-medium mt-1 leading-tight">
-                  ⚠️ Paste this in your wallet comment so power is credited automatically!
                 </div>
               </div>
             </div>
 
-            {/* Direct Tonkeeper Button */}
             <button
               onClick={handleOpenTonkeeper}
-              className="w-full py-3.5 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+              className="w-full py-3 rounded-xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-1.5 shadow-md"
             >
-              <span>💎</span> PAY IN TONKEEPER (AUTO-FILL)
+              <span>💎</span> Pay in Tonkeeper (Auto-Fill)
             </button>
 
-            {/* Other Wallets Button */}
             <button
               onClick={handleOpenAnyWallet}
-              className="w-full py-2.5 rounded-2xl bg-[#182621] hover:bg-[#20332c] text-[#93b3a6] border border-[#2b4137] font-bold text-xs uppercase tracking-wider mb-3 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              className="w-full py-2.5 rounded-xl zentorno-btn-secondary text-xs font-bold uppercase mb-3"
             >
-              <span>⚡</span> OTHER WALLET (TONHUB / MYTONWALLET)
+              Other Wallet (Tonhub / MyTonWallet)
             </button>
 
-            {/* Optional sender address for memo-less payments */}
-            <div className="mb-3 pt-2 border-t border-[#23332d]">
-              <label className="text-[10.5px] font-bold text-stone-400 block mb-1">
-                Sent without memo? (Optional)
-              </label>
+            <div className="mb-3 pt-2 border-t border-[#1a2620]">
               <input
                 type="text"
-                placeholder="Paste your TON wallet address (UQ... or 0:...)"
+                placeholder="Paste your TON wallet address (Optional)"
                 value={senderAddress}
                 onChange={(e) => setSenderAddress(e.target.value)}
-                className="w-full zentorno-input p-2.5 text-xs font-mono text-stone-200 placeholder:text-stone-600 rounded-xl"
+                className="w-full zentorno-input p-2.5 text-xs font-mono text-slate-200 placeholder:text-[#4f6158] rounded-xl"
               />
             </div>
 
-            {/* Instant verification button */}
             <button
               onClick={handleVerifyDeposit}
               disabled={verifying}
-              className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2 active:scale-95 shadow-md"
+              className="w-full py-3 rounded-xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2"
             >
-              {verifying ? 'CHECKING BLOCKCHAIN...' : '✅ I HAVE SENT PAYMENT (VERIFY NOW)'}
-            </button>
-
-            <button
-              onClick={() => setShowPayModal(false)}
-              className="w-full py-2.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
-            >
-              CLOSE
+              {verifying ? 'Checking Blockchain...' : '✅ Verify Deposit Now'}
             </button>
           </div>
         </div>
       )}
+
       <LanguageModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
     </div>
   )

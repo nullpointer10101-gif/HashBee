@@ -1,55 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-dark: #101715;
-  --bg-card: #182320;
-  --bg-input: #1f2d29;
-  --border-card: #283a34;
-  --sage-accent: #93b3a6;
-  --sage-accent-hover: #a3c3b6;
-  --sage-text: #c2d6ce;
-  --sage-muted: #728c81;
+  --bg-dark: #070a09;
+  --bg-card: #0e1412;
+  --bg-card-hover: #131c19;
+  --bg-input: #121a17;
+  --border-subtle: #17221d;
+  --border-focus: #10b981;
+  --accent-emerald: #10b981;
+  --accent-mint: #00f59b;
+  --accent-gold: #f59e0b;
+  --text-primary: #f3f5f4;
+  --text-secondary: #9aa8a1;
+  --text-muted: #5d6f66;
 }
 
 body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-dark);
-  color: #e6f0ec;
+  color: var(--text-primary);
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Zentorno UI Components */
+/* Minimalist Clean UI Cards */
 .zentorno-card {
-  background-color: #182320;
-  border: 1px solid #273933;
+  background: linear-gradient(180deg, #0e1512 0%, #0a0f0d 100%);
+  border: 1px solid #16221c;
   border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.zentorno-card:hover {
+  border-color: #1f332a;
 }
 
 .zentorno-input {
-  background-color: #1e2b27;
-  border: 1px solid #2c3e38;
+  background-color: #0b110f;
+  border: 1px solid #17241f;
   border-radius: 14px;
-  color: #e6f0ec;
-}
-
-.zentorno-btn-primary {
-  background-color: #93b3a6;
-  color: #0f1614;
-  font-weight: 800;
-  border-radius: 16px;
+  color: #f3f5f4;
   transition: all 0.2s ease;
 }
 
+.zentorno-input:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+.zentorno-btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #050807;
+  font-weight: 800;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+}
+
 .zentorno-btn-primary:hover {
-  background-color: #a4c4b7;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
 
@@ -58,27 +77,43 @@ body {
 }
 
 .zentorno-btn-secondary {
-  background-color: #1e2b27;
-  border: 1px solid #2c3e38;
-  color: #b5cdc4;
+  background: #0f1714;
+  border: 1px solid #1c2b24;
+  color: #a3b8af;
   font-weight: 700;
-  border-radius: 16px;
+  border-radius: 14px;
   transition: all 0.2s ease;
 }
 
 .zentorno-btn-secondary:hover {
-  background-color: #263631;
-  border-color: #384f48;
+  background: #15221d;
+  color: #ffffff;
+  border-color: #273d33;
 }
 
-/* Custom Scrollbar */
+.zentorno-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Minimalist Glass Badges */
+.badge-glass {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* Custom Minimalist Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 ::-webkit-scrollbar-track {
-  background: #101715;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3d37;
+  background: #1c2b24;
   border-radius: 4px;
 }
