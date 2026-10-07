@@ -44,35 +44,102 @@ function saveWatchAdState(state: WatchAdState) {
 
 function showAd(): Promise<boolean> {
   return new Promise((resolve) => {
-    // 1. Try AdExium Interstitial
-    if (typeof window !== 'undefined' && (window as any).adexiumWidget && typeof (window as any).adexiumWidget.requestAd === 'function') {
+    let finished = false
+    const done = (success: boolean) => {
+      if (!finished) {
+        finished = true
+        resolve(success)
+      }
+    }
+
+    // Safety timeout: if no ad responds in 6.5 seconds, mark as unavailable
+    const timer = setTimeout(() => {
+      done(false)
+    }, 6500)
+
+    const tryMonetag = () => {
+      if (typeof (window as any).show_8985160 === 'function') {
+        try {
+          (window as any)
+            .show_8985160()
+            .then(() => {
+              clearTimeout(timer)
+              done(true)
+            })
+            .catch((err: any) => {
+              console.warn('[Missions] Monetag ad error:', err)
+              clearTimeout(timer)
+              done(false)
+            })
+          return
+        } catch (e) {
+          console.warn('[Missions] Monetag exception:', e)
+        }
+      }
+      clearTimeout(timer)
+      done(false)
+    }
+
+    // 1. Try AdExium Interstitial/Rewarded
+    const adex = typeof window !== 'undefined' ? (window as any).adexiumWidget : null
+    if (adex && typeof adex.requestAd === 'function') {
       try {
-        (window as any).adexiumWidget.requestAd('interstitial')
-        setTimeout(() => resolve(true), 2500)
+        let adDisplayed = false
+
+        const handleReceived = (ad: any) => {
+          adDisplayed = true
+          try {
+            if (typeof adex.displayAd === 'function') {
+              adex.displayAd(ad)
+            }
+          } catch (e) {
+            console.warn('[AdExium] displayAd error:', e)
+          }
+        }
+
+        const handleClosed = () => {
+          cleanup()
+          clearTimeout(timer)
+          done(true)
+        }
+
+        const handleNoAd = () => {
+          cleanup()
+          tryMonetag()
+        }
+
+        const handleError = () => {
+          cleanup()
+          tryMonetag()
+        }
+
+        const cleanup = () => {
+          if (typeof adex.off === 'function') {
+            try {
+              adex.off('adReceived', handleReceived)
+              adex.off('adClosed', handleClosed)
+              adex.off('noAdFound', handleNoAd)
+              adex.off('requestAdError', handleError)
+            } catch {}
+          }
+        }
+
+        if (typeof adex.on === 'function') {
+          adex.on('adReceived', handleReceived)
+          adex.on('adClosed', handleClosed)
+          adex.on('noAdFound', handleNoAd)
+          adex.on('requestAdError', handleError)
+        }
+
+        adex.requestAd('interstitial')
         return
       } catch (err) {
-        console.warn('[Missions] AdExium error:', err)
+        console.warn('[Missions] AdExium request error:', err)
       }
     }
 
-    // 2. Try Monetag Interstitial
-    if (typeof (window as any).show_8985160 === 'function') {
-      try {
-        (window as any)
-          .show_8985160()
-          .then(() => resolve(true))
-          .catch((err: any) => {
-            console.warn('[Missions] Monetag ad error:', err)
-            resolve(false)
-          })
-        return
-      } catch (e) {
-        console.warn('[Missions] Monetag call error:', e)
-      }
-    }
-
-    // No ad provider currently active or available
-    resolve(false)
+    // 2. Fallback to Monetag if AdExium isn't available
+    tryMonetag()
   })
 }
 
@@ -100,11 +167,9 @@ export const Missions: React.FC = () => {
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
 
   const [watchAdState, setWatchAdState] = useState<WatchAdState>(loadWatchAdState)
-  const [watchAdVerifyingIndex, setWatchAdVerifyingIndex] = useState<number | null>(null)
-  const [watchAdSecondsLeft, setWatchAdSecondsLeft] = useState<number>(0)
+  const [watchAdLoadingIndex, setWatchAdLoadingIndex] = useState<number | null>(null)
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
   const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const watchAdVerifyTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -139,9 +204,11 @@ export const Missions: React.FC = () => {
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
       if (watchAdState.completed.includes(taskIndex)) return
-      if (watchAdVerifyingIndex !== null) return
+      if (watchAdLoadingIndex !== null) return
 
-      toast.loading('Requesting video ad...', { id: 'ad-load' })
+      setWatchAdLoadingIndex(taskIndex)
+      toast.loading('🎬 Requesting video ad...', { id: 'ad-load' })
+
       let adPlayed = false
       try {
         adPlayed = await showAd()
@@ -149,54 +216,33 @@ export const Missions: React.FC = () => {
         console.warn('Ad playback error:', err)
       } finally {
         toast.dismiss('ad-load')
+        setWatchAdLoadingIndex(null)
       }
 
       if (!adPlayed) {
-        toast.error('⚠️ Ad is not available right now. Please try again in a moment!')
+        toast.error('⚠️ Ad is not available right now. Please try again in a few moments!')
         return
       }
 
-      const countdownSec = 15
-      setWatchAdVerifyingIndex(taskIndex)
-      setWatchAdSecondsLeft(countdownSec)
+      // Ad successfully watched! Grant reward immediately
+      setWatchAdState((prev) => {
+        const nextCompleted = [...new Set([...prev.completed, taskIndex])]
+        const updated: WatchAdState = { ...prev, completed: nextCompleted }
+        saveWatchAdState(updated)
+        return updated
+      })
 
-      let remaining = countdownSec
-      if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
+      try {
+        await completeMission(`watch_ad_${taskIndex + 1}`)
+      } catch {
+        // Fallback
+      }
 
-      watchAdVerifyTimerRef.current = setInterval(async () => {
-        remaining -= 1
-        setWatchAdSecondsLeft(remaining)
-
-        if (remaining <= 0) {
-          if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
-          setWatchAdVerifyingIndex(null)
-
-          setWatchAdState((prev) => {
-            const nextCompleted = [...new Set([...prev.completed, taskIndex])]
-            const updated: WatchAdState = { ...prev, completed: nextCompleted }
-            saveWatchAdState(updated)
-            return updated
-          })
-
-          try {
-            await completeMission(`watch_ad_${taskIndex + 1}`)
-          } catch {
-            // fallback
-          }
-
-          toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
-          await refreshUser()
-        }
-      }, 1000)
+      toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
+      await refreshUser()
     },
-    [watchAdState.completed, watchAdVerifyingIndex, refreshUser]
+    [watchAdState.completed, watchAdLoadingIndex, refreshUser]
   )
-
-  useEffect(() => {
-    return () => {
-      if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
-    }
-  }, [])
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || ''
@@ -760,7 +806,7 @@ export const Missions: React.FC = () => {
         <div className="space-y-2">
           {Array.from({ length: WATCH_AD_TASKS_COUNT }, (_, i) => {
             const isDone = watchAdState.completed.includes(i)
-            const isVerifying = watchAdVerifyingIndex === i
+            const isLoading = watchAdLoadingIndex === i
             const allPreviousDone = i === 0 || watchAdState.completed.includes(i - 1)
             const isLocked = !isDone && !allPreviousDone
 
@@ -768,14 +814,14 @@ export const Missions: React.FC = () => {
               <div key={i} className="mine-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0 font-black">
-                    {isDone ? '✅' : isVerifying ? '⏱️' : isLocked ? '🔒' : '📺'}
+                    {isDone ? '✅' : isLoading ? '⏳' : isLocked ? '🔒' : '📺'}
                   </div>
                   <div>
                     <div className="text-xs font-black text-slate-900">
                       Watch Booster Ad #{i + 1}
                     </div>
                     <div className="text-[10px] text-[#0088ff] font-bold mt-0.5 font-mono">
-                      {isDone ? `+${WATCH_AD_POWER_REWARD} GHS Claimed ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s)` : `+${WATCH_AD_POWER_REWARD} GHS Mining Power`}
+                      {isDone ? `+${WATCH_AD_POWER_REWARD} GHS Claimed ✓` : isLoading ? 'Loading Video Ad...' : `+${WATCH_AD_POWER_REWARD} GHS Mining Power`}
                     </div>
                   </div>
                 </div>
@@ -785,9 +831,9 @@ export const Missions: React.FC = () => {
                     <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-[10px]">
                       ✓ Done
                     </span>
-                  ) : isVerifying ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-extrabold text-xs">
-                      {watchAdSecondsLeft}s
+                  ) : isLoading ? (
+                    <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-extrabold text-xs animate-pulse">
+                      Loading...
                     </span>
                   ) : isLocked ? (
                     <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-extrabold text-xs">
@@ -796,8 +842,8 @@ export const Missions: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => handleWatchAdTask(i)}
-                      disabled={watchAdVerifyingIndex !== null}
-                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase shadow-sm"
+                      disabled={watchAdLoadingIndex !== null}
+                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase shadow-sm active:scale-95 transition-transform"
                     >
                       ▶ Watch
                     </button>
