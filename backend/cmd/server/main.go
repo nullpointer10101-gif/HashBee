@@ -159,6 +159,11 @@ func main() {
 	withdrawalSvc := services.NewWithdrawalService(pool, settingsSvc, referralSvc)
 	campaignSvc := services.NewCampaignService(pool, settingsSvc)
 
+	// Clean up and refund any unqualified pending withdrawals
+	if refundedCount, err := withdrawalSvc.AutoRefundUnqualifiedPendingWithdrawals(ctx); err == nil && refundedCount > 0 {
+		log.Printf("🛡️ [Startup] Auto-refunded and removed %d unqualified pending withdrawals from admin queue", refundedCount)
+	}
+
 	// Telegram Bot
 	tgBot, err := bot.New(cfg, userSvc)
 	if err != nil {

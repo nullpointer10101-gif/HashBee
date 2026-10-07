@@ -605,6 +605,10 @@ func (h *AdminHandler) ResetStreak(c *gin.Context) {
 
 // GET /api/admin/withdrawals
 func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
+	if h.withdrawSvc != nil {
+		_, _ = h.withdrawSvc.AutoRefundUnqualifiedPendingWithdrawals(c.Request.Context())
+	}
+
 	status := c.Query("status")
 	limit := 50
 	offset := 0

@@ -486,21 +486,27 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 
 	var cratesOpened int
 	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(*) 
-		FROM transactions 
-		WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase')
+		SELECT (
+			(SELECT COUNT(*) FROM user_plans WHERE user_id = $1) +
+			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase'))
+		)
 	`, user.ID).Scan(&cratesOpened)
 
 	var friendCratesOpened int
 	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(DISTINCT t.user_id)
-		FROM transactions t
-		WHERE t.user_id IN (
-			SELECT referred_id FROM referrals WHERE referrer_id = $1
+		SELECT COUNT(DISTINCT uid) FROM (
+			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
+				SELECT referred_id FROM referrals WHERE referrer_id = $1
+				UNION
+				SELECT id FROM users WHERE referrer_id = $1
+			)
 			UNION
-			SELECT id FROM users WHERE referrer_id = $1
-		)
-		AND t.type IN ('crate_purchase', 'plan_purchase')
+			SELECT t.user_id as uid FROM transactions t WHERE t.user_id IN (
+				SELECT referred_id FROM referrals WHERE referrer_id = $1
+				UNION
+				SELECT id FROM users WHERE referrer_id = $1
+			) AND t.type IN ('crate_purchase', 'plan_purchase')
+		) q
 	`, user.ID).Scan(&friendCratesOpened)
 
 	var activePlans int

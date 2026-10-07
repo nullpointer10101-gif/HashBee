@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -25,6 +26,40 @@ type WithdrawalRequest struct {
 	Address string `json:"address" binding:"required"`
 	Network string `json:"network" binding:"required"`
 	Amount  float64 `json:"amount" binding:"required,gt=0"`
+}
+
+// IsUserQualified checks if a user holds at least 1 NFT miner or has invited at least 1 friend with an NFT miner or has one-time grant
+func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUID) (bool, int, int, bool) {
+	var oneTimeGranted bool
+	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
+
+	var cratesOpened int
+	_ = s.db.QueryRow(ctx, `
+		SELECT (
+			(SELECT COUNT(*) FROM user_plans WHERE user_id = $1) +
+			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase'))
+		)
+	`, userID).Scan(&cratesOpened)
+
+	var friendCratesOpened int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(DISTINCT uid) FROM (
+			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
+				SELECT referred_id FROM referrals WHERE referrer_id = $1
+				UNION
+				SELECT id FROM users WHERE referrer_id = $1
+			)
+			UNION
+			SELECT t.user_id as uid FROM transactions t WHERE t.user_id IN (
+				SELECT referred_id FROM referrals WHERE referrer_id = $1
+				UNION
+				SELECT id FROM users WHERE referrer_id = $1
+			) AND t.type IN ('crate_purchase', 'plan_purchase')
+		) q
+	`, userID).Scan(&friendCratesOpened)
+
+	qualified := oneTimeGranted || cratesOpened >= 1 || friendCratesOpened >= 1
+	return qualified, cratesOpened, friendCratesOpened, oneTimeGranted
 }
 
 // CreateWithdrawal validates gates and creates a withdrawal request
@@ -95,30 +130,9 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("only earned rewards (mining yield, spins, daily plans & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check Lifetime Withdrawal Qualification (Activate 1 Mining Plan >= 0.70 G OR 1 Friend Activates Plan OR One-Time Granted)
-	var oneTimeGranted bool
-	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
-
-	var cratesOpened int
-	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(*) 
-		FROM transactions 
-		WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase')
-	`, userID).Scan(&cratesOpened)
-
-	var friendCratesOpened int
-	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(DISTINCT t.user_id)
-		FROM transactions t
-		WHERE t.user_id IN (
-			SELECT referred_id FROM referrals WHERE referrer_id = $1
-			UNION
-			SELECT id FROM users WHERE referrer_id = $1
-		)
-		AND t.type IN ('crate_purchase', 'plan_purchase')
-	`, userID).Scan(&friendCratesOpened)
-
-	if !oneTimeGranted && cratesOpened < 1 && friendCratesOpened < 1 {
+	// Check Lifetime Withdrawal Qualification (Must hold >= 1 NFT Miner OR have >= 1 friend with NFT Miner)
+	qualified, cratesOpened, friendCratesOpened, _ := s.IsUserQualified(ctx, userID)
+	if !qualified {
 		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either hold at least 1 NFT Miner (starts from 0.70 GRAM) or have at least 1 invited friend activate an NFT Miner (Current: %d/1 friend NFT miners, %d NFT miners activated)", friendCratesOpened, cratesOpened)
 	}
 
@@ -294,3 +308,72 @@ func validateWalletAddress(network, address string) error {
 	}
 	return nil
 }
+
+// AutoRefundUnqualifiedPendingWithdrawals cancels pending withdrawals for users who don't meet qualification and refunds their balance
+func (s *WithdrawalService) AutoRefundUnqualifiedPendingWithdrawals(ctx context.Context) (int, error) {
+	rows, err := s.db.Query(ctx, `SELECT id, user_id, honey_amount FROM withdrawals WHERE status = 'pending'`)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	type PendingW struct {
+		ID          uuid.UUID
+		UserID      uuid.UUID
+		HoneyAmount float64
+	}
+
+	var toRefund []PendingW
+	for rows.Next() {
+		var pw PendingW
+		if err := rows.Scan(&pw.ID, &pw.UserID, &pw.HoneyAmount); err == nil {
+			toRefund = append(toRefund, pw)
+		}
+	}
+	rows.Close()
+
+	refundedCount := 0
+	for _, pw := range toRefund {
+		qualified, _, _, _ := s.IsUserQualified(ctx, pw.UserID)
+		if !qualified {
+			tx, err := s.db.Begin(ctx)
+			if err != nil {
+				continue
+			}
+
+			// Mark rejected with clear reason
+			_, err = tx.Exec(ctx,
+				`UPDATE withdrawals SET status = 'rejected', reason = 'Requirement: Hold 1 NFT Miner or invite 1 friend with NFT Miner (Balance refunded)', updated_at = NOW() WHERE id = $1`,
+				pw.ID)
+			if err != nil {
+				tx.Rollback(ctx)
+				continue
+			}
+
+			// Silently give balance back
+			_, err = tx.Exec(ctx,
+				`UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`,
+				pw.HoneyAmount, pw.UserID)
+			if err != nil {
+				tx.Rollback(ctx)
+				continue
+			}
+
+			// Record refund transaction
+			idempKey := fmt.Sprintf("refund_%s", pw.ID)
+			_, _ = tx.Exec(ctx,
+				`INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at)
+				 VALUES ($1, $2, 'adjustment', $3, 'HONEY', $4, 'withdrawal', $5, 'Withdrawal balance returned (NFT qualification requirement)', NOW())
+				 ON CONFLICT (idempotency_key) DO NOTHING`,
+				uuid.New(), pw.UserID, pw.HoneyAmount, pw.ID, idempKey)
+
+			if err := tx.Commit(ctx); err == nil {
+				refundedCount++
+				log.Printf("🛡️ [WithdrawalService] Silently refunded %.4f Honey to unqualified user %s and removed withdrawal %s from admin queue", pw.HoneyAmount, pw.UserID, pw.ID)
+			}
+		}
+	}
+
+	return refundedCount, nil
+}
+
