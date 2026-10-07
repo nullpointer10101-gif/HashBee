@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { fetchReferrals, fetchSpinEpoch, claimSpinReward, fetchSpinStatus } from '../services/api'
+import { fetchReferrals, claimSpinReward, fetchSpinStatus } from '../services/api'
 import toast from 'react-hot-toast'
 import ReactConfetti from 'react-confetti'
 
@@ -26,23 +26,22 @@ interface WheelSlice {
   amount: number
 }
 
-// 8 wheel slices configured with 0.002 GRAM & 0.001 USDT (50% drop rate), plus 0.01 USDT and 1 GRAM jackpot (0% drop rate)
+// 8 wheel slices in high-end monochrome obsidian / emerald styling
 const SLICES: WheelSlice[] = [
-  { id: 0, label: '0.002 GRAM', sublabel: 'Crypto Drop', icon: '🪙', color1: '#261b0c', color2: '#382812', textColor: '#fbbf24', weight: 25.0, type: 'gram', amount: 0.002 },
-  { id: 1, label: '0.001 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#0e2b1e', color2: '#174530', textColor: '#4ade80', weight: 25.0, type: 'usdt', amount: 0.001 },
-  { id: 2, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#112920', color2: '#16382a', textColor: '#34d399', weight: 25.0, type: 'hash', amount: 1 },
-  { id: 3, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#142338', color2: '#1e3554', textColor: '#60a5fa', weight: 18.0, type: 'spin', amount: 1 },
-  { id: 4, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#0c3321', color2: '#134f33', textColor: '#10b981', weight: 5.0, type: 'hash', amount: 2 },
-  { id: 5, label: '0.01 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#09361c', color2: '#12572e', textColor: '#22c55e', weight: 1.0, type: 'usdt', amount: 0.01 },
-  { id: 6, label: '5 HASH', sublabel: 'Mega Boost', icon: '⚡', color1: '#153325', color2: '#1f4a36', textColor: '#6ee7b7', weight: 1.0, type: 'hash', amount: 5 },
-  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#3d1d05', color2: '#5e2d09', textColor: '#ffd700', weight: 0, type: 'gram', amount: 1.0 },
+  { id: 0, label: '0.002 GRAM', sublabel: 'Crypto Drop', icon: '💎', color1: '#0e1411', color2: '#16221c', textColor: '#ffffff', weight: 25.0, type: 'gram', amount: 0.002 },
+  { id: 1, label: '0.001 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#080c0a', color2: '#111915', textColor: '#00f090', weight: 25.0, type: 'usdt', amount: 0.001 },
+  { id: 2, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#0e1411', color2: '#16221c', textColor: '#ffffff', weight: 25.0, type: 'hash', amount: 1 },
+  { id: 3, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#080c0a', color2: '#111915', textColor: '#38bdf8', weight: 18.0, type: 'spin', amount: 1 },
+  { id: 4, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#0e1411', color2: '#16221c', textColor: '#00f090', weight: 5.0, type: 'hash', amount: 2 },
+  { id: 5, label: '0.01 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#080c0a', color2: '#111915', textColor: '#ffffff', weight: 1.0, type: 'usdt', amount: 0.01 },
+  { id: 6, label: '5 HASH', sublabel: 'Mega Boost', icon: '⚡', color1: '#0e1411', color2: '#16221c', textColor: '#00f090', weight: 1.0, type: 'hash', amount: 5 },
+  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#080c0a', color2: '#1a2920', textColor: '#00f090', weight: 0, type: 'gram', amount: 1.0 },
 ]
 
 export const Spin: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const { t } = useLanguage()
 
-  // Spins balance: authoritative from server database profile
   const [spinsLeft, setSpinsLeft] = useState<number>(() => {
     return user?.spin_balance !== undefined ? user.spin_balance : 1
   })
@@ -56,177 +55,120 @@ export const Spin: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Clean legacy local storage keys from previous versions
-  useEffect(() => {
-    try {
-      for (let i = 1; i <= 10; i++) {
-        localStorage.removeItem(`hb_spins_v${i}`)
-        localStorage.removeItem(`hb_spin_credited_ids_v${i}`)
-      }
-      localStorage.removeItem('hb_spins')
-      localStorage.removeItem('hb_spin_credited_ids')
-    } catch {
-      // Ignore
-    }
-  }, [])
-
-  // Sync spinsLeft whenever authoritative user profile updates
   useEffect(() => {
     if (user?.spin_balance !== undefined) {
       setSpinsLeft(user.spin_balance)
     }
   }, [user?.spin_balance])
 
-  // Load spin status (daily count out of 20) and fresh referrals
   useEffect(() => {
-    if (!user) return
-
-    const loadSpinData = async () => {
+    const loadStatus = async () => {
       try {
-        const [data, epochStr, spinStatus] = await Promise.all([
-          fetchReferrals(),
-          fetchSpinEpoch(),
-          fetchSpinStatus(),
-        ])
-        if (spinStatus?.spins_today !== undefined) {
-          setSpinsToday(spinStatus.spins_today)
+        const status = await fetchSpinStatus()
+        if (status) {
+          if (status.spins_today !== undefined) setSpinsToday(status.spins_today)
+          if (status.daily_limit !== undefined) setDailyLimit(status.daily_limit)
+          if (status.spin_balance !== undefined) setSpinsLeft(status.spin_balance)
         }
-        if (spinStatus?.daily_limit !== undefined) {
-          setDailyLimit(spinStatus.daily_limit)
-        }
-        if (spinStatus?.spin_balance !== undefined) {
-          setSpinsLeft(spinStatus.spin_balance)
-        }
-
-        const allRefs = data?.referrals || []
-        const epochMs = epochStr ? new Date(epochStr).getTime() : 0
-
-        // Filter: only show referrals that joined after the spin reset epoch
-        const freshInvites = allRefs.filter((r: ReferralItem) => {
-          if (!r.joined_at) return false
-          const joinedMs = new Date(r.joined_at).getTime()
-          return joinedMs >= epochMs
-        })
-
-        setRecentFriends(freshInvites)
       } catch (err) {
-        // Silently catch network blip
+        // Fallback
+      }
+
+      try {
+        const refData = await fetchReferrals()
+        if (refData?.referrals) {
+          const list: ReferralItem[] = refData.referrals.map((r: any) => ({
+            id: String(r.id || Math.random()),
+            username: r.username || '',
+            first_name: r.first_name || r.username || 'Partner',
+            joined_at: r.joined_at || new Date().toISOString(),
+            status: r.status,
+          }))
+          setRecentFriends(list)
+        }
+      } catch (err) {
+        // Ignore
       }
     }
 
-    loadSpinData()
-    const interval = setInterval(loadSpinData, 10000)
-    return () => clearInterval(interval)
-  }, [user])
+    loadStatus()
+  }, [])
 
-  // Render High-DPR Crisp Canvas Wheel
-  useEffect(() => {
+  // Draw High-End Minimalist Wheel Canvas
+  const drawWheel = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const dpr = window.devicePixelRatio || 2
-    const size = 320
-    canvas.width = size * dpr
-    canvas.height = size * dpr
-    ctx.scale(dpr, dpr)
+    const size = 300
+    canvas.width = size * 2
+    canvas.height = size * 2
+    ctx.scale(2, 2)
 
     const center = size / 2
-    const radius = center - 14
-    const totalSlices = SLICES.length
-    const arc = (2 * Math.PI) / totalSlices
+    const radius = center - 8
+    const sliceAngle = (2 * Math.PI) / SLICES.length
 
     ctx.clearRect(0, 0, size, size)
 
-    // Outer Glowing Metallic Gold Bezel
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(center, center, radius + 10, 0, 2 * Math.PI)
-    const goldGrad = ctx.createLinearGradient(0, 0, size, size)
-    goldGrad.addColorStop(0, '#ffe57f')
-    goldGrad.addColorStop(0.3, '#f59e0b')
-    goldGrad.addColorStop(0.7, '#d97706')
-    goldGrad.addColorStop(1, '#fffae0')
-    ctx.strokeStyle = goldGrad
-    ctx.lineWidth = 9
-    ctx.stroke()
-    ctx.restore()
-
-    // Outer LED Lights
-    const numBulbs = 24
-    for (let b = 0; b < numBulbs; b++) {
-      const bulbAngle = (b * 2 * Math.PI) / numBulbs
-      const bx = center + (radius + 10) * Math.cos(bulbAngle)
-      const by = center + (radius + 10) * Math.sin(bulbAngle)
-      ctx.beginPath()
-      ctx.arc(bx, by, 2.5, 0, 2 * Math.PI)
-      ctx.fillStyle = b % 2 === 0 ? '#ffffff' : '#fbbf24'
-      ctx.fill()
-    }
-
-    // Draw Slices with Rich Radial Gradients
     SLICES.forEach((slice, i) => {
-      const angle = i * arc
+      const angle = i * sliceAngle
       ctx.save()
       ctx.beginPath()
       ctx.moveTo(center, center)
-      ctx.arc(center, center, radius, angle, angle + arc)
-      ctx.lineTo(center, center)
+      ctx.arc(center, center, radius, angle, angle + sliceAngle)
+      ctx.closePath()
 
-      const grad = ctx.createRadialGradient(center, center, 10, center, center, radius)
-      grad.addColorStop(0, slice.color2)
-      grad.addColorStop(1, slice.color1)
+      const grad = ctx.createRadialGradient(center, center, 20, center, center, radius)
+      grad.addColorStop(0, slice.color1)
+      grad.addColorStop(1, slice.color2)
       ctx.fillStyle = grad
       ctx.fill()
 
-      // Slice Divider Line
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)'
+      ctx.strokeStyle = '#17241d'
       ctx.lineWidth = 1.5
       ctx.stroke()
 
-      // Slice Typography & Icons
+      // Text and Icon
+      ctx.save()
       ctx.translate(center, center)
-      ctx.rotate(angle + arc / 2)
+      ctx.rotate(angle + sliceAngle / 2)
       ctx.textAlign = 'right'
+      ctx.textBaseline = 'middle'
 
-      // Amount / Label
       ctx.fillStyle = slice.textColor
-      ctx.font = '900 13px Outfit, -apple-system, sans-serif'
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'
-      ctx.shadowBlur = 4
-      ctx.fillText(slice.label, radius - 30, 4)
+      ctx.font = 'bold 11px Plus Jakarta Sans, sans-serif'
+      ctx.fillText(slice.label, radius - 26, 0)
 
-      // Icon
-      ctx.font = '16px sans-serif'
-      ctx.shadowBlur = 0
-      ctx.fillText(slice.icon, radius - 8, 5)
+      ctx.font = '14px sans-serif'
+      ctx.fillText(slice.icon, radius - 8, 0)
 
+      ctx.restore()
       ctx.restore()
     })
 
-    // Center Gold Metallic Cap
+    // Center Obsidian Cap
     ctx.save()
     ctx.beginPath()
-    ctx.arc(center, center, 28, 0, 2 * Math.PI)
-    const centerGrad = ctx.createRadialGradient(center - 5, center - 5, 2, center, center, 28)
-    centerGrad.addColorStop(0, '#fef08a')
-    centerGrad.addColorStop(0.5, '#eab308')
-    centerGrad.addColorStop(1, '#78350f')
-    ctx.fillStyle = centerGrad
+    ctx.arc(center, center, 24, 0, 2 * Math.PI)
+    ctx.fillStyle = '#060807'
     ctx.fill()
-    ctx.strokeStyle = '#fff'
-    ctx.lineWidth = 2.5
+    ctx.strokeStyle = '#17241d'
+    ctx.lineWidth = 2
     ctx.stroke()
 
-    ctx.font = '18px sans-serif'
+    ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillText('⚡', center, center)
     ctx.restore()
   }, [])
 
-  // Weighted random picker (strictly excludes 0-weight slices)
+  useEffect(() => {
+    drawWheel()
+  }, [drawWheel])
+
   const pickRandomReward = (): WheelSlice => {
     const validSlices = SLICES.filter((s) => s.weight > 0)
     const totalWeight = validSlices.reduce((sum, s) => sum + s.weight, 0)
@@ -240,15 +182,14 @@ export const Spin: React.FC = () => {
     return validSlices[0] || SLICES[0]
   }
 
-  // Fast & Snappy Spin Action (2.2s)
   const handleSpin = async () => {
     if (isSpinning) return
     if (spinsToday >= dailyLimit) {
-      toast.error(`Daily limit reached (${spinsToday}/${dailyLimit} spins used today). Resets at 00:00 UTC.`)
+      toast.error(`Daily limit reached (${spinsToday}/${dailyLimit} spins). Resets at 00:00 UTC.`)
       return
     }
     if (spinsLeft <= 0) {
-      toast.error('No spins left! For each invite you get 1 free spin.')
+      toast.error('No spins left! Invite friends for 1 free spin each.')
       return
     }
 
@@ -264,15 +205,13 @@ export const Spin: React.FC = () => {
     const sliceIndex = selectedReward.id
     const sliceAngle = 360 / SLICES.length
 
-    // Target landing under the top pointer
-    const extraSpins = 4 * 360 // 4 full rotations
+    const extraSpins = 4 * 360
     const targetSliceCenter = sliceIndex * sliceAngle + sliceAngle / 2
     const stopAngle = 360 - targetSliceCenter + 270
     const finalRotation = rotation + extraSpins + (stopAngle - (rotation % 360))
 
     setRotation(finalRotation)
 
-    // Spin animation duration: 2.2 seconds
     setTimeout(async () => {
       try {
         const res = await claimSpinReward(
@@ -307,8 +246,7 @@ export const Spin: React.FC = () => {
 
         if (refreshUser) refreshUser()
       } catch (err: any) {
-        const errorMsg = err?.response?.data?.error || 'Failed to claim spin reward'
-        toast.error(errorMsg)
+        toast.error(err?.response?.data?.error || 'Failed to claim spin reward')
         if (refreshUser) refreshUser()
       } finally {
         setIsSpinning(false)
@@ -316,12 +254,11 @@ export const Spin: React.FC = () => {
     }, 2200)
   }
 
-  // Share referral link to get +1 spin
   const handleShareReferral = () => {
     const botUser = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
     const refCode = user?.telegram_id || ''
     const refUrl = `https://t.me/${botUser}?start=${refCode}`
-    const shareText = encodeURIComponent(`🐝 Spin the Lucky Wheel on HashBee to win USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)
+    const shareText = encodeURIComponent(`⛏️ Spin the Lucky Wheel on HashBee to win USDT, GRAM & Mining Power! 🎁\n\n${refUrl}`)
     const tgUrl = `https://t.me/share/url?url=${refUrl}&text=${shareText}`
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
@@ -333,44 +270,39 @@ export const Spin: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-28 px-4 pt-4 text-stone-100 max-w-md mx-auto relative overflow-hidden">
-      {showConfetti && <ReactConfetti numberOfPieces={130} recycle={false} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999 }} />}
+    <div className="flex flex-col min-h-screen pb-28 px-4 pt-4 text-[#f8fafc] max-w-md mx-auto relative overflow-hidden bg-[#060807]">
+      {showConfetti && <ReactConfetti numberOfPieces={100} recycle={false} style={{ position: 'fixed', top: 0, left: 0, zIndex: 999 }} />}
 
       {/* Top Banner with Balance and Daily Limit Status */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-[#12231b] via-[#1a382b] to-[#12231b] border border-[#2c5743] rounded-2xl p-3.5 mb-3 shadow-xl">
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl animate-pulse">🎡</span>
-          <div>
-            <h1 className="text-sm font-black text-[#e6f0ec] tracking-wide uppercase">Lucky Honey Wheel</h1>
-            <p className="text-[11px] text-[#78a591]">1 free spin per invite • 10/day limit</p>
-          </div>
+      <div className="lux-card p-3.5 mb-3.5 flex items-center justify-between">
+        <div>
+          <h1 className="text-sm font-extrabold text-white uppercase tracking-wide">Lucky Wheel Arena</h1>
+          <p className="text-[11px] text-[#84948c] font-medium mt-0.5">1 free spin per invite • 10 daily max</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Daily limit badge */}
-          <div className="bg-[#0f1c16] border border-[#234535] px-2.5 py-1.5 rounded-xl text-center shadow-inner">
-            <span className="text-[8px] uppercase font-black text-amber-300/80 block">Today</span>
-            <span className={`text-xs font-black ${spinsToday >= dailyLimit ? 'text-rose-400' : 'text-stone-200'}`}>
+        <div className="flex items-center gap-1.5">
+          <div className="bg-[#080c0a] border border-[#17241d] px-2.5 py-1 rounded-xl text-center">
+            <span className="text-[8px] uppercase font-bold text-[#84948c] block">Today</span>
+            <span className={`text-xs font-mono font-bold ${spinsToday >= dailyLimit ? 'text-rose-400' : 'text-white'}`}>
               {spinsToday}/{dailyLimit}
             </span>
           </div>
-          {/* Spins left badge */}
-          <div className="bg-[#0f1c16] border border-[#234535] px-3 py-1.5 rounded-xl text-center shadow-inner">
-            <span className="text-[8px] uppercase font-black text-[#10b981] block">Spins</span>
-            <span className="text-base font-black text-amber-400">{spinsLeft}</span>
+          <div className="bg-[#080c0a] border border-[#17241d] px-3 py-1 rounded-xl text-center">
+            <span className="text-[8px] uppercase font-bold text-[#00f090] block">Spins</span>
+            <span className="text-sm font-mono font-black text-white">{spinsLeft}</span>
           </div>
         </div>
       </div>
 
-      {/* High-Quality Wheel Section */}
+      {/* High-Quality Minimalist Wheel Section */}
       <div className="relative flex flex-col items-center justify-center my-2">
-        {/* Top Pointer Indicator */}
-        <div className="absolute -top-3.5 z-30 flex flex-col items-center pointer-events-none drop-shadow-[0_4px_10px_rgba(251,191,36,0.9)]">
-          <div className="w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[24px] border-t-amber-400"></div>
+        {/* Pointer */}
+        <div className="absolute -top-3 z-30 flex flex-col items-center pointer-events-none">
+          <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-white"></div>
         </div>
 
-        {/* Wheel Container with 3D Depth & Lighting */}
+        {/* Wheel Container */}
         <div
-          className="relative w-[320px] h-[320px] rounded-full p-2 bg-gradient-to-b from-[#1b3d2c] via-[#0f2118] to-[#070e0a] shadow-[0_0_45px_rgba(16,185,129,0.35)] border-2 border-amber-400/30"
+          className="relative w-[308px] h-[308px] rounded-full p-1 bg-[#0d1411] border border-[#17241d] shadow-2xl"
           style={{
             transform: `rotate(${rotation}deg)`,
             transition: isSpinning ? 'transform 2.2s cubic-bezier(0.12, 0.8, 0.2, 1.0)' : 'none',
@@ -379,110 +311,60 @@ export const Spin: React.FC = () => {
           <canvas ref={canvasRef} style={{ width: '300px', height: '300px' }} className="rounded-full" />
         </div>
 
-        {/* Fast Spin Action Button */}
+        {/* High-Contrast Pure White Spin Button */}
         <button
           onClick={handleSpin}
           disabled={isSpinning || spinsLeft <= 0 || spinsToday >= dailyLimit}
-          className={`mt-5 w-full max-w-xs py-4 px-6 rounded-2xl font-black text-base uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-2xl flex items-center justify-center gap-2 ${
+          className={`mt-5 w-full max-w-xs py-3.5 px-6 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-xl flex items-center justify-center gap-2 ${
             spinsToday >= dailyLimit
-              ? 'bg-rose-950/60 text-rose-300 border border-rose-700/60 cursor-not-allowed'
+              ? 'bg-white/5 text-[#4d5c54] cursor-not-allowed border border-white/5'
               : spinsLeft > 0 && !isSpinning
-              ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-stone-950 hover:brightness-110 shadow-[0_0_25px_rgba(251,191,36,0.4)]'
-              : 'bg-stone-800 text-stone-500 cursor-not-allowed border border-stone-700'
+              ? 'btn-white'
+              : 'bg-white/5 text-[#4d5c54] cursor-not-allowed border border-white/5'
           }`}
         >
           {isSpinning ? (
-            <span className="flex items-center gap-2 text-stone-900">
-              <span className="w-4 h-4 border-2 border-stone-900 border-t-transparent rounded-full animate-spin"></span>
-              Fast Spinning...
-            </span>
+            <span>SPINNING...</span>
           ) : spinsToday >= dailyLimit ? (
-            <span>DAILY LIMIT REACHED ({dailyLimit}/{dailyLimit}) ⏳</span>
+            <span>DAILY LIMIT REACHED ({dailyLimit}/{dailyLimit})</span>
           ) : spinsLeft > 0 ? (
-            <span>SPIN NOW ({spinsLeft} Left) 🎰</span>
+            <span>SPIN WHEEL ({spinsLeft} Left)</span>
           ) : (
-            <span>No Spins Left (Invite Friends)</span>
+            <span>NO SPINS LEFT (INVITE FRIENDS)</span>
           )}
         </button>
       </div>
 
       {/* Won Reward Alert Card */}
       {wonReward && (
-        <div className="bg-gradient-to-br from-[#16382a] via-[#1b4232] to-[#10241c] border-2 border-amber-400 rounded-3xl p-4 mt-3 shadow-2xl text-center animate-fade-in">
-          <span className="text-3xl mb-1 block">{wonReward.icon}</span>
-          <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">Congratulations!</p>
-          <h3 className="text-xl font-black text-white mt-0.5">{wonReward.label}</h3>
-          <p className="text-xs text-emerald-300 font-medium mt-0.5">{wonReward.sublabel} credited!</p>
+        <div className="lux-card p-4 mt-3 text-center">
+          <span className="text-2xl mb-1 block">{wonReward.icon}</span>
+          <p className="text-[10px] font-extrabold text-[#00f090] uppercase tracking-widest">Reward Unlocked!</p>
+          <h3 className="text-lg font-black text-white mt-0.5">{wonReward.label}</h3>
+          <p className="text-xs text-[#84948c] font-medium mt-0.5">{wonReward.sublabel} credited instantly</p>
         </div>
       )}
 
       {/* Referral Viral Share */}
-      <div className="mt-4">
+      <div className="mt-3.5">
         <button
           onClick={handleShareReferral}
-          className="w-full bg-gradient-to-r from-[#142820] to-[#1b3b2e] hover:from-[#1b3b2e] hover:to-[#224c3b] border border-[#2d614b] p-3.5 rounded-2xl flex items-center justify-between transition-all duration-150 active:scale-[0.98] shadow-lg"
+          className="w-full lux-card p-3.5 flex items-center justify-between transition-all duration-150 active:scale-98"
         >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl p-2 bg-[#10241b] rounded-xl border border-[#234535]">👥</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-xl">👥</span>
             <div className="text-left">
-              <span className="text-sm font-black text-[#e6f0ec] block">For each invite you get 1 free spin</span>
-              <span className="text-[11px] text-[#60a5fa] font-semibold">Share your link ➔ Instant +1 spin on signup!</span>
+              <span className="text-xs font-black text-white block">Get 1 free spin for each invite</span>
+              <span className="text-[10px] text-[#84948c] font-medium">Share link ➔ Instant +1 spin per friend!</span>
             </div>
           </div>
-          <span className="text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-3.5 py-1.5 rounded-xl shadow">
+          <span className="text-[10px] font-black btn-surface px-3 py-1.5 rounded-lg">
             +1 SPIN
           </span>
         </button>
       </div>
-
-      {/* Recently Joined Friends Section */}
-      <div className="mt-4 bg-[#0d1713]/95 border border-[#1e362a] rounded-2xl p-3.5 shadow-inner">
-        <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-[#1b2f25]">
-          <span className="text-[11px] font-black uppercase tracking-wider text-stone-300 flex items-center gap-1.5">
-            <span>👥</span> New Invited Friends
-          </span>
-          <span className="text-[10px] font-bold text-[#10b981]">
-            {recentFriends.length} Invites
-          </span>
-        </div>
-
-        {recentFriends.length > 0 ? (
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {recentFriends.map((friend, idx) => (
-              <div
-                key={friend.id || idx}
-                className="flex items-center justify-between bg-[#12211a] px-3 py-2 rounded-xl border border-[#1d382b]"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-[#1a382b] flex items-center justify-center text-xs font-bold text-amber-300">
-                    🐝
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-stone-200 block">
-                      {friend.first_name || friend.username || 'Friend'}
-                    </span>
-                    <span className="text-[10px] text-stone-500">
-                      {friend.username ? `@${friend.username}` : 'Friend joined'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                  <span className="text-[10px] font-black text-emerald-400">+1 SPIN</span>
-                  <span className="text-[9px] text-emerald-300">✨</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 px-2">
-            <span className="text-2xl block mb-1">🎁</span>
-            <p className="text-xs font-bold text-stone-300">No new friends joined yet</p>
-            <p className="text-[11px] text-stone-500 mt-0.5">
-              Share your invite link above — for each new friend who signs up, you'll receive +1 free spin immediately!
-            </p>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
+
+export default Spin

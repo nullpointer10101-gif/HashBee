@@ -34,14 +34,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const copyMemo = () => {
     navigator.clipboard.writeText(userMemo)
     setCopiedMemo(true)
-    toast.success('Memo copied! Paste this in your transfer comment.')
+    toast.success('Memo copied!')
     setTimeout(() => setCopiedMemo(false), 2500)
   }
 
   const copyDepositAddress = () => {
     navigator.clipboard.writeText(depositAddress)
     setCopiedAddr(true)
-    toast.success('Official deposit address copied!')
+    toast.success('Deposit address copied!')
     setTimeout(() => setCopiedAddr(false), 2500)
   }
 
@@ -87,7 +87,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       toast.dismiss('verify-dep')
       await refreshUser()
       if (res?.credited && res.credited > 0) {
-        toast.success(`🎉 Detected & credited ${res.credited} deposit(s)! Mining power upgraded!`)
+        toast.success(`🎉 Credited ${res.credited} deposit(s)! Computing power upgraded!`)
         onSuccess?.()
         onClose()
       } else {
@@ -95,235 +95,170 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       }
     } catch (err: any) {
       toast.dismiss('verify-dep')
-      toast.error('Could not verify yet. TON transfers usually arrive in 5–15 seconds!')
+      toast.error('TON transfers arrive in 5–15 seconds!')
     } finally {
       setVerifying(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 animate-in fade-in duration-200">
-      <div className="bg-[#121c19] border border-[#273a33] rounded-3xl w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-stone-100 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="lux-card w-full max-w-sm max-h-[92vh] overflow-y-auto p-5 text-white shadow-2xl relative">
         {step === 'calculate' ? (
           <div>
-            <div className="text-center mb-5 relative">
+            <div className="text-center mb-4 relative">
               <button
                 onClick={onClose}
-                className="absolute left-0 top-0 text-stone-400 hover:text-white p-1"
+                className="absolute left-0 top-0 text-[#84948c] hover:text-white p-1"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
+                ✕
               </button>
-              <h2 className="text-lg font-black uppercase tracking-wider">ADD GHS / DEPOSIT</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider">UPGRADE COMPUTING POWER</h2>
             </div>
 
-            <div className="mb-4">
-              <label className="text-[11px] font-extrabold text-stone-400 block mb-1.5 uppercase tracking-wide">
-                Amount to deposit (GRAM)
+            <div className="mb-3.5">
+              <label className="text-[10px] font-extrabold text-[#84948c] block mb-1 uppercase tracking-wide">
+                Amount to Deposit (TON)
               </label>
-              <div className="zentorno-input p-3.5 flex items-center justify-between">
+              <div className="lux-input p-3 flex items-center justify-between">
                 <input
                   type="number"
                   min="0.1"
                   step="0.1"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full bg-transparent text-xl font-black text-stone-100 focus:outline-none"
+                  className="w-full bg-transparent text-lg font-black text-white outline-none font-mono"
                 />
-                <span className="text-xs font-black text-stone-400 ml-2 whitespace-nowrap">
-                  GRAM
+                <span className="text-xs font-black text-[#84948c] ml-2">
+                  TON
                 </span>
               </div>
-              <div className="text-[10px] text-stone-400 font-semibold mt-1">
-                Minimum deposit: 0.10 GRAM
+              <div className="text-[9px] text-[#84948c] font-medium mt-1">
+                Minimum deposit: 0.10 TON
               </div>
             </div>
 
-            <div className="bg-[#8ba89c] text-[#0f1614] rounded-2xl py-3 px-4 text-center mb-4 font-black text-xs uppercase tracking-wide shadow-sm">
-              +5% first deposit bonus!
-            </div>
-
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 text-center mb-4">
-              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">
-                YOU WILL GET
+            <div className="bg-[#080c0a] border border-[#17241d] rounded-xl p-3.5 text-center mb-3">
+              <div className="text-[9px] font-extrabold text-[#84948c] uppercase tracking-widest">
+                ESTIMATED POWER
               </div>
-              <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider mt-1">
-                TOTAL GHS POWER
+              <div className="text-2xl font-black text-white mt-0.5 font-mono">
+                {totalGhsPower.toFixed(1)} <span className="text-xs font-bold text-[#00f090]">GHS</span>
               </div>
-              <div className="text-3xl font-black text-stone-100 mt-1">
-                {totalGhsPower.toFixed(1)} GHS
-              </div>
-              <div className="text-[11px] font-bold text-[#86a397] mt-1 flex items-center justify-center gap-1">
-                🎁 +5% first deposit bonus applied!
+              <div className="text-[10px] font-bold text-[#00f090] mt-0.5">
+                ⚡ +5% deposit power bonus applied!
               </div>
             </div>
 
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-4 mb-4">
-              <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest text-center mb-3">
-                POTENTIAL EARNINGS
+            <div className="bg-[#080c0a] border border-[#17241d] rounded-xl p-3 mb-4">
+              <div className="text-[9px] font-extrabold text-[#84948c] uppercase tracking-widest text-center mb-2">
+                PROJECTED REVENUE
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER SECOND
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#060807] border border-[#17241d] rounded-lg p-2">
+                  <div className="text-[8px] font-bold text-[#84948c] uppercase">PER DAY</div>
+                  <div className="text-xs font-black text-white font-mono mt-0.5">
+                    {modalEarningsPerDay.toFixed(4)} USDT
                   </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5 truncate">
-                    {modalEarningsPerSecond.toFixed(8)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
 
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER DAY
+                <div className="bg-[#060807] border border-[#17241d] rounded-lg p-2">
+                  <div className="text-[8px] font-bold text-[#84948c] uppercase">PER MONTH</div>
+                  <div className="text-xs font-black text-white font-mono mt-0.5">
+                    {modalEarningsPerMonth.toFixed(2)} USDT
                   </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerDay.toFixed(4)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
                 </div>
-
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER WEEK
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerWeek.toFixed(4)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-
-                <div className="bg-[#121b18] border border-[#22332d] rounded-xl p-2.5">
-                  <div className="text-[9px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    PER MONTH
-                  </div>
-                  <div className="text-xs font-black text-stone-100 mt-0.5">
-                    {modalEarningsPerMonth.toFixed(2)}
-                  </div>
-                  <div className="text-[9px] font-bold text-stone-500">GRAM</div>
-                </div>
-              </div>
-
-              <div className="text-[9.5px] italic text-stone-400 text-center mt-3 leading-relaxed">
-                These GHS last 30 days. Earnings: 0.0500 GRAM per day per 100 GHS (0.50 GRAM / 1,000 GHS).
               </div>
             </div>
 
             <button
               onClick={() => setStep('pay')}
-              className="w-full py-4 rounded-2xl bg-[#8ba89c] hover:bg-[#9cb8ac] text-[#0f1614] font-black text-sm uppercase tracking-wider mb-2.5 shadow-md active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider mb-2 shadow-lg active:scale-95 transition-all"
             >
-              PAY ORDER
+              PROCEED TO PAYMENT
             </button>
 
             <button
               onClick={onClose}
-              className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+              className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider"
             >
-              BACK
+              CANCEL
             </button>
           </div>
         ) : (
           <div>
             <div className="text-center mb-3">
-              <h2 className="text-lg font-black uppercase tracking-wider">PAYMENT ORDER</h2>
-              <p className="text-xs text-stone-400 mt-0.5">Send exact GRAM on TON Blockchain</p>
+              <h2 className="text-sm font-extrabold uppercase tracking-wider">PAYMENT DETAILS</h2>
+              <p className="text-[10px] text-[#84948c] mt-0.5">Send exact TON on blockchain</p>
             </div>
 
-            <div className="border border-[#2a3c35] bg-[#16231f] rounded-2xl p-3.5 mb-3 space-y-2.5">
+            <div className="bg-[#080c0a] border border-[#17241d] rounded-xl p-3.5 mb-3 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-stone-400">Network</span>
-                <span className="text-xs font-black text-[#93b3a6] bg-[#1f2d28] px-2 py-0.5 rounded-lg border border-[#2e423b]">
-                  TON / GRAM
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-stone-400">Amount</span>
-                <span className="text-base font-black text-white">{numDeposit.toFixed(2)} GRAM</span>
+                <span className="text-[10px] font-bold text-[#84948c] uppercase">Amount</span>
+                <span className="text-sm font-black text-white font-mono">{numDeposit.toFixed(2)} TON</span>
               </div>
 
-              <div className="border-t border-[#253530] pt-2.5">
-                <div className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider mb-1">
-                  Official Deposit Address
+              <div className="border-t border-[#17241d] pt-2">
+                <div className="text-[9px] font-extrabold text-[#84948c] uppercase mb-1">
+                  Deposit Address
                 </div>
-                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5">
-                  <span className="text-[10px] font-mono text-stone-200 truncate flex-1">
-                    {depositAddress}
-                  </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={depositAddress}
+                    className="flex-1 bg-[#060807] text-[10px] text-white font-mono px-2.5 py-1.5 rounded-lg border border-[#17241d] outline-none truncate"
+                  />
                   <button
                     onClick={copyDepositAddress}
-                    className="p-1.5 bg-[#93b3a6] text-[#0f1614] rounded-lg font-bold text-[11px] shrink-0"
+                    className="px-2.5 py-1.5 btn-surface text-[10px] font-bold rounded-lg"
                   >
-                    {copiedAddr ? 'COPIED!' : 'COPY'}
+                    {copiedAddr ? '✓' : 'Copy'}
                   </button>
                 </div>
               </div>
 
-              <div className="bg-[#241c10] border border-[#543b18] rounded-xl p-2.5">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
-                    REQUIRED MEMO / COMMENT
-                  </span>
-                  <span className="text-[9px] font-bold text-amber-400">MUST INCLUDE</span>
+              <div>
+                <div className="text-[9px] font-extrabold text-[#00f090] uppercase mb-1 font-bold">
+                  Transfer Memo (REQUIRED)
                 </div>
-                <div className="zentorno-input p-2 flex items-center justify-between gap-1.5 border-amber-500/40">
-                  <span className="text-xs font-mono font-black text-amber-300">
-                    {userMemo}
-                  </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={userMemo}
+                    className="flex-1 bg-[#060807] text-[11px] text-[#00f090] font-mono font-bold px-2.5 py-1.5 rounded-lg border border-[#00f090]/40 outline-none"
+                  />
                   <button
                     onClick={copyMemo}
-                    className="p-1.5 bg-amber-400 hover:bg-amber-300 text-stone-900 rounded-lg font-black text-[11px] shrink-0"
+                    className="px-2.5 py-1.5 bg-[#00f090]/15 text-[#00f090] text-[10px] font-bold rounded-lg border border-[#00f090]/30"
                   >
-                    {copiedMemo ? 'COPIED!' : 'COPY MEMO'}
+                    {copiedMemo ? '✓' : 'Copy'}
                   </button>
-                </div>
-                <div className="text-[9.5px] text-amber-200/80 font-medium mt-1 leading-tight">
-                  ⚠️ Paste this in your wallet comment so power is credited automatically!
                 </div>
               </div>
             </div>
 
             <button
               onClick={handleOpenTonkeeper}
-              className="w-full py-3.5 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider mb-2 shadow-lg flex items-center justify-center gap-1.5"
             >
-              <span>💎</span> PAY IN TONKEEPER (AUTO-FILL)
+              <span>💎 1-CLICK PAY VIA TONKEEPER</span>
             </button>
-
-            <button
-              onClick={handleOpenAnyWallet}
-              className="w-full py-2.5 rounded-2xl bg-[#182621] hover:bg-[#20332c] text-[#93b3a6] border border-[#2b4137] font-bold text-xs uppercase tracking-wider mb-3 flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-            >
-              <span>⚡</span> OTHER WALLET (TONHUB / MYTONWALLET)
-            </button>
-
-            <div className="mb-3 pt-2 border-t border-[#23332d]">
-              <label className="text-[10.5px] font-bold text-stone-400 block mb-1">
-                Sent without memo? (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="Paste your TON wallet address (UQ... or 0:...)"
-                value={senderAddress}
-                onChange={(e) => setSenderAddress(e.target.value)}
-                className="w-full zentorno-input p-2.5 text-xs font-mono text-stone-200 placeholder:text-stone-600 rounded-xl"
-              />
-            </div>
 
             <button
               onClick={handleVerifyDeposit}
               disabled={verifying}
-              className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2 active:scale-95 shadow-md"
+              className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider mb-2"
             >
-              {verifying ? 'CHECKING BLOCKCHAIN...' : '✅ I HAVE SENT PAYMENT (VERIFY NOW)'}
+              {verifying ? 'VERIFYING...' : '✓ I HAVE PAID — VERIFY'}
             </button>
 
             <button
               onClick={() => setStep('calculate')}
-              className="w-full py-2.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
+              className="w-full py-2.5 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs uppercase tracking-wider"
             >
-              BACK TO CALCULATOR
+              BACK
             </button>
           </div>
         )}
@@ -331,3 +266,5 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     </div>
   )
 }
+
+export default DepositModal

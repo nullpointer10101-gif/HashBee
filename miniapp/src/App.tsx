@@ -35,7 +35,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#101715] text-[#e6f0ec] font-sans antialiased selection:bg-[#93b3a6] selection:text-[#0f1614] relative">
+    <div className="min-h-screen bg-[#060807] text-[#f8fafc] font-sans antialiased selection:bg-[#00f090] selection:text-[#000000] relative">
       {/* 🔒 1-TIME VIP CHANNEL VERIFICATION MODAL OVERLAY FOR EVERY TELEGRAM ACCOUNT */}
       {!isVerified && (!activeTgId || !verifiedMap[String(activeTgId)]) && (
         <PrivateGroupGatekeeper

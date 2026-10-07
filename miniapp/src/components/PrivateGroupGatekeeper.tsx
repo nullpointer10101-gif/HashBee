@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 export const PRIVATE_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
@@ -101,166 +101,105 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
       return
     }
 
-    triggerHaptic('medium')
-    setErrorMsg(null)
+    triggerHaptic('light')
     setIsVerifying(true)
+    setErrorMsg(null)
 
-    // Verification check delay
     setTimeout(() => {
       setIsVerifying(false)
       setVerifiedSuccess(true)
       triggerSuccessHaptic()
 
-      // Save strictly for THIS specific Telegram Account ID
       markAccountVerified(currentTgId)
 
       setTimeout(() => {
         if (onVerified) {
           onVerified()
         }
-      }, 600)
-    }, 1100)
+      }, 700)
+    }, 1200)
   }
 
-  useEffect(() => {
-    if (!currentTgId) return
-    try {
-      if (localStorage.getItem(`hb_pvt_clicked_v3_${currentTgId}`) === 'true') {
-        setHasClickedLink(true)
-      }
-    } catch {}
-  }, [currentTgId])
-
   return (
-    <div className="fixed inset-0 z-[99999] bg-[#0a0f0d] text-[#e6f0ec] flex flex-col justify-between items-center px-5 py-8 overflow-y-auto select-none">
-      {/* Background ambient glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-[#10b981]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-80 h-80 bg-[#f59e0b]/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Top Header */}
-      <div className="relative z-10 w-full max-w-sm text-center pt-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#162923] border border-[#10b981]/40 shadow-[0_0_20px_rgba(16,185,129,0.15)] mb-4">
-          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-[#10b981]">
-            Required Verification
-          </span>
+    <div className="fixed inset-0 z-[99999] bg-[#060807]/95 backdrop-blur-xl flex flex-col items-center justify-center px-4 py-6 text-center select-none overflow-y-auto">
+      {/* Container Card */}
+      <div className="lux-card max-w-sm w-full p-6 text-center relative overflow-hidden shadow-2xl">
+        <div className="w-12 h-12 rounded-2xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center text-2xl mx-auto mb-3">
+          📢
         </div>
 
-        {/* VIP Icon */}
-        <div className="relative mx-auto w-20 h-20 rounded-3xl bg-gradient-to-br from-[#1b2a24] to-[#121c18] border border-[#10b981]/30 flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] mb-4">
-          <div className="text-4xl animate-bounce">📢</div>
-          <div className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-[#f59e0b] text-[#000] font-black text-[9px] uppercase tracking-wider shadow">
-            VIP
-          </div>
-        </div>
-
-        <h1 className="text-2xl font-black tracking-tight text-white mb-2 leading-tight">
-          Join VIP Channel <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#10b981] to-[#34d399]">
-            To Enter HashBee
-          </span>
+        <h1 className="text-lg font-black text-white mb-1 uppercase tracking-wide">
+          Official Community
         </h1>
-
-        <p className="text-xs text-stone-400 leading-relaxed max-w-xs mx-auto mb-6">
-          To start mining USDT, spin rewards & withdrawals, you must send a request to join our official private channel.
+        <p className="text-[11px] text-[#84948c] mb-5 leading-relaxed">
+          Send a request to join our official private channel to unlock instant withdrawals and live yield mining.
         </p>
 
         {/* Steps Box */}
-        <div className="w-full bg-[#131c18]/90 border border-[#23352e] rounded-2xl p-4 text-left backdrop-blur-md mb-4 shadow-lg space-y-3">
+        <div className="bg-[#080c0a] border border-[#17241d] rounded-2xl p-4 text-left space-y-3 mb-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-[#10b981]/20 border border-[#10b981]/40 flex items-center justify-center shrink-0 mt-0.5 text-xs font-black text-[#10b981]">
+            <div className="w-5 h-5 rounded-full bg-white/10 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
               1
             </div>
             <div>
               <p className="text-xs font-bold text-white">Send Join Request</p>
-              <p className="text-[11px] text-stone-400">
-                Tap button below & click <b>"Request to Join"</b> in Telegram.
-              </p>
+              <p className="text-[10px] text-[#84948c]">Tap button below and click "Request to Join".</p>
             </div>
           </div>
 
-          <div className="h-[1px] bg-[#1e2f28] w-full" />
+          <div className="h-[1px] bg-[#17241d] w-full" />
 
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-[#f59e0b]/20 border border-[#f59e0b]/40 flex items-center justify-center shrink-0 mt-0.5 text-xs font-black text-[#f59e0b]">
+            <div className="w-5 h-5 rounded-full bg-white/10 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
               2
             </div>
             <div>
-              <p className="text-xs font-bold text-white">Verify & Unlock Miner</p>
-              <p className="text-[11px] text-stone-400">
-                Return here and tap <b>"Verify & Enter"</b> to get full access.
-              </p>
+              <p className="text-xs font-bold text-white">Verify & Enter Terminal</p>
+              <p className="text-[10px] text-[#84948c]">Return here and tap "Verify & Enter".</p>
             </div>
           </div>
         </div>
 
-        {/* Error Warning if not clicked */}
         {errorMsg && (
-          <div className="p-3 bg-red-950/50 border border-red-500/40 rounded-xl text-xs text-red-300 font-semibold mb-3 animate-shake">
+          <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-[11px] text-rose-300 font-bold mb-3">
             {errorMsg}
           </div>
         )}
-      </div>
 
-      {/* Action Buttons Section */}
-      <div className="relative z-10 w-full max-w-sm space-y-3 pb-2">
-        {/* Step 1: Open Channel Link */}
-        <button
-          onClick={handleOpenChannel}
-          className={`w-full py-4 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-between transition-all active:scale-[0.98] cursor-pointer ${
-            hasClickedLink
-              ? 'bg-[#182a23] border border-[#10b981]/50 text-[#34d399]'
-              : 'bg-gradient-to-r from-[#0088cc] to-[#00a8ff] text-white shadow-[0_4px_25px_rgba(0,136,204,0.35)]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="text-lg">📢</span>
-            <span className="text-left font-extrabold">
-              {hasClickedLink ? '1. Request Sent (Tap to re-open)' : '1. Send Join Request'}
-            </span>
-          </div>
-          {hasClickedLink ? (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#10b981]/20 text-[#10b981] font-bold border border-[#10b981]/30">
-              ✓ Done
-            </span>
-          ) : (
-            <span className="text-lg font-bold">➔</span>
-          )}
-        </button>
+        {/* Buttons */}
+        <div className="space-y-2.5">
+          <button
+            onClick={handleOpenChannel}
+            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-between ${
+              hasClickedLink
+                ? 'bg-[#080c0a] border border-[#00f090]/40 text-[#00f090]'
+                : 'btn-surface text-white'
+            }`}
+          >
+            <span>{hasClickedLink ? '1. Request Sent (Re-open)' : '1. Send Join Request'}</span>
+            <span>➔</span>
+          </button>
 
-        {/* Step 2: Verify and Enter Button */}
-        <button
-          onClick={handleVerifyAndEnter}
-          disabled={isVerifying || verifiedSuccess}
-          className={`w-full py-4 px-5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
-            verifiedSuccess
-              ? 'bg-[#10b981] text-[#0c1210] shadow-[0_4px_30px_rgba(16,185,129,0.4)]'
-              : hasClickedLink
-              ? 'bg-gradient-to-r from-[#10b981] to-[#059669] text-[#091511] shadow-[0_4px_30px_rgba(16,185,129,0.3)] animate-pulse cursor-pointer'
-              : 'bg-[#1a2622] text-stone-500 border border-[#273933] cursor-not-allowed opacity-90'
-          }`}
-        >
-          {isVerifying ? (
-            <>
-              <div className="w-4 h-4 border-2 border-[#091511] border-t-transparent rounded-full animate-spin" />
-              <span>Verifying Request...</span>
-            </>
-          ) : verifiedSuccess ? (
-            <>
-              <span>🎉</span>
-              <span>Access Granted! Entering Miner...</span>
-            </>
-          ) : (
-            <>
-              <span>⛏️</span>
-              <span>2. Verify & Enter Miner</span>
-            </>
-          )}
-        </button>
-
-        <p className="text-[10px] text-center text-stone-500 uppercase tracking-widest pt-1">
-          🔒 Required 1-time verification for each Telegram account
-        </p>
+          <button
+            onClick={handleVerifyAndEnter}
+            disabled={isVerifying || verifiedSuccess}
+            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${
+              verifiedSuccess
+                ? 'btn-white'
+                : hasClickedLink
+                ? 'btn-white'
+                : 'bg-white/5 text-[#4d5c54] cursor-not-allowed border border-white/5'
+            }`}
+          >
+            {isVerifying ? (
+              <span>VERIFYING REQUEST...</span>
+            ) : verifiedSuccess ? (
+              <span>✓ ACCESS GRANTED</span>
+            ) : (
+              <span>2. VERIFY & ENTER MINER</span>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )

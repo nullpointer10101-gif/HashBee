@@ -89,12 +89,12 @@ export const Withdraw: React.FC = () => {
     }
 
     if (user && numAmount > user.honey_balance) {
-      toast.error(`Insufficient Balance: Available is ${user.honey_balance.toFixed(4)} ${selectedCrypto === 'GRAM' ? 'GRAM' : 'USDT'} (Requested: ${numAmount.toFixed(4)}). Collect from your Miner to earn more!`)
+      toast.error(`Insufficient Balance: Available is ${user.honey_balance.toFixed(4)} ${selectedCrypto === 'GRAM' ? 'GRAM' : 'USDT'}`)
       await refreshUser()
       return
     }
 
-    // Check Lifetime Withdrawal Qualification (Open 1 Crate OR 1 Friend Opens Crate OR 1-Time Granted)
+    // Check Lifetime Withdrawal Qualification
     const cratesOpened = user?.crates_opened_count || 0
     const friendCratesOpened = user?.friend_crates_opened_count || 0
     const isOneTimeGranted = user?.one_time_withdrawal_granted || false
@@ -112,12 +112,11 @@ export const Withdraw: React.FC = () => {
       await refreshUser()
       setWallet('')
       setAmount('')
-      // Switch to history tab to view pending payout
       switchTab('history')
     } catch (err: any) {
       await refreshUser()
       const errMsg = err?.response?.data?.error || 'Withdrawal failed'
-      if (errMsg.includes('QUALIFICATION_REQUIRED') || errMsg.includes('Mystery Crate') || errMsg.includes('friend')) {
+      if (errMsg.includes('QUALIFICATION_REQUIRED') || errMsg.includes('Mystery Crate') || errMsg.includes('friend') || errMsg.includes('Plan')) {
         setShowQualifyModal(true)
       } else {
         toast.error(errMsg)
@@ -129,7 +128,7 @@ export const Withdraw: React.FC = () => {
 
   const handleReinvest = async () => {
     if (!user || user.honey_balance < 1.0) {
-      toast.error(`Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Your current balance is ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT. Collect honey from your miner!`)
+      toast.error(`Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Current balance: ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT`)
       return
     }
 
@@ -140,138 +139,129 @@ export const Withdraw: React.FC = () => {
       await refreshUser()
     } catch (err: any) {
       await refreshUser()
-      const errMsg = err?.response?.data?.error || 'Reinvestment failed'
-      toast.error(errMsg)
+      toast.error(err?.response?.data?.error || 'Reinvestment failed')
     } finally {
       setReinvesting(false)
     }
   }
 
-  const userUsdtBalance = user ? user.honey_balance.toFixed(7) : '0.0000000'
+  const userUsdtBalance = user ? user.honey_balance.toFixed(4) : '0.0000'
 
   return (
-    <div className="pb-24 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      <div className="text-center mb-5">
-        <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider">
-          WALLET & CASHOUT
+    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+      <div className="text-center mb-4">
+        <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+          Wallet & Cashout
         </h1>
-        <p className="text-xs font-semibold text-stone-400 mt-1">
-          Fast crypto cashouts & transaction history
+        <p className="text-[11px] font-medium text-[#84948c] mt-0.5">
+          Fast crypto cashouts & transaction ledger
         </p>
       </div>
 
       {/* Tabs Switcher */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-[#131d1a] border border-[#273a33] rounded-2xl mb-4 shadow-sm">
+      <div className="flex bg-[#0d1411] p-1 rounded-2xl border border-[#17241d] mb-4 shadow-sm">
         <button
           onClick={() => switchTab('withdraw')}
-          className={`py-3 px-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'withdraw'
-              ? 'bg-[#93b3a6] text-[#0f1614] shadow-md scale-[1.01]'
-              : 'text-stone-400 hover:text-white'
+              ? 'bg-white text-black shadow-md'
+              : 'text-[#84948c] hover:text-white'
           }`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          WITHDRAW
+          <span>WITHDRAW</span>
         </button>
 
         <button
           onClick={() => switchTab('history')}
-          className={`py-3 px-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'history'
-              ? 'bg-[#93b3a6] text-[#0f1614] shadow-md scale-[1.01]'
-              : 'text-stone-400 hover:text-white'
+              ? 'bg-white text-black shadow-md'
+              : 'text-[#84948c] hover:text-white'
           }`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          HISTORY
+          <span>HISTORY</span>
         </button>
       </div>
 
       {activeTab === 'withdraw' ? (
         <>
-          <div className="zentorno-card p-5 mb-4 text-center">
-            <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-widest">
-              YOUR {t('balance_available', 'AVAILABLE BALANCE')}
+          {/* Balance Card */}
+          <div className="lux-card p-5 mb-3.5 text-center">
+            <div className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-widest">
+              {t('balance_available', 'AVAILABLE BALANCE')}
             </div>
-            <div className="text-3xl font-black text-stone-100 mt-1 mb-4">
-              {userUsdtBalance} USDT
+            <div className="text-3xl font-black text-white mt-1 mb-4 font-mono">
+              {userUsdtBalance} <span className="text-base text-[#00f090] font-sans">USDT</span>
             </div>
 
             <button
               onClick={handleReinvest}
               disabled={reinvesting}
-              className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+              className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
-              <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              {reinvesting ? 'REINVESTING...' : 'REINVEST BALANCE (MIN 1 USDT = 50 GHS)'}
+              {reinvesting ? 'REINVESTING...' : '⚡ REINVEST BALANCE (MIN 1 USDT = 50 GHS)'}
             </button>
           </div>
 
-          <form onSubmit={handleWithdraw} className="zentorno-card p-5 mb-4">
-            <div className="mb-5">
-              <label className="text-[11px] font-extrabold text-stone-400 block mb-2 uppercase tracking-wide">
-                Withdrawal Currency (Select One)
+          <form onSubmit={handleWithdraw} className="lux-card p-5 mb-3.5 space-y-4">
+            <div>
+              <label className="text-[10px] font-extrabold text-[#84948c] block mb-2 uppercase tracking-wide">
+                Withdrawal Currency
               </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-[#131d1a] border border-[#273a33] rounded-2xl">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[#080c0a] border border-[#17241d] rounded-2xl">
                 <button
                   type="button"
                   onClick={() => setSelectedCrypto('USDT_BSC')}
-                  className={`py-3 px-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
+                  className={`py-2.5 px-2 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
                     selectedCrypto === 'USDT_BSC'
-                      ? 'bg-[#93b3a6] text-[#0f1614] shadow-md scale-[1.02]'
-                      : 'text-stone-400 hover:text-white'
+                      ? 'bg-white text-black shadow-md'
+                      : 'text-[#84948c] hover:text-white'
                   }`}
                 >
                   <span>USDT</span>
-                  <span className="text-[9px] font-bold opacity-80">BSC (BEP-20)</span>
+                  <span className="text-[9px] opacity-70">BSC (BEP-20)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedCrypto('GRAM')}
-                  className={`py-3 px-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
+                  className={`py-2.5 px-2 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
                     selectedCrypto === 'GRAM'
-                      ? 'bg-[#93b3a6] text-[#0f1614] shadow-md scale-[1.02]'
-                      : 'text-stone-400 hover:text-white'
+                      ? 'bg-white text-black shadow-md'
+                      : 'text-[#84948c] hover:text-white'
                   }`}
                 >
                   <span>GRAM</span>
-                  <span className="text-[9px] font-bold opacity-80">GRAM Network</span>
+                  <span className="text-[9px] opacity-70">TON Mainnet</span>
                 </button>
               </div>
             </div>
 
-            <div className="mb-4 bg-[#1f2d28] border border-[#2e423b] rounded-xl py-2 px-3 flex items-center justify-between text-xs">
-              <span className="text-stone-400 font-bold">Selected Network:</span>
-              <span className="font-black text-[#93b3a6]">
+            <div className="bg-[#080c0a] border border-[#17241d] rounded-xl py-2 px-3 flex items-center justify-between text-xs">
+              <span className="text-[#84948c] font-bold">Network:</span>
+              <span className="font-extrabold text-[#00f090]">
                 {selectedCrypto === 'USDT_BSC' ? 'BNB Smart Chain (BEP-20)' : 'GRAM Network (TON)'}
               </span>
             </div>
 
-            <div className="mb-4">
-              <label className="text-xs font-extrabold text-stone-300 block mb-2">
-                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM ' + t('destination_wallet', 'Wallet Address')}
+            <div>
+              <label className="text-[10px] font-extrabold text-[#84948c] uppercase block mb-1.5">
+                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM Destination Address'}
               </label>
               <input
                 type="text"
-                placeholder={selectedCrypto === 'USDT_BSC' ? '0x... (42 characters BSC address)' : 'Enter your GRAM address'}
+                placeholder={selectedCrypto === 'USDT_BSC' ? '0x... (42 characters BSC address)' : 'Enter TON/GRAM address'}
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
-                className="w-full zentorno-input px-4 py-3.5 text-xs font-mono font-medium focus:outline-none focus:border-[#93b3a6]"
+                className="w-full lux-input px-3.5 py-3 text-xs font-mono font-medium outline-none"
               />
             </div>
 
-            <div className="mb-1">
-              <label className="text-xs font-extrabold text-stone-300 block mb-2">
-                Amount to withdraw
+            <div>
+              <label className="text-[10px] font-extrabold text-[#84948c] uppercase block mb-1.5">
+                Amount to Withdraw
               </label>
-              <div className="zentorno-input px-4 py-3 flex items-center justify-between">
+              <div className="lux-input px-3.5 py-2.5 flex items-center justify-between">
                 <input
                   type="number"
                   step="0.01"
@@ -279,33 +269,33 @@ export const Withdraw: React.FC = () => {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-transparent text-sm font-extrabold text-stone-100 focus:outline-none"
+                  className="w-full bg-transparent text-sm font-extrabold text-white outline-none font-mono"
                 />
-                <span className="text-xs font-black text-stone-300 ml-2">
+                <span className="text-xs font-black text-[#84948c] ml-2">
                   {selectedCrypto === 'USDT_BSC' ? 'USDT' : 'GRAM'}
                 </span>
               </div>
+              <div className="text-[10px] font-medium text-[#84948c] mt-1.5">
+                Minimum withdrawal: {minWithdrawal.toFixed(2)} USDT
+              </div>
             </div>
 
-            <div className="text-[11px] font-semibold text-stone-400 mb-4 mt-1">
-              Minimum withdrawal is {minWithdrawal.toFixed(2)} USDT
-            </div>
-
+            {/* High-Contrast Pure White Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 rounded-2xl zentorno-btn-primary font-black text-sm uppercase tracking-wider shadow-md active:scale-95"
+              className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all"
             >
               {submitting ? 'PROCESSING...' : `WITHDRAW ${selectedCrypto === 'USDT_BSC' ? 'USDT (BSC)' : 'GRAM'}`}
             </button>
 
-            <div className="mt-3 p-3 rounded-xl bg-[#16231e] border border-[#273a33] text-[10.5px] text-stone-400 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-stone-300">
+            <div className="p-3 rounded-xl bg-[#080c0a] border border-[#17241d] text-[11px] text-[#84948c] space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-white">
                 <span>🛡️</span>
-                <span>Earnings & Profit Withdrawal</span>
+                <span>Protected Automated Settlements</span>
               </div>
-              <p className="leading-tight text-stone-400">
-                You can withdraw all earnings from <b>Cloud Mining</b>, <b>Lucky Spins</b>, <b>Daily Mining Plans</b>, and <b>Referrals</b>! Deposited funds power your active contracts and yield plans.
+              <p className="leading-snug">
+                You can withdraw all profits from Cloud Mining, 24H Yield Plans, Spin rewards, and Referrals.
               </p>
             </div>
           </form>
@@ -314,34 +304,31 @@ export const Withdraw: React.FC = () => {
         /* History Tab */
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1 mb-2">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-stone-400">
-              WITHDRAWAL REQUESTS
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#84948c]">
+              WITHDRAWAL HISTORY
             </span>
             <button
               onClick={loadHistory}
               disabled={loadingHistory}
-              className="text-[11px] font-bold text-[#93b3a6] hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#00f090] hover:underline flex items-center gap-1"
             >
-              <svg className={`w-3.5 h-3.5 ${loadingHistory ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
               REFRESH
             </button>
           </div>
 
           {loadingHistory ? (
-            <div className="zentorno-card p-8 text-center text-stone-400">
-              <div className="w-8 h-8 border-3 border-[#93b3a6] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <div className="lux-card p-8 text-center text-[#84948c]">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
               <p className="text-xs font-bold uppercase tracking-wider">Loading history...</p>
             </div>
           ) : history.length === 0 ? (
-            <div className="zentorno-card p-8 text-center text-stone-400">
+            <div className="lux-card p-8 text-center text-[#84948c]">
               <div className="text-3xl mb-2">📜</div>
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-300">No withdrawals yet</p>
-              <p className="text-[11px] text-stone-500 mt-1">Your payout requests and statuses will show up here.</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-white">No withdrawals yet</p>
+              <p className="text-[11px] text-[#84948c] mt-1">Your payout requests and blockchain proofs will show up here.</p>
               <button
                 onClick={() => switchTab('withdraw')}
-                className="mt-4 px-4 py-2 rounded-xl zentorno-btn-primary font-black text-xs uppercase tracking-wider"
+                className="mt-4 px-4 py-2.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider"
               >
                 REQUEST WITHDRAWAL
               </button>
@@ -368,35 +355,35 @@ export const Withdraw: React.FC = () => {
                 : 'N/A'
 
               return (
-                <div key={item.id} className="zentorno-card p-4 flex flex-col gap-2">
+                <div key={item.id} className="lux-card p-3.5 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-black text-stone-100">
+                      <span className="text-sm font-black text-white font-mono">
                         {Number(item.amount_usd || item.amount_honey || 0).toFixed(2)}
                       </span>
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-[#1d2b26] text-[#93b3a6] border border-[#2e423b]">
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-[#080c0a] text-[#84948c] border border-[#17241d]">
                         {item.payout_method || 'GRAM'}
                       </span>
                     </div>
 
                     <span
-                      className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                      className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full ${
                         isApproved
-                          ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+                          ? 'bg-[#00f090]/15 text-[#00f090] border border-[#00f090]/30'
                           : isRejected
-                          ? 'bg-rose-950/80 text-rose-400 border border-rose-800/60'
-                          : 'bg-amber-950/80 text-amber-400 border border-amber-800/60'
+                          ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                          : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                       }`}
                     >
-                      {isApproved ? '✅ COMPLETED' : isRejected ? '❌ REJECTED' : '⏳ PENDING'}
+                      {isApproved ? '✓ COMPLETED' : isRejected ? '✕ REJECTED' : '⏳ PENDING'}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-stone-400 pt-1 border-t border-[#1d2b26]">
-                    <span className="font-mono text-stone-400 truncate max-w-[200px]" title={item.wallet_address}>
+                  <div className="flex items-center justify-between text-[10px] text-[#84948c] pt-1 border-t border-[#17241d]">
+                    <span className="font-mono truncate max-w-[180px]" title={item.wallet_address}>
                       {truncAddress}
                     </span>
-                    <span className="text-stone-500 font-medium">
+                    <span className="font-medium">
                       {formattedDate}
                     </span>
                   </div>
@@ -407,98 +394,76 @@ export const Withdraw: React.FC = () => {
         </div>
       )}
 
-      <button
-        onClick={() => navigate('/')}
-        className="w-full mt-4 py-4 rounded-2xl zentorno-btn-secondary font-extrabold text-xs uppercase tracking-wider"
-      >
-        BACK TO MINER
-      </button>
-
       {/* Qualification Modal Popup */}
       {showQualifyModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121c19] border-2 border-emerald-500/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="lux-card p-5 max-w-sm w-full shadow-2xl relative text-center">
             {/* Close Button */}
             <button
               onClick={() => setShowQualifyModal(false)}
-              className="absolute top-4 right-4 text-stone-400 hover:text-white p-1 rounded-full bg-[#1b2a25] border border-[#2e423b]"
+              className="absolute top-4 right-4 text-[#84948c] hover:text-white p-1 rounded-full bg-white/5"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✕
             </button>
 
-            {/* Header Icon & Title */}
-            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
-              🍯
+            <div className="w-12 h-12 bg-[#080c0a] border border-[#17241d] rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">
+              ⚡
             </div>
             
-            <h3 className="text-lg font-black text-stone-100 uppercase tracking-wide">
-              UNLOCK INSTANT CASHOUT
+            <h3 className="text-sm font-black text-white uppercase tracking-wide">
+              Unlock Instant Cashout
             </h3>
-            <p className="text-xs text-stone-300 mt-1 leading-relaxed">
-              Kindly purchase any <span className="text-emerald-400 font-bold">24H Mining Plan</span> (or invite 1 friend who activates a plan) before withdrawing:
+            <p className="text-[11px] text-[#84948c] mt-1 leading-relaxed">
+              Activate any <span className="text-white font-bold">24H Mining Plan</span> (or invite 1 friend who activates a plan) to unlock unlimited lifetime cashouts:
             </p>
 
             {/* Requirement Cards */}
-            <div className="mt-4 space-y-3 text-left">
-              {/* Option 1: Activate 1 Mining Plan (Instant) */}
-              <div className="p-3.5 rounded-2xl bg-[#182622] border border-emerald-500/40 hover:border-emerald-400 transition-all shadow-md relative overflow-hidden">
-                <div className="absolute top-2 right-2 bg-emerald-500/20 text-emerald-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  ⚡ INSTANT CASHOUT UNLOCK
-                </div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xl">⚡</span>
-                  <span className="font-extrabold text-xs text-emerald-200 uppercase tracking-wide">
-                    Option 1: Activate 1 Mining Plan
+            <div className="mt-4 space-y-2.5 text-left">
+              {/* Option 1: Activate 1 Mining Plan */}
+              <div className="p-3.5 rounded-2xl bg-[#080c0a] border border-[#17241d]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-black text-xs text-white uppercase">
+                    Option 1: Activate Plan
+                  </span>
+                  <span className="bg-[#00f090] text-black text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full">
+                    INSTANT
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-300 mb-2.5 leading-snug">
-                  Activate any 24h Daily Yield Plan (starts from <b>0.70 TON</b>) to earn guaranteed daily profit & unlock unlimited lifetime withdrawals!
+                <p className="text-[11px] text-[#84948c] mb-2.5 leading-snug">
+                  Activate any 24h Daily Yield Plan (from <b>0.70 TON</b>) to earn daily profit & unlock unlimited withdrawals.
                 </p>
                 <button
                   onClick={() => {
                     setShowQualifyModal(false)
                     navigate('/plans')
                   }}
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-stone-950 font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1 active:scale-95 transition-all"
+                  className="w-full py-2.5 rounded-xl btn-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1"
                 >
-                  <span>⚡ ACTIVATE MINER PLAN (0.70 TON)</span>
+                  <span>⚡ ACTIVATE PLAN (0.70 TON)</span>
                   <span>➔</span>
                 </button>
               </div>
 
               {/* Option 2: 1 Friend Activates Plan */}
-              <div className="p-3.5 rounded-2xl bg-[#182622] border border-[#2e423b] hover:border-[#93b3a6]/50 transition-all shadow-md">
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">👥</span>
-                    <span className="font-extrabold text-xs text-stone-200 uppercase tracking-wide">
-                      Option 2: 1 Friend Activates Plan
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-black text-[#93b3a6]">
+              <div className="p-3.5 rounded-2xl bg-[#080c0a] border border-[#17241d]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-black text-xs text-white uppercase">
+                    Option 2: Invite Friend
+                  </span>
+                  <span className="text-[10px] font-black text-[#00f090]">
                     {user?.friend_crates_opened_count || 0}/1
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-300 mb-2 leading-snug">
-                  Invite a friend who activates any Daily Mining Plan (starts from <b>0.70 TON</b>) for 100% free lifetime verification!
+                <p className="text-[11px] text-[#84948c] mb-2.5 leading-snug">
+                  Invite 1 friend who activates any Daily Plan for 100% free lifetime verification.
                 </p>
                 
-                {/* Progress Bar */}
-                <div className="w-full bg-[#111a17] rounded-full h-2 mb-2.5 overflow-hidden border border-[#273a33]">
-                  <div
-                    className="bg-[#93b3a6] h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, ((user?.friend_crates_opened_count || 0) / 1) * 100)}%` }}
-                  />
-                </div>
-
                 <button
                   onClick={() => {
                     setShowQualifyModal(false)
                     navigate('/earn')
                   }}
-                  className="w-full py-2.5 rounded-xl zentorno-btn-secondary text-stone-200 font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all"
+                  className="w-full py-2.5 rounded-xl btn-surface text-xs font-extrabold uppercase tracking-wider flex items-center justify-center gap-1"
                 >
                   <span>👥 INVITE FRIENDS</span>
                   <span>➔</span>
@@ -506,11 +471,10 @@ export const Withdraw: React.FC = () => {
               </div>
             </div>
 
-            {/* Footer notice */}
-            <div className="mt-4 pt-3 border-t border-[#1d2b26]">
+            <div className="mt-4 pt-3 border-t border-[#17241d]">
               <button
                 onClick={() => setShowQualifyModal(false)}
-                className="text-xs font-bold text-stone-400 hover:text-white uppercase tracking-wider"
+                className="text-xs font-bold text-[#84948c] hover:text-white uppercase tracking-wider"
               >
                 Close & Return
               </button>
@@ -521,4 +485,5 @@ export const Withdraw: React.FC = () => {
     </div>
   )
 }
+
 export default Withdraw

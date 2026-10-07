@@ -17,12 +17,12 @@ type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 // ─── Watch Ad Tasks Constants ────────────────────────────────────────────────
 const WATCH_AD_TASKS_COUNT = 3
 const WATCH_AD_REFRESH_MS = 3 * 60 * 60 * 1000 // 3 hours
-const WATCH_AD_HONEY_REWARD = 1 // 1 Honey per task
+const WATCH_AD_HONEY_REWARD = 1
 const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v1'
 
 interface WatchAdState {
-  windowStart: number  // timestamp of current 3-hr window start
-  completed: number[]  // task indices (0,1,2) done in this window
+  windowStart: number
+  completed: number[]
 }
 
 function loadWatchAdState(): WatchAdState {
@@ -30,7 +30,6 @@ function loadWatchAdState(): WatchAdState {
     const raw = localStorage.getItem(LS_KEY_WATCH_ADS)
     if (raw) {
       const parsed: WatchAdState = JSON.parse(raw)
-      // If window has expired, reset
       if (Date.now() - parsed.windowStart >= WATCH_AD_REFRESH_MS) {
         return { windowStart: Date.now(), completed: [] }
       }
@@ -46,10 +45,8 @@ function saveWatchAdState(state: WatchAdState) {
 
 function showAd(): Promise<boolean> {
   return new Promise((resolve) => {
-    // 1. PRIMARY: AdExium
     if (window.adexiumWidget) {
       try {
-        console.log('[Missions] Requesting AdExium ad...')
         window.adexiumWidget.requestAd('interstitial')
         resolve(true)
         return
@@ -57,7 +54,6 @@ function showAd(): Promise<boolean> {
         console.warn('[Missions] AdExium error:', err)
       }
     }
-
     resolve(false)
   })
 }
@@ -99,126 +95,100 @@ export const Missions: React.FC = () => {
 
   // Countdown ticker for Watch Ad 3-hour refresh
   useEffect(() => {
-    const tick = () => {
-      const remaining = WATCH_AD_REFRESH_MS - (Date.now() - watchAdState.windowStart)
-      if (remaining <= 0) {
-        // Window expired — reset
+    const updateCountdown = () => {
+      const now = Date.now()
+      const elapsed = now - watchAdState.windowStart
+      const remainingMs = Math.max(0, WATCH_AD_REFRESH_MS - elapsed)
+
+      if (remainingMs === 0) {
         const fresh: WatchAdState = { windowStart: Date.now(), completed: [] }
-        saveWatchAdState(fresh)
         setWatchAdState(fresh)
+        saveWatchAdState(fresh)
         setWatchAdCountdown('')
         return
       }
-      const h = Math.floor(remaining / 3600000)
-      const m = Math.floor((remaining % 3600000) / 60000)
-      const s = Math.floor((remaining % 60000) / 1000)
-      setWatchAdCountdown(`${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`)
+
+      const totalSec = Math.floor(remainingMs / 1000)
+      const hrs = Math.floor(totalSec / 3600)
+      const mins = Math.floor((totalSec % 3600) / 60)
+      const secs = totalSec % 60
+      setWatchAdCountdown(
+        `${hrs > 0 ? `${hrs}h ` : ''}${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`
+      )
     }
-    tick()
-    watchAdTimerRef.current = setInterval(tick, 1000)
-    return () => { if (watchAdTimerRef.current) clearInterval(watchAdTimerRef.current) }
+
+    updateCountdown()
+    watchAdTimerRef.current = setInterval(updateCountdown, 1000)
+    return () => {
+      if (watchAdTimerRef.current) clearInterval(watchAdTimerRef.current)
+    }
   }, [watchAdState.windowStart])
 
-  // Cleanup verifying timer on unmount
+  // Watch Ad action handler
+  const handleWatchAdTask = useCallback(
+    async (taskIndex: number) => {
+      if (watchAdState.completed.includes(taskIndex)) return
+      if (watchAdVerifyingIndex !== null) return
+
+      try {
+        await showAd()
+      } catch (err) {
+        console.warn('Ad playback note:', err)
+      }
+
+      const countdownSec = 15
+      setWatchAdVerifyingIndex(taskIndex)
+      setWatchAdSecondsLeft(countdownSec)
+
+      let remaining = countdownSec
+      if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
+
+      watchAdVerifyTimerRef.current = setInterval(async () => {
+        remaining -= 1
+        setWatchAdSecondsLeft(remaining)
+
+        if (remaining <= 0) {
+          if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
+          setWatchAdVerifyingIndex(null)
+
+          setWatchAdState((prev) => {
+            const nextCompleted = [...new Set([...prev.completed, taskIndex])]
+            const updated: WatchAdState = { ...prev, completed: nextCompleted }
+            saveWatchAdState(updated)
+            return updated
+          })
+
+          try {
+            await completeMission(`watch_ad_${taskIndex + 1}`)
+          } catch {
+            // fallback
+          }
+
+          toast.success(`🎉 +${WATCH_AD_HONEY_REWARD} Honey added to balance!`)
+          await refreshUser()
+        }
+      }, 1000)
+    },
+    [watchAdState.completed, watchAdVerifyingIndex, refreshUser]
+  )
+
   useEffect(() => {
     return () => {
       if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
     }
   }, [])
 
-  // 15-Second verification handler for Watch Ad tasks
-  const handleWatchAdTask = useCallback(async (taskIndex: number) => {
-    if (watchAdState.completed.includes(taskIndex)) return
-    if (watchAdVerifyingIndex !== null) return
-
-    setWatchAdVerifyingIndex(taskIndex)
-    setWatchAdSecondsLeft(15)
-
-    // Trigger Ad: AdExium 1st, Monetag fallback
-    try {
-      await showAd()
-    } catch (e) {
-      console.warn('Ad trigger notice:', e)
-    }
-
-    toast('🎬 Watching Ad: Stay 15s to earn +1 Honey...', { icon: '⏱️', duration: 4000 })
-
-    let seconds = 15
-    if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
-    watchAdVerifyTimerRef.current = setInterval(async () => {
-      seconds -= 1
-      setWatchAdSecondsLeft(seconds)
-
-      if (seconds <= 0) {
-        if (watchAdVerifyTimerRef.current) clearInterval(watchAdVerifyTimerRef.current)
-        setWatchAdVerifyingIndex(null)
-        setWatchAdSecondsLeft(0)
-
-        // Mark task as completed
-        setWatchAdState((prev) => {
-          const updated: WatchAdState = {
-            ...prev,
-            completed: prev.completed.includes(taskIndex) ? prev.completed : [...prev.completed, taskIndex],
-          }
-          saveWatchAdState(updated)
-          return updated
-        })
-
-        toast.success(`🍯 +${WATCH_AD_HONEY_REWARD} Honey earned! Reward added to balance.`)
-        try { await refreshUser() } catch {}
-      }
-    }, 1000)
-  }, [watchAdState, watchAdVerifyingIndex, refreshUser])
-
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
-  const userTgId = user?.telegram_id || '6446145632'
+  const userTgId = user?.telegram_id || ''
   const inviteLink = 'https://t.me/' + botUsername + '?start=' + userTgId
 
   const loadMissions = async () => {
     try {
       setLoading(true)
       const data = await fetchMissions()
-      setMissions(data)
+      setMissions(data || [])
     } catch (err) {
-      setMissions([
-        {
-          id: 'm-10',
-          title: 'Invite 10 Active Friends',
-          description: 'Reach 10 friends who start mining',
-          reward_power: 10,
-          type: 'milestone',
-          milestone_count: 10,
-          progress: 0,
-          is_completed: false,
-        },
-        {
-          id: 's-1',
-          title: 'airdrops288',
-          description: '+0.1 GHS',
-          reward_power: 0.1,
-          type: 'telegram_channel',
-          target_url: 'https://t.me/airdrops288',
-          is_completed: false,
-        },
-        {
-          id: 's-2',
-          title: 'criptochts2025',
-          description: '+0.1 GHS',
-          reward_power: 0.1,
-          type: 'telegram_channel',
-          target_url: 'https://t.me/criptochts2025',
-          is_completed: false,
-        },
-        {
-          id: 's-3',
-          title: 'Aird555',
-          description: '+0.1 GHS',
-          reward_power: 0.1,
-          type: 'telegram_channel',
-          target_url: 'https://t.me/Aird555',
-          is_completed: false,
-        },
-      ])
+      console.error('Failed to load missions', err)
     } finally {
       setLoading(false)
     }
@@ -228,9 +198,9 @@ export const Missions: React.FC = () => {
     try {
       setLoadingCampaigns(true)
       const data = await fetchMyCampaigns()
-      setCampaigns(data)
+      setCampaigns(data || [])
     } catch (err) {
-      setCampaigns([])
+      console.error('Failed to load campaigns', err)
     } finally {
       setLoadingCampaigns(false)
     }
@@ -240,46 +210,16 @@ export const Missions: React.FC = () => {
     loadMissions()
   }, [])
 
-  useEffect(() => {
-    if (view === 'campaigns' || view === 'pay_campaign') {
-      loadCampaigns()
-    }
-  }, [view])
-
-  // Auto-poll blockchain while on pay_campaign view so status turns active automatically upon payment
-  useEffect(() => {
-    if (view !== 'pay_campaign' || !selectedCampaign) return
-    let isCancelled = false
-    const interval = setInterval(async () => {
-      try {
-        await checkDeposit()
-        const updated = await fetchMyCampaigns()
-        if (isCancelled) return
-        const found = updated.find(
-          (c) =>
-            c.id === selectedCampaign.id ||
-            (c.payment_memo && selectedCampaign.payment_memo && c.payment_memo.toUpperCase() === selectedCampaign.payment_memo.toUpperCase())
-        )
-        if (found && found.status === 'active') {
-          setCampaigns(updated)
-          toast.success('🎉 Payment Received! Your campaign is now LIVE!', { duration: 5000 })
-          setView('campaigns')
-        }
-      } catch (e) {}
-    }, 5000)
-    return () => {
-      isCancelled = true
-      clearInterval(interval)
-    }
-  }, [view, selectedCampaign])
+  const milestones = missions.filter((m) => m.category === 'referral_milestone')
+  const sponsored = missions.filter((m) => m.category !== 'referral_milestone')
 
   const handleClaimMilestone = async (mission: Mission) => {
     setActionId(mission.id)
     try {
       const res = await claimMilestone(mission.id)
-      toast.success('🎉 Milestone Claimed! +' + (res.reward_power || mission.reward_power) + ' GHS POWER')
+      toast.success(res.message || 'Milestone claimed!')
       setMissions((prev) =>
-        prev.filter((m) => m.id !== mission.id)
+        prev.map((m) => (m.id === mission.id ? { ...m, is_completed: true } : m))
       )
       await refreshUser()
     } catch (err: any) {
@@ -291,7 +231,7 @@ export const Missions: React.FC = () => {
 
   const handleSponsoredAction = async (mission: Mission) => {
     if (mission.target_url) {
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink && mission.target_url.includes('t.me/')) {
         window.Telegram.WebApp.openTelegramLink(mission.target_url)
       } else {
         window.open(mission.target_url, '_blank')
@@ -314,7 +254,7 @@ export const Missions: React.FC = () => {
   }
 
   const handleShare = () => {
-    const text = '⛏️ Join HashBee & get 50 GHS Power! Start mining GRAM & withdraw without restrictions! 💰'
+    const text = '⛏️ Join HashBee & get 50 GHS Power! Start mining GRAM & withdraw instantly!'
     const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(inviteLink) + '&text=' + encodeURIComponent(text)
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(shareUrl)
@@ -323,7 +263,6 @@ export const Missions: React.FC = () => {
     }
   }
 
-  // Pay directly with in-app balance
   const handlePayWithBalance = async () => {
     const target = promoTarget.trim()
     if (!target) {
@@ -354,7 +293,7 @@ export const Missions: React.FC = () => {
         reward_bp: 0.5,
         pay_with_balance: true,
       })
-      toast.success('🎉 Campaign Activated Instantly! Your project is now live on the Tasks board.')
+      toast.success('🎉 Campaign Activated Instantly! Your project is now live.')
       await refreshUser()
       await loadMissions()
       await loadCampaigns()
@@ -366,7 +305,6 @@ export const Missions: React.FC = () => {
     }
   }
 
-  // Open Tonkeeper for campaign payment
   const handlePayInTonkeeper = (camp: Campaign) => {
     const cost = camp.cost || 0.10
     const nanoAmount = Math.round(cost * 1e9)
@@ -384,7 +322,6 @@ export const Missions: React.FC = () => {
     }
   }
 
-  // Create Campaign & Go To Payment (Immediately opens Tonkeeper)
   const handlePublishCampaign = async () => {
     const target = promoTarget.trim()
     if (!target) {
@@ -401,7 +338,6 @@ export const Missions: React.FC = () => {
     const cost = completions * 0.001
     setPublishing(true)
 
-    // Guaranteed fallback memo so user is NEVER blocked if backend is restarting
     const fallbackMemo = 'CMP' + Math.random().toString(16).substring(2, 8).toUpperCase()
     let campaignObj: Campaign = {
       id: 'cmp-' + Date.now(),
@@ -430,184 +366,140 @@ export const Missions: React.FC = () => {
         campaignObj = newCamp
       }
     } catch (err: any) {
-      console.warn('Backend campaign creation note, proceeding with direct invoice:', err)
+      console.warn('Backend campaign creation note:', err)
     } finally {
       setPublishing(false)
       setSelectedCampaign(campaignObj)
       setView('pay_campaign')
       loadCampaigns()
       toast.success('Invoice ready! Opening Tonkeeper...')
-      // Immediately open Tonkeeper!
       handlePayInTonkeeper(campaignObj)
     }
   }
 
-  // Verify payment for campaign
   const handleVerifyCampaignPayment = async (camp: Campaign) => {
     setVerifyingPayment(true)
     toast.loading('Scanning blockchain for payment...', { id: 'camp-verify' })
     try {
       const res = await checkDeposit()
       toast.dismiss('camp-verify')
-      const updated = await fetchMyCampaigns()
-      setCampaigns(updated)
-      const found = updated.find((c) => c.id === camp.id || (c.payment_memo && camp.payment_memo && c.payment_memo.toUpperCase() === camp.payment_memo.toUpperCase()))
-      if (found && found.status === 'active') {
-        toast.success('🎉 Payment confirmed! Your campaign is now LIVE!', { duration: 4500 })
-        setView('campaigns')
-      } else if (res && res.credited > 0) {
-        toast.success('🎉 Payment received! Your campaign is now LIVE!', { duration: 4500 })
+      await refreshUser()
+      await loadCampaigns()
+      if (res?.credited && res.credited > 0) {
+        toast.success('🎉 Payment verified! Campaign is now live.')
         setView('campaigns')
       } else {
-        toast.error(`⏳ Payment not detected yet. Please ensure you sent ${(camp.cost || 0.10).toFixed(2)} GRAM with memo "${camp.payment_memo || ''}". If you just sent it, please wait 15-30 seconds.`, { duration: 5500 })
+        toast.success('Blockchain scan complete. Active campaigns appear automatically.')
+        setView('campaigns')
       }
-    } catch (err) {
+    } catch (err: any) {
       toast.dismiss('camp-verify')
-      toast.error('Could not verify yet. Please wait a few seconds after sending.')
+      toast.error('Payment confirmation takes 5–15 seconds on TON.')
     } finally {
       setVerifyingPayment(false)
     }
   }
 
-  const milestones = missions.filter((m) => m.type === 'milestone')
-  const sponsored = missions.filter((m) => m.type !== 'milestone' && !m.is_completed)
+  const calculatedCost = (promoCompletions * 0.001).toFixed(2)
 
-  const calculatedCost = ((Math.max(100, Number(promoCompletions) || 100)) * 0.001).toFixed(4)
-
-  // =========================================================================
-  // VIEW 4: PAY TO PUBLISH (SCREENSHOT 4)
-  // =========================================================================
+  // VIEW 4: PAY CAMPAIGN
   if (view === 'pay_campaign' && selectedCampaign) {
-    const campCost = (selectedCampaign.cost || 0.10).toFixed(2) + ' GRAM'
-    const campMemo = selectedCampaign.payment_memo || 'CMP123'
-    const qrData = 'ton://transfer/' + depositAddress + '?amount=' + Math.round((selectedCampaign.cost || 0.10) * 1e9) + '&text=' + encodeURIComponent(campMemo)
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(qrData)
+    const cost = selectedCampaign.cost || (selectedCampaign.total_completions * 0.001) || 0.50
+    const campMemo = selectedCampaign.payment_memo || 'CMP' + selectedCampaign.id.replace(/\D/g, '').slice(-6)
 
     return (
-      <div className="pb-28 pt-6 px-4 max-w-md mx-auto min-h-screen">
-        <div className="text-center mb-5">
-          <div className="w-12 h-12 rounded-full bg-[#1e2d27] border border-[#2e423b] flex items-center justify-center mx-auto mb-2 text-stone-200">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.001 2.001 0 017 6h18" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider">
-            PAY TO PUBLISH
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+        <div className="text-center mb-4">
+          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+            CAMPAIGN INVOICE
           </h1>
+          <p className="text-[11px] text-[#84948c] mt-0.5">
+            Complete TON payment to launch your task
+          </p>
         </div>
 
-        {/* QR Code */}
-        <div className="zentorno-card p-4 flex flex-col items-center justify-center mb-4">
-          <div className="bg-white p-3 rounded-2xl shadow-lg mb-2">
-            <img src={qrUrl} alt="Payment QR Code" className="w-48 h-48 block rounded-lg" />
+        <div className="lux-card p-4 mb-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-[#84948c] uppercase">Amount to Send</span>
+            <span className="text-sm font-black text-white font-mono">{cost.toFixed(2)} TON</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold text-[#84948c] uppercase">Target Users</span>
+            <span className="text-xs font-bold text-[#00f090] font-mono">{selectedCampaign.total_completions} Users</span>
           </div>
         </div>
 
-        {/* Card 1: AMOUNT TO PAY */}
-        <div className="zentorno-card p-3.5 mb-2.5 flex items-center justify-between border border-[#2b3d37]">
-          <div>
-            <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider">AMOUNT TO PAY</div>
-            <div className="text-sm font-black text-stone-100 mt-0.5">{campCost}</div>
+        {/* Deposit Address */}
+        <div className="lux-card p-3.5 mb-3">
+          <label className="text-[9px] font-extrabold text-[#84948c] uppercase block mb-1">
+            Deposit Address
+          </label>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              readOnly
+              value={depositAddress}
+              className="flex-1 bg-[#080c0a] text-[10px] text-white font-mono px-2.5 py-2 rounded-xl border border-[#17241d] outline-none truncate select-all"
+            />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(depositAddress)
+                setCopiedAddr(true)
+                toast.success('Address copied!')
+                setTimeout(() => setCopiedAddr(false), 2000)
+              }}
+              className="px-3 py-2 btn-surface text-xs font-bold rounded-xl"
+            >
+              {copiedAddr ? '✓' : 'Copy'}
+            </button>
           </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(campCost.replace(' GRAM', ''))
-              setCopiedAmount(true)
-              toast.success('Amount copied!')
-              setTimeout(() => setCopiedAmount(false), 2000)
-            }}
-            className="p-2 rounded-xl bg-[#23332e] text-stone-300 hover:text-white"
-          >
-            {copiedAmount ? (
-              <span className="text-xs font-black text-emerald-400">✓</span>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            )}
-          </button>
         </div>
 
-        {/* Card 2: PAYMENT ADDRESS */}
-        <div className="zentorno-card p-3.5 mb-2.5 flex items-center justify-between border border-[#2b3d37] gap-2">
-          <div className="truncate flex-1">
-            <div className="text-[10px] font-black text-stone-400 uppercase tracking-wider">PAYMENT ADDRESS</div>
-            <div className="text-xs font-mono text-stone-200 mt-0.5 truncate">{depositAddress}</div>
+        {/* Memo */}
+        <div className="lux-card p-3.5 mb-3.5">
+          <label className="text-[9px] font-extrabold text-[#00f090] uppercase block mb-1 font-bold">
+            Payment Memo (REQUIRED)
+          </label>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              readOnly
+              value={campMemo}
+              className="flex-1 bg-[#080c0a] text-[11px] text-[#00f090] font-mono font-bold px-2.5 py-2 rounded-xl border border-[#00f090]/40 outline-none select-all"
+            />
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(campMemo)
+                setCopiedMemo(true)
+                toast.success('Memo copied!')
+                setTimeout(() => setCopiedMemo(false), 2000)
+              }}
+              className="px-3 py-2 bg-[#00f090]/15 text-[#00f090] text-xs font-bold rounded-xl border border-[#00f090]/30"
+            >
+              {copiedMemo ? '✓' : 'Copy'}
+            </button>
           </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(depositAddress)
-              setCopiedAddr(true)
-              toast.success('Payment address copied!')
-              setTimeout(() => setCopiedAddr(false), 2000)
-            }}
-            className="p-2 rounded-xl bg-[#23332e] text-stone-300 hover:text-white shrink-0"
-          >
-            {copiedAddr ? (
-              <span className="text-xs font-black text-emerald-400">✓</span>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            )}
-          </button>
         </div>
-
-        {/* Card 3: MEMO / COMMENT - REQUIRED */}
-        <div className="zentorno-card p-3.5 mb-3 flex items-center justify-between border border-amber-500/40 bg-[#1d221b]">
-          <div>
-            <div className="text-[10px] font-black text-amber-300 uppercase tracking-wider">
-              MEMO / COMMENT — REQUIRED
-            </div>
-            <div className="text-sm font-mono font-black text-amber-200 mt-0.5 tracking-wider">{campMemo}</div>
-          </div>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(campMemo)
-              setCopiedMemo(true)
-              toast.success('Memo copied!')
-              setTimeout(() => setCopiedMemo(false), 2000)
-            }}
-            className="p-2 rounded-xl bg-amber-400 text-stone-900 font-bold"
-          >
-            {copiedMemo ? (
-              <span className="text-xs font-black">✓</span>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        {/* Warning Banner */}
-        <div className="bg-[#242013] border-l-4 border-amber-400 p-3 rounded-xl mb-3 text-[11px] text-amber-200/90 leading-relaxed">
-          ⚠ Send the memo with your payment. Without it we cannot tell whose it is, and it cannot be credited.
-        </div>
-
-        <p className="text-[11px] text-stone-400 text-center mb-4 leading-normal px-2">
-          Send the exact amount with the memo. Your campaign goes live on its own, within a minute of the payment landing.
-        </p>
 
         {/* Actions */}
         <button
           onClick={() => handlePayInTonkeeper(selectedCampaign)}
-          className="w-full py-3.5 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+          className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider mb-2.5 shadow-lg flex items-center justify-center gap-2"
         >
-          <span>💎</span> PAY IN TONKEEPER (AUTO-FILL)
+          <span>💎 1-CLICK PAY IN TONKEEPER</span>
         </button>
 
         <button
           onClick={() => handleVerifyCampaignPayment(selectedCampaign)}
           disabled={verifyingPayment}
-          className="w-full py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-md flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider mb-2.5 flex items-center justify-center gap-2"
         >
-          {verifyingPayment ? 'CHECKING BLOCKCHAIN...' : '✅ I HAVE PAID (VERIFY NOW)'}
+          {verifyingPayment ? 'CHECKING BLOCKCHAIN...' : '✓ I HAVE PAID (VERIFY NOW)'}
         </button>
 
         <button
           onClick={() => setView('campaigns')}
-          className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-black text-xs uppercase tracking-wider active:scale-95"
+          className="w-full py-3 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs uppercase tracking-wider"
         >
           BACK
         </button>
@@ -615,268 +507,185 @@ export const Missions: React.FC = () => {
     )
   }
 
-  // =========================================================================
-  // VIEW 3: NEW CAMPAIGN (SCREENSHOT 3)
-  // =========================================================================
+  // VIEW 3: NEW CAMPAIGN
   if (view === 'new_campaign') {
     return (
-      <div className="pb-28 pt-6 px-4 max-w-md mx-auto min-h-screen">
-        <div className="text-center mb-5">
-          <div className="w-12 h-12 rounded-full bg-[#1e2d27] border border-[#2e423b] flex items-center justify-center mx-auto mb-2 text-stone-200">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.001 2.001 0 017 6h18" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider">
-            NEW CAMPAIGN
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
+        <div className="text-center mb-4">
+          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+            Create Campaign
           </h1>
+          <p className="text-[11px] text-[#84948c] mt-0.5">
+            Promote to thousands of active crypto users
+          </p>
         </div>
 
-        <div className="zentorno-card p-5 border border-[#2b3d37] mb-5">
-          {/* Radio Group: WHAT DO YOU WANT PROMOTED? */}
-          <div className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider mb-3">
-            WHAT DO YOU WANT PROMOTED?
+        <div className="lux-card p-4.5 mb-3.5 space-y-4">
+          <div>
+            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-2">
+              Promo Category
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'link', label: 'Web Link' },
+                { id: 'channel', label: 'Telegram Channel' },
+                { id: 'group', label: 'Telegram Group' },
+                { id: 'bot', label: 'Telegram Bot' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setPromoType(item.id as any)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    promoType === item.id
+                      ? 'bg-white text-black font-extrabold border-white shadow-md'
+                      : 'bg-[#080c0a] text-[#84948c] border-[#17241d]'
+                  }`}
+                >
+                  <span className="text-xs">{item.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 mb-5">
-            {[
-              { id: 'link', label: 'A link' },
-              { id: 'channel', label: 'A channel' },
-              { id: 'group', label: 'A group' },
-              { id: 'bot', label: 'A bot' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setPromoType(item.id as any)}
-                className={'p-3 rounded-2xl border flex items-center justify-between transition-all ' + (
-                  promoType === item.id
-                    ? 'bg-[#1e2e28] border-[#93b3a6] text-white shadow-sm'
-                    : 'bg-[#15221e] border-[#293d36] text-stone-400 hover:border-[#38534a]'
-                )}
-              >
-                <span className="text-xs font-bold">{item.label}</span>
-                <span className={'w-4 h-4 rounded-full border flex items-center justify-center ' + (
-                  promoType === item.id ? 'border-[#93b3a6]' : 'border-stone-500'
-                )}>
-                  {promoType === item.id && <span className="w-2 h-2 rounded-full bg-[#93b3a6]" />}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Your link */}
-          <div className="mb-4">
-            <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1.5">
-              Your link
+          <div>
+            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-1">
+              Destination URL or @Username
             </label>
             <input
               type="text"
-              placeholder="https://... / @canal"
+              placeholder="https://... or @channel"
               value={promoTarget}
               onChange={(e) => setPromoTarget(e.target.value)}
-              className="w-full zentorno-input p-3.5 text-xs text-stone-200 placeholder:text-stone-600 rounded-2xl"
+              className="w-full lux-input px-3.5 py-3 text-xs outline-none"
             />
           </div>
 
-          {/* How many completions */}
-          <div className="mb-3">
-            <label className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider block mb-1.5">
-              How many completions (Min 500 Users = 0.50 GRAM)
+          <div>
+            <label className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider block mb-1">
+              Completions (Min 500 Users = 0.50 GRAM)
             </label>
-            <div className="grid grid-cols-3 gap-2 mb-2.5">
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
               {[500, 1000, 2000, 5000, 10000].map((num) => (
                 <button
                   key={num}
                   type="button"
                   onClick={() => setPromoCompletions(num)}
-                  className={'py-2 px-1 rounded-xl text-xs transition-all border ' + (
+                  className={`py-2 px-1 rounded-xl text-xs transition-all border ${
                     promoCompletions === num
-                      ? 'bg-[#93b3a6] text-[#0f1614] border-[#93b3a6] font-black shadow-sm'
-                      : 'bg-[#15221e] text-stone-300 border-[#2b3d37] hover:border-[#38534a]'
-                  )}
+                      ? 'bg-white text-black font-black border-white shadow-sm'
+                      : 'bg-[#080c0a] text-[#84948c] border-[#17241d]'
+                  }`}
                 >
                   {num} Users
-                  <div className="text-[9px] opacity-75">{(num * 0.001).toFixed(2)} GRAM</div>
                 </button>
               ))}
-              <div className="flex items-center justify-center bg-[#15221e] border border-[#2b3d37] rounded-xl px-2">
-                <input
-                  type="number"
-                  min={500}
-                  step={100}
-                  value={promoCompletions || ''}
-                  onChange={(e) => setPromoCompletions(e.target.value === '' ? ('' as any) : Number(e.target.value))}
-                  onBlur={() => {
-                    if (!promoCompletions || Number(promoCompletions) < 500) {
-                      setPromoCompletions(500)
-                    }
-                  }}
-                  placeholder="Min 500"
-                  className="w-full bg-transparent text-xs text-center font-black text-stone-200 focus:outline-none"
-                />
-              </div>
             </div>
           </div>
 
-          {/* Live Invoice Summary */}
-          <div className="border border-[#2e423b] bg-[#16231f] rounded-2xl p-4 mb-5 space-y-2">
-            <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center mb-1">
-              ⚡ CAMPAIGN INVOICE BREAKDOWN
-            </div>
+          {/* Invoice Summary */}
+          <div className="bg-[#080c0a] rounded-xl p-3.5 border border-[#17241d] space-y-1.5">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-stone-400 font-bold">Target Completions:</span>
-              <span className="font-black text-stone-200">{promoCompletions} Users</span>
+              <span className="text-[#84948c]">Target Reach:</span>
+              <span className="font-bold text-white">{promoCompletions} Users</span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-stone-400 font-bold">Reward per User:</span>
-              <span className="font-bold text-[#93b3a6]">+0.5 GHS Power</span>
-            </div>
-            <div className="flex justify-between items-center text-xs border-t border-[#23332d] pt-2">
-              <span className="font-black text-stone-300 uppercase text-[11px]">Total Invoice Amount:</span>
-              <span className="font-black text-base text-emerald-400 font-mono">{calculatedCost} GRAM</span>
+            <div className="flex justify-between items-center text-xs border-t border-[#17241d] pt-1.5">
+              <span className="font-extrabold text-white uppercase text-[10px]">Total Cost:</span>
+              <span className="font-black text-sm text-[#00f090] font-mono">{calculatedCost} GRAM</span>
             </div>
           </div>
 
-          {/* Direct Payment Channel 1: In-App Balance */}
           {user && user.honey_balance >= Number(calculatedCost) ? (
             <button
               onClick={handlePayWithBalance}
               disabled={publishing}
-              className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-stone-900 font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-lg flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
             >
-              <span>⚡</span> PAY WITH BALANCE ({user.honey_balance.toFixed(4)} GRAM)
+              <span>⚡ PAY WITH BALANCE ({user.honey_balance.toFixed(4)} GRAM)</span>
             </button>
-          ) : (
-            <div className="mb-3 p-3 bg-[#182320] border border-[#2b3d37] rounded-xl text-xs flex justify-between items-center">
-              <span className="text-stone-400">Balance: <strong className="text-stone-200">{user ? user.honey_balance.toFixed(4) : '0.0000'} GRAM</strong></span>
-              <span className="text-amber-400 font-bold text-[11px]">Need {calculatedCost} GRAM</span>
-            </div>
-          )}
+          ) : null}
 
-          {/* Direct Payment Channel 2: Tonkeeper Invoice */}
           <button
             onClick={handlePublishCampaign}
             disabled={publishing}
-            className="w-full py-4 rounded-2xl bg-[#0098ea] hover:bg-[#00a8ff] text-white font-black text-xs uppercase tracking-wider mb-2.5 active:scale-95 shadow-md flex items-center justify-center gap-2 transition-all"
+            className="w-full py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
           >
-            <span>💎</span> GET INVOICE & PAY VIA TONKEEPER
-          </button>
-
-          <button
-            onClick={() => setView('campaigns')}
-            className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-black text-xs uppercase tracking-wider active:scale-95"
-          >
-            BACK
+            <span>💎 PAY VIA TONKEEPER ({calculatedCost} TON)</span>
           </button>
         </div>
+
+        <button
+          onClick={() => setView('campaigns')}
+          className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider"
+        >
+          BACK
+        </button>
       </div>
     )
   }
 
-  // =========================================================================
-  // VIEW 2: MY CAMPAIGNS (SCREENSHOT 2)
-  // =========================================================================
+  // VIEW 2: CAMPAIGNS LIST
   if (view === 'campaigns') {
     return (
-      <div className="pb-28 pt-6 px-4 max-w-md mx-auto min-h-screen">
+      <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
         <div className="text-center mb-4">
-          <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider flex items-center justify-center gap-2">
-            <svg className="w-5 h-5 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.001 2.001 0 017 6h18" />
-            </svg>
-            MY CAMPAIGNS
+          <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+            Promote Channel & Links
           </h1>
+          <p className="text-[11px] text-[#84948c] mt-0.5">
+            Broadcast tasks to thousands of active miners
+          </p>
         </div>
 
-        {/* NEW CAMPAIGN Button */}
         <button
           onClick={() => setView('new_campaign')}
-          className="w-full mb-4 py-3.5 rounded-2xl zentorno-btn-primary font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95"
+          className="w-full mb-3.5 py-3.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2"
         >
-          NEW CAMPAIGN
+          <span>+ CREATE NEW CAMPAIGN</span>
         </button>
 
-        {/* Campaign List */}
         {loadingCampaigns ? (
-          <div className="text-center py-10 text-stone-500 text-xs animate-pulse">Loading campaigns...</div>
+          <div className="text-center py-8 text-[#84948c] text-xs animate-pulse">Loading campaigns...</div>
         ) : campaigns.length === 0 ? (
-          <div className="zentorno-card p-6 text-center border border-[#2b3d37] mb-4">
-            <div className="text-3xl mb-2">📢</div>
-            <div className="text-xs font-black text-stone-200">No campaigns created yet</div>
-            <p className="text-[11px] text-stone-400 mt-1">
-              Promote your channel, bot, group, or link to thousands of active miners!
+          <div className="lux-card p-6 text-center mb-4">
+            <div className="text-2xl mb-1">📢</div>
+            <div className="text-xs font-bold text-white">No campaigns created yet</div>
+            <p className="text-[11px] text-[#84948c] mt-1">
+              Promote your channel, bot, group, or link to thousands of active miners.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5 mb-4">
+          <div className="space-y-2 mb-4">
             {campaigns.map((camp) => {
               const isWaiting = camp.status === 'waiting_for_payment'
               const isFinished = camp.status === 'finished' || camp.status === 'completed' || camp.done_completions >= camp.total_completions
-              const displayDone = isFinished ? camp.total_completions : (camp.done_completions || 0)
-              const percent = isFinished ? 100 : Math.min(100, Math.round((displayDone / (camp.total_completions || 50)) * 100))
 
               return (
-                <div
-                  key={camp.id}
-                  className="zentorno-card p-3.5 flex items-center justify-between gap-3 border border-[#2b3d37]"
-                >
-                  <div className="flex items-center gap-3 truncate flex-1">
-                    {/* Icon */}
-                    <div className="w-10 h-10 rounded-xl bg-[#23332e] flex items-center justify-center text-stone-300 flex-shrink-0">
-                      {camp.type === 'bot' ? (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      ) : camp.type === 'link' ? (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
+                <div key={camp.id} className="lux-card p-3.5 flex items-center justify-between gap-3">
+                  <div className="truncate flex-1">
+                    <div className="text-xs font-black text-white truncate">{camp.title || camp.target}</div>
+                    <div className="text-[10px] text-[#84948c] mt-0.5">
+                      {isWaiting ? (
+                        <span className="text-amber-400 font-bold">Waiting for payment</span>
+                      ) : isFinished ? (
+                        <span className="text-[#00f090] font-bold">✓ Completed ({camp.total_completions}/{camp.total_completions})</span>
                       ) : (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                        <span>{camp.done_completions}/{camp.total_completions} completions</span>
                       )}
                     </div>
-
-                    {/* Details */}
-                    <div className="truncate flex-1">
-                      <div className="text-xs font-black text-stone-200 truncate">{camp.title || camp.target}</div>
-                      <div className="text-[11px] font-bold text-stone-400 mt-0.5">
-                        {isWaiting ? (
-                          <span className="text-amber-300">Waiting for payment</span>
-                        ) : isFinished ? (
-                          <span className="text-emerald-400 font-extrabold">✓ Completed ({camp.total_completions}/{camp.total_completions})</span>
-                        ) : (
-                          <span>{camp.done_completions}/{camp.total_completions} completions</span>
-                        )}
-                      </div>
-                    </div>
                   </div>
 
-                  {/* Right side: Action or Progress */}
-                  <div className="shrink-0">
-                    {isWaiting ? (
-                      <button
-                        onClick={() => {
-                          setSelectedCampaign(camp)
-                          setView('pay_campaign')
-                        }}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#d1d5db] text-[#121c19] font-black text-xs uppercase tracking-wider hover:bg-white active:scale-95 shadow-sm"
-                      >
-                        Pay to publish
-                      </button>
-                    ) : (
-                      <div className="w-20">
-                        <div className="h-2 bg-[#202e2a] rounded-full overflow-hidden border border-[#2b3d37]">
-                          <div
-                            className={'h-full ' + (isFinished ? 'bg-stone-500' : 'bg-[#93b3a6]')}
-                            style={{ width: percent + '%' }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {isWaiting && (
+                    <button
+                      onClick={() => {
+                        setSelectedCampaign(camp)
+                        setView('pay_campaign')
+                      }}
+                      className="px-3 py-1.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-sm"
+                    >
+                      Pay
+                    </button>
+                  )}
                 </div>
               )
             })}
@@ -885,7 +694,7 @@ export const Missions: React.FC = () => {
 
         <button
           onClick={() => setView('tasks')}
-          className="w-full py-3.5 rounded-2xl zentorno-btn-secondary font-black text-xs uppercase tracking-wider active:scale-95"
+          className="w-full py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider"
         >
           ← BACK TO TASKS
         </button>
@@ -893,116 +702,82 @@ export const Missions: React.FC = () => {
     )
   }
 
-  // =========================================================================
-  // VIEW 1: TASKS (SCREENSHOT 1)
-  // =========================================================================
+  // VIEW 1: TASKS
   return (
-    <div className="pb-28 pt-6 px-4 max-w-md mx-auto min-h-screen">
-      {/* Centered Page Header */}
+    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#060807] text-[#f8fafc]">
       <div className="text-center mb-4">
-        <h1 className="text-xl font-black text-stone-100 uppercase tracking-wider flex items-center justify-center gap-2">
-          <svg className="w-5 h-5 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          TASKS
+        <h1 className="text-base font-extrabold text-white uppercase tracking-wider">
+          Tasks & Missions
         </h1>
+        <p className="text-[11px] text-[#84948c] mt-0.5">
+          Complete daily tasks to boost your computing power
+        </p>
       </div>
 
-      {/* Top Banner Button: PROMOTE YOUR LINK (MATCHES SCREENSHOT 1) */}
+      {/* Top Banner Button: PROMOTE YOUR LINK */}
       <button
-        onClick={() => setView('campaigns')}
-        className="w-full mb-4 py-3.5 rounded-2xl zentorno-card border border-[#2c3e38] font-black text-xs text-stone-300 uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#202e2a] transition-all shadow-md active:scale-95"
+        onClick={() => {
+          setView('campaigns')
+          loadCampaigns()
+        }}
+        className="w-full mb-3.5 py-3 rounded-xl btn-surface font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm"
       >
-        <svg className="w-4 h-4 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.001 2.001 0 017 6h18" />
-        </svg>
-        PROMOTE YOUR LINK
+        <span>📢</span>
+        <span>PROMOTE YOUR LINK OR CHANNEL</span>
       </button>
 
-      {/* ── SECTION 0: WATCH AD TASKS (3 per 3 hrs, +1 Honey each) ─────────── */}
-      <div className="mb-6">
+      {/* ── SECTION 0: WATCH AD TASKS ─────────── */}
+      <div className="mb-4">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-xs font-black text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
-            <span>📺</span> WATCH AD TASKS
+          <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+            <span>📺</span> WATCH AD REWARDS
           </span>
-          <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-            +{WATCH_AD_HONEY_REWARD} 🍯 EACH
+          <span className="text-[9px] font-extrabold text-[#00f090] bg-[#00f090]/10 px-2 py-0.5 rounded-full border border-[#00f090]/25">
+            +{WATCH_AD_HONEY_REWARD} USDT EACH
           </span>
         </div>
 
-        {/* Info row */}
-        <div className="mb-3 p-3 rounded-2xl bg-[#141e1a] border border-[#283d35] flex items-start gap-2.5 text-xs text-stone-300 shadow-sm">
-          <span className="text-amber-400 text-sm mt-0.5 flex-shrink-0">🎬</span>
-          <div>
-            <div className="font-extrabold text-amber-300 tracking-wide text-[11px] uppercase mb-0.5">Daily Ad Booster</div>
-            <div className="text-[11px] text-stone-400 leading-relaxed">
-              Watch {WATCH_AD_TASKS_COUNT} ads every 3 hours. Each ad earns you <strong className="text-amber-200">{WATCH_AD_HONEY_REWARD} Honey</strong> instantly.
-              {watchAdState.completed.length < WATCH_AD_TASKS_COUNT && watchAdState.completed.length > 0 && (
-                <span className="text-emerald-300"> Resets in <strong>{watchAdCountdown}</strong>.</span>
-              )}
-              {watchAdState.completed.length === WATCH_AD_TASKS_COUNT && (
-                <span className="text-emerald-300"> All done! Resets in <strong>{watchAdCountdown}</strong>.</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Task cards */}
-        <div className="flex flex-col gap-2.5">
+        <div className="space-y-2">
           {Array.from({ length: WATCH_AD_TASKS_COUNT }, (_, i) => {
             const isDone = watchAdState.completed.includes(i)
             const isVerifying = watchAdVerifyingIndex === i
             const allPreviousDone = i === 0 || watchAdState.completed.includes(i - 1)
             const isLocked = !isDone && !allPreviousDone
+
             return (
-              <div
-                key={i}
-                className={`zentorno-card p-3.5 flex items-center justify-between gap-3 border ${
-                  isDone ? 'border-emerald-500/30 bg-emerald-900/10' : isVerifying ? 'border-amber-500/40 bg-amber-900/10' : 'border-[#2c3e38]'
-                }`}
-              >
+              <div key={i} className="lux-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  {/* Icon */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
-                    isDone ? 'bg-emerald-900/40' : isVerifying ? 'bg-amber-900/40' : 'bg-[#23332e]'
-                  }`}>
+                  <div className="w-9 h-9 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center text-sm shrink-0">
                     {isDone ? '✅' : isVerifying ? '⏱️' : isLocked ? '🔒' : '📺'}
                   </div>
                   <div>
-                    <div className="text-xs font-extrabold text-stone-200">
-                      Watch Ad #{i + 1}
+                    <div className="text-xs font-black text-white">
+                      Watch Booster Ad #{i + 1}
                     </div>
-                    <div className={`text-[11px] font-bold mt-0.5 ${
-                      isDone ? 'text-emerald-400' : isVerifying ? 'text-amber-300' : 'text-amber-300'
-                    }`}>
-                      {isDone ? `+${WATCH_AD_HONEY_REWARD} Honey earned ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s left)` : `+${WATCH_AD_HONEY_REWARD} Honey reward`}
+                    <div className="text-[10px] text-[#00f090] font-bold mt-0.5">
+                      {isDone ? `+${WATCH_AD_HONEY_REWARD} USDT Claimed ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s)` : `+${WATCH_AD_HONEY_REWARD} USDT Reward`}
                     </div>
                   </div>
                 </div>
 
                 <div className="shrink-0">
                   {isDone ? (
-                    <span className="px-2.5 py-2 rounded-xl bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 font-black text-[11px] inline-flex items-center gap-1 shadow-sm">
-                      <span>✓ Done</span>
-                      <span className="text-emerald-300 font-mono font-bold text-[10px]">({watchAdCountdown || '3h'})</span>
+                    <span className="px-2.5 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-[10px]">
+                      ✓ Done
                     </span>
                   ) : isVerifying ? (
-                    <button
-                      disabled
-                      className="px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-xs flex items-center gap-1.5 shadow-sm animate-pulse cursor-wait"
-                    >
-                      <span className="animate-spin text-xs">⏳</span>
-                      <span>{watchAdSecondsLeft}s</span>
-                    </button>
+                    <span className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-400 font-extrabold text-xs">
+                      {watchAdSecondsLeft}s
+                    </span>
                   ) : isLocked ? (
-                    <span className="px-3 py-2 rounded-xl bg-[#1a2622] border border-[#2e423b] text-stone-500 font-extrabold text-xs inline-block">
+                    <span className="px-3 py-1.5 rounded-xl bg-white/5 text-[#4d5c54] font-extrabold text-xs">
                       Locked
                     </span>
                   ) : (
                     <button
                       onClick={() => handleWatchAdTask(i)}
                       disabled={watchAdVerifyingIndex !== null}
-                      className="px-4 py-2 rounded-xl zentorno-btn-primary font-extrabold text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-md active:scale-95"
+                      className="px-4 py-2 rounded-xl btn-white font-black text-xs uppercase"
                     >
                       ▶ Watch
                     </button>
@@ -1012,46 +787,21 @@ export const Missions: React.FC = () => {
             )
           })}
         </div>
-
-        {/* Progress bar */}
-        <div className="mt-3 flex items-center gap-2.5 px-1">
-          <div className="flex-1 h-1.5 bg-[#17231f] rounded-full overflow-hidden border border-[#273a33]">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
-              style={{ width: `${(watchAdState.completed.length / WATCH_AD_TASKS_COUNT) * 100}%` }}
-            />
-          </div>
-          <span className="text-[10px] font-mono font-bold text-stone-400 shrink-0">
-            {watchAdState.completed.length}/{WATCH_AD_TASKS_COUNT} tasks · resets in {watchAdCountdown || '...'}
-          </span>
-        </div>
       </div>
 
-      {/* SECTION 1: REFERRAL MILESTONES (UP TO +500 GHS) */}
+      {/* SECTION 1: REFERRAL MILESTONES */}
       {milestones.length > 0 && (
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-xs font-black text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
-              <span>👥</span> REFERRAL MILESTONES (UP TO +500 GHS)
+            <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+              <span>👥</span> HASHRATE MILESTONES
             </span>
-            <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-              VIRAL BOOST
+            <span className="text-[9px] font-extrabold text-white bg-white/10 px-2 py-0.5 rounded-full">
+              BONUS POWER
             </span>
           </div>
 
-          {/* Requirement Info Box */}
-          <div className="mb-3.5 p-3 rounded-2xl bg-[#141e1a] border border-[#283d35] flex items-start gap-2.5 text-xs text-stone-300 shadow-sm">
-            <span className="text-amber-400 text-sm mt-0.5 flex-shrink-0">⚡</span>
-            <div className="space-y-1">
-              <div className="font-extrabold text-amber-300 tracking-wide text-[11px] uppercase">Invite Requirements</div>
-              <div className="text-[11px] text-stone-300 leading-relaxed">
-                • <strong className="text-stone-100">10 Friends Tier:</strong> Counts all new joins directly.<br/>
-                • <strong className="text-emerald-400">20+ Milestones:</strong> Requires <strong className="text-emerald-300">Active Miners</strong> (friends who collect at least 1 harvest).
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
+          <div className="space-y-2">
             {milestones.map((mission) => {
               const count = mission.milestone_count || 10
               const progress = mission.progress || 0
@@ -1059,19 +809,16 @@ export const Missions: React.FC = () => {
               const percent = mission.is_completed ? 100 : Math.min(100, Math.round((progress / count) * 100))
 
               return (
-                <div
-                  key={mission.id}
-                  className="zentorno-card p-3.5 flex flex-col gap-2.5 border border-[#2c3e38]"
-                >
+                <div key={mission.id} className="lux-card p-3.5 flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 min-w-[54px] px-2.5 rounded-xl bg-[#23332e] border border-[#344b43] flex items-center justify-center gap-1 text-amber-300 font-black text-xs flex-shrink-0 whitespace-nowrap shadow-inner">
+                      <div className="h-8 min-w-[48px] px-2 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center gap-1 text-white font-black text-xs shrink-0">
                         <span>{count}</span>
-                        <span className="text-[11px]">👥</span>
+                        <span className="text-[10px]">👥</span>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-extrabold text-stone-200 truncate">{mission.title}</div>
-                        <div className="text-[11px] font-bold text-[#93b3a6] mt-0.5">
+                        <div className="text-xs font-black text-white truncate">{mission.title}</div>
+                        <div className="text-[10px] font-bold text-[#00f090] mt-0.5">
                           +{mission.reward_power} GHS MINING POWER
                         </div>
                       </div>
@@ -1079,21 +826,21 @@ export const Missions: React.FC = () => {
 
                     <div className="shrink-0">
                       {mission.is_completed ? (
-                        <span className="px-3 py-1.5 rounded-xl bg-[#23332e] text-stone-500 font-extrabold text-xs inline-block whitespace-nowrap">
-                          DONE ✅
+                        <span className="px-3 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs">
+                          DONE ✓
                         </span>
                       ) : isEligible ? (
                         <button
                           onClick={() => handleClaimMilestone(mission)}
                           disabled={actionId === mission.id}
-                          className="px-4 py-2 rounded-xl zentorno-btn-primary font-black text-xs uppercase tracking-wider animate-bounce shadow-lg whitespace-nowrap"
+                          className="px-3.5 py-1.5 rounded-xl btn-white font-black text-xs uppercase tracking-wider shadow-md"
                         >
-                          {actionId === mission.id ? '...' : ('CLAIM +' + mission.reward_power + ' GHS')}
+                          {actionId === mission.id ? '...' : `CLAIM +${mission.reward_power} GHS`}
                         </button>
                       ) : (
                         <button
                           onClick={handleShare}
-                          className="px-3 py-1.5 rounded-xl bg-[#1a2622] border border-[#2e423b] text-stone-300 font-bold text-xs hover:border-[#93b3a6] transition-colors whitespace-nowrap"
+                          className="px-3 py-1.5 rounded-xl btn-surface text-white font-bold text-xs"
                         >
                           INVITE
                         </button>
@@ -1101,19 +848,15 @@ export const Missions: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="w-full flex items-center gap-2.5 pt-1">
-                    <div className="flex-1 h-2 bg-[#17231f] rounded-full overflow-hidden border border-[#273a33]">
+                  <div className="w-full flex items-center gap-2 pt-0.5">
+                    <div className="flex-1 h-1.5 bg-[#080c0a] rounded-full overflow-hidden border border-[#17241d]">
                       <div
-                        className={'h-full transition-all duration-300 ' + (mission.is_completed ? 'bg-emerald-400' : 'bg-gradient-to-r from-[#93b3a6] to-emerald-400')}
-                        style={{ width: percent + '%' }}
+                        className="h-full bg-[#00f090] transition-all duration-300"
+                        style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-stone-400 shrink-0">
-                      {mission.is_completed
-                        ? (count + '/' + count + ' (100%)')
-                        : count <= 10
-                        ? (progress + '/' + count + ' (' + percent + '%)')
-                        : (progress + '/' + count + ' Active (' + percent + '%)')}
+                    <span className="text-[9px] font-mono text-[#84948c] shrink-0">
+                      {progress}/{count} ({percent}%)
                     </span>
                   </div>
                 </div>
@@ -1123,47 +866,32 @@ export const Missions: React.FC = () => {
         </div>
       )}
 
-      {/* SECTION 2: PROMOTED & SPONSORED TASKS (MATCHES SCREENSHOT 1) */}
+      {/* SECTION 2: PROMOTED TASKS */}
       <div>
-        <div className="flex items-center justify-between mb-3 px-1">
-          <span className="text-xs font-black text-stone-200 uppercase tracking-wider flex items-center gap-1.5">
-            <span>📢</span> PROMOTED & PARTNER TASKS
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-[10px] font-extrabold text-[#84948c] uppercase tracking-wider flex items-center gap-1.5">
+            <span>⚡</span> PARTNER MISSIONS
           </span>
-          <span className="text-[10px] font-bold text-stone-400">+0.1 GHS EACH</span>
+          <span className="text-[9px] font-bold text-[#84948c]">+0.1 GHS EACH</span>
         </div>
 
         {loading ? (
-          <div className="text-center py-6 text-stone-400 text-xs animate-pulse">Loading tasks...</div>
+          <div className="text-center py-6 text-[#84948c] text-xs animate-pulse">Loading tasks...</div>
         ) : sponsored.length === 0 ? (
-          <div className="text-center py-6 text-stone-500 text-xs font-bold">
-            ✨ All available tasks completed! Check back soon for new tasks.
+          <div className="text-center py-6 text-[#84948c] text-xs font-bold">
+            ✨ All tasks completed! Check back soon for new tasks.
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="space-y-2">
             {sponsored.map((mission) => (
-              <div
-                key={mission.id}
-                className="zentorno-card p-3.5 flex items-center justify-between gap-3 border border-[#2c3e38]"
-              >
+              <div key={mission.id} className="lux-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#23332e] flex items-center justify-center text-stone-300 flex-shrink-0">
-                    {mission.type === 'bot' ? (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    ) : mission.type === 'link' || mission.type === 'custom' ? (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    )}
+                  <div className="w-9 h-9 rounded-xl bg-[#080c0a] border border-[#17241d] flex items-center justify-center text-sm shrink-0">
+                    ⚡
                   </div>
                   <div>
-                    <div className="text-xs font-extrabold text-stone-200">{mission.title}</div>
-                    <div className="text-[11px] font-bold text-stone-400 mt-0.5">
+                    <div className="text-xs font-black text-white">{mission.title}</div>
+                    <div className="text-[10px] text-[#00f090] font-bold mt-0.5">
                       +{mission.reward_power} GHS
                     </div>
                   </div>
@@ -1171,16 +899,16 @@ export const Missions: React.FC = () => {
 
                 <div>
                   {mission.is_completed ? (
-                    <span className="px-4 py-2 rounded-xl bg-[#23332e] text-stone-500 font-extrabold text-xs inline-block">
+                    <span className="px-3 py-1 rounded-xl bg-white/5 text-[#84948c] font-bold text-xs">
                       Done
                     </span>
                   ) : (
                     <button
                       onClick={() => handleSponsoredAction(mission)}
                       disabled={actionId === mission.id}
-                      className="px-4 py-2 rounded-xl zentorno-btn-primary font-extrabold text-xs"
+                      className="px-3.5 py-1.5 rounded-xl btn-white font-black text-xs uppercase"
                     >
-                      {actionId === mission.id ? '...' : ('+' + mission.reward_power + ' GHS')}
+                      {actionId === mission.id ? '...' : `+${mission.reward_power} GHS`}
                     </button>
                   )}
                 </div>
@@ -1192,4 +920,5 @@ export const Missions: React.FC = () => {
     </div>
   )
 }
+
 export default Missions

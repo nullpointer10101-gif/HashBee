@@ -1,109 +1,179 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-dark: #070a09;
-  --bg-card: #0e1412;
-  --bg-card-hover: #131c19;
-  --bg-input: #121a17;
-  --border-subtle: #17221d;
-  --border-focus: #10b981;
-  --accent-emerald: #10b981;
-  --accent-mint: #00f59b;
-  --accent-gold: #f59e0b;
-  --text-primary: #f3f5f4;
-  --text-secondary: #9aa8a1;
-  --text-muted: #5d6f66;
+  --bg-main: #060807;
+  --bg-card: #0d110f;
+  --bg-card-hover: #121815;
+  --bg-surface: #141c18;
+  --border-subtle: #1a241f;
+  --border-active: #2a3d34;
+  --accent-white: #ffffff;
+  --accent-emerald: #00f090;
+  --accent-mint: #10b981;
+  --accent-cyan: #06b6d4;
+  --text-main: #f8fafc;
+  --text-muted: #84948c;
+  --text-dim: #4d5c54;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(0, 240, 144, 0.04) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
+  color: var(--text-main);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
   user-select: none;
   -webkit-user-select: none;
+  letter-spacing: -0.01em;
 }
 
-/* Minimalist Clean UI Cards */
-.zentorno-card {
-  background: linear-gradient(180deg, #0e1512 0%, #0a0f0d 100%);
-  border: 1px solid #16221c;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.2s ease, transform 0.15s ease;
+/* Minimalist Luxury Cards */
+.lux-card {
+  background: linear-gradient(180deg, #0e1411 0%, #080c0a 100%);
+  border: 1px solid #17241d;
+  border-radius: 24px;
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.7);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.zentorno-card:hover {
-  border-color: #1f332a;
+.lux-card:hover {
+  border-color: #243a2e;
 }
 
-.zentorno-input {
-  background-color: #0b110f;
-  border: 1px solid #17241f;
-  border-radius: 14px;
-  color: #f3f5f4;
-  transition: all 0.2s ease;
+.lux-card-glass {
+  background: rgba(14, 20, 17, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 24px;
 }
 
-.zentorno-input:focus-within {
-  border-color: #10b981;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
-}
-
-.zentorno-btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #050807;
+/* High Contrast Pure White Minimalist Button */
+.btn-white {
+  background: #ffffff;
+  color: #040706;
   font-weight: 800;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  border: 1px solid #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
 }
 
-.zentorno-btn-primary:hover {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+.btn-white:hover {
+  background: #f1f5f3;
+  box-shadow: 0 6px 25px rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
 }
 
-.zentorno-btn-primary:active {
+.btn-white:active {
   transform: scale(0.98);
 }
 
-.zentorno-btn-secondary {
-  background: #0f1714;
-  border: 1px solid #1c2b24;
-  color: #a3b8af;
+/* Radiant Cyber Emerald Button */
+.btn-emerald {
+  background: linear-gradient(135deg, #00f090 0%, #059669 100%);
+  color: #030806;
+  font-weight: 800;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 240, 144, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-emerald:hover {
+  background: linear-gradient(135deg, #34d399 0%, #00f090 100%);
+  box-shadow: 0 6px 28px rgba(0, 240, 144, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-emerald:active {
+  transform: scale(0.98);
+}
+
+/* Minimalist Secondary Surface Button */
+.btn-surface {
+  background: #0d1411;
+  color: #d1ded8;
   font-weight: 700;
+  border: 1px solid #1a2a21;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-surface:hover {
+  background: #141f1a;
+  color: #ffffff;
+  border-color: #273f32;
+}
+
+.btn-surface:active {
+  transform: scale(0.98);
+}
+
+/* Minimalist Clean Input */
+.lux-input {
+  background: #080c0a;
+  border: 1px solid #192720;
   border-radius: 14px;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s ease;
+}
+
+.lux-input:focus-within {
+  border-color: #00f090;
+  box-shadow: 0 0 15px rgba(0, 240, 144, 0.15);
+}
+
+/* Legacy utility overrides for backward compatibility */
+.zentorno-card {
+  background: linear-gradient(180deg, #0e1411 0%, #080c0a 100%);
+  border: 1px solid #17241d;
+  border-radius: 24px;
+}
+
+.zentorno-input {
+  background-color: #080c0a;
+  border: 1px solid #192720;
+  border-radius: 14px;
+  color: #f8fafc;
+}
+
+.zentorno-btn-primary {
+  background: #ffffff;
+  color: #040706;
+  font-weight: 800;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+}
+
+.zentorno-btn-primary:hover {
+  background: #f1f5f3;
+  transform: translateY(-1px);
+}
+
+.zentorno-btn-secondary {
+  background: #0d1411;
+  border: 1px solid #1a2a21;
+  color: #d1ded8;
+  font-weight: 700;
+  border-radius: 16px;
   transition: all 0.2s ease;
 }
 
 .zentorno-btn-secondary:hover {
-  background: #15221d;
+  background: #141f1a;
   color: #ffffff;
-  border-color: #273d33;
-}
-
-.zentorno-btn-secondary:active {
-  transform: scale(0.98);
-}
-
-/* Minimalist Glass Badges */
-.badge-glass {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  border-color: #273f32;
 }
 
 /* Custom Minimalist Scrollbar */
@@ -114,6 +184,6 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1c2b24;
+  background: #1a2820;
   border-radius: 4px;
 }

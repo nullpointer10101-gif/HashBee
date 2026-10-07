@@ -46,6 +46,7 @@ export interface Mission {
   expires_at?: string
   milestone_count?: number
   progress?: number
+  category?: string
 }
 
 export interface Withdrawal {

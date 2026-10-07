@@ -184,13 +184,14 @@ export const fetchMissions = async (): Promise<Mission[]> => {
     is_completed: m.user_status === 'reward_paid' || m.is_completed || false,
     milestone_count: m.milestone_count,
     progress: m.progress,
+    category: m.category || (m.milestone_count ? 'referral_milestone' : 'sponsored'),
     expires_at: m.expires_at,
   }))
 }
 
-export const claimMilestone = async (missionId: string): Promise<{ reward_power: number }> => {
+export const claimMilestone = async (missionId: string): Promise<{ reward_power: number; message?: string }> => {
   const res = await api.post(`/api/missions/${missionId}/claim`)
-  return { reward_power: Number(res.data?.reward_bp || 0) }
+  return { reward_power: Number(res.data?.reward_bp || 0), message: res.data?.message || 'Milestone reward credited!' }
 }
 
 export const completeMission = async (missionId: string): Promise<{ reward_honey: number; reward_power: number }> => {
