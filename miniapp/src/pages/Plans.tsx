@@ -57,6 +57,7 @@ export const Plans: React.FC = () => {
       user_purchased: 0,
       can_purchase: true,
       icon: '🤖',
+      image: '/images/robot_miner.jpg',
       accent_color: '#8b5cf6',
     },
     {
@@ -74,6 +75,7 @@ export const Plans: React.FC = () => {
       user_purchased: 0,
       can_purchase: true,
       icon: '⚡',
+      image: '/images/cyber_worker_miner.jpg',
       accent_color: '#0088ff',
     },
     {
@@ -463,8 +465,12 @@ export const Plans: React.FC = () => {
 
                 {/* Plan Info */}
                 <div className="flex items-center gap-3 mb-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 flex items-center justify-center text-2xl shrink-0 shadow-sm">
-                    {plan.icon}
+                  <div className="w-13 h-13 rounded-2xl overflow-hidden border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+                    {(plan as any).image ? (
+                      <img src={(plan as any).image} alt={plan.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{plan.icon}</span>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-xs font-extrabold text-[#0f172a] uppercase">

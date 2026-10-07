@@ -367,6 +367,7 @@ export interface PlanTier {
   user_purchased: number
   can_purchase: boolean
   icon: string
+  image?: string
   accent_color: string
 }
 

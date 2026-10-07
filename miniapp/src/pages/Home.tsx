@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { LanguageModal } from '../components/LanguageModal'
-import { claimHoney, checkDeposit } from '../services/api'
+import { claimHoney } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
@@ -18,7 +18,7 @@ export const Home: React.FC = () => {
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
   const ghs = user?.bee_power || 50
-  // 100 GHS = 0.05 GRAM/USDT per day
+  // 100 GHS = 0.05 GRAM/USDT per day (0.0005 per GHS)
   const earningsPerDay = ghs * 0.0005
   const earningsPerSecond = earningsPerDay / 86400
 
@@ -69,7 +69,7 @@ export const Home: React.FC = () => {
   const elapsedSec = Math.floor(Math.max(0, (Date.now() - lastTime) / 1000)) % 86400
   const cycleHours = Math.floor(elapsedSec / 3600)
   const cycleMins = Math.floor((elapsedSec % 3600) / 60)
-  const cyclePercent = Math.min(100, Math.max(5, (elapsedSec / 86400) * 100))
+  const cyclePercent = Math.min(100, Math.max(8, (elapsedSec / 86400) * 100))
 
   if (loading || !user) {
     return (
@@ -87,11 +87,11 @@ export const Home: React.FC = () => {
   return (
     <div className="pb-28 pt-3 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a] font-sans">
       {/* ── TOP HEADER ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3.5">
         <div className="flex items-center gap-2.5">
           {/* Cute Robot Icon */}
-          <div className="w-11 h-11 rounded-2xl bg-[#e0f2fe] border border-[#bae6fd] flex items-center justify-center text-2xl shadow-sm">
-            🤖
+          <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-[#bae6fd] shadow-sm flex-shrink-0">
+            <img src="/images/robot_miner.jpg" alt="Crypto Mine" className="w-full h-full object-cover" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -99,11 +99,11 @@ export const Home: React.FC = () => {
                 Crypto <span className="text-[#0088ff]">Mine</span>
               </h1>
               {/* Verified Blue Checkmark Badge */}
-              <div className="w-4 h-4 rounded-full bg-[#0088ff] flex items-center justify-center text-white text-[9px] font-black">
+              <div className="w-4 h-4 rounded-full bg-[#0088ff] flex items-center justify-center text-white text-[9px] font-black shadow-sm">
                 ✓
               </div>
             </div>
-            <div className="text-[11px] font-semibold text-slate-400 mt-0.2">
+            <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
               Mine • Earn • Grow
             </div>
           </div>
@@ -133,7 +133,7 @@ export const Home: React.FC = () => {
             href="https://t.me/+L4xApdSQJkA3N2Rl"
             target="_blank"
             rel="noreferrer"
-            className="w-9 h-9 rounded-full bg-[#0088ff] text-white flex items-center justify-center shadow-sm active:scale-95"
+            className="w-9 h-9 rounded-full bg-[#0088ff] text-white flex items-center justify-center shadow-md active:scale-95"
             title="Channel"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -143,11 +143,14 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* ── CARD 1: TOTAL BALANCE (VIVID OCEAN BLUE GRADIENT) ── */}
-      <div className="mine-hero-card p-5 mb-3.5 relative">
-        <div className="flex items-center justify-between">
+      {/* ── CARD 1: TOTAL BALANCE (VIVID OCEAN BLUE GRADIENT WITH CRYSTAL LIGHTING) ── */}
+      <div className="mine-hero-card p-5 mb-3.5 relative overflow-hidden">
+        {/* Subtle Crystal Mesh in Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.25)_0%,transparent_50%)] pointer-events-none" />
+
+        <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs">
+            <div className="w-6 h-6 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center text-xs">
               💳
             </div>
             <span className="text-[11px] font-extrabold tracking-wider text-white/90 uppercase">
@@ -155,26 +158,26 @@ export const Home: React.FC = () => {
             </span>
           </div>
 
-          {/* NFT Balance */}
-          <div className="px-2.5 py-1 rounded-xl bg-black/25 backdrop-blur-md text-right">
+          {/* NFT Balance Badge */}
+          <div className="px-3 py-1 rounded-xl bg-black/30 backdrop-blur-md text-right border border-white/10">
             <span className="text-[8px] font-bold text-white/70 uppercase block leading-none">NFT BALANCE</span>
-            <span className="text-xs font-extrabold text-white font-mono mt-0.5 block">0.00 <span className="text-[9px] text-[#00f090]">USDT</span></span>
+            <span className="text-xs font-black text-white font-mono mt-0.5 block">0.00 <span className="text-[9px] text-[#00f090] font-sans">USDT</span></span>
           </div>
         </div>
 
         {/* Large Balance Display */}
-        <div className="mt-3 flex items-baseline gap-2">
+        <div className="mt-3 flex items-baseline gap-2 relative z-10">
           <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
             {userBalance.toFixed(4)}
           </span>
-          <span className="px-2 py-0.5 rounded-lg bg-white/20 text-white font-extrabold text-xs">
+          <span className="px-2 py-0.5 rounded-lg bg-black/25 border border-white/15 text-white font-extrabold text-xs">
             USDT
           </span>
         </div>
 
         {/* Bottom Row */}
-        <div className="mt-4 flex items-center justify-between pt-1">
-          <div className="px-3 py-1.5 rounded-xl bg-black/25 backdrop-blur-md flex items-center gap-1.5 text-xs text-white">
+        <div className="mt-4 flex items-center justify-between pt-1 relative z-10">
+          <div className="px-3 py-1.5 rounded-xl bg-black/25 backdrop-blur-md border border-white/10 flex items-center gap-1.5 text-xs text-white">
             <span className="text-[#00f090] font-black">↑</span>
             <span className="text-white/80 font-medium text-[11px]">Mining</span>
             <span className="text-[#00f090] font-extrabold font-mono text-[11px]">+{earningsPerDay.toFixed(4)} USDT/d</span>
@@ -182,7 +185,7 @@ export const Home: React.FC = () => {
 
           <button
             onClick={() => navigate('/withdraw')}
-            className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-extrabold flex items-center gap-1 border border-white/30 backdrop-blur-md transition-all active:scale-95"
+            className="px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-extrabold flex items-center gap-1 border border-white/30 backdrop-blur-md transition-all active:scale-95 shadow-sm"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -211,9 +214,9 @@ export const Home: React.FC = () => {
 
         {/* Miner Profile */}
         <div className="flex items-center gap-3 mb-3.5">
-          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0284c7] to-[#0369a1] p-0.5 shadow-md flex-shrink-0 flex items-center justify-center text-3xl">
-            🤖
-            <div className="absolute -bottom-1.5 px-2 py-0.2 bg-[#7c3aed] text-white text-[8px] font-black rounded-full uppercase tracking-wider shadow">
+          <div className="relative w-15 h-15 rounded-2xl overflow-hidden shadow-md flex-shrink-0 border-2 border-[#0284c7]/30 bg-gradient-to-br from-[#0284c7] to-[#0369a1]">
+            <img src="/images/robot_miner.jpg" alt="Miner Avatar" className="w-full h-full object-cover" />
+            <div className="absolute bottom-0 inset-x-0 bg-[#7c3aed]/90 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider shadow">
               Level 1
             </div>
           </div>
@@ -307,55 +310,76 @@ export const Home: React.FC = () => {
 
       {/* ── 3 ACTION GRID CARDS: DEPOSIT / WITHDRAW / REFERRAL ── */}
       <div className="grid grid-cols-3 gap-2.5 mb-4">
-        {/* Deposit Card */}
+        {/* Deposit Card with Watermark */}
         <div
           onClick={() => setShowDepositModal(true)}
-          className="mine-card p-3 flex flex-col justify-between cursor-pointer hover:border-emerald-200 active:scale-95 transition-all"
+          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-emerald-300 active:scale-95 transition-all min-h-[96px]"
         >
-          <div className="flex items-center justify-between">
+          {/* Subtle Coin watermark */}
+          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-emerald-600">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
+            </svg>
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-[#0f172a]">Deposit</span>
-            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-black shadow-sm">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center text-sm font-black shadow-sm">
               +
             </div>
           </div>
-          <div className="mt-4">
-            <span className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-extrabold">
+          <div className="mt-3 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold inline-block">
               Add USDT
             </span>
           </div>
         </div>
 
-        {/* Withdraw Card */}
+        {/* Withdraw Card with Watermark */}
         <div
           onClick={() => navigate('/withdraw')}
-          className="mine-card p-3 flex flex-col justify-between cursor-pointer hover:border-blue-200 active:scale-95 transition-all"
+          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-blue-300 active:scale-95 transition-all min-h-[96px]"
         >
-          <div className="flex items-center justify-between">
+          {/* Subtle Chart watermark */}
+          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-[#0088ff]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zM16.2 13H19v6h-2.8z" />
+            </svg>
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-[#0f172a]">Withdraw</span>
-            <div className="w-7 h-7 rounded-full bg-[#0088ff] text-white flex items-center justify-center text-sm font-black shadow-sm">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-sm font-black shadow-sm">
               ↓
             </div>
           </div>
-          <div className="mt-4">
-            <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-[#0088ff] text-[10px] font-extrabold">
+          <div className="mt-3 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-blue-50 border border-blue-200 text-[#0088ff] text-[10px] font-extrabold inline-block">
               Get Profit
             </span>
           </div>
         </div>
 
-        {/* Referral Card */}
+        {/* Referral Card with Watermark */}
         <div
           onClick={() => navigate('/earn')}
-          className="mine-card p-3 flex flex-col justify-between cursor-pointer hover:border-purple-200 active:scale-95 transition-all"
+          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-purple-300 active:scale-95 transition-all min-h-[96px]"
         >
-          <div className="flex items-center justify-between">
+          {/* Subtle Users watermark */}
+          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-[#7c3aed]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+            </svg>
+          </div>
+
+          <div className="flex items-center justify-between relative z-10">
             <span className="text-xs font-black text-[#0f172a]">Referral</span>
-            <div className="w-7 h-7 rounded-full bg-[#7c3aed] text-white flex items-center justify-center text-xs font-black shadow-sm">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-xs font-black shadow-sm">
               👥
             </div>
           </div>
-          <div className="mt-4">
-            <span className="px-2 py-0.5 rounded-lg bg-purple-50 text-[#7c3aed] text-[10px] font-extrabold">
+          <div className="mt-3 relative z-10">
+            <span className="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 text-[#7c3aed] text-[10px] font-extrabold inline-block">
               Invite & Earn
             </span>
           </div>
@@ -365,27 +389,27 @@ export const Home: React.FC = () => {
       {/* ── BANNER: INVITE FRIEND / EARN MORE ─────────────────── */}
       <div
         onClick={() => navigate('/earn')}
-        className="mine-card p-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white rounded-3xl shadow-lg flex items-center justify-between cursor-pointer active:scale-98 transition-all"
+        className="mine-card p-0 relative overflow-hidden text-white rounded-3xl shadow-lg cursor-pointer active:scale-98 transition-all border border-purple-200/50"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shrink-0">
-            🤖
-          </div>
-          <div>
-            <div className="text-xs font-black uppercase tracking-wider text-purple-200">
-              VIRAL REWARDS
+        <div className="relative h-28 w-full overflow-hidden">
+          <img src="/images/invite_banner.jpg" alt="Invite Friends" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/50 to-transparent flex items-center justify-between p-4">
+            <div className="max-w-[70%]">
+              <span className="px-2 py-0.5 rounded-full bg-indigo-500/80 text-white text-[8px] font-black uppercase tracking-wider backdrop-blur-sm">
+                VIRAL HASHRATE BOOST
+              </span>
+              <h4 className="text-base font-black text-white leading-tight mt-1 drop-shadow-sm">
+                Invite Friends & Earn
+              </h4>
+              <p className="text-[10px] text-indigo-100 font-semibold mt-0.5">
+                Instant +3 GHS per friend + milestone rewards!
+              </p>
             </div>
-            <div className="text-sm font-black leading-tight">
-              Invite Friends & Earn +3 GHS
-            </div>
-            <div className="text-[10px] text-white/80 mt-0.5">
-              Up to +500 GHS Power bonus on team milestones!
-            </div>
-          </div>
-        </div>
 
-        <div className="px-3 py-1.5 rounded-xl bg-white text-[#7c3aed] text-xs font-black shadow-sm">
-          ➔
+            <div className="w-9 h-9 rounded-full bg-white text-[#7c3aed] flex items-center justify-center font-black text-sm shadow-md shrink-0">
+              ➔
+            </div>
+          </div>
         </div>
       </div>
 
