@@ -41,9 +41,15 @@ export const ViralBountyWidget: React.FC = () => {
 
   useEffect(() => {
     loadBounty()
-    const interval = setInterval(loadBounty, 25000)
+    const interval = setInterval(loadBounty, 10000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      loadBounty()
+    }
+  }, [isOpen])
 
   // Live countdown timer state
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({

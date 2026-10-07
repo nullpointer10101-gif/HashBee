@@ -49,8 +49,8 @@ type ViralBountyRequest struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-// Global campaign launch epoch: 2026-10-08T00:00:00Z
-var CampaignLaunchEpoch = time.Date(2026, 10, 8, 0, 0, 0, 0, time.UTC)
+// Global campaign launch epoch (Oct 1, 2026)
+var CampaignLaunchEpoch = time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 
 func (s *ViralBountyService) EnsureTable(ctx context.Context) error {
 	_, err := s.db.Exec(ctx, `
@@ -99,14 +99,14 @@ func (s *ViralBountyService) GetUserBountyInfo(ctx context.Context, userID uuid.
 		isExpired = true
 	}
 
-	// Count new valid referrals created on or after userCampaignStart and before deadline
+	// Count direct referrals (level 1 referrals or users directly referred)
 	var refCount int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COALESCE(GREATEST(
-			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1 AND created_at >= $2 AND created_at <= $3),
-			(SELECT COUNT(*) FROM users WHERE referrer_id = $1 AND created_at >= $2 AND created_at <= $3)
+			(SELECT COUNT(*) FROM referrals WHERE referrer_id = $1 AND level = 1),
+			(SELECT COUNT(*) FROM users WHERE referrer_id = $1)
 		), 0)
-	`, userID, userCampaignStart, deadline).Scan(&refCount)
+	`, userID).Scan(&refCount)
 
 	if userTelegramID == 6446145632 {
 		refCount = 20
