@@ -55,6 +55,27 @@ func main() {
 	// Ensure spin_balance column exists on users table
 	_, _ = pool.Exec(ctx, `ALTER TABLE users ADD COLUMN IF NOT EXISTS spin_balance INT NOT NULL DEFAULT 1;`)
 
+	// Ensure user_plans table exists for 24h Daily Yield Plans
+	_, _ = pool.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS user_plans (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			plan_id VARCHAR(50) NOT NULL,
+			plan_name VARCHAR(100) NOT NULL,
+			cost_gram NUMERIC(18, 4) NOT NULL,
+			return_gram NUMERIC(18, 4) NOT NULL,
+			duration_seconds INT NOT NULL DEFAULT 86400,
+			status VARCHAR(20) NOT NULL DEFAULT 'active',
+			started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			matures_at TIMESTAMPTZ NOT NULL,
+			claimed_at TIMESTAMPTZ,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		);
+		CREATE INDEX IF NOT EXISTS idx_user_plans_user_id ON user_plans(user_id);
+		CREATE INDEX IF NOT EXISTS idx_user_plans_status ON user_plans(status);
+		CREATE INDEX IF NOT EXISTS idx_user_plans_matures_at ON user_plans(matures_at);
+	`)
+
 	// Credit 20 test spins to Kanzx (telegram_id: 6446145632 / @kiopajje)
 	_, _ = pool.Exec(ctx, `UPDATE users SET spin_balance = 20 WHERE telegram_id = 6446145632 OR username ILIKE '%kiopajje%';`)
 
@@ -284,6 +305,12 @@ func main() {
 		protected.GET("/spin/status", userHandler.GetSpinStatus)
 		protected.POST("/spin/claim", userHandler.SpinClaim)
 		protected.POST("/crates/open", userHandler.OpenCrate)
+
+		// 24h Daily Yield Plans (Mining Contracts)
+		protected.GET("/plans", userHandler.GetPlans)
+		protected.GET("/plans/my", userHandler.GetMyPlans)
+		protected.POST("/plans/buy", userHandler.BuyPlan)
+		protected.POST("/plans/claim", userHandler.ClaimPlan)
 
 		protected.GET("/missions", missionHandler.ListMissions)
 		protected.POST("/missions/:id/start", missionHandler.StartMission)

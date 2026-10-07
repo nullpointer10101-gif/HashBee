@@ -351,6 +351,72 @@ export const checkDeposit = async (senderAddress?: string): Promise<any> => {
   return res.data
 }
 
+export interface PlanTier {
+  id: string
+  name: string
+  subtitle: string
+  badge: string
+  cost_gram: number
+  return_gram: number
+  profit_gram: number
+  profit_percent: number
+  duration_hours: number
+  max_per_account: number
+  is_limited: boolean
+  user_purchased: number
+  can_purchase: boolean
+  icon: string
+  accent_color: string
+}
+
+export interface UserPlanItem {
+  id: string
+  user_id: string
+  plan_id: string
+  plan_name: string
+  cost_gram: number
+  return_gram: number
+  profit_gram: number
+  duration_seconds: number
+  status: 'active' | 'claimed'
+  started_at: string
+  matures_at: string
+  claimed_at?: string
+  created_at: string
+  seconds_remaining: number
+  progress_percent: number
+  is_ready_to_claim: boolean
+}
+
+export interface PlansOverview {
+  plans: PlanTier[]
+  active_plans_count: number
+  completed_plans_count: number
+  total_locked_gram: number
+  total_earned_gram: number
+  can_buy_starter: boolean
+}
+
+export const fetchPlans = async (): Promise<PlansOverview> => {
+  const res = await api.get('/api/plans')
+  return res.data
+}
+
+export const fetchMyPlans = async (): Promise<UserPlanItem[]> => {
+  const res = await api.get('/api/plans/my')
+  return res.data?.user_plans || []
+}
+
+export const buyPlan = async (planId: string): Promise<{ success: boolean; message: string; new_honey_balance: number; plan: UserPlanItem }> => {
+  const res = await api.post('/api/plans/buy', { plan_id: planId })
+  return res.data
+}
+
+export const claimPlan = async (userPlanId: string): Promise<{ success: boolean; message: string; claimed_gram: number; new_honey_balance: number }> => {
+  const res = await api.post('/api/plans/claim', { user_plan_id: userPlanId })
+  return res.data
+}
+
 export interface CrateRewardResponse {
   rarity_label: string
   rarity_color: string
@@ -377,4 +443,6 @@ export const openCrate = async (tier: 'bronze' | 'silver' | 'gold' | 'god'): Pro
   })
   return res.data
 }
+
+
 

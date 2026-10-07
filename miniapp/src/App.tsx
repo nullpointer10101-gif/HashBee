@@ -8,7 +8,7 @@ import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
 import { Withdraw } from './pages/Withdraw'
 import { Spin } from './pages/Spin'
-import { Crates } from './pages/Crates'
+import { Plans } from './pages/Plans'
 import { BannedScreen } from './components/BannedScreen'
 import { PrivateGroupGatekeeper, isAccountVerified } from './components/PrivateGroupGatekeeper'
 import { initMonetagAutoAds } from './services/monetag'
@@ -48,7 +48,8 @@ const AppContent: React.FC = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/crates" element={<Crates />} />
+        <Route path="/plans" element={<Plans />} />
+        <Route path="/crates" element={<Plans />} />
         <Route path="/spin" element={<Spin />} />
         <Route path="/earn" element={<Referrals />} />
         <Route path="/tasks" element={<Missions />} />

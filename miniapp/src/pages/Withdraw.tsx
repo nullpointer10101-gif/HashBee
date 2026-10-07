@@ -305,7 +305,7 @@ export const Withdraw: React.FC = () => {
                 <span>Earnings & Profit Withdrawal</span>
               </div>
               <p className="leading-tight text-stone-400">
-                You can withdraw all earnings from <b>Cloud Mining</b>, <b>Lucky Spins</b>, <b>Mystery Crates</b>, and <b>Referrals</b>! Deposited funds power your active GHS miner and unlock crates.
+                You can withdraw all earnings from <b>Cloud Mining</b>, <b>Lucky Spins</b>, <b>Daily Mining Plans</b>, and <b>Referrals</b>! Deposited funds power your active contracts and yield plans.
               </p>
             </div>
           </form>

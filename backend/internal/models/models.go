@@ -63,6 +63,8 @@ type UserProfile struct {
 	LastCollectAt            time.Time  `json:"last_collect_at"`
 	CreatedAt                time.Time  `json:"created_at"`
 	ReferralCount            int        `json:"referral_count"`
+	PlansActiveCount         int        `json:"plans_active_count"`
+	PlansCompletedCount      int        `json:"plans_completed_count"`
 	CratesOpenedCount        int        `json:"crates_opened_count"`
 	FriendCratesOpenedCount  int        `json:"friend_crates_opened_count"`
 	CanWithdrawLifetime      bool       `json:"can_withdraw_lifetime"`
@@ -278,3 +280,51 @@ type Setting struct {
 	Description *string   `json:"description,omitempty" db:"description"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
+
+// Plan status constants
+const (
+	PlanStatusActive  = "active"
+	PlanStatusClaimed = "claimed"
+)
+
+// UserPlan represents an active or claimed 24h daily yield plan
+type UserPlan struct {
+	ID              uuid.UUID  `json:"id" db:"id"`
+	UserID          uuid.UUID  `json:"user_id" db:"user_id"`
+	PlanID          string     `json:"plan_id" db:"plan_id"` // starter, standard, queen
+	PlanName        string     `json:"plan_name" db:"plan_name"`
+	CostGRAM        float64    `json:"cost_gram" db:"cost_gram"`
+	ReturnGRAM      float64    `json:"return_gram" db:"return_gram"`
+	DurationSeconds int        `json:"duration_seconds" db:"duration_seconds"`
+	Status          string     `json:"status" db:"status"` // active, claimed
+	StartedAt       time.Time  `json:"started_at" db:"started_at"`
+	MaturesAt       time.Time  `json:"matures_at" db:"matures_at"`
+	ClaimedAt       *time.Time `json:"claimed_at,omitempty" db:"claimed_at"`
+	CreatedAt       time.Time  `json:"created_at" db:"created_at"`
+
+	// Calculated fields for API response
+	SecondsRemaining int     `json:"seconds_remaining"`
+	ProgressPercent  float64 `json:"progress_percent"`
+	IsReadyToClaim   bool    `json:"is_ready_to_claim"`
+	ProfitGRAM       float64 `json:"profit_gram"`
+}
+
+// PlanTier represents an available plan in the store
+type PlanTier struct {
+	ID              string  `json:"id"`
+	Name            string  `json:"name"`
+	Subtitle        string  `json:"subtitle"`
+	Badge           string  `json:"badge"`
+	CostGRAM        float64 `json:"cost_gram"`
+	ReturnGRAM      float64 `json:"return_gram"`
+	ProfitGRAM      float64 `json:"profit_gram"`
+	ProfitPercent   float64 `json:"profit_percent"`
+	DurationHours   int     `json:"duration_hours"`
+	MaxPerAccount   int     `json:"max_per_account"` // 1 for starter, 0 for unlimited
+	IsLimited       bool    `json:"is_limited"`
+	UserPurchased   int     `json:"user_purchased"`
+	CanPurchase     bool    `json:"can_purchase"`
+	Icon            string  `json:"icon"`
+	AccentColor     string  `json:"accent_color"`
+}
+

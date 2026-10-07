@@ -480,7 +480,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(*) 
 		FROM transactions 
-		WHERE user_id = $1 AND type = 'crate_purchase'
+		WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase')
 	`, user.ID).Scan(&cratesOpened)
 
 	var friendCratesOpened int
@@ -492,8 +492,18 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 			UNION
 			SELECT id FROM users WHERE referrer_id = $1
 		)
-		AND t.type = 'crate_purchase'
+		AND t.type IN ('crate_purchase', 'plan_purchase')
 	`, user.ID).Scan(&friendCratesOpened)
+
+	var activePlans int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(*) FROM user_plans WHERE user_id = $1 AND status = 'active'
+	`, user.ID).Scan(&activePlans)
+
+	var completedPlans int
+	_ = s.db.QueryRow(ctx, `
+		SELECT COUNT(*) FROM user_plans WHERE user_id = $1 AND status = 'claimed'
+	`, user.ID).Scan(&completedPlans)
 
 	var validInvites int
 	_ = s.db.QueryRow(ctx, `
@@ -519,6 +529,8 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		LastCollectAt:            user.LastCollectAt,
 		CreatedAt:                user.CreatedAt,
 		ReferralCount:            validInvites,
+		PlansActiveCount:         activePlans,
+		PlansCompletedCount:      completedPlans,
 		CratesOpenedCount:        cratesOpened,
 		FriendCratesOpenedCount:  friendCratesOpened,
 		CanWithdrawLifetime:      canWithdraw,

@@ -577,5 +577,400 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 	})
 }
 
+// GET /api/plans — List available 24h daily yield plans and user eligibility
+func (h *UserHandler) GetPlans(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var starterCount int
+	_ = h.userSvc.GetDB().QueryRow(ctx,
+		`SELECT COUNT(*) FROM user_plans WHERE user_id = $1 AND plan_id = 'starter'`,
+		user.ID).Scan(&starterCount)
+
+	var activeCount int
+	var totalLocked float64
+	_ = h.userSvc.GetDB().QueryRow(ctx,
+		`SELECT COUNT(*), COALESCE(SUM(cost_gram), 0) FROM user_plans WHERE user_id = $1 AND status = 'active'`,
+		user.ID).Scan(&activeCount, &totalLocked)
+
+	var claimedCount int
+	var totalEarned float64
+	_ = h.userSvc.GetDB().QueryRow(ctx,
+		`SELECT COUNT(*), COALESCE(SUM(return_gram), 0) FROM user_plans WHERE user_id = $1 AND status = 'claimed'`,
+		user.ID).Scan(&claimedCount, &totalEarned)
+
+	plans := []models.PlanTier{
+		{
+			ID:            "starter",
+			Name:          "Starter Bee Miner",
+			Subtitle:      "Fast 24h trial pack — high conversion entry miner",
+			Badge:         "⚡ 1 PER ACCOUNT",
+			CostGRAM:      0.70,
+			ReturnGRAM:    0.80,
+			ProfitGRAM:    0.10,
+			ProfitPercent: 14.28,
+			DurationHours: 24,
+			MaxPerAccount: 1,
+			IsLimited:     true,
+			UserPurchased: starterCount,
+			CanPurchase:   starterCount < 1,
+			Icon:          "🐝",
+			AccentColor:   "#f59e0b",
+		},
+		{
+			ID:            "standard",
+			Name:          "Standard Worker Miner",
+			Subtitle:      "Best value daily yield contract with massive returns",
+			Badge:         "🔥 BEST VALUE",
+			CostGRAM:      1.30,
+			ReturnGRAM:    2.00,
+			ProfitGRAM:    0.70,
+			ProfitPercent: 53.85,
+			DurationHours: 24,
+			MaxPerAccount: 0,
+			IsLimited:     false,
+			UserPurchased: 0,
+			CanPurchase:   true,
+			Icon:          "⚡",
+			AccentColor:   "#10b981",
+		},
+		{
+			ID:            "queen",
+			Name:          "Royal Queen Miner",
+			Subtitle:      "Maximum power mining contract with guaranteed 4.00 GRAM payout",
+			Badge:         "👑 HIGH YIELD",
+			CostGRAM:      3.00,
+			ReturnGRAM:    4.00,
+			ProfitGRAM:    1.00,
+			ProfitPercent: 33.33,
+			DurationHours: 24,
+			MaxPerAccount: 0,
+			IsLimited:     false,
+			UserPurchased: 0,
+			CanPurchase:   true,
+			Icon:          "👑",
+			AccentColor:   "#a855f7",
+		},
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"plans":                 plans,
+		"active_plans_count":    activeCount,
+		"completed_plans_count": claimedCount,
+		"total_locked_gram":     totalLocked,
+		"total_earned_gram":     totalEarned,
+		"can_buy_starter":       starterCount < 1,
+	})
+}
+
+// GET /api/plans/my — Get all active & completed user plans with real-time timers
+func (h *UserHandler) GetMyPlans(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	rows, err := h.userSvc.GetDB().Query(ctx,
+		`SELECT id, user_id, plan_id, plan_name, cost_gram, return_gram, duration_seconds, status, started_at, matures_at, claimed_at, created_at
+		 FROM user_plans 
+		 WHERE user_id = $1 
+		 ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, created_at DESC 
+		 LIMIT 50`,
+		user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user plans"})
+		return
+	}
+	defer rows.Close()
+
+	now := time.Now().UTC()
+	var userPlans []models.UserPlan
+
+	for rows.Next() {
+		var p models.UserPlan
+		if err := rows.Scan(
+			&p.ID, &p.UserID, &p.PlanID, &p.PlanName, &p.CostGRAM, &p.ReturnGRAM,
+			&p.DurationSeconds, &p.Status, &p.StartedAt, &p.MaturesAt, &p.ClaimedAt, &p.CreatedAt,
+		); err != nil {
+			continue
+		}
+
+		remSeconds := int(p.MaturesAt.Sub(now).Seconds())
+		p.ProfitGRAM = p.ReturnGRAM - p.CostGRAM
+
+		if p.Status == "claimed" {
+			p.SecondsRemaining = 0
+			p.ProgressPercent = 100.0
+			p.IsReadyToClaim = false
+		} else if remSeconds <= 0 {
+			p.SecondsRemaining = 0
+			p.ProgressPercent = 100.0
+			p.IsReadyToClaim = true
+		} else {
+			p.SecondsRemaining = remSeconds
+			elapsed := now.Sub(p.StartedAt).Seconds()
+			totalSec := float64(p.DurationSeconds)
+			if totalSec <= 0 {
+				totalSec = 86400
+			}
+			prog := (elapsed / totalSec) * 100.0
+			if prog < 0 {
+				prog = 0
+			}
+			if prog > 99.9 {
+				prog = 99.9
+			}
+			p.ProgressPercent = prog
+			p.IsReadyToClaim = false
+		}
+
+		userPlans = append(userPlans, p)
+	}
+
+	if userPlans == nil {
+		userPlans = []models.UserPlan{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user_plans": userPlans})
+}
+
+type BuyPlanRequest struct {
+	PlanID string `json:"plan_id" binding:"required"` // starter, standard, queen
+}
+
+// POST /api/plans/buy — Purchase a 24h Daily Yield Plan
+func (h *UserHandler) BuyPlan(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var req BuyPlanRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request, plan_id is required"})
+		return
+	}
+
+	planID := strings.ToLower(strings.TrimSpace(req.PlanID))
+	var planName string
+	var costGRAM, returnGRAM float64
+	var maxPerAccount int
+
+	switch planID {
+	case "starter":
+		planName = "Starter Bee Miner"
+		costGRAM = 0.70
+		returnGRAM = 0.80
+		maxPerAccount = 1
+	case "standard":
+		planName = "Standard Worker Miner"
+		costGRAM = 1.30
+		returnGRAM = 2.00
+		maxPerAccount = 0
+	case "queen":
+		planName = "Royal Queen Miner"
+		costGRAM = 3.00
+		returnGRAM = 4.00
+		maxPerAccount = 0
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid plan_id. Available: starter, standard, queen"})
+		return
+	}
+
+	tx, err := h.userSvc.GetDB().Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	// Check 1-per-account limit for Starter plan
+	if maxPerAccount > 0 {
+		var pastPurchases int
+		_ = tx.QueryRow(ctx,
+			`SELECT COUNT(*) FROM user_plans WHERE user_id = $1 AND plan_id = $2`,
+			user.ID, planID).Scan(&pastPurchases)
+
+		if pastPurchases >= maxPerAccount {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("The %s is a special starter trial limited to %d purchase per account.", planName, maxPerAccount),
+			})
+			return
+		}
+	}
+
+	var currentHoney float64
+	err = tx.QueryRow(ctx, `SELECT honey_balance FROM users WHERE id = $1 FOR UPDATE`, user.ID).Scan(&currentHoney)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if currentHoney < costGRAM {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":           fmt.Sprintf("Insufficient balance. %s requires %.2f GRAM. Your balance: %.4f GRAM.", planName, costGRAM, currentHoney),
+			"required":        costGRAM,
+			"current_balance": currentHoney,
+			"needs_deposit":   true,
+		})
+		return
+	}
+
+	newHoney := currentHoney - costGRAM
+	now := time.Now().UTC()
+	durationSec := 86400 // 24 Hours
+	maturesAt := now.Add(time.Duration(durationSec) * time.Second)
+	newPlanID := uuid.New()
+
+	// 1. Deduct user balance
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET honey_balance = $1, updated_at = $2 WHERE id = $3`,
+		newHoney, now, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user balance"})
+		return
+	}
+
+	// 2. Insert into user_plans
+	_, err = tx.Exec(ctx,
+		`INSERT INTO user_plans (id, user_id, plan_id, plan_name, cost_gram, return_gram, duration_seconds, status, started_at, matures_at, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $8)`,
+		newPlanID, user.ID, planID, planName, costGRAM, returnGRAM, durationSec, now, maturesAt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user plan record"})
+		return
+	}
+
+	// 3. Record transaction
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
+		 VALUES ($1, $2, 'plan_purchase', $3, 'GRAM', $4, $5)`,
+		uuid.New(), user.ID, costGRAM, fmt.Sprintf("Activate %s (24h Yield Contract)", planName), now)
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit purchase transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":           true,
+		"message":           fmt.Sprintf("🎉 Successfully activated %s! Your %.2f GRAM return unlocks in 24 hours.", planName, returnGRAM),
+		"new_honey_balance": newHoney,
+		"plan": models.UserPlan{
+			ID:               newPlanID,
+			UserID:           user.ID,
+			PlanID:           planID,
+			PlanName:         planName,
+			CostGRAM:         costGRAM,
+			ReturnGRAM:       returnGRAM,
+			DurationSeconds:  durationSec,
+			Status:           "active",
+			StartedAt:        now,
+			MaturesAt:        maturesAt,
+			CreatedAt:        now,
+			SecondsRemaining: durationSec,
+			ProgressPercent:  0,
+			IsReadyToClaim:   false,
+			ProfitGRAM:       returnGRAM - costGRAM,
+		},
+	})
+}
+
+type ClaimPlanRequest struct {
+	UserPlanID string `json:"user_plan_id" binding:"required"`
+}
+
+// POST /api/plans/claim — Claim earnings once 24h daily plan matures
+func (h *UserHandler) ClaimPlan(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	ctx := c.Request.Context()
+
+	var req ClaimPlanRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request, user_plan_id is required"})
+		return
+	}
+
+	planUUID, err := uuid.Parse(req.UserPlanID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_plan_id format"})
+		return
+	}
+
+	tx, err := h.userSvc.GetDB().Begin(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	var p models.UserPlan
+	err = tx.QueryRow(ctx,
+		`SELECT id, user_id, plan_id, plan_name, cost_gram, return_gram, status, matures_at
+		 FROM user_plans 
+		 WHERE id = $1 AND user_id = $2 
+		 FOR UPDATE`,
+		planUUID, user.ID).Scan(
+		&p.ID, &p.UserID, &p.PlanID, &p.PlanName, &p.CostGRAM, &p.ReturnGRAM, &p.Status, &p.MaturesAt,
+	)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "plan contract not found"})
+		return
+	}
+
+	if p.Status == "claimed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This plan has already been claimed."})
+		return
+	}
+
+	now := time.Now().UTC()
+	if now.Before(p.MaturesAt) {
+		remSec := int(p.MaturesAt.Sub(now).Seconds())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":             fmt.Sprintf("Contract is still maturing. Please wait %d seconds.", remSec),
+			"seconds_remaining": remSec,
+		})
+		return
+	}
+
+	// 1. Mark plan as claimed
+	_, err = tx.Exec(ctx,
+		`UPDATE user_plans SET status = 'claimed', claimed_at = $1 WHERE id = $2`,
+		now, p.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update plan status"})
+		return
+	}
+
+	// 2. Credit user honey_balance
+	var newBalance float64
+	err = tx.QueryRow(ctx,
+		`UPDATE users 
+		 SET honey_balance = honey_balance + $1, updated_at = $2 
+		 WHERE id = $3 
+		 RETURNING honey_balance`,
+		p.ReturnGRAM, now, user.ID).Scan(&newBalance)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to credit reward"})
+		return
+	}
+
+	// 3. Record transaction
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
+		 VALUES ($1, $2, 'plan_reward', $3, 'GRAM', $4, $5)`,
+		uuid.New(), user.ID, p.ReturnGRAM, fmt.Sprintf("Claim Yield Contract (+%.2f GRAM %s)", p.ReturnGRAM, p.PlanName), now)
+
+	if err := tx.Commit(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to commit claim transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":           true,
+		"message":           fmt.Sprintf("💰 Successfully claimed +%.2f GRAM from %s!", p.ReturnGRAM, p.PlanName),
+		"claimed_gram":      p.ReturnGRAM,
+		"new_honey_balance": newBalance,
+		"user_plan_id":      p.ID,
+	})
+}
+
+
 
 

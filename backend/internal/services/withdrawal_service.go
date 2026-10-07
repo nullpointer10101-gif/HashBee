@@ -66,14 +66,14 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("insufficient Honey balance: have %.8f, need %.8f", u.HoneyBalance, req.Amount)
 	}
 
-	// Strict Gate: Only earned rewards (mining yield, spins, crates, referral & mission rewards) are withdrawable.
+	// Strict Gate: Only earned rewards (mining yield, spins, plans, crates, referral & mission rewards) are withdrawable.
 	// Deposited funds cannot be directly withdrawn.
 	var totalEarned float64
 	_ = s.db.QueryRow(ctx, `
 		SELECT COALESCE(SUM(amount), 0)
 		FROM transactions
 		WHERE user_id = $1
-		  AND type IN ('collect', 'spin_reward', 'crate_reward', 'mission_reward', 'referral_reward', 'admin_adjustment', 'adjustment')
+		  AND type IN ('collect', 'spin_reward', 'crate_reward', 'plan_reward', 'mission_reward', 'referral_reward', 'admin_adjustment', 'adjustment')
 		  AND currency IN ('HONEY', 'USDT', 'GRAM')
 		  AND amount > 0
 	`, userID).Scan(&totalEarned)
@@ -92,10 +92,10 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	}
 
 	if usdtAmount > maxWithdrawable {
-		return nil, fmt.Errorf("only earned rewards (mining yield, spins, crates & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
+		return nil, fmt.Errorf("only earned rewards (mining yield, spins, daily plans & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check Lifetime Withdrawal Qualification (Open 1 Mystery Crate >= 0.5 G OR 1 Friend Opens Crate OR One-Time Granted)
+	// Check Lifetime Withdrawal Qualification (Activate 1 Mining Plan >= 0.70 G OR 1 Friend Activates Plan OR One-Time Granted)
 	var oneTimeGranted bool
 	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
 
@@ -103,7 +103,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(*) 
 		FROM transactions 
-		WHERE user_id = $1 AND type = 'crate_purchase'
+		WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase')
 	`, userID).Scan(&cratesOpened)
 
 	var friendCratesOpened int
@@ -115,11 +115,11 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 			UNION
 			SELECT id FROM users WHERE referrer_id = $1
 		)
-		AND t.type = 'crate_purchase'
+		AND t.type IN ('crate_purchase', 'plan_purchase')
 	`, userID).Scan(&friendCratesOpened)
 
 	if !oneTimeGranted && cratesOpened < 1 && friendCratesOpened < 1 {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either open 1 Mystery Crate (starts from 0.5 GRAM) or have at least 1 invited friend open a Mystery Crate (Current: %d/1 friend crates, %d crates opened)", friendCratesOpened, cratesOpened)
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either activate 1 Daily Mining Plan (starts from 0.70 GRAM) or have at least 1 invited friend activate a Mining Plan (Current: %d/1 friend plans, %d plans activated)", friendCratesOpened, cratesOpened)
 	}
 
 	// Check cooldown
