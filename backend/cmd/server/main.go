@@ -244,6 +244,28 @@ func main() {
 	r.StaticFile("/admin/", "./public/admin/index.html")
 	r.Static("/admin/assets", "./public/admin/assets")
 
+	// Serve MiniApp static frontend
+	r.StaticFile("/", "./public/app/index.html")
+	r.StaticFile("/index.html", "./public/app/index.html")
+	r.Static("/assets", "./public/app/assets")
+	r.StaticFile("/app", "./public/app/index.html")
+	r.StaticFile("/app/", "./public/app/index.html")
+	r.Static("/app/assets", "./public/app/assets")
+
+	// SPA Fallback for client-side routing
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if strings.HasPrefix(path, "/api") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "api endpoint not found"})
+			return
+		}
+		if strings.HasPrefix(path, "/admin") {
+			c.File("./public/admin/index.html")
+			return
+		}
+		c.File("./public/app/index.html")
+	})
+
 	// =====================================================
 	// Telegram Webhook
 	// =====================================================
