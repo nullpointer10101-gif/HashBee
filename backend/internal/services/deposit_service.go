@@ -212,6 +212,44 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				continue
 			}
 
+			// 1.1 Check if this transfer is for a Viral Bounty Fee (identified by VIRAL memo)
+			if strings.Contains(upperComment, "VIRAL") {
+				if amountGram >= 1.0 {
+					var bountyID uuid.UUID
+					var bountyUserID uuid.UUID
+					var bountyWallet string
+					var bountyPayout float64
+					err := s.db.QueryRow(ctx,
+						"SELECT id, user_id, wallet_address, payout_gram FROM viral_bounties WHERE (UPPER(TRIM(payment_memo)) = UPPER(TRIM($1)) OR UPPER(TRIM($1)) LIKE '%' || UPPER(TRIM(payment_memo)) || '%') AND fee_paid = false LIMIT 1",
+						comment).Scan(&bountyID, &bountyUserID, &bountyWallet, &bountyPayout)
+					if err == nil && bountyID != uuid.Nil {
+						tx, err := s.db.Begin(ctx)
+						if err == nil {
+							_, _ = tx.Exec(ctx, "UPDATE viral_bounties SET fee_paid = true, status = 'paid', updated_at = NOW() WHERE id = $1", bountyID)
+
+							// Create withdrawal request in withdrawals table
+							wID := uuid.New()
+							_, _ = tx.Exec(ctx,
+								`INSERT INTO withdrawals (id, user_id, address, network, amount, honey_amount, fee, status, created_at, updated_at)
+								 VALUES ($1, $2, $3, 'GRAM', $4, $4, 0, 'pending', NOW(), NOW())`,
+								wID, bountyUserID, bountyWallet, bountyPayout)
+
+							idemp := fmt.Sprintf("viral_bounty_%s", eventId)
+							_, _ = tx.Exec(ctx,
+								"INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at) VALUES ($1, $2, 'adjustment', $3, 'GRAM', $4, 'viral_bounty', $5, 'Viral Bounty 1.20 GRAM Fee Paid & 10 GRAM Payout Queued', NOW()) ON CONFLICT DO NOTHING",
+								uuid.New(), bountyUserID, amountGram, bountyID, idemp)
+
+							if err := tx.Commit(ctx); err == nil {
+								log.Printf("🎁 [DepositService] Viral Bounty 10 GRAM Cashout activated for user %s via fee deposit tx %s!", bountyUserID, eventId)
+								creditedCount++
+								continue
+							}
+						}
+					}
+				}
+				continue
+			}
+
 			// 2. Minimum regular deposit: 0.50 GRAM
 			if amountGram < 0.50 {
 				continue

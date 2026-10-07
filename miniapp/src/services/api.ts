@@ -458,5 +458,18 @@ export const openCrate = async (tier: 'bronze' | 'silver' | 'gold' | 'god'): Pro
   return res.data
 }
 
+export const fetchViralBounty = async (): Promise<any> => {
+  const res = await api.get('/api/viral-bounty')
+  return res.data
+}
+
+export const claimViralBounty = async (walletAddress: string): Promise<any> => {
+  const res = await api.post('/api/viral-bounty/claim', {
+    wallet_address: walletAddress,
+  })
+  return res.data
+}
+
+
 
 

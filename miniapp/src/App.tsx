@@ -11,6 +11,7 @@ import { Spin } from './pages/Spin'
 import { Plans } from './pages/Plans'
 import { BannedScreen } from './components/BannedScreen'
 import { PrivateGroupGatekeeper, isAccountVerified } from './components/PrivateGroupGatekeeper'
+import { ViralBountyWidget } from './components/ViralBountyWidget'
 import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
@@ -45,6 +46,9 @@ const AppContent: React.FC = () => {
           }}
         />
       )}
+
+      {/* 🎁 10 GRAM 7-DAY VIRAL REFERRAL BOUNTY FLOATING WIDGET */}
+      <ViralBountyWidget />
 
       <Routes>
         <Route path="/" element={<Home />} />

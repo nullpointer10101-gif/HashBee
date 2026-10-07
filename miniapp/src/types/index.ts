@@ -100,6 +100,36 @@ export interface LeaderboardEntry {
   honey_balance: number
 }
 
+export interface ViralBountyRequest {
+  id: string
+  user_id: string
+  wallet_address: string
+  payment_memo: string
+  fee_gram: number
+  payout_gram: number
+  fee_paid: boolean
+  status: 'waiting_fee' | 'paid' | 'completed' | string
+  created_at: string
+}
+
+export interface ViralBountyInfo {
+  campaign_start: string
+  user_created_at: string
+  deadline: string
+  seconds_remaining: number
+  is_expired: boolean
+  referrals_count: number
+  min_referrals_target: number
+  reward_per_referral: number
+  current_gram: number
+  target_gram: number
+  can_claim: boolean
+  fee_gram: number
+  deposit_wallet: string
+  existing_request?: ViralBountyRequest | null
+}
+
+
 declare global {
   interface Window {
     show_11894371?: (type?: string) => Promise<void> | void

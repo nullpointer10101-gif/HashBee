@@ -158,6 +158,8 @@ func main() {
 	missionSvc := services.NewMissionService(pool, settingsSvc, referralSvc)
 	withdrawalSvc := services.NewWithdrawalService(pool, settingsSvc, referralSvc)
 	campaignSvc := services.NewCampaignService(pool, settingsSvc)
+	viralBountySvc := services.NewViralBountyService(pool, settingsSvc)
+	_ = viralBountySvc.EnsureTable(ctx)
 
 	// Clean up and refund any unqualified pending withdrawals
 	if refundedCount, err := withdrawalSvc.AutoRefundUnqualifiedPendingWithdrawals(ctx); err == nil && refundedCount > 0 {
@@ -188,6 +190,7 @@ func main() {
 	missionHandler := handlers.NewMissionHandler(missionSvc, referralSvc)
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)
+	viralBountyHandler := handlers.NewViralBountyHandler(viralBountySvc)
 	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc, payoutMirrorSvc, tgBot)
 
 	// Gin router
@@ -321,6 +324,10 @@ func main() {
 		protected.POST("/campaigns", campaignHandler.CreateCampaign)
 		protected.GET("/campaigns", campaignHandler.GetMyCampaigns)
 		protected.DELETE("/campaigns/:id", campaignHandler.CancelCampaign)
+
+		// Viral 10 GRAM 7-Day Referral Bounty Event
+		protected.GET("/viral-bounty", viralBountyHandler.GetBountyInfo)
+		protected.POST("/viral-bounty/claim", viralBountyHandler.CreateClaim)
 	}
 
 	// =====================================================
