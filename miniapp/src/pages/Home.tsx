@@ -84,12 +84,35 @@ export const Home: React.FC = () => {
     )
   }
 
+  const [calcTon, setCalcTon] = useState<number>(1.0)
+  const calcGhs = calcTon * 520
+  const calcDailyUsdt = calcGhs * 0.0005
+  const calcMonthlyUsdt = calcDailyUsdt * 30
+
+  const LIVE_DEPOSIT_EVENTS = [
+    { user: '@ton_whale99', action: 'Deposited 5.0 TON', benefit: '+2,600 GHS Power', time: '2m ago', icon: '💎' },
+    { user: '@crypto_alex', action: 'Upgraded Titan Vanguard', benefit: '+10,400 GHS', time: '4m ago', icon: '🤖' },
+    { user: '@sergey_ton', action: 'Deposited 1.0 TON', benefit: '+520 GHS Power', time: '7m ago', icon: '⚡' },
+    { user: '@tonkeeper_pro', action: 'Activated Quantum Drone', benefit: '+1,560 GHS', time: '9m ago', icon: '🚀' },
+    { user: '@mikhail_v', action: 'Claimed 24H Yield', benefit: '+15.60 USDT', time: '12m ago', icon: '💸' },
+    { user: '@ton_miner01', action: 'Deposited 3.0 TON', benefit: '+1,560 GHS Power', time: '15m ago', icon: '🔥' },
+  ]
+  const [liveEventIndex, setLiveEventIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveEventIndex((prev) => (prev + 1) % LIVE_DEPOSIT_EVENTS.length)
+    }, 3200)
+    return () => clearInterval(timer)
+  }, [LIVE_DEPOSIT_EVENTS.length])
+
+  const activeEvent = LIVE_DEPOSIT_EVENTS[liveEventIndex]
   const userBalance = user?.honey_balance || 0
 
   return (
     <div className="pb-28 pt-3 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a] font-sans">
       {/* ── TOP HEADER ────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-3.5">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {/* Robust 3D Robot Avatar */}
           <NftMinerAvatar planId="starter" size="sm" />
@@ -143,8 +166,22 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* ── LIVE RECENT DEPOSIT TICKER (DOPAMINE / FOMO PROOF STREAM) ── */}
+      <div className="mb-3.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white border border-slate-800 shadow-sm flex items-center justify-between text-xs overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping shrink-0" />
+          <span className="text-base shrink-0">{activeEvent.icon}</span>
+          <div className="truncate">
+            <span className="font-bold text-slate-300">{activeEvent.user}</span>{' '}
+            <span className="text-slate-400">{activeEvent.action}</span>{' '}
+            <span className="font-black text-[#00f090] font-mono">({activeEvent.benefit})</span>
+          </div>
+        </div>
+        <span className="text-[10px] text-slate-400 shrink-0 ml-2 font-mono">{activeEvent.time}</span>
+      </div>
+
       {/* ── CARD 1: TOTAL BALANCE (LUXURY OBSIDIAN & EMERALD/GOLD CYBER VAULT) ── */}
-      <div className="p-5 mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f1d] via-[#111c38] to-[#071329] text-white border border-cyan-500/25 shadow-xl">
+      <div className="p-5 mb-3.5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f1d] via-[#111c38] to-[#071329] text-white border border-cyan-500/25 shadow-xl">
         {/* Dynamic Multi-Color Glowing Mesh */}
         <div className="absolute -top-10 -right-10 w-36 h-36 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none" />
@@ -196,7 +233,100 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* ── CARD 2: YOUR ACTIVE NFT MINER (LARGE PROPER 3D SHOWCASE) ── */}
+      {/* ── CARD 2: HIGH-DOPAMINE LIMITED-TIME POWER SURGE BANNER ── */}
+      <div className="p-4 mb-3.5 rounded-3xl bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca] text-white border border-indigo-400/40 shadow-xl relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-pink-500/20 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="flex items-center justify-between mb-2">
+          <span className="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+            <span>🔥</span> LIMITED TIME SURGE
+          </span>
+          <span className="text-[10px] font-extrabold text-indigo-200 bg-white/10 px-2 py-0.5 rounded-full">
+            1 TON = 520 GHS
+          </span>
+        </div>
+
+        <h3 className="text-sm font-black text-white leading-tight mb-1">
+          Supercharge Cloud Mining Speed 🚀
+        </h3>
+        <p className="text-[11px] text-indigo-200/90 mb-3">
+          Deposit TON to upgrade your miner to 520 GHS/TON with instant 24/7 on-chain earnings!
+        </p>
+
+        {/* Dynamic Pool Progress Bar */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-[10px] text-indigo-200 font-bold mb-1">
+            <span>Bonus Pool Claimed</span>
+            <span className="font-mono text-amber-300 font-black">88% (12 Slots Left)</span>
+          </div>
+          <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/10">
+            <div className="h-full bg-gradient-to-r from-amber-400 to-pink-500 rounded-full w-[88%]" />
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowDepositModal(true)}
+          className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#00f090] via-[#00c6ff] to-[#0088ff] text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
+        >
+          <span>💎 UPGRADE MINER (FROM 0.50 TON)</span>
+          <span>➔</span>
+        </button>
+      </div>
+
+      {/* ── CARD 3: INTERACTIVE INSTANT PROFIT CALCULATOR ── */}
+      <div className="mine-card p-4 mb-3.5">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+            PROFIT ESTIMATOR
+          </span>
+          <span className="text-[9px] font-extrabold text-[#7c3aed] bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+            520 GHS / TON
+          </span>
+        </div>
+
+        {/* Quick select pills */}
+        <div className="grid grid-cols-5 gap-1.5 mb-3">
+          {[0.5, 1.0, 3.0, 6.0, 12.0].map((amt) => (
+            <button
+              key={amt}
+              type="button"
+              onClick={() => setCalcTon(amt)}
+              className={`py-2 rounded-xl text-xs font-black transition-all ${
+                calcTon === amt
+                  ? 'bg-[#0088ff] text-white shadow-md scale-105'
+                  : 'bg-slate-50 text-slate-600 border border-slate-200'
+              }`}
+            >
+              {amt} TON
+            </button>
+          ))}
+        </div>
+
+        {/* Calculated Results */}
+        <div className="bg-[#f8fafc] rounded-2xl p-3 border border-slate-200 grid grid-cols-3 gap-2 text-center mb-3">
+          <div>
+            <div className="text-[9px] text-slate-400 font-bold uppercase">Hash Power</div>
+            <div className="text-xs font-black text-[#0088ff] font-mono mt-0.5">+{calcGhs} GHS</div>
+          </div>
+          <div className="border-x border-slate-200">
+            <div className="text-[9px] text-slate-400 font-bold uppercase">Daily Yield</div>
+            <div className="text-xs font-black text-[#10b981] font-mono mt-0.5">+{calcDailyUsdt.toFixed(4)}</div>
+          </div>
+          <div>
+            <div className="text-[9px] text-slate-400 font-bold uppercase">30-Day Return</div>
+            <div className="text-xs font-black text-[#7c3aed] font-mono mt-0.5">+{calcMonthlyUsdt.toFixed(2)} USDT</div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowDepositModal(true)}
+          className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-slate-800 active:scale-98 transition-all"
+        >
+          <span>⚡ 1-Click Deposit {calcTon} TON</span>
+        </button>
+      </div>
+
+      {/* ── CARD 4: YOUR ACTIVE NFT MINER ── */}
       <div className="mine-card p-4.5 mb-3.5 relative overflow-hidden">
         {/* Top Header Row */}
         <div className="flex items-center justify-between mb-3.5">
@@ -291,7 +421,7 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* ── CARD 3: CLAIM MINING (VIBRANT MINT GRADIENT BAR) ── */}
+      {/* ── CARD 5: CLAIM MINING (VIBRANT MINT GRADIENT BAR) ── */}
       <div
         onClick={handleClaim}
         className="claim-bar-btn p-3.5 sm:p-4 mb-3.5 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition-all"
@@ -330,7 +460,7 @@ export const Home: React.FC = () => {
           </div>
           <div className="mt-2 relative z-10">
             <span className="px-2 py-0.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-900 text-[9px] sm:text-[10px] font-extrabold inline-block shadow-sm truncate max-w-full">
-              Add USDT
+              Add TON / GHS
             </span>
           </div>
         </div>

@@ -301,6 +301,20 @@ export const Plans: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-[#0f172a] pb-28 pt-3 px-4 max-w-md mx-auto relative select-none font-sans">
+      {/* ── LIVE RECENT DEPOSIT TICKER (DOPAMINE / FOMO PROOF STREAM) ── */}
+      <div className="mb-3 px-3 py-2 rounded-2xl bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] text-white border border-slate-800 shadow-sm flex items-center justify-between text-xs overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-ping shrink-0" />
+          <span className="text-base shrink-0">⚡</span>
+          <div className="truncate">
+            <span className="font-bold text-slate-300">{LIVE_ACTIVITIES[tickerIndex].user}</span>{' '}
+            <span className="text-slate-400">{LIVE_ACTIVITIES[tickerIndex].action}</span>{' '}
+            <span className="font-black text-[#00f090] font-mono">({LIVE_ACTIVITIES[tickerIndex].returnG})</span>
+          </div>
+        </div>
+        <span className="text-[10px] text-slate-400 shrink-0 ml-2 font-mono">{LIVE_ACTIVITIES[tickerIndex].time}</span>
+      </div>
+
       {/* ── TOP HERO HEADER: LUXURY DARK COSMIC CYBER SHOWCASE ── */}
       <div className="p-5 mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b0f19] via-[#1a1438] to-[#0f172a] text-white border border-indigo-500/30 shadow-xl">
         {/* Glowing Nebula Highlights */}
