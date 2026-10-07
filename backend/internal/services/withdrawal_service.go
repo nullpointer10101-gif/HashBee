@@ -119,7 +119,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	`, userID).Scan(&friendCratesOpened)
 
 	if !oneTimeGranted && cratesOpened < 1 && friendCratesOpened < 1 {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either activate 1 Daily Mining Plan (starts from 0.70 GRAM) or have at least 1 invited friend activate a Mining Plan (Current: %d/1 friend plans, %d plans activated)", friendCratesOpened, cratesOpened)
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either hold at least 1 NFT Miner (starts from 0.70 GRAM) or have at least 1 invited friend activate an NFT Miner (Current: %d/1 friend NFT miners, %d NFT miners activated)", friendCratesOpened, cratesOpened)
 	}
 
 	// Check cooldown
