@@ -167,7 +167,7 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
           <span className="absolute inset-0 flex items-center justify-center text-3xl">🤖</span>
           <img
             src={robotMinerImg}
-            alt="Crypto Mine"
+            alt="HashBee"
             loading="eager"
             className="w-full h-full object-cover relative z-10"
             onError={(e) => {

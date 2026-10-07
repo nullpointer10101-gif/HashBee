@@ -371,7 +371,7 @@ export const Missions: React.FC = () => {
   }
 
   const handleShare = () => {
-    const text = '⛏️ Join Crypto Mine & get 50 GHS Power! Start mining USDT!'
+    const text = '🐝 Join HashBee & get 50 GHS Power! Start mining TON & USDT!'
     const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(inviteLink) + '&text=' + encodeURIComponent(text)
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(shareUrl)

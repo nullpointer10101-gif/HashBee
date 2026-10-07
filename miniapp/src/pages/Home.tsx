@@ -78,7 +78,7 @@ export const Home: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
         <div className="w-8 h-8 border-3 border-[#0066ff] border-t-transparent rounded-full animate-spin mb-3"></div>
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Loading Crypto Mine...
+          Loading HashBee...
         </p>
       </div>
     )
@@ -113,8 +113,8 @@ export const Home: React.FC = () => {
           <NftMinerAvatar planId="starter" size="sm" />
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-extrabold text-[#0f172a] tracking-tight">
-                Crypto <span className="text-[#0088ff]">Mine</span>
+              <h1 className="text-base font-black text-[#0f172a] tracking-tight">
+                Hash<span className="text-[#0088ff]">Bee</span> 🐝
               </h1>
               {/* Verified Blue Checkmark Badge */}
               <div className="w-4 h-4 rounded-full bg-[#0088ff] flex items-center justify-center text-white text-[9px] font-black shadow-sm">
@@ -122,7 +122,7 @@ export const Home: React.FC = () => {
               </div>
             </div>
             <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
-              Mine • Earn • Grow
+              Cloud Miner Network
             </div>
           </div>
         </div>

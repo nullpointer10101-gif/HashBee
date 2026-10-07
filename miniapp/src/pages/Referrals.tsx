@@ -52,7 +52,7 @@ export const Referrals: React.FC = () => {
   }
 
   const shareTelegram = () => {
-    const text = '⛏️ Join Crypto Mine & get 50 GHS Cloud Mining Power! Start auto-mining USDT!'
+    const text = '🐝 Join HashBee & get 50 GHS Cloud Mining Power! Start auto-mining TON & USDT!'
     const shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent(text)
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
