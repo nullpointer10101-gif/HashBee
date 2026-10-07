@@ -154,29 +154,29 @@ export const Withdraw: React.FC = () => {
         </p>
       </div>
 
-      {/* ── LIVE WITHDRAWAL PROOFS BANNER (HIGH-TRUST RED LIVE INDICATOR) ── */}
-      <div className="mine-card p-4 mb-4 bg-gradient-to-r from-[#180509] via-[#2a080f] to-[#180509] text-white border-2 border-rose-500/50 relative overflow-hidden shadow-xl">
-        {/* Glowing Red Ambient Core */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+      {/* ── LIVE WITHDRAWAL PROOFS BANNER (VIBRANT SOLID RED & CRYSTAL CLEAR WHITE TEXT) ── */}
+      <div className="p-4 mb-4 rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white shadow-xl border-2 border-red-300/60 relative overflow-hidden">
+        {/* Dynamic Glow */}
+        <div className="absolute -top-8 -right-8 w-28 h-28 bg-white/15 rounded-full blur-xl pointer-events-none" />
 
         <div className="flex items-center justify-between relative z-10 gap-3">
           <div className="flex items-center gap-3">
             {/* Pulsing Live Shield Icon */}
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center text-xl shrink-0 shadow-lg border border-rose-400/40 relative">
-              <span className="animate-pulse">🛡️</span>
-              <span className="w-3 h-3 rounded-full bg-rose-400 absolute -top-1 -right-1 animate-ping" />
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shrink-0 shadow-md border border-white/30 relative">
+              <span>🛡️</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-white absolute -top-0.5 -right-0.5 animate-ping" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-black text-rose-100 uppercase tracking-wide">
-                  Check Payment Proofs Ongoing Here
+                <span className="text-xs sm:text-sm font-black text-white uppercase tracking-wide drop-shadow-sm">
+                  CHECK PAYMENT PROOFS ONGOING HERE
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 shadow">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                  🔴 LIVE
+                <span className="px-2 py-0.5 rounded-full bg-black/35 text-white text-[8px] font-black uppercase tracking-wider flex items-center gap-1 border border-white/25 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00f090] animate-ping" />
+                  LIVE LEDGER
                 </span>
               </div>
-              <p className="text-[11px] text-rose-200/90 font-medium mt-0.5 leading-tight">
+              <p className="text-[11px] text-white/90 font-bold mt-0.5 leading-tight drop-shadow-sm">
                 100% Verified settlements on public blockchain ledger
               </p>
             </div>
@@ -186,7 +186,7 @@ export const Withdraw: React.FC = () => {
             href="https://t.me/HashBeePayouts"
             target="_blank"
             rel="noreferrer"
-            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg active:scale-95 transition-all shrink-0 hover:brightness-110 border border-rose-400/50"
+            className="px-3.5 py-2.5 rounded-xl bg-white text-red-700 text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg active:scale-95 transition-all shrink-0 hover:bg-slate-100 border border-white/40"
           >
             <span>PROOFS</span>
             <span>➔</span>

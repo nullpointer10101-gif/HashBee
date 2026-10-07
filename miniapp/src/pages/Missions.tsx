@@ -16,7 +16,7 @@ type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
 const WATCH_AD_TASKS_COUNT = 3
 const WATCH_AD_REFRESH_MS = 3 * 60 * 60 * 1000 // 3 hours
-const WATCH_AD_HONEY_REWARD = 1
+const WATCH_AD_POWER_REWARD = 1 // 1 GHS Mining Power
 const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v1'
 
 interface WatchAdState {
@@ -44,7 +44,18 @@ function saveWatchAdState(state: WatchAdState) {
 
 function showAd(): Promise<boolean> {
   return new Promise((resolve) => {
-    // 1. Try Monetag interstitial
+    // 1. Try AdExium Interstitial
+    if (typeof window !== 'undefined' && (window as any).adexiumWidget && typeof (window as any).adexiumWidget.requestAd === 'function') {
+      try {
+        (window as any).adexiumWidget.requestAd('interstitial')
+        setTimeout(() => resolve(true), 2500)
+        return
+      } catch (err) {
+        console.warn('[Missions] AdExium error:', err)
+      }
+    }
+
+    // 2. Try Monetag Interstitial
     if (typeof (window as any).show_8985160 === 'function') {
       try {
         (window as any)
@@ -57,17 +68,6 @@ function showAd(): Promise<boolean> {
         return
       } catch (e) {
         console.warn('[Missions] Monetag call error:', e)
-      }
-    }
-
-    // 2. Try AdExium Widget
-    if (window.adexiumWidget && typeof window.adexiumWidget.requestAd === 'function') {
-      try {
-        window.adexiumWidget.requestAd('interstitial')
-        resolve(true)
-        return
-      } catch (err) {
-        console.warn('[Missions] AdExium error:', err)
       }
     }
 
@@ -141,7 +141,7 @@ export const Missions: React.FC = () => {
       if (watchAdState.completed.includes(taskIndex)) return
       if (watchAdVerifyingIndex !== null) return
 
-      toast.loading('Loading sponsored video ad...', { id: 'ad-load' })
+      toast.loading('Requesting video ad...', { id: 'ad-load' })
       let adPlayed = false
       try {
         adPlayed = await showAd()
@@ -152,7 +152,7 @@ export const Missions: React.FC = () => {
       }
 
       if (!adPlayed) {
-        toast.error('⚠️ Ad not available right now. Please try again in a few moments!')
+        toast.error('⚠️ Ad is not available right now. Please try again in a moment!')
         return
       }
 
@@ -184,7 +184,7 @@ export const Missions: React.FC = () => {
             // fallback
           }
 
-          toast.success(`🎉 +${WATCH_AD_HONEY_REWARD} USDT added to balance!`)
+          toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
           await refreshUser()
         }
       }, 1000)
@@ -752,8 +752,8 @@ export const Missions: React.FC = () => {
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span>📺</span> WATCH AD REWARDS
           </span>
-          <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full">
-            +{WATCH_AD_HONEY_REWARD} USDT EACH
+          <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+            +{WATCH_AD_POWER_REWARD} GHS EACH
           </span>
         </div>
 
@@ -767,15 +767,15 @@ export const Missions: React.FC = () => {
             return (
               <div key={i} className="mine-card p-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0 font-black">
                     {isDone ? '✅' : isVerifying ? '⏱️' : isLocked ? '🔒' : '📺'}
                   </div>
                   <div>
                     <div className="text-xs font-black text-slate-900">
                       Watch Booster Ad #{i + 1}
                     </div>
-                    <div className="text-[10px] text-[#059669] font-bold mt-0.5">
-                      {isDone ? `+${WATCH_AD_HONEY_REWARD} USDT Claimed ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s)` : `+${WATCH_AD_HONEY_REWARD} USDT Reward`}
+                    <div className="text-[10px] text-[#0088ff] font-bold mt-0.5 font-mono">
+                      {isDone ? `+${WATCH_AD_POWER_REWARD} GHS Claimed ✓` : isVerifying ? `Verifying... (${watchAdSecondsLeft}s)` : `+${WATCH_AD_POWER_REWARD} GHS Mining Power`}
                     </div>
                   </div>
                 </div>
@@ -797,7 +797,7 @@ export const Missions: React.FC = () => {
                     <button
                       onClick={() => handleWatchAdTask(i)}
                       disabled={watchAdVerifyingIndex !== null}
-                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase"
+                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase shadow-sm"
                     >
                       ▶ Watch
                     </button>
