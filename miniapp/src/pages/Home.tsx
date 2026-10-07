@@ -6,6 +6,8 @@ import { claimHoney } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
+import robotMinerImg from '../assets/images/robot_miner.jpg'
+import inviteBannerImg from '../assets/images/invite_banner.jpg'
 
 export const Home: React.FC = () => {
   const { user, refreshUser, loading } = useAuth()
@@ -90,8 +92,15 @@ export const Home: React.FC = () => {
       <div className="flex items-center justify-between mb-3.5">
         <div className="flex items-center gap-2.5">
           {/* Cute Robot Icon */}
-          <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-[#bae6fd] shadow-sm flex-shrink-0">
-            <img src="/images/robot_miner.jpg" alt="Crypto Mine" className="w-full h-full object-cover" />
+          <div className="relative w-10 h-10 rounded-2xl overflow-hidden border border-[#bae6fd] shadow-sm flex-shrink-0 bg-blue-100 flex items-center justify-center text-xl">
+            <img
+              src={robotMinerImg}
+              alt="Crypto Mine"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none'
+              }}
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -214,8 +223,15 @@ export const Home: React.FC = () => {
 
         {/* Miner Profile */}
         <div className="flex items-center gap-3 mb-3.5">
-          <div className="relative w-15 h-15 rounded-2xl overflow-hidden shadow-md flex-shrink-0 border-2 border-[#0284c7]/30 bg-gradient-to-br from-[#0284c7] to-[#0369a1]">
-            <img src="/images/robot_miner.jpg" alt="Miner Avatar" className="w-full h-full object-cover" />
+          <div className="relative w-15 h-15 rounded-2xl overflow-hidden shadow-md flex-shrink-0 border-2 border-[#0284c7]/30 bg-gradient-to-br from-[#0284c7] to-[#0369a1] flex items-center justify-center text-3xl">
+            <img
+              src={robotMinerImg}
+              alt="Miner Avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none'
+              }}
+            />
             <div className="absolute bottom-0 inset-x-0 bg-[#7c3aed]/90 text-white text-[8px] font-black text-center py-0.5 uppercase tracking-wider shadow">
               Level 1
             </div>
@@ -434,10 +450,17 @@ export const Home: React.FC = () => {
       {/* ── BANNER: INVITE FRIEND / EARN MORE ─────────────────── */}
       <div
         onClick={() => navigate('/earn')}
-        className="mine-card p-0 relative overflow-hidden text-white rounded-3xl shadow-lg cursor-pointer active:scale-98 transition-all border border-purple-200/50"
+        className="mine-card p-0 relative overflow-hidden text-white rounded-3xl shadow-lg cursor-pointer active:scale-98 transition-all border border-purple-200/50 bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#ec4899]"
       >
         <div className="relative h-28 w-full overflow-hidden">
-          <img src="/images/invite_banner.jpg" alt="Invite Friends" className="w-full h-full object-cover" />
+          <img
+            src={inviteBannerImg}
+            alt="Invite Friends"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none'
+            }}
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/50 to-transparent flex items-center justify-between p-4">
             <div className="max-w-[70%]">
               <span className="px-2 py-0.5 rounded-full bg-indigo-500/80 text-white text-[8px] font-black uppercase tracking-wider backdrop-blur-sm">

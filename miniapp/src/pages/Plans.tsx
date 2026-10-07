@@ -11,6 +11,8 @@ import {
 } from '../services/api'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
+import robotMinerImg from '../assets/images/robot_miner.jpg'
+import cyberWorkerImg from '../assets/images/cyber_worker_miner.jpg'
 
 export const Plans: React.FC = () => {
   const { user, refreshUser } = useAuth()
@@ -57,7 +59,7 @@ export const Plans: React.FC = () => {
       user_purchased: 0,
       can_purchase: true,
       icon: '🤖',
-      image: '/images/robot_miner.jpg',
+      image: robotMinerImg,
       accent_color: '#8b5cf6',
     },
     {
@@ -75,7 +77,7 @@ export const Plans: React.FC = () => {
       user_purchased: 0,
       can_purchase: true,
       icon: '⚡',
-      image: '/images/cyber_worker_miner.jpg',
+      image: cyberWorkerImg,
       accent_color: '#0088ff',
     },
     {
@@ -497,7 +499,14 @@ export const Plans: React.FC = () => {
                 <div className="flex items-center gap-3 mb-3.5">
                   <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-3xl shrink-0 shadow-md">
                     {(plan as any).image ? (
-                      <img src={(plan as any).image} alt={plan.name} className="w-full h-full object-cover" />
+                      <img
+                        src={(plan as any).image}
+                        alt={plan.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none'
+                        }}
+                      />
                     ) : (
                       <span>{plan.icon}</span>
                     )}
