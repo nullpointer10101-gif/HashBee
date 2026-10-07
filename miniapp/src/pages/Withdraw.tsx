@@ -416,7 +416,7 @@ export const Withdraw: React.FC = () => {
 
       {/* Qualification Modal Popup */}
       {showQualifyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
           <div className="bg-[#121c19] border-2 border-emerald-500/40 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative text-center">
             {/* Close Button */}
             <button

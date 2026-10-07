@@ -753,28 +753,28 @@ export const Plans: React.FC = () => {
       {/* Direct Payment / Activation Modal */}
       <AnimatePresence>
         {showPayModal && selectedPlan && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              className="w-full max-w-md bg-gradient-to-b from-[#1c2924] via-[#141f1b] to-[#0c1411] border-2 border-emerald-500/50 rounded-3xl p-5 shadow-2xl overflow-hidden relative"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-md bg-gradient-to-b from-[#1c2924] via-[#141f1b] to-[#0c1411] border-2 border-emerald-500/50 rounded-3xl p-4.5 shadow-2xl relative max-h-[90vh] overflow-y-auto"
             >
               {/* Close Button */}
               <button
                 onClick={() => setShowPayModal(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/40 text-stone-400 hover:text-white flex items-center justify-center border border-white/10"
+                className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 text-stone-400 hover:text-white flex items-center justify-center border border-white/10 z-10"
               >
                 ✕
               </button>
 
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-2xl">
+              <div className="flex items-center gap-3 mb-3 pr-8">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-2xl flex-shrink-0">
                   {selectedPlan.icon}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">{selectedPlan.name}</h3>
-                  <p className="text-xs text-stone-300">
+                  <h3 className="text-sm font-black text-white">{selectedPlan.name}</h3>
+                  <p className="text-[11px] text-stone-300">
                     Deposit <span className="text-white font-bold">{selectedPlan.cost_gram.toFixed(2)} TON</span> ➔
                     Receive <span className="text-emerald-400 font-bold">{selectedPlan.return_gram.toFixed(2)} GRAM</span> in 24h
                   </p>
@@ -784,36 +784,36 @@ export const Plans: React.FC = () => {
               {/* 1-Click Tonkeeper Button */}
               <button
                 onClick={() => handle1ClickTonkeeper(selectedPlan)}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-blue-600 hover:from-blue-400 hover:to-sky-300 text-white font-black text-xs tracking-wider uppercase shadow-xl shadow-blue-950 active:scale-98 transition-all flex items-center justify-center gap-2 mb-4"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 via-sky-400 to-blue-600 hover:from-blue-400 hover:to-sky-300 text-white font-black text-xs tracking-wider uppercase shadow-xl shadow-blue-950 active:scale-98 transition-all flex items-center justify-center gap-2 mb-3"
               >
                 <span>💎 1-CLICK TONKEEPER PAY ({selectedPlan.cost_gram.toFixed(2)} TON)</span>
               </button>
 
               {/* Manual Transfer Option */}
-              <div className="bg-black/60 rounded-2xl p-3.5 border border-white/10 space-y-3 mb-4">
-                <div className="text-[11px] font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+              <div className="bg-black/60 rounded-2xl p-3 border border-white/10 space-y-2.5 mb-3.5">
+                <div className="text-[10px] font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
                   <span>Manual Transfer Details</span>
-                  <span className="text-[10px] text-amber-400 font-bold">MEMO REQUIRED</span>
+                  <span className="text-[9px] text-amber-400 font-bold">MEMO REQUIRED</span>
                 </div>
 
                 {/* Amount */}
                 <div>
-                  <label className="text-[10px] text-stone-400 uppercase block mb-1">Send Exact Amount</label>
-                  <div className="text-sm font-black text-white bg-[#0a100e] px-3 py-2 rounded-xl border border-white/5 flex items-center justify-between">
+                  <label className="text-[9px] text-stone-400 uppercase block mb-0.5">Send Exact Amount</label>
+                  <div className="text-xs font-black text-white bg-[#0a100e] px-2.5 py-1.5 rounded-xl border border-white/5 flex items-center justify-between">
                     <span>{selectedPlan.cost_gram.toFixed(2)} TON</span>
-                    <span className="text-[10px] text-emerald-400 font-bold">24H RETURN: {selectedPlan.return_gram.toFixed(2)} GRAM</span>
+                    <span className="text-[9px] text-emerald-400 font-bold">24H RETURN: {selectedPlan.return_gram.toFixed(2)} GRAM</span>
                   </div>
                 </div>
 
                 {/* Destination Wallet */}
                 <div>
-                  <label className="text-[10px] text-stone-400 uppercase block mb-1">Deposit Wallet Address</label>
-                  <div className="flex items-center gap-2">
+                  <label className="text-[9px] text-stone-400 uppercase block mb-0.5">Deposit Wallet Address</label>
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       readOnly
                       value={DEPOSIT_WALLET}
-                      className="flex-1 bg-[#0a100e] text-[11px] text-stone-300 font-mono px-3 py-2 rounded-xl border border-white/5 outline-none truncate select-all"
+                      className="flex-1 bg-[#0a100e] text-[10px] text-stone-300 font-mono px-2.5 py-1.5 rounded-xl border border-white/5 outline-none truncate select-all"
                     />
                     <button
                       onClick={() => {
@@ -822,7 +822,7 @@ export const Plans: React.FC = () => {
                         setTimeout(() => setCopiedAddress(false), 2000)
                         toast.success('Address copied!')
                       }}
-                      className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-xl text-xs font-bold border border-white/10"
+                      className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-white rounded-xl text-xs font-bold border border-white/10"
                     >
                       {copiedAddress ? '✓' : 'Copy'}
                     </button>
@@ -831,15 +831,15 @@ export const Plans: React.FC = () => {
 
                 {/* Memo */}
                 <div>
-                  <label className="text-[10px] text-amber-400 uppercase block mb-1 font-bold">
+                  <label className="text-[9px] text-amber-400 uppercase block mb-0.5 font-bold">
                     Comment / Memo (CRITICAL)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       readOnly
                       value={getPlanMemo(selectedPlan.id)}
-                      className="flex-1 bg-[#0a100e] text-xs text-amber-300 font-mono font-bold px-3 py-2 rounded-xl border border-amber-500/30 outline-none select-all"
+                      className="flex-1 bg-[#0a100e] text-[11px] text-amber-300 font-mono font-bold px-2.5 py-1.5 rounded-xl border border-amber-500/30 outline-none select-all"
                     />
                     <button
                       onClick={() => {
@@ -848,12 +848,12 @@ export const Plans: React.FC = () => {
                         setTimeout(() => setCopiedMemo(false), 2000)
                         toast.success('Memo copied!')
                       }}
-                      className="px-3 py-2 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded-xl text-xs font-bold border border-amber-500/40"
+                      className="px-2.5 py-1.5 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 rounded-xl text-xs font-bold border border-amber-500/40"
                     >
                       {copiedMemo ? '✓' : 'Copy'}
                     </button>
                   </div>
-                  <p className="text-[9px] text-stone-400 mt-1">
+                  <p className="text-[8.5px] text-stone-400 mt-1">
                     ⚠️ You MUST paste this exact memo in Tonkeeper/wallet so your plan is activated instantly.
                   </p>
                 </div>
@@ -863,7 +863,7 @@ export const Plans: React.FC = () => {
               <button
                 onClick={handleVerifyPayment}
                 disabled={checkingPayment}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xs tracking-wider uppercase shadow-lg shadow-emerald-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xs tracking-wider uppercase shadow-xl shadow-emerald-950 active:scale-98 transition-all flex items-center justify-center gap-1.5"
               >
                 {checkingPayment ? (
                   <>

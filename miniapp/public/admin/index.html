@@ -234,19 +234,16 @@
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
               <option value="custom">✍️ Custom Message</option>
-              <option value="watch_ads_boost">📺 Free Honey & Hashrate Booster (Watch Ads)</option>
-              <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
-              <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
-              <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
-              <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win USDT/GRAM)</option>
-              <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
-              <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
+              <option value="plan_standard_53pct">⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit Plan)</option>
+              <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (Apex God Hive +83.3% ROI)</option>
+              <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (2X Double Whale Matrix)</option>
+              <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Starter Trial Miner)</option>
+              <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive)</option>
+              <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Queen Miner)</option>
+              <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win)</option>
+              <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin & Mining Boost</option>
               <option value="personalized_buzz">🐝 Hive Capacity Full Reminder (Hey {name})</option>
-              <option value="viral_25k">🚀 25,000+ Miners Milestone Celebration</option>
-              <option value="mining_boost">⛏️ 2X Mining Hashrate Supercharge</option>
-              <option value="ghs_drop">🎁 Free Hashrate Power Gift</option>
-              <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
-              <option value="withdraw_alert">💸 Instant GRAM & TON Withdrawals Live</option>
+              <option value="withdraw_alert">💸 Daily Cashouts Processed & Verified</option>
             </select>
           </div>
 
@@ -384,38 +381,34 @@
             </button>
           </div>
           <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
-            <option value="watch_ads_boost" selected>📺 Free Honey & Hashrate Booster (Watch Ads)</option>
-            <option value="crate_mega_jackpot">📦 Mystery Loot Crates Live (0.5 - 5 GRAM / USDT Jackpot)</option>
-            <option value="crate_bronze_starter">🥉 Bronze Crate Starter Drop (0.5 GRAM / Instant Cash)</option>
-            <option value="crate_vip_dopamine">👑 VIP High Roller Crate (Gold & Diamond 25 GRAM)</option>
-            <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win USDT/GRAM)</option>
-            <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin (Viral Referral Boost)</option>
-            <option value="spin_vip_drop">⚡ VIP Free Spin Turn Waiting (Hey {name})</option>
+            <option value="plan_standard_53pct" selected>⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit Plan)</option>
+            <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (Apex God Hive +83.3% ROI)</option>
+            <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (2X Double Whale Matrix)</option>
+            <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Starter Trial Miner)</option>
+            <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive)</option>
+            <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Queen Miner)</option>
+            <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win)</option>
+            <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin & Mining Boost</option>
             <option value="personalized_buzz">🐝 Hive Capacity Full Reminder (Hey {name})</option>
-            <option value="viral_25k">🚀 25,000+ Miners Milestone Celebration</option>
-            <option value="mining_boost">⛏️ 2X Mining Hashrate Supercharge</option>
-            <option value="ghs_drop">🎁 Free Hashrate Power Gift</option>
-            <option value="tasks_drop">🔥 High-Reward Missions Alert</option>
-            <option value="withdraw_alert">💸 Instant GRAM & TON Withdrawals Live</option>
+            <option value="withdraw_alert">💸 Daily Cashouts Processed & Verified</option>
             <option value="custom">✍️ Custom Message Below</option>
           </select>
         </div>
 
-          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">🎁 *MYSTERY CRATES ARE LIVE!* 🐝💎
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H MINING PLAN IS LIVE!* 🍯
 
-Unbox real USDT, instant GRAM cash, or massive Hashrate boosts!
-• 🥉 *Bronze (0.5 G)* ➔ Win up to 2.5 GRAM
-• 🥈 *Silver (1.5 G)* ➔ Win up to 7.5 GRAM
-• 🥇 *Gold (3.0 G)* ➔ Win up to 15.0 GRAM
-• 💎 *Diamond (5.0 G)* ➔ *25 GRAM Jackpot + $20 USDT!*
+Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
 
-👇 Open your crate now:</textarea>
+✅ Guaranteed next-day payout
+✅ Unlocks lifetime instant withdrawals
+
+👇 Activate in 1-click:</textarea>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
           <div class="form-group">
             <label class="form-label">Button Text</label>
-            <input type="text" id="autoBroadcastBtnText" class="form-input" value="📦 Unlock Mystery Crates 🎁">
+            <input type="text" id="autoBroadcastBtnText" class="form-input" value="⚡ Activate 1.30 TON Plan (+53.8%) ➔">
           </div>
           <div class="form-group">
             <label class="form-label">Button WebApp URL</label>
@@ -977,44 +970,75 @@ Hey {name}, you can now earn free Honey and boost your mining power without spen
 👇 Watch your 3 daily ads and boost your gains:`,
     btn: '📺 Watch Ads & Earn Honey 🍯'
   },
-  crate_mega_jackpot: {
-    msg: `📦 *MYSTERY CRATES ARE LIVE (0.50 - 5.00 GRAM)!* 💎🔥
+  plan_standard_53pct: {
+    msg: `⚡ *24H MINING PLAN IS LIVE!* 🍯
 
-Unbox guaranteed real crypto cashouts, instant GRAM tokens, and massive permanent Hashrate boosts:
-• 🥉 *Bronze Crate (0.50 G)* ➔ Up to 2.50 GRAM + Hashrate
-• 🥈 *Silver Crate (1.50 G)* ➔ Up to 7.50 GRAM + Hashrate
-• 🥇 *Gold Crate (3.00 G)* ➔ Up to 15.00 GRAM + Hashrate
-• 💎 *Diamond Crate (5.00 G)* ➔ *25.00 GRAM Jackpot + $20 USDT!*
+Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
 
-⚡ *Bonus*: Opening just 1 crate verifies your wallet for *Unlimited Lifetime Withdrawals*!
+✅ Guaranteed next-day payout
+✅ Unlocks lifetime instant withdrawals
 
-👇 Unbox your mystery crate now:`,
-    btn: '📦 Unlock Mystery Crates 🎁'
+👇 Activate in 1-click:`,
+    btn: '⚡ Activate 1.30 TON Plan (+53.8%) ➔'
   },
-  crate_bronze_starter: {
-    msg: `🥉 *0.50 GRAM STARTER CRATE: INSTANT WIN!* ⚡🎁
+  plan_god_tier: {
+    msg: `🔥 *APEX GOD HIVE ACTIVATED!* 💎
 
-Start small and win big with the 0.50 GRAM Starter Box!
-💵 *Real USDT & GRAM Cash* directly credited
-⚡ *+5 to +25 GHS Permanent Mining Power*
-🔓 *Instant Lifetime Cashout Verification* unlocked upon open!
+Pay *12.00 TON* ➔ Receive *22.00 GRAM* in 24 Hours!
+💰 *+10.00 GRAM Pure Profit* (+83.3% ROI)
 
-100% transparent on-chain mechanics with guaranteed rewards on every drop.
+✅ Instant on-chain confirmation
+✅ Maximum daily yield
 
-👇 Tap below to test your luck:`,
-    btn: '📦 Open 0.5 G Crate 🚀'
+👇 Claim Apex God Hive:`,
+    btn: '🚀 Activate God Hive Plan 💎'
   },
-  crate_vip_dopamine: {
-    msg: `👑 *25.0 GRAM VIP HIGH-ROLLER CRATE JACKPOT!* 💎🔥
+  plan_matrix_2x: {
+    msg: `🌌 *2X DOUBLE WHALE MATRIX!* 🚀
 
-Hey {name}, High-Roller Gold & Diamond Crates are loaded with top-tier prizes!
-🏆 *25.00 GRAM Single Drop Grand Prize*
-💵 *$20.00 Direct USDT Cashout*
-⚡ *+20.0 to +100 GHS Permanent Mining Speed*
-👑 Instant on-chain confirmation & lifetime withdrawal verification.
+Pay *25.00 TON* ➔ Receive *50.00 GRAM* tomorrow!
+💎 *100% DOUBLE PROFIT* in 24 hours!
 
-👇 Claim your high-roller crate today:`,
-    btn: '💎 Play High Roller Crates 👑'
+✅ Guaranteed 24h settlement
+✅ Instant blockchain activation
+
+👇 Double your TON now:`,
+    btn: '🌌 Double Your TON (50 GRAM) ➔'
+  },
+  plan_starter_trial: {
+    msg: `🐝 *0.70 TON STARTER TRIAL!* ⚡
+
+Pay *0.70 TON* ➔ Receive *0.80 GRAM* next day!
+
+✅ Unlocks lifetime instant cashouts
+✅ 1-per-account trial pack
+
+👇 Activate Starter Plan:`,
+    btn: '🐝 Start Miner (0.70 TON) ➔'
+  },
+  plan_titan_66pct: {
+    msg: `💎 *CYBER TITAN HIVE LIVE!* ⚡
+
+Pay *6.00 TON* ➔ Receive *10.00 GRAM* in 24 hours!
+💰 *+66.7% Guaranteed Daily Profit*
+
+✅ Instant on-chain confirmation
+✅ 24-hour rapid payout
+
+👇 Activate Cyber Titan Hive:`,
+    btn: '💎 Activate Titan Hive (6.00 TON) ➔'
+  },
+  plan_queen_whale: {
+    msg: `👑 *ROYAL QUEEN MINER CONTRACT!* 💎
+
+Pay *3.00 TON* ➔ Receive *4.50 GRAM* in 24 hours!
+💰 *+50.0% Guaranteed Profit*
+
+✅ Instant blockchain verification
+✅ Guaranteed daily returns
+
+👇 Activate Queen Miner:`,
+    btn: '👑 Activate Queen Miner 💎'
   },
   spin_dopamine_jackpot: {
     msg: `🎡 *LUCKY HONEY WHEEL: SPIN TO WIN USDT & GRAM!* 🎰⚡
