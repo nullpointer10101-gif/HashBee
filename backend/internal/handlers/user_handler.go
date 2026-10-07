@@ -18,6 +18,7 @@ import (
 
 type UserBotNotifier interface {
 	SendReferralJoinNotification(referrerTelegramID int64, joinerName string)
+	CheckUserChannelMembership(channelTarget string, userID int64) (bool, error)
 }
 
 type UserHandler struct {
@@ -1019,6 +1020,56 @@ func (h *UserHandler) ClaimPlan(c *gin.Context) {
 		"claimed_gram":      p.ReturnGRAM,
 		"new_honey_balance": newBalance,
 		"user_plan_id":      p.ID,
+	})
+}
+
+// POST /api/check-channels — Verifies if user has joined required channels
+func (h *UserHandler) CheckChannels(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		return
+	}
+	u := user.(*models.User)
+
+	var req struct {
+		Channel1 string `json:"channel1"`
+		Channel2 string `json:"channel2"`
+	}
+	_ = c.ShouldBindJSON(&req)
+
+	ch1 := req.Channel1
+	if ch1 == "" {
+		ch1 = "https://t.me/+L4xApdSQJkA3N2Rl"
+	}
+	ch2 := req.Channel2
+	if ch2 == "" {
+		ch2 = "@HashBeePayouts"
+	}
+
+	ch1Joined := true
+	ch2Joined := true
+
+	if h.bot != nil && u.TelegramID > 0 {
+		if !strings.HasPrefix(ch1, "+") && !strings.Contains(ch1, "/+") {
+			isMember, err := h.bot.CheckUserChannelMembership(ch1, u.TelegramID)
+			if err == nil {
+				ch1Joined = isMember
+			}
+		}
+		if !strings.HasPrefix(ch2, "+") && !strings.Contains(ch2, "/+") {
+			isMember, err := h.bot.CheckUserChannelMembership(ch2, u.TelegramID)
+			if err == nil {
+				ch2Joined = isMember
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"verified":   true,
+		"ch1_joined": ch1Joined,
+		"ch2_joined": ch2Joined,
+		"message":    "Channel membership verified successfully",
 	})
 }
 

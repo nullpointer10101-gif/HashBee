@@ -332,6 +332,7 @@ func main() {
 		protected.GET("/spin/status", userHandler.GetSpinStatus)
 		protected.POST("/spin/claim", userHandler.SpinClaim)
 		protected.POST("/crates/open", userHandler.OpenCrate)
+		protected.POST("/check-channels", userHandler.CheckChannels)
 
 		// 24h Daily Yield Plans (Mining Contracts)
 		protected.GET("/plans", userHandler.GetPlans)

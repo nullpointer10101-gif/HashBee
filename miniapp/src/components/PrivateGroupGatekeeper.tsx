@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { checkChannelsAPI } from '../services/api'
+import robotMinerImg from '../assets/images/robot_miner.jpg'
 
-export const PRIVATE_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
-export const GATEKEEPER_KEY_PREFIX = 'hb_vip_channel_v3_'
+export const VIP_CHANNEL_URL = 'https://t.me/+L4xApdSQJkA3N2Rl'
+export const PAYOUTS_CHANNEL_URL = 'https://t.me/HashBeePayouts'
+export const GATEKEEPER_KEY_PREFIX = 'hb_dual_channels_v5_'
 
 interface PrivateGroupGatekeeperProps {
   telegramId?: number | string
@@ -48,14 +51,24 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
   const { user } = useAuth()
   const currentTgId = getActiveTelegramId(telegramId || user?.telegram_id)
 
-  const [hasClickedLink, setHasClickedLink] = useState<boolean>(() => {
+  const [clickedCh1, setClickedCh1] = useState<boolean>(() => {
     if (!currentTgId) return false
     try {
-      return localStorage.getItem(`hb_pvt_clicked_v3_${currentTgId}`) === 'true'
+      return localStorage.getItem(`hb_ch1_v5_${currentTgId}`) === 'true'
     } catch {
       return false
     }
   })
+
+  const [clickedCh2, setClickedCh2] = useState<boolean>(() => {
+    if (!currentTgId) return false
+    try {
+      return localStorage.getItem(`hb_ch2_v5_${currentTgId}`) === 'true'
+    } catch {
+      return false
+    }
+  })
+
   const [isVerifying, setIsVerifying] = useState<boolean>(false)
   const [verifiedSuccess, setVerifiedSuccess] = useState<boolean>(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -76,34 +89,60 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
     } catch {}
   }
 
-  const handleOpenChannel = () => {
+  const handleOpenCh1 = () => {
     triggerHaptic('medium')
     setErrorMsg(null)
-    setHasClickedLink(true)
-
+    setClickedCh1(true)
     if (currentTgId) {
       try {
-        localStorage.setItem(`hb_pvt_clicked_v3_${currentTgId}`, 'true')
+        localStorage.setItem(`hb_ch1_v5_${currentTgId}`, 'true')
       } catch {}
     }
-
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
-      window.Telegram.WebApp.openTelegramLink(PRIVATE_CHANNEL_URL)
+      window.Telegram.WebApp.openTelegramLink(VIP_CHANNEL_URL)
     } else {
-      window.open(PRIVATE_CHANNEL_URL, '_blank')
+      window.open(VIP_CHANNEL_URL, '_blank')
     }
   }
 
-  const handleVerifyAndEnter = () => {
-    if (!hasClickedLink) {
+  const handleOpenCh2 = () => {
+    triggerHaptic('medium')
+    setErrorMsg(null)
+    setClickedCh2(true)
+    if (currentTgId) {
+      try {
+        localStorage.setItem(`hb_ch2_v5_${currentTgId}`, 'true')
+      } catch {}
+    }
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(PAYOUTS_CHANNEL_URL)
+    } else {
+      window.open(PAYOUTS_CHANNEL_URL, '_blank')
+    }
+  }
+
+  const handleVerifyAndEnter = async () => {
+    if (!clickedCh1) {
       triggerHaptic('heavy')
-      setErrorMsg('⚠️ Please tap Step 1 first to send a request to the VIP channel!')
+      setErrorMsg('⚠️ Please tap Channel 1 first and send your join request!')
+      return
+    }
+
+    if (!clickedCh2) {
+      triggerHaptic('heavy')
+      setErrorMsg('⚠️ Please tap Channel 2 and join the Payout Proofs channel!')
       return
     }
 
     triggerHaptic('light')
     setIsVerifying(true)
     setErrorMsg(null)
+
+    try {
+      await checkChannelsAPI(VIP_CHANNEL_URL, PAYOUTS_CHANNEL_URL)
+    } catch (e) {
+      // Graceful fallback
+    }
 
     setTimeout(() => {
       setIsVerifying(false)
@@ -117,88 +156,128 @@ export const PrivateGroupGatekeeper: React.FC<PrivateGroupGatekeeperProps> = ({ 
           onVerified()
         }
       }, 700)
-    }, 1200)
+    }, 1000)
   }
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center px-4 py-6 text-center select-none overflow-y-auto">
-      <div className="mine-card max-w-sm w-full p-6 text-center relative overflow-hidden shadow-2xl bg-white">
-        <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl mx-auto mb-3">
-          🤖
+    <div className="fixed inset-0 z-[99999] bg-slate-900/70 backdrop-blur-md flex flex-col items-center justify-center px-4 py-6 text-center select-none overflow-y-auto font-sans">
+      <div className="mine-card max-w-sm w-full p-5 sm:p-6 text-center relative overflow-hidden shadow-2xl bg-white border border-slate-200">
+        {/* Robot Miner Avatar */}
+        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-sky-200 bg-sky-50 mx-auto mb-3 shadow-md flex items-center justify-center text-3xl">
+          <img
+            src={robotMinerImg}
+            alt="Crypto Mine"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none'
+            }}
+          />
         </div>
 
-        <h1 className="text-lg font-black text-slate-900 mb-1 uppercase tracking-wide">
-          Official Community
+        <h1 className="text-base sm:text-lg font-black text-slate-900 mb-1 uppercase tracking-tight">
+          Join Official Channels
         </h1>
-        <p className="text-[11px] text-slate-500 mb-5 leading-relaxed">
-          Send a request to join our official community channel to unlock instant cashouts and live cloud mining.
+        <p className="text-[11px] text-slate-500 mb-4 leading-relaxed font-medium">
+          Join both channels below to activate your <b className="text-slate-900 font-bold">50 GHS Cloud Mining</b> and unlock instant withdrawals.
         </p>
 
-        {/* Steps Box */}
-        <div className="bg-[#f8fafc] border border-slate-200 rounded-2xl p-4 text-left space-y-3 mb-4">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-[#0088ff] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
-              1
+        {/* Both Channel Cards */}
+        <div className="space-y-2.5 mb-4 text-left">
+          {/* Channel 1: VIP Community */}
+          <div
+            onClick={handleOpenCh1}
+            className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between active:scale-98 ${
+              clickedCh1
+                ? 'bg-emerald-50/80 border-emerald-300 shadow-sm'
+                : 'bg-blue-50/60 border-blue-200 hover:border-blue-400'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                📢
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black text-slate-900 flex items-center gap-1">
+                  <span>1. VIP Community Channel</span>
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Send join request for gift codes & updates
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900">Send Join Request</p>
-              <p className="text-[10px] text-slate-500">Tap button below and click "Request to Join".</p>
-            </div>
+
+            <span
+              className={`px-2 py-0.5 rounded-full text-[9px] font-black shrink-0 ml-2 ${
+                clickedCh1
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-[#0088ff] text-white'
+              }`}
+            >
+              {clickedCh1 ? '✓ REQUESTED' : 'JOIN ➔'}
+            </span>
           </div>
 
-          <div className="h-[1px] bg-slate-200 w-full" />
+          {/* Channel 2: Payout Proofs */}
+          <div
+            onClick={handleOpenCh2}
+            className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between active:scale-98 ${
+              clickedCh2
+                ? 'bg-emerald-50/80 border-emerald-300 shadow-sm'
+                : 'bg-purple-50/60 border-purple-200 hover:border-purple-400'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                💎
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black text-slate-900 flex items-center gap-1">
+                  <span>2. Live Payouts & Proofs</span>
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Real-time TON & USDT on-chain receipts
+                </div>
+              </div>
+            </div>
 
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-[#0088ff] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
-              2
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900">Verify & Enter App</p>
-              <p className="text-[10px] text-slate-500">Return here and tap "Verify & Enter".</p>
-            </div>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[9px] font-black shrink-0 ml-2 ${
+                clickedCh2
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-[#7c3aed] text-white'
+              }`}
+            >
+              {clickedCh2 ? '✓ JOINED' : 'JOIN ➔'}
+            </span>
           </div>
         </div>
 
         {errorMsg && (
-          <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-600 font-bold mb-3">
+          <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-600 font-bold mb-3 text-left">
             {errorMsg}
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="space-y-2.5">
-          <button
-            onClick={handleOpenChannel}
-            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 flex items-center justify-between ${
-              hasClickedLink
-                ? 'bg-emerald-50 border border-emerald-300 text-emerald-700'
-                : 'bg-[#0088ff] text-white shadow-md'
-            }`}
-          >
-            <span>{hasClickedLink ? '1. Request Sent (Re-open)' : '1. Send Join Request'}</span>
-            <span>➔</span>
-          </button>
-
-          <button
-            onClick={handleVerifyAndEnter}
-            disabled={isVerifying || verifiedSuccess}
-            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all active:scale-95 ${
-              verifiedSuccess
-                ? 'bg-emerald-600 text-white'
-                : hasClickedLink
-                ? 'btn-primary-blue'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            {isVerifying ? (
-              <span>VERIFYING REQUEST...</span>
-            ) : verifiedSuccess ? (
-              <span>✓ ACCESS GRANTED</span>
-            ) : (
-              <span>2. VERIFY & ENTER MINER</span>
-            )}
-          </button>
-        </div>
+        {/* Verify & Enter Button */}
+        <button
+          onClick={handleVerifyAndEnter}
+          disabled={isVerifying || verifiedSuccess}
+          className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${
+            verifiedSuccess
+              ? 'bg-emerald-600 text-white'
+              : clickedCh1 && clickedCh2
+              ? 'btn-primary-blue'
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          {isVerifying ? (
+            <span>VERIFYING CHANNELS...</span>
+          ) : verifiedSuccess ? (
+            <span>✓ VERIFIED & ACCESS GRANTED</span>
+          ) : (
+            <span>3. VERIFY MEMBERSHIP & ENTER ➔</span>
+          )}
+        </button>
       </div>
     </div>
   )

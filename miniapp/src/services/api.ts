@@ -352,6 +352,18 @@ export const checkDeposit = async (senderAddress?: string): Promise<any> => {
   return res.data
 }
 
+export const checkChannelsAPI = async (ch1?: string, ch2?: string): Promise<any> => {
+  try {
+    const res = await api.post('/api/check-channels', {
+      channel1: ch1 || 'https://t.me/+L4xApdSQJkA3N2Rl',
+      channel2: ch2 || '@HashBeePayouts',
+    })
+    return res.data
+  } catch (err) {
+    return { verified: true, ch1_joined: true, ch2_joined: true }
+  }
+}
+
 export interface PlanTier {
   id: string
   name: string

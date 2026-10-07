@@ -609,3 +609,50 @@ func (b *Bot) SendChannelPayoutProof(channelTarget string, htmlText string, btnT
 	return nil
 }
 
+// CheckUserChannelMembership checks whether a Telegram user has joined a channel/chat
+func (b *Bot) CheckUserChannelMembership(channelTarget string, userID int64) (bool, error) {
+	if b == nil || b.api == nil {
+		return true, nil // If bot is not configured, don't hard block
+	}
+
+	channelTarget = strings.TrimSpace(channelTarget)
+	if channelTarget == "" || userID <= 0 {
+		return false, fmt.Errorf("invalid channel or user ID")
+	}
+
+	var chatConfig tgbotapi.ChatConfigWithUser
+	if chatID, err := strconv.ParseInt(channelTarget, 10, 64); err == nil {
+		chatConfig = tgbotapi.ChatConfigWithUser{
+			ChatID: chatID,
+			UserID: userID,
+		}
+	} else {
+		cleanUsername := strings.TrimPrefix(channelTarget, "@")
+		cleanUsername = strings.TrimPrefix(cleanUsername, "https://t.me/")
+		cleanUsername = strings.TrimPrefix(cleanUsername, "t.me/")
+		cleanUsername = strings.TrimPrefix(cleanUsername, "+")
+		chatConfig = tgbotapi.ChatConfigWithUser{
+			SuperGroupUsername: cleanUsername,
+			UserID:             userID,
+		}
+	}
+
+	memberConfig := tgbotapi.GetChatMemberConfig{
+		ChatConfigWithUser: chatConfig,
+	}
+
+	member, err := b.api.GetChatMember(memberConfig)
+	if err != nil {
+		log.Printf("⚠️ [Bot] GetChatMember for %s user %d: %v", channelTarget, userID, err)
+		return false, err
+	}
+
+	// Status can be: "creator", "administrator", "member", "restricted", "left", "kicked"
+	status := strings.ToLower(member.Status)
+	if status == "creator" || status == "administrator" || status == "member" || status == "restricted" {
+		return true, nil
+	}
+
+	return false, nil
+}
+
