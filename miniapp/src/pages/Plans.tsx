@@ -441,9 +441,29 @@ export const Plans: React.FC = () => {
 
       {/* Tab 1: Available Plans Store */}
       {activeTab === 'store' && (
-        <div className="space-y-3 relative z-10">
+        <div className="space-y-3.5 relative z-10">
           {availablePlans.map((plan, index) => {
             const isStarter = plan.id === 'starter'
+            const isDouble = plan.id === 'matrix'
+            const isMythic = plan.id === 'apex'
+            const isLegendary = plan.id === 'titan'
+
+            // Dynamic card tint
+            const cardTintClass = isDouble
+              ? 'card-tint-red'
+              : isMythic
+              ? 'card-tint-amber'
+              : isLegendary
+              ? 'card-tint-emerald'
+              : 'card-tint-blue'
+
+            const buttonClass = isDouble
+              ? 'btn-primary-red'
+              : isMythic
+              ? 'btn-primary-amber'
+              : isLegendary
+              ? 'btn-primary-emerald'
+              : 'btn-primary-blue'
 
             return (
               <motion.div
@@ -451,21 +471,31 @@ export const Plans: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 + index * 0.04 }}
-                className="mine-card p-4 relative"
+                className={`${cardTintClass} p-4.5 relative shadow-md`}
               >
                 {/* Header Tag Bar */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider bg-purple-50 text-[#7c3aed]">
+                  <span
+                    className={`px-3 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
+                      isDouble
+                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                        : isMythic
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        : isLegendary
+                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : 'bg-purple-100 text-[#7c3aed] border border-purple-200'
+                    }`}
+                  >
                     {plan.badge}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-50 text-emerald-600 font-mono">
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white font-mono shadow-sm">
                     +{plan.profit_percent.toFixed(1)}% NET 24H ROI
                   </span>
                 </div>
 
                 {/* Plan Info */}
                 <div className="flex items-center gap-3 mb-3.5">
-                  <div className="w-13 h-13 rounded-2xl overflow-hidden border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-3xl shrink-0 shadow-md">
                     {(plan as any).image ? (
                       <img src={(plan as any).image} alt={plan.name} className="w-full h-full object-cover" />
                     ) : (
@@ -473,12 +503,12 @@ export const Plans: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-xs font-extrabold text-[#0f172a] uppercase">
+                    <h3 className="text-sm font-black text-slate-950 uppercase tracking-tight">
                       {plan.name}
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">
-                      Pay <span className="text-slate-900 font-bold">{plan.cost_gram.toFixed(2)} TON</span> ➔ Receive{' '}
-                      <span className="text-[#0088ff] font-extrabold">
+                    <p className="text-[11px] text-slate-600 font-medium leading-snug mt-0.5">
+                      Pay <span className="text-slate-950 font-bold">{plan.cost_gram.toFixed(2)} TON</span> ➔ Receive{' '}
+                      <span className="text-[#0088ff] font-black">
                         {plan.return_gram.toFixed(2)} GRAM
                       </span>{' '}
                       in 24 Hours
@@ -487,32 +517,32 @@ export const Plans: React.FC = () => {
                 </div>
 
                 {/* Return Grid Breakdown */}
-                <div className="grid grid-cols-3 gap-1.5 bg-[#f8fafc] rounded-xl p-2.5 border border-slate-200 mb-3.5 text-center">
+                <div className="grid grid-cols-3 gap-1.5 bg-white/90 rounded-2xl p-2.5 border border-slate-200/80 mb-3.5 text-center shadow-sm">
                   <div>
-                    <div className="text-[8px] text-slate-400 uppercase font-bold">Deposit</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-black">Deposit</div>
                     <div className="text-xs font-black text-slate-900 font-mono">{plan.cost_gram.toFixed(2)} TON</div>
                   </div>
                   <div className="border-x border-slate-200">
-                    <div className="text-[8px] text-slate-400 uppercase font-bold">24H Return</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-black">24H Payout</div>
                     <div className="text-xs font-black text-[#0088ff] font-mono">
                       {plan.return_gram.toFixed(2)} GRAM
                     </div>
                   </div>
                   <div>
-                    <div className="text-[8px] text-slate-400 uppercase font-bold">Net Profit</div>
-                    <div className="text-xs font-black text-[#059669] font-mono">+{plan.profit_gram.toFixed(2)} G</div>
+                    <div className="text-[8px] text-slate-400 uppercase font-black">Net Profit</div>
+                    <div className="text-xs font-black text-emerald-600 font-mono">+{plan.profit_gram.toFixed(2)} G</div>
                   </div>
                 </div>
 
                 {/* Action Button */}
                 {isStarter && plansOverview?.can_buy_starter === false ? (
-                  <div className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs text-center">
+                  <div className="w-full py-2.5 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs text-center">
                     ✓ 1-TIME TRIAL COMPLETED
                   </div>
                 ) : (
                   <button
                     onClick={() => handleOpenPayment(plan)}
-                    className="w-full py-3 rounded-xl btn-primary-blue text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95"
+                    className={`w-full py-3.5 rounded-2xl ${buttonClass} text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all`}
                   >
                     <span>⚡ ACTIVATE MINER ({plan.cost_gram.toFixed(2)} TON)</span>
                     <span>➔</span>

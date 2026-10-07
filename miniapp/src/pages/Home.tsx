@@ -308,80 +308,125 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 3 ACTION GRID CARDS: DEPOSIT / WITHDRAW / REFERRAL ── */}
-      <div className="grid grid-cols-3 gap-2.5 mb-4">
-        {/* Deposit Card with Watermark */}
+      {/* ── 3 VIBRANT ACTION GRID CARDS: DEPOSIT / WITHDRAW / REFERRAL ── */}
+      <div className="grid grid-cols-3 gap-2.5 mb-3.5">
+        {/* Deposit Card (Emerald Green) */}
         <div
           onClick={() => setShowDepositModal(true)}
-          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-emerald-300 active:scale-95 transition-all min-h-[96px]"
+          className="card-tint-emerald p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-emerald-400 active:scale-95 transition-all min-h-[105px]"
         >
           {/* Subtle Coin watermark */}
-          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-emerald-600">
+          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-emerald-600">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
             </svg>
           </div>
 
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-black text-[#0f172a]">Deposit</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center text-sm font-black shadow-sm">
+            <span className="text-xs font-black text-emerald-950">Deposit</span>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center text-sm font-black shadow-md">
               +
             </div>
           </div>
           <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold inline-block">
+            <span className="px-2 py-0.5 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-extrabold inline-block shadow-sm">
               Add USDT
             </span>
           </div>
         </div>
 
-        {/* Withdraw Card with Watermark */}
+        {/* Withdraw Card (Ruby Red / Rose) */}
         <div
           onClick={() => navigate('/withdraw')}
-          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-blue-300 active:scale-95 transition-all min-h-[96px]"
+          className="card-tint-red p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-rose-400 active:scale-95 transition-all min-h-[105px]"
         >
           {/* Subtle Chart watermark */}
-          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-[#0088ff]">
+          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-rose-600">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zM16.2 13H19v6h-2.8z" />
             </svg>
           </div>
 
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-black text-[#0f172a]">Withdraw</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-sm font-black shadow-sm">
+            <span className="text-xs font-black text-rose-950">Withdraw</span>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-rose-500 to-red-600 text-white flex items-center justify-center text-xs font-black shadow-md">
               ↓
             </div>
           </div>
           <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-blue-50 border border-blue-200 text-[#0088ff] text-[10px] font-extrabold inline-block">
+            <span className="px-2 py-0.5 rounded-lg bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-extrabold inline-block shadow-sm">
               Get Profit
             </span>
           </div>
         </div>
 
-        {/* Referral Card with Watermark */}
+        {/* Referral Card (Royal Purple) */}
         <div
           onClick={() => navigate('/earn')}
-          className="mine-card p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-purple-300 active:scale-95 transition-all min-h-[96px]"
+          className="card-tint-purple p-3 relative overflow-hidden flex flex-col justify-between cursor-pointer hover:border-purple-400 active:scale-95 transition-all min-h-[105px]"
         >
           {/* Subtle Users watermark */}
-          <div className="absolute -right-2 -bottom-2 w-12 h-12 opacity-15 pointer-events-none text-[#7c3aed]">
+          <div className="absolute -right-2 -bottom-2 w-14 h-14 opacity-20 pointer-events-none text-purple-600">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
             </svg>
           </div>
 
           <div className="flex items-center justify-between relative z-10">
-            <span className="text-xs font-black text-[#0f172a]">Referral</span>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-xs font-black shadow-sm">
+            <span className="text-xs font-black text-purple-950">Referral</span>
+            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white flex items-center justify-center text-xs font-black shadow-md">
               👥
             </div>
           </div>
           <div className="mt-3 relative z-10">
-            <span className="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 text-[#7c3aed] text-[10px] font-extrabold inline-block">
+            <span className="px-2 py-0.5 rounded-lg bg-purple-100 border border-purple-300 text-purple-800 text-[10px] font-extrabold inline-block shadow-sm">
               Invite & Earn
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2 QUICK PLAY & EARN CARDS: LUCKY SPIN & MISSIONS ── */}
+      <div className="grid grid-cols-2 gap-2.5 mb-3.5">
+        {/* Lucky Spin (Amber / Gold) */}
+        <div
+          onClick={() => navigate('/spin')}
+          className="card-tint-amber p-3.5 relative overflow-hidden cursor-pointer hover:border-amber-400 active:scale-95 transition-all"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-base shadow-sm">
+              🎰
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[9px] font-black uppercase">
+              HOT JACKPOT
+            </span>
+          </div>
+          <h4 className="text-xs font-extrabold text-amber-950">Lucky Wheel Spin</h4>
+          <p className="text-[10px] text-amber-800 font-semibold mt-0.5">Win up to 25 GRAM / USDT</p>
+          <div className="mt-2.5 flex items-center gap-1 text-[10px] font-black text-amber-700">
+            <span>SPIN NOW</span>
+            <span>➔</span>
+          </div>
+        </div>
+
+        {/* Missions & Tasks (Electric Blue / Cyan) */}
+        <div
+          onClick={() => navigate('/missions')}
+          className="card-tint-blue p-3.5 relative overflow-hidden cursor-pointer hover:border-blue-400 active:scale-95 transition-all"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-base shadow-sm">
+              🎯
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 text-[9px] font-black uppercase">
+              FREE GHS
+            </span>
+          </div>
+          <h4 className="text-xs font-extrabold text-blue-950">Daily Missions</h4>
+          <p className="text-[10px] text-blue-800 font-semibold mt-0.5">Watch ads & earn power</p>
+          <div className="mt-2.5 flex items-center gap-1 text-[10px] font-black text-[#0066ff]">
+            <span>COMPLETE</span>
+            <span>➔</span>
           </div>
         </div>
       </div>

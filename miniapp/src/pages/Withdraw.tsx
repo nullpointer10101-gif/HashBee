@@ -181,83 +181,94 @@ export const Withdraw: React.FC = () => {
 
       {activeTab === 'withdraw' ? (
         <>
-          {/* Balance Card */}
+          {/* Balance Card (Vivid Blue Hero Card) */}
           <div className="mine-hero-card p-5 mb-3.5 text-center">
             <div className="text-[10px] font-extrabold text-white/80 uppercase tracking-widest">
-              AVAILABLE BALANCE
+              AVAILABLE WALLET BALANCE
             </div>
-            <div className="text-3xl font-black text-white mt-1 mb-4 font-mono">
+            <div className="text-3xl sm:text-4xl font-black text-white mt-1 mb-4 font-mono">
               {userUsdtBalance} <span className="text-base text-[#00f090] font-sans">USDT</span>
             </div>
 
             <button
               onClick={handleReinvest}
               disabled={reinvesting}
-              className="w-full py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-extrabold text-xs uppercase tracking-wider border border-white/30 backdrop-blur-md active:scale-95 transition-all"
+              className="w-full py-3 rounded-xl btn-primary-amber font-black text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-1.5"
             >
-              {reinvesting ? 'REINVESTING...' : '⚡ REINVEST TO POWER (MIN 1 USDT = 50 GHS)'}
+              <span>⚡</span>
+              <span>{reinvesting ? 'REINVESTING...' : 'REINVEST TO MINING POWER (1 USDT = 50 GHS)'}</span>
             </button>
           </div>
 
-          <form onSubmit={handleWithdraw} className="mine-card p-5 mb-3.5 space-y-3.5">
+          <form onSubmit={handleWithdraw} className="mine-card p-5 mb-3.5 space-y-4">
             <div>
-              <label className="text-[10px] font-extrabold text-slate-500 block mb-2 uppercase tracking-wide">
-                Withdrawal Currency
+              <label className="text-[10px] font-extrabold text-slate-700 block mb-2 uppercase tracking-wide">
+                Select Withdrawal Currency
               </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/80 border border-slate-200 rounded-2xl">
                 <button
                   type="button"
                   onClick={() => setSelectedCrypto('USDT_BSC')}
-                  className={`py-2 px-2 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
+                  className={`py-2.5 px-3 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-1 ${
                     selectedCrypto === 'USDT_BSC'
-                      ? 'bg-white text-[#0f172a] shadow-md border border-slate-200'
-                      : 'text-slate-400 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md font-black scale-102'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
                   }`}
                 >
-                  <span>USDT</span>
-                  <span className="text-[9px] opacity-75 font-mono">BSC (BEP-20)</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">💵</span>
+                    <span>USDT</span>
+                  </div>
+                  <span className={`text-[9px] font-mono ${selectedCrypto === 'USDT_BSC' ? 'text-white/90 font-bold' : 'text-slate-400'}`}>
+                    BSC (BEP-20)
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedCrypto('GRAM')}
-                  className={`py-2 px-2 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-0.5 ${
+                  className={`py-2.5 px-3 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all flex flex-col items-center gap-1 ${
                     selectedCrypto === 'GRAM'
-                      ? 'bg-white text-[#0f172a] shadow-md border border-slate-200'
-                      : 'text-slate-400 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-[#0088ff] to-[#00c6ff] text-white shadow-md font-black scale-102'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900'
                   }`}
                 >
-                  <span>GRAM</span>
-                  <span className="text-[9px] opacity-75 font-mono">TON Network</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">💎</span>
+                    <span>GRAM</span>
+                  </div>
+                  <span className={`text-[9px] font-mono ${selectedCrypto === 'GRAM' ? 'text-white/90 font-bold' : 'text-slate-400'}`}>
+                    TON Network
+                  </span>
                 </button>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-bold">Network:</span>
-              <span className="font-extrabold text-[#0088ff]">
+            <div className="card-tint-blue py-2.5 px-3.5 flex items-center justify-between text-xs">
+              <span className="text-slate-600 font-bold">Payout Network:</span>
+              <span className="font-black text-[#0066ff]">
                 {selectedCrypto === 'USDT_BSC' ? 'BNB Smart Chain (BEP-20)' : 'GRAM Network (TON)'}
               </span>
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-500 uppercase block mb-1">
-                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Address' : 'GRAM Destination Address'}
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase block mb-1">
+                {selectedCrypto === 'USDT_BSC' ? 'USDT BSC (BEP-20) Destination Address' : 'GRAM Destination Address'}
               </label>
               <input
                 type="text"
                 placeholder={selectedCrypto === 'USDT_BSC' ? '0x... (42 characters BSC address)' : 'Enter TON/GRAM address'}
                 value={wallet}
                 onChange={(e) => setWallet(e.target.value)}
-                className="w-full mine-input px-3.5 py-2.5 text-xs font-mono font-medium outline-none"
+                className="w-full mine-input px-3.5 py-2.5 text-xs font-mono font-medium outline-none bg-white"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-500 uppercase block mb-1">
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase block mb-1">
                 Amount to Withdraw
               </label>
-              <div className="mine-input px-3.5 py-2.5 flex items-center justify-between">
+              <div className="mine-input px-3.5 py-2.5 flex items-center justify-between bg-white">
                 <input
                   type="number"
                   step="0.01"
@@ -267,30 +278,38 @@ export const Withdraw: React.FC = () => {
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full bg-transparent text-sm font-extrabold text-slate-900 outline-none font-mono"
                 />
-                <span className="text-xs font-black text-slate-400 ml-2">
+                <span className="text-xs font-black text-[#0088ff] ml-2">
                   {selectedCrypto === 'USDT_BSC' ? 'USDT' : 'GRAM'}
                 </span>
               </div>
-              <div className="text-[10px] font-medium text-slate-400 mt-1">
-                Minimum withdrawal: {minWithdrawal.toFixed(2)} USDT
+              <div className="flex items-center justify-between text-[10px] font-medium text-slate-500 mt-1">
+                <span>Minimum: <b className="text-slate-800 font-mono">{minWithdrawal.toFixed(2)} USDT</b></span>
+                <button
+                  type="button"
+                  onClick={() => setAmount(String(user?.honey_balance || 0))}
+                  className="text-[#0088ff] font-extrabold hover:underline uppercase"
+                >
+                  MAX BALANCE
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
             >
-              {submitting ? 'PROCESSING...' : `WITHDRAW ${selectedCrypto === 'USDT_BSC' ? 'USDT (BSC)' : 'GRAM'}`}
+              <span>{submitting ? 'PROCESSING TRANSFER...' : `CONFIRM CASHOUT ${selectedCrypto === 'USDT_BSC' ? 'USDT (BSC)' : 'GRAM'}`}</span>
+              <span>➔</span>
             </button>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800">
+            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 space-y-1">
+              <div className="flex items-center gap-1.5 font-black text-emerald-950">
                 <span>🛡️</span>
                 <span>Protected Automated Settlements</span>
               </div>
-              <p className="leading-snug">
-                You can withdraw all profits from Cloud Mining, 24H NFT Miners, Lucky Spins, and Referrals.
+              <p className="leading-snug text-emerald-800">
+                You can withdraw all profits from Cloud Mining, 24H NFT Miners, Lucky Spins, and Referrals directly to your personal wallet.
               </p>
             </div>
           </form>

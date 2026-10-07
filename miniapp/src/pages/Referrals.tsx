@@ -75,24 +75,24 @@ export const Referrals: React.FC = () => {
       </div>
 
       {/* Card 1: Your Referral Link & Share Button */}
-      <div className="mine-card p-4.5 mb-3.5">
+      <div className="card-tint-purple p-4.5 mb-3.5">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Your Invitation Link
+          <label className="text-[10px] font-black text-purple-900 uppercase tracking-wider">
+            Your Personal Referral Link
           </label>
-          <span className="text-[9px] font-mono text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-md font-bold">
+          <span className="text-[9px] font-mono text-[#7c3aed] bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-lg font-black">
             ID: {userTgId}
           </span>
         </div>
         
         {/* Link Input Box with Copy Button */}
-        <div className="bg-[#f8fafc] border border-slate-200 rounded-2xl p-2 flex items-center justify-between mb-3 gap-2">
-          <span className="text-xs font-mono text-slate-800 truncate flex-1 px-1">
+        <div className="bg-white border border-purple-200 rounded-2xl p-2 flex items-center justify-between mb-3 gap-2 shadow-sm">
+          <span className="text-xs font-mono text-purple-950 font-bold truncate flex-1 px-1">
             {link}
           </span>
           <button
             onClick={copyInviteLink}
-            className="px-3.5 py-1.5 bg-[#0088ff] text-white rounded-xl font-extrabold text-xs uppercase tracking-wider shrink-0 shadow-sm active:scale-95"
+            className="px-4 py-2 bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white rounded-xl font-black text-xs uppercase tracking-wider shrink-0 shadow-md active:scale-95"
           >
             {copied ? t('copied', 'COPIED') : t('copy', 'COPY')}
           </button>
@@ -101,50 +101,51 @@ export const Referrals: React.FC = () => {
         {/* Share Button */}
         <button
           onClick={shareTelegram}
-          className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+          className="w-full py-3.5 rounded-xl btn-primary-purple font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
         >
-          <span>⚡ SHARE PARTNER LINK (+3 GHS)</span>
+          <span>⚡ SHARE PARTNER LINK (GET +3 GHS PER FRIEND)</span>
+          <span>➔</span>
         </button>
       </div>
 
       {/* Card 2: Viral Milestones */}
-      <div className="mine-card p-4.5 mb-3.5">
+      <div className="card-tint-emerald p-4.5 mb-3.5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <span>🚀</span> HASHRATE MILESTONES
+          <span className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+            <span>🚀</span> HASHRATE POWER MILESTONES
           </span>
-          <span className="text-[9px] font-extrabold text-[#7c3aed] bg-purple-50 px-2 py-0.5 rounded-full">
+          <span className="text-[9px] font-black text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full uppercase">
             UP TO +500 GHS
           </span>
         </div>
-        <p className="text-[11px] text-slate-500 font-medium mb-3">
-          Earn bonus power milestones in addition to +3 GHS per friend:
+        <p className="text-[11px] text-emerald-800 font-semibold mb-3">
+          Earn massive bonus computing power as your network grows:
         </p>
 
-        <div className="grid grid-cols-3 gap-1.5 text-center text-xs mb-2">
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">10 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+10 GHS</div>
+        <div className="grid grid-cols-3 gap-2 text-center text-xs mb-1">
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">10 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+10 GHS</div>
           </div>
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">20 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+20 GHS</div>
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">20 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+20 GHS</div>
           </div>
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">50 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+50 GHS</div>
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">50 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+50 GHS</div>
           </div>
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">100 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+100 GHS</div>
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">100 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+100 GHS</div>
           </div>
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">250 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+250 GHS</div>
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">250 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+250 GHS</div>
           </div>
-          <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2">
-            <div className="font-extrabold text-slate-800">500 Active</div>
-            <div className="text-[#059669] font-black text-[11px] mt-0.5 font-mono">+500 GHS</div>
+          <div className="bg-white border border-emerald-200 rounded-2xl p-2.5 shadow-sm">
+            <div className="font-extrabold text-slate-800 text-[11px]">500 Active</div>
+            <div className="text-emerald-600 font-black text-xs mt-0.5 font-mono">+500 GHS</div>
           </div>
         </div>
       </div>
@@ -152,55 +153,55 @@ export const Referrals: React.FC = () => {
       {/* Card 3: 3-Tier Network */}
       <div className="mine-card p-4.5 mb-3.5">
         <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest text-center mb-3">
-          3-TIER PARTNER NETWORK
+          3-TIER MULTI-LEVEL PARTNER MATRIX
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-3">
           <button
             onClick={() => setSelectedLevel(1)}
-            className={`p-2.5 rounded-xl text-center border transition-all ${
+            className={`p-3 rounded-2xl text-center border transition-all ${
               selectedLevel === 1
-                ? 'bg-[#0088ff] text-white font-black shadow-md'
-                : 'bg-slate-50 text-slate-500 border-slate-200'
+                ? 'bg-gradient-to-tr from-[#7c3aed] to-[#a855f7] text-white font-black shadow-lg scale-102 border-transparent'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900'
             }`}
           >
-            <div className="text-[9px] uppercase tracking-wider opacity-80">Tier 1</div>
-            <div className="text-sm font-black mt-0.5 font-mono">{summary?.tier1_count || 0}</div>
-            <div className="text-[9px] font-bold mt-0.5">+3 GHS</div>
+            <div className="text-[9px] uppercase tracking-wider font-bold opacity-90">Tier 1</div>
+            <div className="text-base font-black mt-0.5 font-mono">{summary?.tier1_count || 0}</div>
+            <div className="text-[10px] font-black mt-0.5 text-emerald-300">+3 GHS</div>
           </button>
 
           <button
             onClick={() => setSelectedLevel(2)}
-            className={`p-2.5 rounded-xl text-center border transition-all ${
+            className={`p-3 rounded-2xl text-center border transition-all ${
               selectedLevel === 2
-                ? 'bg-[#0088ff] text-white font-black shadow-md'
-                : 'bg-slate-50 text-slate-500 border-slate-200'
+                ? 'bg-gradient-to-tr from-[#0088ff] to-[#00c6ff] text-white font-black shadow-lg scale-102 border-transparent'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900'
             }`}
           >
-            <div className="text-[9px] uppercase tracking-wider opacity-80">Tier 2</div>
-            <div className="text-sm font-black mt-0.5 font-mono">{summary?.tier2_count || 0}</div>
-            <div className="text-[9px] font-bold mt-0.5">+1 GHS</div>
+            <div className="text-[9px] uppercase tracking-wider font-bold opacity-90">Tier 2</div>
+            <div className="text-base font-black mt-0.5 font-mono">{summary?.tier2_count || 0}</div>
+            <div className="text-[10px] font-black mt-0.5 text-emerald-300">+1 GHS</div>
           </button>
 
           <button
             onClick={() => setSelectedLevel(3)}
-            className={`p-2.5 rounded-xl text-center border transition-all ${
+            className={`p-3 rounded-2xl text-center border transition-all ${
               selectedLevel === 3
-                ? 'bg-[#0088ff] text-white font-black shadow-md'
-                : 'bg-slate-50 text-slate-500 border-slate-200'
+                ? 'bg-gradient-to-tr from-[#10b981] to-[#059669] text-white font-black shadow-lg scale-102 border-transparent'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900'
             }`}
           >
-            <div className="text-[9px] uppercase tracking-wider opacity-80">Tier 3</div>
-            <div className="text-sm font-black mt-0.5 font-mono">0</div>
-            <div className="text-[9px] font-bold mt-0.5">+0.5 GHS</div>
+            <div className="text-[9px] uppercase tracking-wider font-bold opacity-90">Tier 3</div>
+            <div className="text-base font-black mt-0.5 font-mono">0</div>
+            <div className="text-[10px] font-black mt-0.5 text-emerald-300">+0.5 GHS</div>
           </button>
         </div>
 
-        <div className="bg-[#f8fafc] border border-slate-200 rounded-xl p-2.5 text-center">
-          <div className="text-xs font-semibold text-slate-600">
-            {selectedLevel === 1 && '⭐ Tier 1: Direct invites — earn +3 GHS bonus per active partner!'}
-            {selectedLevel === 2 && '⚡ Tier 2: Secondary network — earn +1 GHS bonus!'}
-            {selectedLevel === 3 && '✨ Tier 3: Extended network — earn +0.5 GHS bonus!'}
+        <div className="bg-[#f8fafc] border border-slate-200 rounded-2xl p-3 text-center">
+          <div className="text-xs font-bold text-slate-700">
+            {selectedLevel === 1 && '⭐ Tier 1: Direct invites — earn +3 GHS power per active partner!'}
+            {selectedLevel === 2 && '⚡ Tier 2: Secondary network — earn +1 GHS power!'}
+            {selectedLevel === 3 && '✨ Tier 3: Extended network — earn +0.5 GHS power!'}
           </div>
         </div>
       </div>

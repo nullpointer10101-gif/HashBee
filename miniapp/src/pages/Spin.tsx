@@ -28,14 +28,14 @@ interface WheelSlice {
 
 // 8 colorful wheel slices for Crypto Mine Lucky Wheel
 const SLICES: WheelSlice[] = [
-  { id: 0, label: '0.002 GRAM', sublabel: 'Crypto Drop', icon: '💎', color1: '#eff6ff', color2: '#dbeafe', textColor: '#1d4ed8', weight: 25.0, type: 'gram', amount: 0.002 },
-  { id: 1, label: '0.001 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#ecfdf5', color2: '#d1fae5', textColor: '#059669', weight: 25.0, type: 'usdt', amount: 0.001 },
-  { id: 2, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#faf5ff', color2: '#f3e8ff', textColor: '#7c3aed', weight: 25.0, type: 'hash', amount: 1 },
-  { id: 3, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#f0f9ff', color2: '#e0f2fe', textColor: '#0284c7', weight: 18.0, type: 'spin', amount: 1 },
-  { id: 4, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#ecfdf5', color2: '#d1fae5', textColor: '#059669', weight: 5.0, type: 'hash', amount: 2 },
-  { id: 5, label: '0.01 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#eff6ff', color2: '#dbeafe', textColor: '#2563eb', weight: 1.0, type: 'usdt', amount: 0.01 },
-  { id: 6, label: '5 HASH', sublabel: 'Mega Boost', icon: '⚡', color1: '#faf5ff', color2: '#f3e8ff', textColor: '#9333ea', weight: 1.0, type: 'hash', amount: 5 },
-  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#fefce8', color2: '#fef08a', textColor: '#ca8a04', weight: 0, type: 'gram', amount: 1.0 },
+  { id: 0, label: '0.002 GRAM', sublabel: 'Crypto Drop', icon: '💎', color1: '#3b82f6', color2: '#2563eb', textColor: '#ffffff', weight: 25.0, type: 'gram', amount: 0.002 },
+  { id: 1, label: '0.001 USDT', sublabel: 'Cash Win', icon: '💵', color1: '#10b981', color2: '#059669', textColor: '#ffffff', weight: 25.0, type: 'usdt', amount: 0.001 },
+  { id: 2, label: '1 HASH', sublabel: 'Mining Boost', icon: '⚡', color1: '#8b5cf6', color2: '#7c3aed', textColor: '#ffffff', weight: 25.0, type: 'hash', amount: 1 },
+  { id: 3, label: '+1 SPIN', sublabel: 'Free Re-spin', icon: '🔄', color1: '#06b6d4', color2: '#0891b2', textColor: '#ffffff', weight: 18.0, type: 'spin', amount: 1 },
+  { id: 4, label: '2 HASH', sublabel: 'Double Hash', icon: '⚡', color1: '#10b981', color2: '#047857', textColor: '#ffffff', weight: 5.0, type: 'hash', amount: 2 },
+  { id: 5, label: '0.01 USDT', sublabel: 'Big Cash', icon: '💵', color1: '#ec4899', color2: '#db2777', textColor: '#ffffff', weight: 1.0, type: 'usdt', amount: 0.01 },
+  { id: 6, label: '5 HASH', sublabel: 'Mega Boost', icon: '⚡', color1: '#a855f7', color2: '#9333ea', textColor: '#ffffff', weight: 1.0, type: 'hash', amount: 5 },
+  { id: 7, label: '1 GRAM', sublabel: '★ JACKPOT ★', icon: '👑', color1: '#f59e0b', color2: '#d97706', textColor: '#ffffff', weight: 0, type: 'gram', amount: 1.0 },
 ]
 
 export const Spin: React.FC = () => {
@@ -309,20 +309,20 @@ export const Spin: React.FC = () => {
         <button
           onClick={handleSpin}
           disabled={isSpinning || spinsLeft <= 0 || spinsToday >= dailyLimit}
-          className={`mt-5 w-full max-w-xs py-3.5 px-6 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-md flex items-center justify-center gap-2 ${
+          className={`mt-5 w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-150 transform active:scale-95 shadow-lg flex items-center justify-center gap-2 ${
             spinsToday >= dailyLimit
               ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
               : spinsLeft > 0 && !isSpinning
-              ? 'btn-primary-blue'
+              ? 'btn-primary-amber'
               : 'bg-slate-200 text-slate-400 cursor-not-allowed'
           }`}
         >
           {isSpinning ? (
-            <span>SPINNING...</span>
+            <span>SPINNING WHEEL...</span>
           ) : spinsToday >= dailyLimit ? (
             <span>DAILY LIMIT REACHED ({dailyLimit}/{dailyLimit})</span>
           ) : spinsLeft > 0 ? (
-            <span>SPIN WHEEL ({spinsLeft} Left)</span>
+            <span>🎰 SPIN WHEEL NOW ({spinsLeft} Left)</span>
           ) : (
             <span>NO SPINS LEFT (INVITE FRIENDS)</span>
           )}
@@ -331,11 +331,11 @@ export const Spin: React.FC = () => {
 
       {/* Won Reward Alert Card */}
       {wonReward && (
-        <div className="mine-card p-4 mt-3 text-center bg-white border border-emerald-200">
-          <span className="text-2xl mb-1 block">{wonReward.icon}</span>
-          <p className="text-[10px] font-extrabold text-[#059669] uppercase tracking-widest">Reward Unlocked!</p>
-          <h3 className="text-lg font-black text-slate-900 mt-0.5">{wonReward.label}</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">{wonReward.sublabel} credited instantly</p>
+        <div className="card-tint-amber p-4 mt-3 text-center bg-white border-2 border-amber-300 shadow-md">
+          <span className="text-3xl mb-1 block">{wonReward.icon}</span>
+          <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Reward Unlocked!</p>
+          <h3 className="text-xl font-black text-slate-900 mt-0.5">{wonReward.label}</h3>
+          <p className="text-xs text-amber-800 font-bold mt-0.5">{wonReward.sublabel} credited instantly</p>
         </div>
       )}
 
@@ -343,16 +343,16 @@ export const Spin: React.FC = () => {
       <div className="mt-3.5">
         <button
           onClick={handleShareReferral}
-          className="w-full mine-card p-3.5 flex items-center justify-between transition-all duration-150 active:scale-98"
+          className="w-full card-tint-purple p-4 flex items-center justify-between transition-all duration-150 active:scale-98 shadow-sm"
         >
           <div className="flex items-center gap-2.5">
-            <span className="text-xl">👥</span>
+            <span className="text-2xl">👥</span>
             <div className="text-left">
-              <span className="text-xs font-black text-slate-800 block">Get 1 free spin for each invite</span>
-              <span className="text-[10px] text-slate-400 font-medium">Share link ➔ Instant +1 spin per friend!</span>
+              <span className="text-xs font-black text-purple-950 block">Get 1 free spin for each invite</span>
+              <span className="text-[10px] text-purple-800 font-semibold">Share link ➔ Instant +1 spin per friend!</span>
             </div>
           </div>
-          <span className="text-[10px] font-black bg-purple-50 text-[#7c3aed] px-3 py-1.5 rounded-lg">
+          <span className="text-[10px] font-black bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-white px-3 py-1.5 rounded-xl shadow-sm">
             +1 SPIN
           </span>
         </button>
