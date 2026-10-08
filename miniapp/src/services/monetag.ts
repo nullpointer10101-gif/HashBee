@@ -187,37 +187,44 @@ export const showAdsgramAd = async (blockId = 'int-8543'): Promise<boolean> => {
 
 /**
  * Full Waterfall / Cascade Rewarded Ad Player:
- * 1. Try GigaPub first for Giga tasks (or AdExium -> GigaPub -> Adsgram for general)
+ * Priority 1: AdExium (Primary Provider)
+ * Priority 2: GigaPub (Backup Provider, App ID 8543)
+ * Priority 3: Fallback (In-App Interactive Booster Modal)
  */
-export const showRewardedAdWithWaterfall = async (preferredProvider: 'gigapub' | 'adexium' | 'any' = 'any'): Promise<{ success: boolean; provider: string }> => {
+export const showRewardedAdWithWaterfall = async (
+  preferredProvider: 'adexium' | 'gigapub' | 'any' = 'adexium'
+): Promise<{ success: boolean; provider: string }> => {
   if (typeof window === 'undefined') return { success: false, provider: 'none' }
 
-  // 1. If GigaPub is preferred (e.g. for GigaPub Tasks)
-  if (preferredProvider === 'gigapub') {
-    const gigaSuccess = await showGigaPubAd()
-    if (gigaSuccess) return { success: true, provider: 'GigaPub' }
-
-    // Fallback to AdExium
+  // 1. Primary Provider: AdExium (unless gigapub explicitly prioritized)
+  if (preferredProvider !== 'gigapub') {
+    console.log('[Ads] Waterfall Step 1/2: Requesting AdExium primary provider...')
     const adexSuccess = await showAdexiumAd()
-    if (adexSuccess) return { success: true, provider: 'AdExium' }
-
-    // Fallback to Adsgram
-    const adsgramSuccess = await showAdsgramAd()
-    if (adsgramSuccess) return { success: true, provider: 'Adsgram' }
-
-    return { success: false, provider: 'none' }
+    if (adexSuccess) {
+      console.log('✅ [Ads] AdExium ad delivered and completed!')
+      return { success: true, provider: 'AdExium' }
+    }
+    console.log('⚠️ [Ads] AdExium unavailable / no fill. Cascading to GigaPub backup...')
   }
 
-  // 2. Default cascade: AdExium -> GigaPub -> Adsgram
-  const adexSuccess = await showAdexiumAd()
-  if (adexSuccess) return { success: true, provider: 'AdExium' }
-
+  // 2. Backup Provider: GigaPub (App ID 8543)
+  console.log('[Ads] Waterfall Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
   const gigaSuccess = await showGigaPubAd()
-  if (gigaSuccess) return { success: true, provider: 'GigaPub' }
+  if (gigaSuccess) {
+    console.log('✅ [Ads] GigaPub ad delivered and completed!')
+    return { success: true, provider: 'GigaPub' }
+  }
 
-  const adsgramSuccess = await showAdsgramAd()
-  if (adsgramSuccess) return { success: true, provider: 'Adsgram' }
+  // 3. Fallback: If gigapub was preferred and failed, try AdExium once more
+  if (preferredProvider === 'gigapub') {
+    console.log('[Ads] Waterfall fallback: Trying AdExium...')
+    const adexSuccess = await showAdexiumAd()
+    if (adexSuccess) {
+      return { success: true, provider: 'AdExium' }
+    }
+  }
 
+  console.log('ℹ️ [Ads] All ad networks exhausted / no fill. Launching interactive in-app booster fallback.')
   return { success: false, provider: 'none' }
 }
 

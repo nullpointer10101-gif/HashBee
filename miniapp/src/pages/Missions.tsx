@@ -281,11 +281,11 @@ export const Missions: React.FC = () => {
       if (watchAdLoadingIndex !== null) return
 
       setWatchAdLoadingIndex(taskIndex)
-      toast.loading('🎬 Launching GigaPub video ad...', { id: 'ad-load' })
+      toast.loading('🎬 Launching sponsor video...', { id: 'ad-load' })
 
       let adResult = { success: false, provider: 'none' }
       try {
-        adResult = await showRewardedAdWithWaterfall('gigapub')
+        adResult = await showRewardedAdWithWaterfall('adexium')
       } catch (err) {
         console.warn('Ad playback error:', err)
       } finally {
