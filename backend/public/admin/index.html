@@ -649,6 +649,7 @@ Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
       <div class="filter-chips">
         <button class="chip active" id="depChipAll" onclick="setDepositFilter('all', this)">All Deposits</button>
         <button class="chip" id="depChipMiner" onclick="setDepositFilter('miner', this)">⚡ Miner Power Deposits</button>
+        <button class="chip" id="depChipPlan" onclick="setDepositFilter('plan', this)">💎 NFT Miner Purchases</button>
         <button class="chip" id="depChipCamp" onclick="setDepositFilter('campaign', this)">📢 Campaign Ad Payments</button>
       </div>
 
@@ -2755,8 +2756,11 @@ function renderDepositsTable(list) {
 
   tbody.innerHTML = list.map(d => {
     const isCamp = d.type === 'campaign_payment';
+    const isPlan = d.type === 'plan_purchase' || d.type === 'crate_purchase';
     const typeBadge = isCamp
       ? '<span class="badge" style="background:rgba(6,182,212,0.15); color:#06b6d4; border:1px solid rgba(6,182,212,0.3);">📢 CAMPAIGN AD</span>'
+      : isPlan
+      ? '<span class="badge" style="background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);">💎 NFT MINER PLAN</span>'
       : '<span class="badge" style="background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3);">⚡ MINER POWER</span>';
 
     const avatarInitial = (d.first_name || d.username || 'U')[0].toUpperCase();

@@ -405,8 +405,8 @@ func (h *AdminHandler) GetUserDetail(c *gin.Context) {
 			var d DepositItem
 			if err := depRows.Scan(&d.ID, &d.Type, &d.Amount, &d.Currency, &d.Description, &d.CreatedAt); err == nil {
 				deposits = append(deposits, d)
-				// Only accumulate genuine deposits (not in-app crate purchases, crate rewards, or internal reinvestments)
-				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance") && strings.ToUpper(d.Currency) != "BP" {
+				// Accumulate genuine deposits & plan purchases (not internal BP adjustments)
+				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance" || d.Type == "plan_purchase" || d.Type == "crate_purchase") && strings.ToUpper(d.Currency) != "BP" {
 					switch strings.ToUpper(d.Currency) {
 					case "TON":
 						totalDepositedTON += d.Amount
@@ -1513,7 +1513,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 		}
 	}
 	search := strings.TrimSpace(c.Query("search"))
-	depositType := strings.TrimSpace(c.Query("type")) // 'all', 'miner', 'campaign'
+	depositType := strings.TrimSpace(c.Query("type")) // 'all', 'miner', 'plan', 'campaign'
 
 	query := `
 		SELECT 
@@ -1530,13 +1530,18 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 			t.created_at
 		FROM transactions t
 		LEFT JOIN users u ON u.id = t.user_id
-		WHERE ((t.type = 'deposit' AND t.currency = 'GRAM') OR (t.type = 'campaign_payment' AND t.currency = 'GRAM') OR (t.type = 'deposit_balance' AND t.currency IN ('GRAM', 'USDT')))
+		WHERE (
+			t.type IN ('deposit', 'deposit_balance', 'plan_purchase', 'crate_purchase', 'campaign_payment')
+			AND UPPER(t.currency) IN ('GRAM', 'TON', 'USDT')
+		)
 	`
 	var args []interface{}
 	argIdx := 1
 
 	if depositType == "miner" {
 		query += " AND t.type IN ('deposit', 'deposit_balance')"
+	} else if depositType == "plan" || depositType == "plans" {
+		query += " AND t.type IN ('plan_purchase', 'crate_purchase')"
 	} else if depositType == "campaign" {
 		query += " AND t.type = 'campaign_payment'"
 	}
@@ -1585,7 +1590,8 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 	_ = h.db.QueryRow(ctx, `
 		SELECT COUNT(*), COALESCE(SUM(amount), 0)
 		FROM transactions
-		WHERE ((type = 'deposit' AND currency = 'GRAM') OR (type = 'campaign_payment' AND currency = 'GRAM') OR (type = 'deposit_balance' AND currency IN ('GRAM', 'USDT')))
+		WHERE type IN ('deposit', 'deposit_balance', 'plan_purchase', 'crate_purchase', 'campaign_payment')
+		  AND UPPER(currency) IN ('GRAM', 'TON', 'USDT')
 	`).Scan(&totalDepositsCount, &totalGramDeposited)
 
 	c.JSON(http.StatusOK, gin.H{
