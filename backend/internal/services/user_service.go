@@ -527,7 +527,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		), 0)
 	`, user.ID).Scan(&validInvites)
 
-	canWithdraw := (oneTimeGranted || cratesOpened >= 1 || friendCratesOpened >= 1)
+	canWithdraw := (oneTimeGranted || cratesOpened >= 1)
 
 	return &models.UserProfile{
 		ID:                       user.ID,

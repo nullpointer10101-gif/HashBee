@@ -28,7 +28,7 @@ type WithdrawalRequest struct {
 	Amount  float64 `json:"amount" binding:"required,gt=0"`
 }
 
-// IsUserQualified checks if a user holds at least 1 NFT miner or has invited at least 1 friend with an NFT miner or has one-time grant
+// IsUserQualified checks if a user holds at least 1 NFT miner or has one-time grant
 func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUID) (bool, int, int, bool) {
 	var oneTimeGranted bool
 	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
@@ -58,7 +58,8 @@ func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUI
 		) q
 	`, userID).Scan(&friendCratesOpened)
 
-	qualified := oneTimeGranted || cratesOpened >= 1 || friendCratesOpened >= 1
+	// User must hold at least 1 NFT Miner directly (or have one-time admin grant)
+	qualified := oneTimeGranted || cratesOpened >= 1
 	return qualified, cratesOpened, friendCratesOpened, oneTimeGranted
 }
 
@@ -130,10 +131,10 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("only earned rewards (mining yield, spins, daily plans & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check Lifetime Withdrawal Qualification (Must hold >= 1 NFT Miner OR have >= 1 friend with NFT Miner)
-	qualified, cratesOpened, friendCratesOpened, _ := s.IsUserQualified(ctx, userID)
+	// Check Lifetime Withdrawal Qualification (Must hold >= 1 NFT Miner)
+	qualified, cratesOpened, _, _ := s.IsUserQualified(ctx, userID)
 	if !qualified {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must either hold at least 1 NFT Miner (starts from 0.70 GRAM) or have at least 1 invited friend activate an NFT Miner (Current: %d/1 friend NFT miners, %d NFT miners activated)", friendCratesOpened, cratesOpened)
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must hold at least 1 NFT Miner (starts from 0.70 GRAM / TON)")
 	}
 
 	// Check cooldown
@@ -343,7 +344,7 @@ func (s *WithdrawalService) AutoRefundUnqualifiedPendingWithdrawals(ctx context.
 
 			// Mark rejected with clear reason
 			_, err = tx.Exec(ctx,
-				`UPDATE withdrawals SET status = 'rejected', reason = 'Requirement: Hold 1 NFT Miner or invite 1 friend with NFT Miner (Balance refunded)', updated_at = NOW() WHERE id = $1`,
+				`UPDATE withdrawals SET status = 'rejected', reason = 'Requirement: Hold 1 NFT Miner (Balance refunded)', updated_at = NOW() WHERE id = $1`,
 				pw.ID)
 			if err != nil {
 				tx.Rollback(ctx)

@@ -25,9 +25,8 @@ export const Withdraw: React.FC = () => {
 
   const minWithdrawal = 0.05
   const cratesOpened = user?.crates_opened_count || 0
-  const friendCratesOpened = user?.friend_crates_opened_count || 0
   const isOneTimeGranted = user?.one_time_withdrawal_granted || false
-  const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (cratesOpened >= 1 || friendCratesOpened >= 1 || isOneTimeGranted))
+  const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (cratesOpened >= 1 || isOneTimeGranted))
 
   useEffect(() => {
     refreshUser()
@@ -252,29 +251,20 @@ export const Withdraw: React.FC = () => {
                   Withdrawal Condition
                 </span>
                 <span className="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-slate-950">
-                  Choose 1
+                  Required
                 </span>
               </div>
               <p className="text-[11px] text-slate-700 leading-snug mb-3">
-                Fulfill <b className="text-slate-900">EITHER ONE</b> of the following options to unlock instant cashouts:
+                Activate at least <b className="text-slate-900">1 NFT Miner</b> (starts from 0.70 TON) to unlock instant lifetime cashouts:
               </p>
-              <div className="flex items-center gap-2">
+              <div>
                 <button
                   type="button"
                   onClick={() => navigate('/plans')}
-                  className="flex-1 py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1 active:scale-95 text-center"
+                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 active:scale-95 text-center"
                 >
                   <span>⚡ Get NFT Miner</span>
-                </button>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
-                  OR
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/earn')}
-                  className="flex-1 py-2.5 px-2 rounded-xl bg-white border border-slate-300 text-slate-800 font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1 active:scale-95 text-center"
-                >
-                  <span>👥 Invite 1 Friend ({user?.friend_crates_opened_count || 0}/1)</span>
+                  <span>➔</span>
                 </button>
               </div>
             </div>
@@ -524,17 +514,17 @@ export const Withdraw: React.FC = () => {
               Withdrawal Condition
             </h3>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Fulfill <span className="text-slate-900 font-bold">EITHER ONE</span> of the following options to unlock instant cashouts:
+              Activate an NFT Miner to unlock instant lifetime cashouts:
             </p>
 
             <div className="mt-4 space-y-2.5 text-left">
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-black text-xs text-slate-900 uppercase">
-                    Option 1: Hold 1 NFT Miner
+                    Hold 1 NFT Miner
                   </span>
-                  <span className="bg-emerald-500 text-white text-[8px] font-black uppercase px-1.5 py-0.2 rounded-full">
-                    INSTANT
+                  <span className="bg-emerald-500 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                    INSTANT UNLOCK
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-2.5 leading-snug">
@@ -548,40 +538,6 @@ export const Withdraw: React.FC = () => {
                   className="w-full py-2.5 rounded-xl btn-primary-blue text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1"
                 >
                   <span>⚡ ACTIVATE NFT MINER (0.70 TON)</span>
-                  <span>➔</span>
-                </button>
-              </div>
-
-              {/* OR Divider */}
-              <div className="flex items-center gap-2 my-1">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200">
-                  OR
-                </span>
-                <div className="flex-1 h-px bg-slate-200" />
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-black text-xs text-slate-900 uppercase">
-                    Option 2: Invite 1 Friend
-                  </span>
-                  <span className="text-[10px] font-black text-[#0088ff]">
-                    {user?.friend_crates_opened_count || 0}/1
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 mb-2.5 leading-snug">
-                  Invite 1 friend who activates any NFT Miner for 100% free lifetime verification.
-                </p>
-                
-                <button
-                  onClick={() => {
-                    setShowQualifyModal(false)
-                    navigate('/earn')
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-purple-50 text-[#7c3aed] font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1"
-                >
-                  <span>👥 INVITE FRIENDS</span>
                   <span>➔</span>
                 </button>
               </div>
