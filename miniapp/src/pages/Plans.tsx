@@ -44,6 +44,10 @@ export const Plans: React.FC = () => {
       ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
       : '')
 
+  const isVipDiscount =
+    String(userTelegramId).trim() === '8842934236' ||
+    (user?.telegram_id != null && String(user.telegram_id).trim() === '8842934236')
+
   const ALL_PLAN_TIERS: PlanTier[] = [
     {
       id: 'starter',
@@ -119,11 +123,11 @@ export const Plans: React.FC = () => {
       id: 'apex',
       name: 'Apex Sovereign Node',
       subtitle: 'Ultra high-yield master node with guaranteed 22.00 GRAM payout',
-      badge: 'MYTHIC (+144.4%)',
-      cost_gram: 9.0,
+      badge: isVipDiscount ? 'MYTHIC VIP (+144.4%)' : 'MYTHIC (+83.3%)',
+      cost_gram: isVipDiscount ? 9.0 : 12.0,
       return_gram: 22.0,
-      profit_gram: 13.0,
-      profit_percent: 144.44,
+      profit_gram: isVipDiscount ? 13.0 : 10.0,
+      profit_percent: isVipDiscount ? 144.44 : 83.33,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: false,
@@ -135,12 +139,14 @@ export const Plans: React.FC = () => {
     {
       id: 'matrix',
       name: 'Quantum Sovereign 2X',
-      subtitle: 'The flagship 24h contract — Over 2.27X return with 50.00 GRAM payout in 24h',
-      badge: '2.27X (+127.3%)',
-      cost_gram: 22.0,
+      subtitle: isVipDiscount
+        ? 'The flagship 24h contract — Over 2.27X return with 50.00 GRAM payout in 24h'
+        : 'The flagship 24h contract — 2X DOUBLE YOUR TON in exactly 24 hours',
+      badge: isVipDiscount ? '2.27X VIP (+127.3%)' : '2X DOUBLE (+100%)',
+      cost_gram: isVipDiscount ? 22.0 : 25.0,
       return_gram: 50.0,
-      profit_gram: 28.0,
-      profit_percent: 127.27,
+      profit_gram: isVipDiscount ? 28.0 : 25.0,
+      profit_percent: isVipDiscount ? 127.27 : 100.0,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: false,
@@ -298,6 +304,12 @@ export const Plans: React.FC = () => {
       return {
         ...tier,
         ...serverPlan,
+        cost_gram: tier.cost_gram,
+        return_gram: tier.return_gram,
+        profit_gram: tier.profit_gram,
+        profit_percent: tier.profit_percent,
+        badge: tier.badge,
+        subtitle: tier.subtitle,
       }
     }
     return tier

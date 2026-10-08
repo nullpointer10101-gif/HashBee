@@ -305,18 +305,34 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				planID = "queen"
 			} else if strings.HasPrefix(upperComment, "PLAN_") {
 				isPlanDeposit = true
-				if amountGram >= 22.0 {
-					planID = "matrix"
-				} else if amountGram >= 9.0 {
-					planID = "apex"
-				} else if amountGram >= 6.0 {
-					planID = "titan"
-				} else if amountGram >= 3.0 {
-					planID = "queen"
-				} else if amountGram >= 1.3 {
-					planID = "standard"
+				if targetTelegramID == 8842934236 {
+					if amountGram >= 22.0 {
+						planID = "matrix"
+					} else if amountGram >= 9.0 {
+						planID = "apex"
+					} else if amountGram >= 6.0 {
+						planID = "titan"
+					} else if amountGram >= 3.0 {
+						planID = "queen"
+					} else if amountGram >= 1.3 {
+						planID = "standard"
+					} else {
+						planID = "starter"
+					}
 				} else {
-					planID = "starter"
+					if amountGram >= 25.0 {
+						planID = "matrix"
+					} else if amountGram >= 12.0 {
+						planID = "apex"
+					} else if amountGram >= 6.0 {
+						planID = "titan"
+					} else if amountGram >= 3.0 {
+						planID = "queen"
+					} else if amountGram >= 1.3 {
+						planID = "standard"
+					} else {
+						planID = "starter"
+					}
 				}
 			}
 
@@ -375,12 +391,20 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	switch planID {
 	case "matrix":
 		planName = "Infinite Mega Whale Matrix"
-		costGRAM = 22.00
+		if telegramID == 8842934236 {
+			costGRAM = 22.00
+		} else {
+			costGRAM = 25.00
+		}
 		returnGRAM = 50.00
 		maxPerAccount = 0
 	case "apex":
 		planName = "Apex Sovereign God Hive"
-		costGRAM = 9.00
+		if telegramID == 8842934236 {
+			costGRAM = 9.00
+		} else {
+			costGRAM = 12.00
+		}
 		returnGRAM = 22.00
 		maxPerAccount = 0
 	case "titan":
