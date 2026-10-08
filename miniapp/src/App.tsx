@@ -86,12 +86,13 @@ const AppContent: React.FC = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/watch" element={<Missions defaultTab="watch" />} />
         <Route path="/plans" element={<Plans />} />
         <Route path="/crates" element={<Plans />} />
         <Route path="/spin" element={<Spin />} />
         <Route path="/earn" element={<Referrals />} />
-        <Route path="/tasks" element={<Missions />} />
-        <Route path="/missions" element={<Missions />} />
+        <Route path="/tasks" element={<Missions defaultTab="tasks" />} />
+        <Route path="/missions" element={<Missions defaultTab="tasks" />} />
         <Route path="/withdraw" element={<Withdraw />} />
       </Routes>
       <Navbar />

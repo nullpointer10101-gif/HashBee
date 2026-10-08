@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import {
   fetchMissions,
   completeMission,
@@ -12,9 +13,13 @@ import { showRewardedAdWithWaterfall } from '../services/monetag'
 import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import toast from 'react-hot-toast'
+import { useLocation } from 'react-router-dom'
 
-type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
+export type ViewMode = 'watch' | 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
+
+interface MissionsProps {
+  defaultTab?: ViewMode
+}
 
 const GIGA_TASKS_COUNT = 3
 const GIGA_ADS_PER_TIER = 10
@@ -173,9 +178,22 @@ function showAd(): Promise<boolean> {
   })
 }
 
-export const Missions: React.FC = () => {
+export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   const { t } = useLanguage()
-  const [view, setView] = useState<ViewMode>('tasks')
+  const location = useLocation()
+
+  const resolveInitialView = (): ViewMode => {
+    if (defaultTab) return defaultTab
+    if (location.pathname === '/watch' || new URLSearchParams(location.search).get('tab') === 'watch') {
+      return 'watch'
+    }
+    if (location.pathname === '/tasks' || location.pathname === '/missions') {
+      return 'tasks'
+    }
+    return 'watch'
+  }
+
+  const [view, setView] = useState<ViewMode>(resolveInitialView)
   const [missions, setMissions] = useState<Mission[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,6 +217,21 @@ export const Missions: React.FC = () => {
   const [gigaAdState, setGigaAdState] = useState<GigaWatchAdState>(loadGigaAdState)
   const [watchAdLoadingIndex, setWatchAdLoadingIndex] = useState<number | null>(null)
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
+
+  const totalWatches = (gigaAdState.counts[0] || 0) + (gigaAdState.counts[1] || 0) + (gigaAdState.counts[2] || 0)
+  const totalPowerFromAds = (totalWatches * GIGA_POWER_PER_AD).toFixed(2)
+  const totalDailyPercent = Math.min(100, (totalWatches / (GIGA_TASKS_COUNT * GIGA_ADS_PER_TIER)) * 100)
+
+  // Synchronize view state with props and URL changes
+  useEffect(() => {
+    if (defaultTab) {
+      setView(defaultTab)
+    } else if (location.pathname === '/watch' || new URLSearchParams(location.search).get('tab') === 'watch') {
+      setView('watch')
+    } else if (location.pathname === '/tasks' || location.pathname === '/missions') {
+      setView('tasks')
+    }
+  }, [defaultTab, location.pathname, location.search])
 
   // 24-Hour Watch Ad Refresh Timer Ticker
   useEffect(() => {
@@ -746,277 +779,436 @@ export const Missions: React.FC = () => {
           onClick={() => setView('tasks')}
           className="w-full py-3 rounded-xl bg-white text-slate-600 font-extrabold text-xs uppercase tracking-wider border border-slate-200"
         >
-          ← BACK TO TASKS
+          ← BACK TO MISSIONS
         </button>
       </div>
     )
   }
 
-  // VIEW 1: TASKS
+  // MAIN VIEW (WATCH OR TASKS)
   return (
-    <div className="pb-28 pt-4 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
-      <div className="text-center mb-4">
+    <div className="pb-28 pt-3 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
+      {/* ── TOP HEADER ── */}
+      <div className="text-center mb-3">
         <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
-          Tasks & Missions
+          {view === 'watch' ? 'Watch & Boost Network' : 'Tasks & Missions'}
         </h1>
         <p className="text-[11px] text-slate-400 mt-0.5">
-          Complete daily tasks to boost your computing power
+          {view === 'watch'
+            ? 'Watch sponsor videos to supercharge your GHS mining power'
+            : 'Complete partner missions & milestones for extra rewards'}
         </p>
       </div>
 
-      {/* Top Banner: PROMOTE YOUR LINK OR CHANNEL */}
-      <div
-        onClick={() => {
-          setView('campaigns')
-          loadCampaigns()
-        }}
-        className="relative overflow-hidden mb-4 p-4 rounded-2xl bg-gradient-to-r from-[#6366f1] via-[#4f46e5] to-[#2563eb] text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/30 cursor-pointer active:scale-[0.98] transition-transform"
-      >
-        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-        <div className="flex items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner border border-white/30 shrink-0">
-              📢
-            </div>
-            <div>
+      {/* ── TOP SEGMENTED TAB SWITCHER ── */}
+      <div className="flex items-center gap-1.5 p-1 mb-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
+        {/* Watch Tab Button */}
+        <button
+          onClick={() => setView('watch')}
+          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            view === 'watch'
+              ? 'bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#b91c1c] text-white shadow-md shadow-red-500/30 active:scale-95'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>🔥</span>
+          <span>Watch Ads</span>
+          <span
+            className={`text-[9px] font-mono font-black px-1.5 py-0.2 rounded-md ${
+              view === 'watch' ? 'bg-black/25 text-white' : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {totalWatches}/30
+          </span>
+        </button>
+
+        {/* Tasks Tab Button */}
+        <button
+          onClick={() => setView('tasks')}
+          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            view === 'tasks'
+              ? 'bg-[#0088ff] text-white shadow-md active:scale-95'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>📋</span>
+          <span>Missions</span>
+        </button>
+
+        {/* Promote Hub Button */}
+        <button
+          onClick={() => {
+            setView('campaigns')
+            loadCampaigns()
+          }}
+          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+            (view as string) === 'campaigns'
+              ? 'bg-indigo-600 text-white shadow-md active:scale-95'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>📢</span>
+          <span>Promote</span>
+        </button>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* ── TAB 1: DEDICATED BN RED WATCH & EARN DASHBOARD ──────── */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {view === 'watch' && (
+        <div>
+          {/* ── LUXURY BN RED HERO CYBER VAULT CARD ── */}
+          <div className="p-4.5 mb-3.5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0407] via-[#2d0910] to-[#120204] text-white border border-red-500/35 shadow-xl shadow-red-950/40">
+            {/* Ambient Ruby Flame Glow */}
+            <div className="absolute -top-12 -right-12 w-36 h-36 bg-red-500/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-center justify-between relative z-10 mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/30">
-                  🔥 PROMOTER HUB
+                <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-red-400/30 flex items-center justify-center text-sm shadow-sm">
+                  🔥
+                </div>
+                <span className="text-[11px] font-black tracking-widest text-red-200 uppercase">
+                  BN HASHRATE BOOSTER
                 </span>
               </div>
-              <div className="text-sm font-black text-white mt-1 leading-tight">
-                Promote Your Channel or Link
+
+              {/* Reset Countdown Timer Badge */}
+              <div className="px-2.5 py-0.5 rounded-xl bg-black/40 border border-red-400/30 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                <span>Resets in {watchAdCountdown || '24:00:00'}</span>
               </div>
-              <div className="text-[11px] text-indigo-100 font-medium mt-0.5">
-                Reach thousands of active crypto miners instantly
+            </div>
+
+            {/* Live Stats Row */}
+            <div className="grid grid-cols-2 gap-2 my-3 relative z-10">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
+                  COMPLETED TODAY
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-white font-mono mt-1 block">
+                  {totalWatches} <span className="text-xs text-red-300 font-sans">/ 30 ADS</span>
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
+                  HASHRATE GAINED
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-[#00f090] font-mono mt-1 block">
+                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans">GHS</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Total Daily Progress Bar */}
+            <div className="relative z-10 pt-1">
+              <div className="flex items-center justify-between text-[10px] text-slate-300 font-bold mb-1.5">
+                <span>Daily Boost Capacity</span>
+                <span className="font-mono text-amber-300 font-black">
+                  {totalDailyPercent.toFixed(0)}% (+15.00 GHS Max)
+                </span>
+              </div>
+              <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-white/10">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-500 shadow-glow"
+                  style={{ width: `${totalDailyPercent}%` }}
+                />
               </div>
             </div>
           </div>
-          <div className="shrink-0">
-            <span className="px-3 py-1.5 rounded-xl bg-white text-[#4f46e5] font-black text-xs shadow-md uppercase tracking-wider flex items-center gap-1 hover:bg-indigo-50">
-              <span>LAUNCH</span>
-              <span>→</span>
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* ── SECTION 0: GIGAPUB WATCH AD REWARDS (3 OPTIONS x 10 WATCHES = 30 TOTAL) ─────────── */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-            <span>📺</span> GIGAPUB WATCH BOOSTERS (30 DAILY)
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-mono font-extrabold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span>Resets in {watchAdCountdown || '24:00:00'}</span>
-            </span>
-            <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-              +0.50 GHS / Ad
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-2.5">
-          {[
-            { id: 0, title: '⚡ GigaPub Boost Option #1', badge: 'BATCH 1', color: 'from-amber-500 to-orange-500' },
-            { id: 1, title: '⚡ GigaPub Boost Option #2', badge: 'BATCH 2', color: 'from-purple-500 to-indigo-500' },
-            { id: 2, title: '⚡ GigaPub Boost Option #3', badge: 'BATCH 3', color: 'from-emerald-500 to-teal-500' },
-          ].map((tier, i) => {
-            const count = gigaAdState.counts[i] || 0
-            const isCompleted = count >= GIGA_ADS_PER_TIER
-            const isLoading = watchAdLoadingIndex === i
-            const progressPercent = Math.min(100, (count / GIGA_ADS_PER_TIER) * 100)
-            const powerEarned = (count * GIGA_POWER_PER_AD).toFixed(2)
-
-            return (
-              <div key={tier.id} className="mine-card p-3.5 flex flex-col gap-2.5 border border-slate-200/90 shadow-sm bg-white">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-base shrink-0 font-black shadow-inner">
-                      {isCompleted ? '👑' : isLoading ? '⏳' : '📺'}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-black text-slate-900">{tier.title}</span>
-                        <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 font-mono">
-                          {tier.badge}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
-                        <span>Progress: <b className="text-slate-900 font-mono font-bold">{count}/{GIGA_ADS_PER_TIER}</b></span>
-                        <span>•</span>
-                        <span className="text-[#0088ff] font-bold font-mono">+{powerEarned} / +5.00 GHS</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0">
-                    {isCompleted ? (
-                      <span className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
-                        <span>✓</span>
-                        <span>10/10 DONE</span>
-                      </span>
-                    ) : isLoading ? (
-                      <span className="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 font-extrabold text-[11px] animate-pulse flex items-center gap-1">
-                        <span>⏳</span>
-                        <span>Playing...</span>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleWatchAdTask(i)}
-                        disabled={watchAdLoadingIndex !== null}
-                        className="px-3.5 py-2 rounded-xl btn-primary-blue font-black text-[11px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-1"
-                      >
-                        <span>▶</span>
-                        <span>Watch (+0.5 GHS)</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className={`h-full bg-gradient-to-r ${tier.color} transition-all duration-500 rounded-full`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* SECTION 1: REFERRAL MILESTONES */}
-      {milestones.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>👥</span> HASHRATE MILESTONES
-            </span>
-            <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
-              BONUS POWER
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {milestones.map((mission) => {
-              const count = mission.milestone_count || 10
-              const progress = mission.progress || 0
-              const isEligible = progress >= count && !mission.is_completed
-              const percent = mission.is_completed ? 100 : Math.min(100, Math.round((progress / count) * 100))
+          {/* ── 3 DEDICATED BN RED BATCH CARDS (10 WATCHES EACH = 30 TOTAL) ── */}
+          <div className="space-y-3 mb-4">
+            {[
+              {
+                id: 0,
+                title: 'Crimson Flame Booster',
+                badge: 'BATCH #1',
+                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
+                accentGrad: 'from-[#dc2626] via-[#ef4444] to-[#b91c1c]',
+                borderGlow: 'border-red-300/80',
+                icon: '🔥',
+              },
+              {
+                id: 1,
+                title: 'Scarlet Ruby Vanguard',
+                badge: 'BATCH #2',
+                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
+                accentGrad: 'from-[#e11d48] via-[#f43f5e] to-[#be123c]',
+                borderGlow: 'border-rose-300/80',
+                icon: '⚡',
+              },
+              {
+                id: 2,
+                title: 'Phoenix Inferno Sovereign',
+                badge: 'BATCH #3',
+                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
+                accentGrad: 'from-[#b91c1c] via-[#dc2626] to-[#991b1b]',
+                borderGlow: 'border-red-400/80',
+                icon: '👑',
+              },
+            ].map((tier, i) => {
+              const count = gigaAdState.counts[i] || 0
+              const isCompleted = count >= GIGA_ADS_PER_TIER
+              const isLoading = watchAdLoadingIndex === i
+              const progressPercent = Math.min(100, (count / GIGA_ADS_PER_TIER) * 100)
+              const powerEarned = (count * GIGA_POWER_PER_AD).toFixed(2)
 
               return (
-                <div key={mission.id} className="mine-card p-3.5 flex flex-col gap-2">
+                <div
+                  key={tier.id}
+                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all hover:border-red-300"
+                >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-8 min-w-[48px] px-2 rounded-xl bg-purple-50 text-[#7c3aed] flex items-center justify-center gap-1 font-black text-xs shrink-0">
-                        <span>{count}</span>
-                        <span className="text-[10px]">👥</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl shrink-0 font-black border border-red-100 shadow-inner">
+                        {isCompleted ? '👑' : tier.icon}
                       </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-black text-slate-900 truncate">{mission.title}</div>
-                        <div className="text-[10px] font-bold text-[#059669] mt-0.5">
-                          +{mission.reward_power} GHS MINING POWER
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs sm:text-sm font-black text-slate-900">{tier.title}</span>
+                          <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded-md bg-red-100/80 text-red-700 font-mono">
+                            {tier.badge}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                          <span>
+                            Progress: <b className="text-slate-900 font-mono font-bold">{count}/{GIGA_ADS_PER_TIER}</b>
+                          </span>
+                          <span>•</span>
+                          <span className="text-red-600 font-black font-mono">+{powerEarned} / +5.00 GHS</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="shrink-0">
-                      {mission.is_completed ? (
-                        <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
-                          DONE ✓
-                        </span>
-                      ) : isEligible ? (
-                        <button
-                          onClick={() => handleClaimMilestone(mission)}
-                          disabled={actionId === mission.id}
-                          className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md"
-                        >
-                          {actionId === mission.id ? '...' : `CLAIM +${mission.reward_power} GHS`}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleShare}
-                          className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs"
-                        >
-                          INVITE
-                        </button>
-                      )}
+                    <div className="text-right shrink-0">
+                      <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-[10px] font-mono">
+                        +0.50 GHS/Ad
+                      </span>
                     </div>
                   </div>
 
-                  <div className="w-full flex items-center gap-2 pt-0.5">
-                    <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#00d68f] to-[#0088ff] transition-all duration-300"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-slate-400 shrink-0">
-                      {progress}/{count} ({percent}%)
-                    </span>
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
+                    <div
+                      className="h-full bg-gradient-to-r from-rose-500 via-red-500 to-red-600 transition-all duration-500 rounded-full"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
+
+                  {/* High-Energy BN Red Action Button */}
+                  {isCompleted ? (
+                    <div className="w-full py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm">
+                      <span>✓</span>
+                      <span>10/10 BATCH COMPLETED</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleWatchAdTask(i)}
+                      disabled={watchAdLoadingIndex !== null}
+                      className={`w-full py-3 rounded-xl bg-gradient-to-r ${tier.accentGrad} text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-500/25 active:scale-98 transition-all flex items-center justify-center gap-2 border border-red-400/40 ${
+                        isLoading ? 'opacity-80 cursor-wait' : 'hover:brightness-110'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Streaming Sponsor Video...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🔥</span>
+                          <span>Watch Sponsor Video (+0.50 GHS)</span>
+                          <span className="font-mono text-[10px] bg-black/20 px-1.5 py-0.2 rounded-md">
+                            {count + 1}/10
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )
             })}
           </div>
+
+          {/* ── AUTO-CREDIT INSTANT VERIFICATION FOOTER ── */}
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-amber-50 border border-red-200/60 text-slate-700 text-xs flex items-center gap-2.5">
+            <span className="text-xl shrink-0">⚡</span>
+            <div className="text-[11px] leading-snug">
+              <span className="font-black text-red-700">Instant Automatic Hashrate:</span> Watching sponsor videos automatically verifies on-chain and increases your cloud mining power in real-time.
+            </div>
+          </div>
         </div>
       )}
 
-      {/* SECTION 2: PROMOTED TASKS */}
-      <div>
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <span>⚡</span> PARTNER MISSIONS
-          </span>
-          <span className="text-[9px] font-bold text-slate-400">+0.1 GHS EACH</span>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-6 text-slate-400 text-xs animate-pulse">Loading tasks...</div>
-        ) : sponsored.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 text-xs font-bold">
-            ✨ All tasks completed! Check back soon for new tasks.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {sponsored.map((mission) => (
-              <div key={mission.id} className="mine-card p-3.5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0">
-                    ⚡
-                  </div>
-                  <div>
-                    <div className="text-xs font-black text-slate-900">{mission.title}</div>
-                    <div className="text-[10px] text-[#059669] font-bold mt-0.5">
-                      +{mission.reward_power} GHS
-                    </div>
-                  </div>
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* ── TAB 2: PARTNER MISSIONS & REFERRAL MILESTONES ────────── */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {view === 'tasks' && (
+        <div>
+          {/* Top Promoter Banner */}
+          <div
+            onClick={() => {
+              setView('campaigns')
+              loadCampaigns()
+            }}
+            className="relative overflow-hidden mb-3.5 p-4 rounded-2xl bg-gradient-to-r from-[#6366f1] via-[#4f46e5] to-[#2563eb] text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/30 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-lg shadow-inner border border-white/30 shrink-0">
+                  📢
                 </div>
-
                 <div>
-                  {mission.is_completed ? (
-                    <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
-                      Done
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleSponsoredAction(mission)}
-                      disabled={actionId === mission.id}
-                      className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase"
-                    >
-                      {actionId === mission.id ? '...' : `+${mission.reward_power} GHS`}
-                    </button>
-                  )}
+                  <div className="text-xs font-black text-white leading-tight">
+                    Promote Your Channel or Link
+                  </div>
+                  <div className="text-[10px] text-indigo-100 font-medium mt-0.5">
+                    Reach thousands of active crypto miners instantly
+                  </div>
                 </div>
               </div>
-            ))}
+              <div className="shrink-0">
+                <span className="px-2.5 py-1 rounded-lg bg-white text-[#4f46e5] font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                  <span>LAUNCH</span>
+                  <span>→</span>
+                </span>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Referral Milestones */}
+          {milestones.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>👥</span> HASHRATE MILESTONES
+                </span>
+                <span className="text-[9px] font-extrabold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                  BONUS POWER
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {milestones.map((mission) => {
+                  const count = mission.milestone_count || 10
+                  const progress = mission.progress || 0
+                  const isEligible = progress >= count && !mission.is_completed
+                  const percent = mission.is_completed ? 100 : Math.min(100, Math.round((progress / count) * 100))
+
+                  return (
+                    <div key={mission.id} className="mine-card p-3.5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-8 min-w-[48px] px-2 rounded-xl bg-purple-50 text-[#7c3aed] flex items-center justify-center gap-1 font-black text-xs shrink-0">
+                            <span>{count}</span>
+                            <span className="text-[10px]">👥</span>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-black text-slate-900 truncate">{mission.title}</div>
+                            <div className="text-[10px] font-bold text-[#059669] mt-0.5">
+                              +{mission.reward_power} GHS MINING POWER
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          {mission.is_completed ? (
+                            <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
+                              DONE ✓
+                            </span>
+                          ) : isEligible ? (
+                            <button
+                              onClick={() => handleClaimMilestone(mission)}
+                              disabled={actionId === mission.id}
+                              className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md"
+                            >
+                              {actionId === mission.id ? '...' : `CLAIM +${mission.reward_power} GHS`}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={handleShare}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs"
+                            >
+                              INVITE
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="w-full flex items-center gap-2 pt-0.5">
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#00d68f] to-[#0088ff] transition-all duration-300"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-400 shrink-0">
+                          {progress}/{count} ({percent}%)
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Partner Missions */}
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span>⚡</span> PARTNER MISSIONS
+              </span>
+              <span className="text-[9px] font-bold text-slate-400">+0.1 GHS EACH</span>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-6 text-slate-400 text-xs animate-pulse">Loading tasks...</div>
+            ) : sponsored.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs font-bold">
+                ✨ All tasks completed! Check back soon for new tasks.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sponsored.map((mission) => (
+                  <div key={mission.id} className="mine-card p-3.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0">
+                        ⚡
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-slate-900">{mission.title}</div>
+                        <div className="text-[10px] text-[#059669] font-bold mt-0.5">
+                          +{mission.reward_power} GHS
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {mission.is_completed ? (
+                        <span className="px-3 py-1 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">
+                          Done
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleSponsoredAction(mission)}
+                          disabled={actionId === mission.id}
+                          className="px-3.5 py-1.5 rounded-xl btn-primary-blue font-black text-xs uppercase"
+                        >
+                          {actionId === mission.id ? '...' : `+${mission.reward_power} GHS`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
