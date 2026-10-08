@@ -688,58 +688,59 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       {view === 'watch' && (
         <div className="space-y-3.5">
           {/* ── LUXURY BN RED HERO CYBER VAULT CARD ── */}
-          <div className="p-4.5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0407] via-[#2d0910] to-[#120204] text-white border border-red-500/35 shadow-xl shadow-red-950/40">
+          <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1d0407] via-[#2a070e] to-[#120204] text-white border border-red-500/40 shadow-xl shadow-red-950/40">
             {/* Ambient Ruby Flame Glow */}
-            <div className="absolute -top-12 -right-12 w-36 h-36 bg-red-500/25 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-12 -right-12 w-40 h-40 bg-red-500/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between relative z-10 mb-2.5">
+            {/* Header Row */}
+            <div className="flex items-center justify-between relative z-10 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-red-400/30 flex items-center justify-center text-sm shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-white/10 backdrop-blur-md border border-red-400/40 flex items-center justify-center text-base shadow-sm">
                   🔥
                 </div>
-                <span className="text-[11px] font-black tracking-widest text-red-200 uppercase">
+                <span className="text-xs font-black tracking-widest text-red-200 uppercase">
                   BN HASHRATE BOOSTER
                 </span>
               </div>
 
               {/* Reset Countdown Timer Badge */}
-              <div className="px-2.5 py-1 rounded-xl bg-black/40 border border-red-400/30 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+              <div className="px-3 py-1 rounded-xl bg-black/50 border border-red-400/40 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Resets in {watchAdCountdown || '24:00:00'}</span>
               </div>
             </div>
 
             {/* Live Stats Row */}
-            <div className="grid grid-cols-2 gap-2 my-2.5 relative z-10">
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
+            <div className="grid grid-cols-2 gap-2.5 my-3 relative z-10">
+              <div className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-md">
+                <span className="text-[9.5px] font-extrabold text-slate-300 uppercase tracking-wider block">
                   COMPLETED TODAY
                 </span>
-                <span className="text-xl font-black text-white font-mono mt-1.5 block">
-                  {totalWatches} <span className="text-xs text-red-300 font-sans font-normal">/ 30 ADS</span>
+                <span className="text-2xl font-black text-white font-mono mt-1 block">
+                  {totalWatches} <span className="text-xs text-red-300 font-sans font-medium">/ 30 ADS</span>
                 </span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-                <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
+              <div className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-md">
+                <span className="text-[9.5px] font-extrabold text-slate-300 uppercase tracking-wider block">
                   HASHRATE GAINED
                 </span>
-                <span className="text-xl font-black text-[#00f090] font-mono mt-1.5 block">
-                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans font-normal">GHS</span>
+                <span className="text-2xl font-black text-[#00f090] font-mono mt-1 block">
+                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans font-medium">GHS</span>
                 </span>
               </div>
             </div>
 
             {/* Total Daily Progress Bar */}
-            <div className="relative z-10 pt-1">
-              <div className="flex items-center justify-between text-[10px] text-slate-300 font-bold mb-1.5">
+            <div className="relative z-10 pt-2 space-y-1.5">
+              <div className="flex items-center justify-between text-[10.5px] text-slate-300 font-bold">
                 <span>Daily Boost Capacity</span>
                 <span className="font-mono text-amber-300 font-black">
                   {totalDailyPercent.toFixed(0)}% (+15.00 GHS Max)
                 </span>
               </div>
-              <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-white/10">
+              <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
                 <div
                   className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-500"
                   style={{ width: `${totalDailyPercent}%` }}

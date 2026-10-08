@@ -252,22 +252,46 @@ export const showRewardedAdWithWaterfall = async (
 }
 
 /**
- * Ambient Interstitial Helper (used for periodic 2-minute ads)
+ * Opening Ad on Launch: ONLY AdExium (if unavailable, DO NOT fallback to GigaPub)
  */
-export const showInterstitialAd = async (force = false): Promise<boolean> => {
+export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false
+  if (isAdActive) return false
+
+  console.log('[Ads] App Launch: Checking AdExium opening interstitial (AdExium only)...')
+  isAdActive = true
+  try {
+    const success = await showAdexiumAd()
+    if (success) {
+      lastAdEndedTimestamp = Date.now()
+      console.log('✅ [Ads] AdExium opening ad displayed successfully!')
+      return true
+    }
+    console.log('[Ads] AdExium opening ad not available. Suppressing fallback on launch.')
+    return false
+  } finally {
+    isAdActive = false
+    lastAdEndedTimestamp = Date.now()
+  }
+}
+
+/**
+ * Periodic 2-Minute Automatic Ad: 1st AdExium -> Backup GigaPub
+ */
+export const showPeriodic2MinAd = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
   if (isAdActive) return false
 
   const now = Date.now()
-  if (!force && now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) {
+  if (now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) {
     return false
   }
 
-  // Check if page is hidden
-  if (typeof document !== 'undefined' && document.hidden) {
-    return false
-  }
+  // Suppress if tab is hidden or user is actively on /watch page
+  if (typeof document !== 'undefined' && document.hidden) return false
+  if (typeof location !== 'undefined' && location.pathname === '/watch') return false
 
+  console.log('[Ads] 2-Minute Periodic Trigger: Requesting AdExium (1st) with GigaPub fallback...')
   const res = await showRewardedAdWithWaterfall('adexium')
   return res.success
 }
@@ -276,29 +300,28 @@ let hasInitializedAutoAds = false
 let periodicAutoAdTimer: ReturnType<typeof setInterval> | null = null
 
 /**
- * Initialize automatic background ads strictly every 2 minutes (120,000ms)
+ * Initialize automatic background ads:
+ * 1. Gentle launch ad (AdExium ONLY - no fallback if unavailable).
+ * 2. Strictly every 2 minutes (120,000ms): 1st AdExium, backup GigaPub.
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitializedAutoAds) return
   hasInitializedAutoAds = true
 
-  // Initial gentle ad after 20 seconds of user activity (not immediately on open)
+  // 1. Launch Ad after 8 seconds (AdExium ONLY)
   setTimeout(() => {
     if (!isAdActive && location.pathname !== '/watch') {
-      showInterstitialAd(false).catch(() => {})
+      showOpeningAdOnlyAdExium().catch(() => {})
     }
-  }, 20000)
+  }, 8000)
 
   if (periodicAutoAdTimer) {
     clearInterval(periodicAutoAdTimer)
   }
 
-  // Exactly 2 Minutes (120,000 ms) Interval
+  // 2. Periodic 2-Minute (120,000ms) Ad Waterfall (AdExium -> GigaPub)
   periodicAutoAdTimer = setInterval(() => {
-    // Only show if user is not in the middle of another ad or actively on watch tab
-    if (!isAdActive && location.pathname !== '/watch') {
-      showInterstitialAd(false).catch(() => {})
-    }
+    showPeriodic2MinAd().catch(() => {})
   }, 120000)
 }
 
