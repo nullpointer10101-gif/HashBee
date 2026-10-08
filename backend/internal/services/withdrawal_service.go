@@ -84,7 +84,6 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	}
 
 	// Load settings
-	honeyToUSDT := s.settings.GetFloat(ctx, "honey_to_usdt_rate", 1000)
 	minUSDT := s.settings.GetFloat(ctx, "min_withdrawal_usdt", 0.10)
 	maxPerDay := s.settings.GetFloat(ctx, "max_withdrawal_per_day_usdt", 100)
 	cooldownHours := s.settings.GetFloat(ctx, "withdrawal_cooldown_hours", 24)
