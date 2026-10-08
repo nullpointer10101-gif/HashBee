@@ -97,7 +97,7 @@ func Load() (*Config, error) {
 		DefaultReferralL1BP:               getFloat64Env("DEFAULT_REFERRAL_L1_BP", 5),
 		DefaultReferralL2BP:               getFloat64Env("DEFAULT_REFERRAL_L2_BP", 1.0),
 		DefaultReferralL3BP:               getFloat64Env("DEFAULT_REFERRAL_L3_BP", 0.5),
-		DefaultMinWithdrawalUSDT:          getFloat64Env("DEFAULT_MIN_WITHDRAWAL_USDT", 0.05),
+		DefaultMinWithdrawalUSDT:          getFloat64Env("DEFAULT_MIN_WITHDRAWAL_USDT", 0.10),
 		DefaultCampaignPricePerCompletion: getFloat64Env("DEFAULT_CAMPAIGN_PRICE_PER_COMPLETION", 0.001),
 		DefaultHoneyPerBPPerHour:          getFloat64Env("DEFAULT_HONEY_PER_BP_PER_HOUR", 0.001),
 		DefaultReinvestRate:               getFloat64Env("DEFAULT_REINVEST_RATE", 100),

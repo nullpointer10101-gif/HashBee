@@ -23,7 +23,7 @@ export const Withdraw: React.FC = () => {
   const [showQualifyModal, setShowQualifyModal] = useState(false)
   const navigate = useNavigate()
 
-  const minWithdrawal = 0.05
+  const minWithdrawal = 0.10
   const cratesOpened = user?.crates_opened_count || 0
   const isOneTimeGranted = user?.one_time_withdrawal_granted || false
   const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (cratesOpened >= 1 || isOneTimeGranted))
@@ -242,51 +242,6 @@ export const Withdraw: React.FC = () => {
             </button>
           </div>
 
-          {/* Withdrawal Requirement Notice Card */}
-          {!isLifetimeQualified ? (
-            <div className="p-4 mb-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-400/40 text-left">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-base">🔒</span>
-                <span className="text-xs font-black text-amber-900 uppercase tracking-wide">
-                  Withdrawal Condition
-                </span>
-                <span className="ml-auto text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-slate-950">
-                  Required
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-700 leading-snug mb-3">
-                Activate at least <b className="text-slate-900">1 NFT Miner</b> (starts from 0.70 TON) to unlock instant lifetime cashouts:
-              </p>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/plans')}
-                  className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 active:scale-95 text-center"
-                >
-                  <span>⚡ Get NFT Miner</span>
-                  <span>➔</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3 mb-4 rounded-2xl bg-emerald-50 border border-emerald-300/80 flex items-center justify-between text-left">
-              <div className="flex items-center gap-2">
-                <span className="text-base">✅</span>
-                <div>
-                  <div className="text-xs font-black text-emerald-900 uppercase tracking-wide">
-                    Withdrawal Condition Met
-                  </div>
-                  <div className="text-[10px] font-semibold text-emerald-700">
-                    Unlimited Lifetime Instant Cashouts Unlocked
-                  </div>
-                </div>
-              </div>
-              <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-                VERIFIED
-              </span>
-            </div>
-          )}
-
           <form onSubmit={handleWithdraw} className="mine-card p-5 mb-3.5 space-y-4">
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 block mb-2 uppercase tracking-wide">
@@ -359,7 +314,7 @@ export const Withdraw: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
-                  min="0.05"
+                  min="0.10"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}

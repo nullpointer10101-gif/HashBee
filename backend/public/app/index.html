@@ -23,7 +23,7 @@
     <script src="https://ad.gigapub.tech/script?id=8543"></script>
 
     <script type="text/javascript">
-      // Global AdExium Helper & Bootstrapper
+      // AdExium Safe Initializer
       window.initAdexium = function() {
         if (window.adexiumWidget) return window.adexiumWidget;
         try {
@@ -33,40 +33,8 @@
             const adex = new WidgetClass({
               wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
               adFormat: 'interstitial',
-              adImpressionIntervalInSeconds: 90,
-              firstAdImpressionIntervalInSeconds: 10,
               debug: !isInsideTg
             });
-            
-            adex.on('adReceived', function(ad) {
-              console.log('[AdExium] Ad received, displaying...');
-              try {
-                if (typeof adex.displayAd === 'function') {
-                  adex.displayAd(ad);
-                }
-              } catch(err) {
-                console.error('[AdExium] displayAd error:', err);
-              }
-            });
-
-            adex.on('adClosed', function() {
-              console.log('[AdExium] Ad closed');
-            });
-
-            adex.on('noAdFound', function() {
-              console.log('[AdExium] noAdFound from network');
-            });
-
-            adex.on('requestAdError', function(e) {
-              console.warn('[AdExium] requestAdError:', e);
-            });
-
-            try {
-              if (typeof adex.autoMode === 'function') {
-                adex.autoMode();
-              }
-            } catch(e) {}
-
             window.adexiumWidget = adex;
             console.log('✅ [AdExium] Initialized with HashBee WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
             return adex;
@@ -77,32 +45,7 @@
         return null;
       };
 
-      window.requestAdexiumAd = function(format) {
-        format = format || 'interstitial';
-        const adex = window.initAdexium();
-        if (adex && typeof adex.requestAd === 'function') {
-          try {
-            console.log('[AdExium] Requesting ad (' + format + ')...');
-            adex.requestAd(format, true).then(function(ads) {
-              if (Array.isArray(ads) && ads.length > 0) {
-                try {
-                  if (typeof adex.displayAd === 'function') {
-                    adex.displayAd(ads);
-                  }
-                } catch(e) {}
-              }
-            }).catch(function(err) {
-              console.warn('[AdExium] requestAd async error:', err);
-            });
-            return true;
-          } catch(e) {
-            console.warn('[AdExium] requestAd error:', e);
-          }
-        }
-        return false;
-      };
-
-      // Auto-initialize on DOM load, script load, and with resilient intervals
+      // Initialize Telegram WebApp SDK safely
       document.addEventListener('DOMContentLoaded', function() {
         try {
           if (window.Telegram?.WebApp) {
@@ -110,33 +53,12 @@
             window.Telegram.WebApp.expand();
           }
         } catch(e) {}
-
-        window.initAdexium();
-
-        // Trigger opening ad after brief render
-        setTimeout(function() {
-          window.requestAdexiumAd('interstitial');
-        }, 800);
       });
-
-      // Periodic check in case CDN script loads asynchronously
-      var adexiumRetries = 0;
-      var adexiumInterval = setInterval(function() {
-        if (window.adexiumWidget || adexiumRetries >= 10) {
-          clearInterval(adexiumInterval);
-          if (window.adexiumWidget && adexiumRetries > 0) {
-            window.requestAdexiumAd('interstitial');
-          }
-        } else {
-          adexiumRetries++;
-          window.initAdexium();
-        }
-      }, 500);
     </script>
-    <script type="module" crossorigin src="/assets/index-odWR5bgA.js"></script>
+    <script type="module" crossorigin src="/assets/index-B0s5sOk0.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-B0sXmqWz.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-5j4nD7dR.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-E8keV5nb.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-CgQ1SYlp.css">
   </head>
   <body>
     <div id="root"></div>

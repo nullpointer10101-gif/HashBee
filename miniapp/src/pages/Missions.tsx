@@ -161,15 +161,19 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
     await refreshUser()
   }
 
+  const isAdTaskInProgressRef = useRef(false)
+
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
+      if (isAdTaskInProgressRef.current || watchAdLoadingIndex !== null) return
+
       const currentCount = gigaAdState.counts[taskIndex] || 0
       if (currentCount >= GIGA_ADS_PER_TIER) {
         toast.error(`Tier ${taskIndex + 1} completed (${GIGA_ADS_PER_TIER}/${GIGA_ADS_PER_TIER})! Try another tier or wait for 24h reset.`)
         return
       }
-      if (watchAdLoadingIndex !== null) return
 
+      isAdTaskInProgressRef.current = true
       setWatchAdLoadingIndex(taskIndex)
       toast.loading('🎬 Launching sponsor video... Please watch for at least 10s to earn reward!', { id: 'ad-load' })
 
@@ -181,6 +185,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       } finally {
         toast.dismiss('ad-load')
         setWatchAdLoadingIndex(null)
+        isAdTaskInProgressRef.current = false
       }
 
       if (adResult.success && adResult.duration >= 9.5) {

@@ -85,16 +85,16 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 
 	// Load settings
 	honeyToUSDT := s.settings.GetFloat(ctx, "honey_to_usdt_rate", 1000)
-	minUSDT := s.settings.GetFloat(ctx, "min_withdrawal_usdt", 0.05)
+	minUSDT := s.settings.GetFloat(ctx, "min_withdrawal_usdt", 0.10)
 	maxPerDay := s.settings.GetFloat(ctx, "max_withdrawal_per_day_usdt", 100)
 	cooldownHours := s.settings.GetFloat(ctx, "withdrawal_cooldown_hours", 24)
 
 	// Direct 1:1 currency amount
 	usdtAmount := req.Amount
 
-	// Check minimum: 0.05
-	if usdtAmount < 0.05 {
-		return nil, fmt.Errorf("minimum withdrawal is %.4f USDT (%.0f Honey)", minUSDT, minUSDT*honeyToUSDT)
+	// Check minimum: 0.10 USDT
+	if usdtAmount < 0.10 || usdtAmount < minUSDT {
+		return nil, fmt.Errorf("minimum withdrawal is %.2f USDT", minUSDT)
 	}
 
 	// Check balance
