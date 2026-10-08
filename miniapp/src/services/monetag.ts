@@ -87,15 +87,19 @@ export const showAdexiumAd = async (): Promise<boolean> => {
     }
 
     const handleCompleted = () => {
-      console.log('✅ [AdExium] Playback completed by user')
-      finish(true)
+      const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
+      console.log(`✅ [AdExium] Playback completed by user (${durationSec.toFixed(1)}s)`)
+      if (durationSec >= 9.5) {
+        finish(true)
+      } else {
+        finish(false)
+      }
     }
 
     const handleClosed = () => {
-      console.log('[AdExium] Ad closed')
       const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
-      // If watched for at least 5 seconds or playback completed
-      if (isDisplaying && durationSec >= 5) {
+      console.log(`[AdExium] Ad closed after ${durationSec.toFixed(1)}s`)
+      if (isDisplaying && durationSec >= 9.5) {
         finish(true)
       } else {
         finish(false)
@@ -103,8 +107,13 @@ export const showAdexiumAd = async (): Promise<boolean> => {
     }
 
     const handleRedirected = () => {
-      console.log('✅ [AdExium] User clicked and redirected to sponsor')
-      finish(true)
+      const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
+      console.log(`[AdExium] User clicked/redirected after ${durationSec.toFixed(1)}s`)
+      if (isDisplaying && durationSec >= 9.5) {
+        finish(true)
+      } else {
+        finish(false)
+      }
     }
 
     const handleNoAd = () => {
@@ -177,13 +186,13 @@ let lastGigaPubEndTime = 0
 /**
  * 2. GigaPub Player (App ID 8543) - Guaranteed Exactly 1 Ad Execution
  */
-export const showGigaPubAd = async (): Promise<boolean> => {
-  if (typeof window === 'undefined') return false
+export const showGigaPubAd = async (): Promise<{ success: boolean; duration: number }> => {
+  if (typeof window === 'undefined') return { success: false, duration: 0 }
 
   const now = Date.now()
   if (isGigaPubActive || (now - lastGigaPubEndTime < 3000)) {
     console.warn('[GigaPub] Ad cooldown in effect or already active. Ignoring duplicate invocation.')
-    return false
+    return { success: false, duration: 0 }
   }
 
   // If window.showGiga is not ready yet, wait up to 3 seconds for script initialization
@@ -203,17 +212,17 @@ export const showGigaPubAd = async (): Promise<boolean> => {
       await window.showGiga()
       const duration = (Date.now() - gigaStartTime) / 1000
       console.log(`✅ [GigaPub] Completed in ${duration.toFixed(1)}s`)
-      return true
+      return { success: duration >= 9.5, duration }
     } catch (err) {
       console.warn('[GigaPub] Playback closed or error:', err)
-      return false
+      return { success: false, duration: 0 }
     } finally {
       isGigaPubActive = false
       lastGigaPubEndTime = Date.now()
     }
   }
 
-  return false
+  return { success: false, duration: 0 }
 }
 
 /**
@@ -239,29 +248,34 @@ export const showRewardedAdWithWaterfall = async (
     // 1. Primary: AdExium
     if (preferredProvider !== 'gigapub') {
       console.log('[Ads] Step 1/2: Requesting AdExium primary provider...')
+      const adStartTime = Date.now()
       const adexSuccess = await showAdexiumAd()
-      const totalDuration = (Date.now() - sessionStart) / 1000
-      if (adexSuccess) {
+      const adDuration = (Date.now() - adStartTime) / 1000
+
+      if (adexSuccess && adDuration >= 9.5) {
         lastAdEndedTimestamp = Date.now()
-        const durationSec = Math.max(10, totalDuration)
-        console.log(`✅ [Ads] AdExium successfully finished (${durationSec.toFixed(1)}s)!`)
-        return { success: true, provider: 'AdExium', duration: durationSec }
+        console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)!`)
+        return { success: true, provider: 'AdExium', duration: adDuration }
       }
-      console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup (exactly 1 ad)...')
+      if (adexSuccess && adDuration < 9.5) {
+        console.warn(`⚠️ [Ads] AdExium closed too quickly (${adDuration.toFixed(1)}s < 10s).`)
+        return { success: false, provider: 'AdExium', duration: adDuration }
+      }
+      console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
     }
 
-    // 2. Backup: GigaPub (App ID 8543) - Exactly 1 attempt
+    // 2. Backup: GigaPub (App ID 8543)
     console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
-    const gigaStartTime = Date.now()
-    const gigaSuccess = await showGigaPubAd()
-    const gigaDuration = (Date.now() - gigaStartTime) / 1000
-    const totalSessionDuration = (Date.now() - sessionStart) / 1000
+    const gigaRes = await showGigaPubAd()
 
-    if (gigaSuccess) {
+    if (gigaRes.success && gigaRes.duration >= 9.5) {
       lastAdEndedTimestamp = Date.now()
-      const durationSec = Math.max(10, gigaDuration, totalSessionDuration)
-      console.log(`✅ [Ads] GigaPub successfully finished (${durationSec.toFixed(1)}s)!`)
-      return { success: true, provider: 'GigaPub', duration: durationSec }
+      console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)!`)
+      return { success: true, provider: 'GigaPub', duration: gigaRes.duration }
+    }
+    if (gigaRes.duration > 0 && gigaRes.duration < 9.5) {
+      console.warn(`⚠️ [Ads] GigaPub closed too quickly (${gigaRes.duration.toFixed(1)}s < 10s).`)
+      return { success: false, provider: 'GigaPub', duration: gigaRes.duration }
     }
 
     console.log('ℹ️ [Ads] No video ad available from any provider.')

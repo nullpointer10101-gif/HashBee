@@ -139,6 +139,11 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   }, [gigaAdState.windowStart])
 
   const completeAdReward = async (taskIndex: number, provider = 'AdExium', durationSec = 10) => {
+    if (durationSec < 9.5) {
+      toast.error(`⚠️ Video was closed too early (${durationSec.toFixed(0)}s). Minimum 10 seconds required to earn +0.50 GHS!`)
+      return
+    }
+
     let powerAdded = GIGA_POWER_PER_AD
     try {
       const res = await rewardAdWatch(provider, taskIndex, durationSec)
@@ -188,14 +193,14 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
         isAdTaskInProgressRef.current = false
       }
 
-      if (adResult.success) {
-        await completeAdReward(taskIndex, adResult.provider, Math.max(10, Math.round(adResult.duration || 10)))
+      if (adResult.success && adResult.duration >= 9.5) {
+        await completeAdReward(taskIndex, adResult.provider, Math.round(adResult.duration))
       } else if (adResult.provider === 'busy') {
         toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
-      } else if (adResult.duration > 0 && adResult.duration < 5) {
-        toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch the sponsor video to earn +0.50 GHS!`)
+      } else if (adResult.duration > 0 && adResult.duration < 9.5) {
+        toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch for at least 10 seconds to earn +0.50 GHS!`)
       } else {
-        toast.error('⚠️ Sponsor video is currently unavailable or loading. Please try again in a moment!')
+        toast.error('⚠️ Sponsor video is currently unavailable. Please try again in a moment!')
       }
     },
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]

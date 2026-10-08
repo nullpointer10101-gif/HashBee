@@ -461,7 +461,7 @@ func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provi
 	}
 
 	// 1. Minimum 10-Second Ad Playback Verification
-	if durationSeconds > 0 && durationSeconds < 9.5 {
+	if durationSeconds < 9.5 {
 		return 0, 0, fmt.Errorf("video playback was too short (minimum 10 seconds required to earn +0.50 GHS)")
 	}
 
