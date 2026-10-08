@@ -188,14 +188,14 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
         isAdTaskInProgressRef.current = false
       }
 
-      if (adResult.success && adResult.duration >= 9.5) {
-        await completeAdReward(taskIndex, adResult.provider, Math.max(10, Math.round(adResult.duration)))
+      if (adResult.success) {
+        await completeAdReward(taskIndex, adResult.provider, Math.max(10, Math.round(adResult.duration || 10)))
       } else if (adResult.provider === 'busy') {
         toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
-      } else if (adResult.duration > 0 && adResult.duration < 9.5) {
-        toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch for at least 10 seconds to earn +0.50 GHS!`)
+      } else if (adResult.duration > 0 && adResult.duration < 5) {
+        toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch the sponsor video to earn +0.50 GHS!`)
       } else {
-        toast.error('⚠️ Video ad was not completed. Please watch the full 10-second sponsor video to claim +0.50 GHS mining power!')
+        toast.error('⚠️ Sponsor video is currently unavailable or loading. Please try again in a moment!')
       }
     },
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]

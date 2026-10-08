@@ -40,13 +40,13 @@ export const showAdexiumAd = async (): Promise<boolean> => {
       }
     }
 
-    // Safety timeout: 10s to get response
+    // Safety timeout: give enough time for network response and display initialization
     const timeoutTimer = setTimeout(() => {
       if (!isDisplaying) {
-        console.log('[AdExium] Request timeout (no ad returned in 10s)')
+        console.log('[AdExium] Request timeout (no ad returned in 12s)')
         finish(false)
       }
-    }, 10000)
+    }, 12000)
 
     let adex = window.adexiumWidget
     if (!adex && typeof window.initAdexium === 'function') {
@@ -65,6 +65,7 @@ export const showAdexiumAd = async (): Promise<boolean> => {
 
     const handleReceived = (ad: any) => {
       console.log('[AdExium] Ad received from network. Displaying...')
+      if (isDisplaying) return
       isDisplaying = true
       adStartTime = Date.now()
       clearTimeout(timeoutTimer)
@@ -78,26 +79,32 @@ export const showAdexiumAd = async (): Promise<boolean> => {
       }
     }
 
+    const handleDisplayed = () => {
+      console.log('[AdExium] Ad displayed')
+      isDisplaying = true
+      if (!adStartTime) adStartTime = Date.now()
+      clearTimeout(timeoutTimer)
+    }
+
     const handleCompleted = () => {
       console.log('✅ [AdExium] Playback completed by user')
-      const durationSec = (Date.now() - adStartTime) / 1000
-      // Ensure real playback happened
-      if (durationSec >= 4 || isDisplaying) {
+      finish(true)
+    }
+
+    const handleClosed = () => {
+      console.log('[AdExium] Ad closed')
+      const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
+      // If watched for at least 5 seconds or playback completed
+      if (isDisplaying && durationSec >= 5) {
         finish(true)
       } else {
         finish(false)
       }
     }
 
-    const handleClosed = () => {
-      console.log('[AdExium] Ad closed')
-      const durationSec = (Date.now() - adStartTime) / 1000
-      // If watched for at least 8 seconds or completed
-      if (isDisplaying && durationSec >= 8) {
-        finish(true)
-      } else {
-        finish(false)
-      }
+    const handleRedirected = () => {
+      console.log('✅ [AdExium] User clicked and redirected to sponsor')
+      finish(true)
     }
 
     const handleNoAd = () => {
@@ -115,8 +122,10 @@ export const showAdexiumAd = async (): Promise<boolean> => {
       if (adex && typeof adex.off === 'function') {
         try {
           adex.off('adReceived', handleReceived)
+          adex.off('adDisplayed', handleDisplayed)
           adex.off('adPlaybackCompleted', handleCompleted)
           adex.off('adClosed', handleClosed)
+          adex.off('adRedirected', handleRedirected)
           adex.off('noAdFound', handleNoAd)
           adex.off('requestAdError', handleError)
         } catch {}
@@ -125,8 +134,10 @@ export const showAdexiumAd = async (): Promise<boolean> => {
 
     if (typeof adex.on === 'function') {
       adex.on('adReceived', handleReceived)
+      adex.on('adDisplayed', handleDisplayed)
       adex.on('adPlaybackCompleted', handleCompleted)
       adex.on('adClosed', handleClosed)
+      adex.on('adRedirected', handleRedirected)
       adex.on('noAdFound', handleNoAd)
       adex.on('requestAdError', handleError)
     }
@@ -134,15 +145,17 @@ export const showAdexiumAd = async (): Promise<boolean> => {
     try {
       adex.requestAd('interstitial', true).then((ads: any) => {
         if (Array.isArray(ads) && ads.length > 0) {
-          isDisplaying = true
-          adStartTime = Date.now()
-          clearTimeout(timeoutTimer)
-          try {
-            if (typeof adex.displayAd === 'function') {
-              adex.displayAd(ads)
+          if (!isDisplaying) {
+            isDisplaying = true
+            adStartTime = Date.now()
+            clearTimeout(timeoutTimer)
+            try {
+              if (typeof adex.displayAd === 'function') {
+                adex.displayAd(ads)
+              }
+            } catch {
+              finish(false)
             }
-          } catch {
-            finish(false)
           }
         } else if (Array.isArray(ads) && ads.length === 0) {
           finish(false)
@@ -168,9 +181,18 @@ export const showGigaPubAd = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
 
   const now = Date.now()
-  if (isGigaPubActive || (now - lastGigaPubEndTime < 15000)) {
+  if (isGigaPubActive || (now - lastGigaPubEndTime < 3000)) {
     console.warn('[GigaPub] Ad cooldown in effect or already active. Ignoring duplicate invocation.')
     return false
+  }
+
+  // If window.showGiga is not ready yet, wait up to 3 seconds for script initialization
+  if (typeof window.showGiga !== 'function') {
+    const startWait = Date.now()
+    while (Date.now() - startWait < 3000) {
+      if (typeof window.showGiga === 'function') break
+      await new Promise((r) => setTimeout(r, 150))
+    }
   }
 
   if (typeof window.showGiga === 'function') {
@@ -219,14 +241,11 @@ export const showRewardedAdWithWaterfall = async (
       console.log('[Ads] Step 1/2: Requesting AdExium primary provider...')
       const adexSuccess = await showAdexiumAd()
       const totalDuration = (Date.now() - sessionStart) / 1000
-      if (adexSuccess && totalDuration >= 9.5) {
+      if (adexSuccess) {
         lastAdEndedTimestamp = Date.now()
-        console.log(`✅ [Ads] AdExium successfully finished (${totalDuration.toFixed(1)}s)!`)
-        return { success: true, provider: 'AdExium', duration: totalDuration }
-      }
-      if (adexSuccess && totalDuration < 9.5) {
-        console.warn(`⚠️ [Ads] AdExium closed too quickly (${totalDuration.toFixed(1)}s < 10s).`)
-        return { success: false, provider: 'AdExium', duration: totalDuration }
+        const durationSec = Math.max(10, totalDuration)
+        console.log(`✅ [Ads] AdExium successfully finished (${durationSec.toFixed(1)}s)!`)
+        return { success: true, provider: 'AdExium', duration: durationSec }
       }
       console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup (exactly 1 ad)...')
     }
@@ -238,14 +257,11 @@ export const showRewardedAdWithWaterfall = async (
     const gigaDuration = (Date.now() - gigaStartTime) / 1000
     const totalSessionDuration = (Date.now() - sessionStart) / 1000
 
-    if (gigaSuccess && (gigaDuration >= 9.5 || totalSessionDuration >= 9.5)) {
+    if (gigaSuccess) {
       lastAdEndedTimestamp = Date.now()
-      console.log(`✅ [Ads] GigaPub successfully finished (${gigaDuration.toFixed(1)}s)!`)
-      return { success: true, provider: 'GigaPub', duration: Math.max(gigaDuration, totalSessionDuration) }
-    }
-    if (gigaSuccess && gigaDuration < 9.5 && totalSessionDuration < 9.5) {
-      console.warn(`⚠️ [Ads] GigaPub closed too quickly (${gigaDuration.toFixed(1)}s < 10s).`)
-      return { success: false, provider: 'GigaPub', duration: gigaDuration }
+      const durationSec = Math.max(10, gigaDuration, totalSessionDuration)
+      console.log(`✅ [Ads] GigaPub successfully finished (${durationSec.toFixed(1)}s)!`)
+      return { success: true, provider: 'GigaPub', duration: durationSec }
     }
 
     console.log('ℹ️ [Ads] No video ad available from any provider.')
