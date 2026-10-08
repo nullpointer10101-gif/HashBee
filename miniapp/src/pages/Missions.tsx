@@ -380,48 +380,6 @@ export const Missions: React.FC = () => {
     }
   }
 
-  const handlePayWithBalance = async () => {
-    const target = promoTarget.trim()
-    if (!target) {
-      toast.error('Please enter your link or @channel')
-      return
-    }
-
-    const completions = Number(promoCompletions) || 0
-    if (completions < 500) {
-      toast.error('Minimum order is 500 completions (0.50 GRAM)')
-      setPromoCompletions(500)
-      return
-    }
-    const cost = completions * 0.001
-
-    if (!user || user.honey_balance < cost) {
-      toast.error(`Insufficient balance (${user ? user.honey_balance.toFixed(4) : 0} GRAM). Need ${cost.toFixed(4)} GRAM. Please pay via Tonkeeper!`)
-      return
-    }
-
-    setPublishing(true)
-    try {
-      await createCampaign({
-        type: promoType,
-        target: target,
-        title: target.replace(/^https?:\/\//, '').replace(/^t\.me\//, ''),
-        total_completions: completions,
-        reward_bp: 0.5,
-        pay_with_balance: true,
-      })
-      toast.success('🎉 Campaign Activated Instantly!')
-      await refreshUser()
-      await loadMissions()
-      await loadCampaigns()
-      setView('campaigns')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || 'Failed to activate with balance')
-    } finally {
-      setPublishing(false)
-    }
-  }
-
   const handlePayInTonkeeper = (camp: Campaign) => {
     const cost = camp.cost || 0.10
     const nanoAmount = Math.round(cost * 1e9)
@@ -710,16 +668,6 @@ export const Missions: React.FC = () => {
               <span className="font-black text-sm text-[#0088ff] font-mono">{calculatedCost} GRAM</span>
             </div>
           </div>
-
-          {user && user.honey_balance >= Number(calculatedCost) ? (
-            <button
-              onClick={handlePayWithBalance}
-              disabled={publishing}
-              className="w-full py-3.5 rounded-xl btn-primary-blue font-black text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2"
-            >
-              <span>⚡ PAY WITH BALANCE ({user.honey_balance.toFixed(4)} GRAM)</span>
-            </button>
-          ) : null}
 
           <button
             onClick={handlePublishCampaign}

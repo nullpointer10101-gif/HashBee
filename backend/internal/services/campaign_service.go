@@ -89,26 +89,6 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, ownerID uuid.UUID,
 
 	status := "waiting_for_payment"
 
-	// If user explicitly chose to pay with in-app balance
-	if req.PayWithBalance {
-		var balance float64
-		err = tx.QueryRow(ctx, "SELECT honey_balance FROM users WHERE id = $1 FOR UPDATE", ownerID).Scan(&balance)
-		if err != nil {
-			return nil, fmt.Errorf("user not found")
-		}
-		if balance < totalCostGRAM {
-			return nil, fmt.Errorf("insufficient balance: need %.4f GRAM, have %.4f", totalCostGRAM, balance)
-		}
-
-		_, err = tx.Exec(ctx,
-			"UPDATE users SET honey_balance = honey_balance - $1, updated_at = NOW() WHERE id = $2",
-			totalCostGRAM, ownerID)
-		if err != nil {
-			return nil, err
-		}
-		status = models.CampaignStatusActive
-	}
-
 	campaign := &models.Campaign{
 		ID:               uuid.New(),
 		OwnerUserID:      ownerID,
@@ -133,12 +113,6 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, ownerID uuid.UUID,
 		campaign.Status, campaign.VerificationType, campaign.PaymentMemo)
 	if err != nil {
 		return nil, err
-	}
-
-	if status == models.CampaignStatusActive {
-		if err := s.createMissionForCampaign(ctx, tx, campaign); err != nil {
-			return nil, err
-		}
 	}
 
 	return campaign, tx.Commit(ctx)
