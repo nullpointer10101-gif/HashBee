@@ -159,6 +159,7 @@ export const showAdexiumAd = async (): Promise<boolean> => {
 }
 
 let isGigaPubActive = false
+let lastGigaPubEndTime = 0
 
 /**
  * 2. GigaPub Player (App ID 8543) - Guaranteed Exactly 1 Ad Execution
@@ -166,8 +167,9 @@ let isGigaPubActive = false
 export const showGigaPubAd = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
 
-  if (isGigaPubActive) {
-    console.warn('[GigaPub] Ad is already active. Ignoring duplicate invocation.')
+  const now = Date.now()
+  if (isGigaPubActive || (now - lastGigaPubEndTime < 15000)) {
+    console.warn('[GigaPub] Ad cooldown in effect or already active. Ignoring duplicate invocation.')
     return false
   }
 
@@ -185,6 +187,7 @@ export const showGigaPubAd = async (): Promise<boolean> => {
       return false
     } finally {
       isGigaPubActive = false
+      lastGigaPubEndTime = Date.now()
     }
   }
 
@@ -289,9 +292,14 @@ export const showPeriodic2MinAd = async (): Promise<boolean> => {
     return false
   }
 
-  // Suppress if tab is hidden or user is actively on /watch page
+  // Suppress if tab is hidden or user is on watch/tasks/missions page
   if (typeof document !== 'undefined' && document.hidden) return false
-  if (typeof location !== 'undefined' && location.pathname === '/watch') return false
+  if (typeof location !== 'undefined') {
+    const p = location.pathname
+    if (p === '/watch' || p === '/tasks' || p === '/missions' || p === '/withdraw') {
+      return false
+    }
+  }
 
   console.log('[Ads] 2-Minute Periodic Trigger: Requesting AdExium (1st) with GigaPub fallback...')
   const res = await showRewardedAdWithWaterfall('adexium')
@@ -312,8 +320,11 @@ export const initMonetagAutoAds = () => {
 
   // 1. Launch Ad after 8 seconds (AdExium ONLY)
   setTimeout(() => {
-    if (!isAdActive && location.pathname !== '/watch') {
-      showOpeningAdOnlyAdExium().catch(() => {})
+    if (typeof location !== 'undefined') {
+      const p = location.pathname
+      if (!isAdActive && p !== '/watch' && p !== '/tasks' && p !== '/missions' && p !== '/withdraw') {
+        showOpeningAdOnlyAdExium().catch(() => {})
+      }
     }
   }, 8000)
 
