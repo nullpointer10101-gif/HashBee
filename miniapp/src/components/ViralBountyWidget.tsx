@@ -149,29 +149,28 @@ export const ViralBountyWidget: React.FC = () => {
           setIsOpen(true)
           loadBounty()
         }}
-        className="fixed right-1 top-[35%] z-40 cursor-pointer group select-none animate-bounce"
-        style={{ animationDuration: '3s' }}
+        className="fixed right-1.5 top-[18%] z-30 cursor-pointer group select-none transition-all active:scale-90"
       >
-        <div className="relative p-2 rounded-2xl bg-gradient-to-b from-amber-400 via-rose-500 to-indigo-600 text-white shadow-2xl shadow-rose-500/40 border-2 border-yellow-300 flex flex-col items-center gap-1 group-active:scale-95 transition-all">
+        <div className="relative p-1.5 rounded-2xl bg-gradient-to-b from-amber-400 via-rose-500 to-indigo-600 text-white shadow-xl shadow-rose-500/30 border border-yellow-300/80 flex flex-col items-center gap-0.5 group-hover:scale-105 transition-transform">
           {/* Glowing pulse ring */}
-          <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 opacity-60 blur-sm animate-pulse pointer-events-none" />
+          <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 opacity-50 blur-sm pointer-events-none" />
 
           {/* Badge Icon */}
-          <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-lg relative z-10">
+          <div className="w-6 h-6 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center text-sm relative z-10">
             🎁
           </div>
 
-          <div className="text-center relative z-10 leading-tight">
-            <span className="block text-[10px] font-black tracking-tighter text-yellow-200 uppercase">
+          <div className="text-center relative z-10 leading-none">
+            <span className="block text-[8.5px] font-black tracking-tight text-yellow-200 uppercase">
               10 GRAM
             </span>
-            <span className="block text-[8px] font-extrabold uppercase bg-white text-rose-600 px-1 rounded-md mt-0.5 shadow-sm">
+            <span className="block text-[7px] font-black uppercase bg-white text-rose-600 px-1 py-0.2 rounded mt-0.5">
               BOUNTY
             </span>
           </div>
 
           {/* Quick Timer Pill */}
-          <div className="relative z-10 bg-black/40 px-1.5 py-0.5 rounded-full text-[8px] font-mono font-bold text-yellow-300">
+          <div className="relative z-10 bg-black/40 px-1 py-0.2 rounded-full text-[7px] font-mono font-bold text-yellow-300">
             {bounty?.is_expired ? 'Ended' : `${timeLeft.days}d ${timeLeft.hours}h`}
           </div>
         </div>

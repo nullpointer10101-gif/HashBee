@@ -669,7 +669,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   return (
     <div className="pb-28 pt-3 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
       {/* ── TOP HEADER ── */}
-      <div className="text-center mb-3">
+      <div className="text-center mb-3.5">
         <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
           {view === 'watch' ? 'Watch & Boost Network' : 'Tasks & Missions'}
         </h1>
@@ -680,70 +680,18 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
         </p>
       </div>
 
-      {/* ── TOP SEGMENTED TAB SWITCHER ── */}
-      <div className="flex items-center gap-1.5 p-1 mb-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
-        {/* Watch Tab Button */}
-        <button
-          onClick={() => setView('watch')}
-          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
-            view === 'watch'
-              ? 'bg-gradient-to-r from-[#dc2626] via-[#ef4444] to-[#b91c1c] text-white shadow-md shadow-red-500/30 active:scale-95'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <span>🔥</span>
-          <span>Watch Ads</span>
-          <span
-            className={`text-[9px] font-mono font-black px-1.5 py-0.2 rounded-md ${
-              view === 'watch' ? 'bg-black/25 text-white' : 'bg-red-50 text-red-600'
-            }`}
-          >
-            {totalWatches}/30
-          </span>
-        </button>
-
-        {/* Tasks Tab Button */}
-        <button
-          onClick={() => setView('tasks')}
-          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
-            view === 'tasks'
-              ? 'bg-[#0088ff] text-white shadow-md active:scale-95'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <span>📋</span>
-          <span>Missions</span>
-        </button>
-
-        {/* Promote Hub Button */}
-        <button
-          onClick={() => {
-            setView('campaigns')
-            loadCampaigns()
-          }}
-          className={`flex-1 py-2.5 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
-            (view as string) === 'campaigns'
-              ? 'bg-indigo-600 text-white shadow-md active:scale-95'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <span>📢</span>
-          <span>Promote</span>
-        </button>
-      </div>
-
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* ── TAB 1: DEDICATED BN RED WATCH & EARN DASHBOARD ──────── */}
+      {/* ── DEDICATED BN RED WATCH & EARN DASHBOARD ─────────────── */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {view === 'watch' && (
-        <div>
+        <div className="space-y-3.5">
           {/* ── LUXURY BN RED HERO CYBER VAULT CARD ── */}
-          <div className="p-4.5 mb-3.5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0407] via-[#2d0910] to-[#120204] text-white border border-red-500/35 shadow-xl shadow-red-950/40">
+          <div className="p-4.5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0407] via-[#2d0910] to-[#120204] text-white border border-red-500/35 shadow-xl shadow-red-950/40">
             {/* Ambient Ruby Flame Glow */}
             <div className="absolute -top-12 -right-12 w-36 h-36 bg-red-500/25 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between relative z-10 mb-2">
+            <div className="flex items-center justify-between relative z-10 mb-2.5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-xl bg-white/10 backdrop-blur-md border border-red-400/30 flex items-center justify-center text-sm shadow-sm">
                   🔥
@@ -754,20 +702,20 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
               </div>
 
               {/* Reset Countdown Timer Badge */}
-              <div className="px-2.5 py-0.5 rounded-xl bg-black/40 border border-red-400/30 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5">
+              <div className="px-2.5 py-1 rounded-xl bg-black/40 border border-red-400/30 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
                 <span>Resets in {watchAdCountdown || '24:00:00'}</span>
               </div>
             </div>
 
             {/* Live Stats Row */}
-            <div className="grid grid-cols-2 gap-2 my-3 relative z-10">
+            <div className="grid grid-cols-2 gap-2 my-2.5 relative z-10">
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
                 <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
                   COMPLETED TODAY
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-white font-mono mt-1 block">
-                  {totalWatches} <span className="text-xs text-red-300 font-sans">/ 30 ADS</span>
+                <span className="text-xl font-black text-white font-mono mt-1.5 block">
+                  {totalWatches} <span className="text-xs text-red-300 font-sans font-normal">/ 30 ADS</span>
                 </span>
               </div>
 
@@ -775,8 +723,8 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                 <span className="text-[9px] font-bold text-slate-300 uppercase block leading-none">
                   HASHRATE GAINED
                 </span>
-                <span className="text-xl sm:text-2xl font-black text-[#00f090] font-mono mt-1 block">
-                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans">GHS</span>
+                <span className="text-xl font-black text-[#00f090] font-mono mt-1.5 block">
+                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans font-normal">GHS</span>
                 </span>
               </div>
             </div>
@@ -791,7 +739,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
               </div>
               <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-white/10">
                 <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-500 shadow-glow"
+                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-500"
                   style={{ width: `${totalDailyPercent}%` }}
                 />
               </div>
@@ -799,33 +747,27 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
           </div>
 
           {/* ── 3 DEDICATED BN RED BATCH CARDS (10 WATCHES EACH = 30 TOTAL) ── */}
-          <div className="space-y-3 mb-4">
+          <div className="space-y-3">
             {[
               {
                 id: 0,
                 title: 'Crimson Flame Booster',
                 badge: 'BATCH #1',
-                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
                 accentGrad: 'from-[#dc2626] via-[#ef4444] to-[#b91c1c]',
-                borderGlow: 'border-red-300/80',
                 icon: '🔥',
               },
               {
                 id: 1,
                 title: 'Scarlet Ruby Vanguard',
                 badge: 'BATCH #2',
-                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
                 accentGrad: 'from-[#e11d48] via-[#f43f5e] to-[#be123c]',
-                borderGlow: 'border-rose-300/80',
                 icon: '⚡',
               },
               {
                 id: 2,
                 title: 'Phoenix Inferno Sovereign',
                 badge: 'BATCH #3',
-                desc: 'Watch 10 sponsor videos for +5.00 GHS total mining boost',
                 accentGrad: 'from-[#b91c1c] via-[#dc2626] to-[#991b1b]',
-                borderGlow: 'border-red-400/80',
                 icon: '👑',
               },
             ].map((tier, i) => {
@@ -838,32 +780,36 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
               return (
                 <div
                   key={tier.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-3 relative overflow-hidden transition-all hover:border-red-300"
+                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-2.5 relative overflow-hidden"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl shrink-0 font-black border border-red-100 shadow-inner">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl shrink-0 font-black border border-red-100">
                         {isCompleted ? '👑' : tier.icon}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs sm:text-sm font-black text-slate-900">{tier.title}</span>
-                          <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded-md bg-red-100/80 text-red-700 font-mono">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                            {tier.title}
+                          </span>
+                          <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono shrink-0">
                             {tier.badge}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                        <div className="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5 flex-wrap">
                           <span>
-                            Progress: <b className="text-slate-900 font-mono font-bold">{count}/{GIGA_ADS_PER_TIER}</b>
+                            Progress: <b className="text-slate-900 font-mono">{count}/{GIGA_ADS_PER_TIER}</b>
                           </span>
                           <span>•</span>
-                          <span className="text-red-600 font-black font-mono">+{powerEarned} / +5.00 GHS</span>
+                          <span className="text-red-600 font-black font-mono">
+                            +{powerEarned} / +5.00 GHS
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-[10px] font-mono">
+                    <div className="shrink-0 text-right">
+                      <span className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-[10px] font-mono whitespace-nowrap">
                         +0.50 GHS/Ad
                       </span>
                     </div>
@@ -881,7 +827,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                   {isCompleted ? (
                     <div className="w-full py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm">
                       <span>✓</span>
-                      <span>10/10 BATCH COMPLETED</span>
+                      <span>10/10 BATCH COMPLETED (+5.00 GHS)</span>
                     </div>
                   ) : (
                     <button
@@ -900,7 +846,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                         <>
                           <span>🔥</span>
                           <span>Watch Sponsor Video (+0.50 GHS)</span>
-                          <span className="font-mono text-[10px] bg-black/20 px-1.5 py-0.2 rounded-md">
+                          <span className="font-mono text-[10px] bg-black/20 px-1.5 py-0.5 rounded-md">
                             {count + 1}/10
                           </span>
                         </>
@@ -916,24 +862,24 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
           <div className="p-3 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-amber-50 border border-red-200/60 text-slate-700 text-xs flex items-center gap-2.5">
             <span className="text-xl shrink-0">⚡</span>
             <div className="text-[11px] leading-snug">
-              <span className="font-black text-red-700">Instant Automatic Hashrate:</span> Watching sponsor videos automatically verifies on-chain and increases your cloud mining power in real-time.
+              <span className="font-black text-red-700">Instant Automatic Hashrate:</span> Watching sponsor videos automatically verifies on-chain and credits your cloud mining power in real-time.
             </div>
           </div>
         </div>
       )}
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* ── TAB 2: PARTNER MISSIONS & REFERRAL MILESTONES ────────── */}
+      {/* ── TASKS & MISSIONS SECTION (ALL-IN-ONE) ───────────────── */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {view === 'tasks' && (
-        <div>
-          {/* Top Promoter Banner */}
+        <div className="space-y-3.5">
+          {/* ── 1. TOP PROMOTER BANNER ── */}
           <div
             onClick={() => {
               setView('campaigns')
               loadCampaigns()
             }}
-            className="relative overflow-hidden mb-3.5 p-4 rounded-2xl bg-gradient-to-r from-[#6366f1] via-[#4f46e5] to-[#2563eb] text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/30 cursor-pointer active:scale-[0.98] transition-transform"
+            className="relative overflow-hidden p-4 rounded-2xl bg-gradient-to-r from-[#6366f1] via-[#4f46e5] to-[#2563eb] text-white shadow-lg shadow-indigo-500/25 border border-indigo-300/30 cursor-pointer active:scale-[0.98] transition-transform"
           >
             <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between gap-3 relative z-10">
@@ -951,7 +897,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                 </div>
               </div>
               <div className="shrink-0">
-                <span className="px-2.5 py-1 rounded-lg bg-white text-[#4f46e5] font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-lg bg-white text-[#4f46e5] font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
                   <span>LAUNCH</span>
                   <span>→</span>
                 </span>
