@@ -693,95 +693,151 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/* ── DEDICATED BN RED WATCH & EARN DASHBOARD ─────────────── */}
+      {/* ── DEDICATED VIBRANT ANIMATED WATCH & EARN DASHBOARD ─────── */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {view === 'watch' && (
-        <div className="space-y-3.5">
-          {/* ── LUXURY BN RED HERO CYBER VAULT CARD ── */}
-          <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1d0407] via-[#2a070e] to-[#120204] text-white border border-red-500/40 shadow-xl shadow-red-950/40">
-            {/* Ambient Ruby Flame Glow */}
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-red-500/25 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-amber-500/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="space-y-4">
+          {/* ── LUXURY CYBER REACTOR HERO VAULT CARD ── */}
+          <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#090d16] text-white border border-indigo-500/30 shadow-2xl shadow-indigo-950/50">
+            {/* Ambient Animated Cyber Particle Glows */}
+            <div className="absolute -top-12 -right-12 w-44 h-44 bg-amber-500/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+            <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Header Row */}
-            <div className="flex items-center justify-between relative z-10 mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-white/10 backdrop-blur-md border border-red-400/40 flex items-center justify-center text-base shadow-sm">
-                  🔥
+            <div className="flex items-center justify-between relative z-10 mb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-600 p-0.5 shadow-lg shadow-rose-500/30">
+                  <div className="w-full h-full rounded-[10px] bg-black/40 backdrop-blur-md flex items-center justify-center text-lg">
+                    ⚡
+                  </div>
                 </div>
-                <span className="text-xs font-black tracking-widest text-red-200 uppercase">
-                  BN HASHRATE BOOSTER
-                </span>
+                <div>
+                  <span className="text-[11px] font-black tracking-widest bg-gradient-to-r from-amber-300 via-rose-300 to-cyan-300 bg-clip-text text-transparent uppercase block leading-none">
+                    GHS ACCELERATOR
+                  </span>
+                  <span className="text-[9px] text-indigo-200/70 font-semibold mt-0.5 block">
+                    Daily 30-Stream Energy Grid
+                  </span>
+                </div>
               </div>
 
               {/* Reset Countdown Timer Badge */}
-              <div className="px-3 py-1 rounded-xl bg-black/50 border border-red-400/40 text-[10px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Resets in {watchAdCountdown || '24:00:00'}</span>
+              <div className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-[10.5px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0 shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>{watchAdCountdown || '24:00:00'}</span>
               </div>
             </div>
 
             {/* Live Stats Row */}
-            <div className="grid grid-cols-2 gap-2.5 my-3 relative z-10">
-              <div className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-md">
-                <span className="text-[9.5px] font-extrabold text-slate-300 uppercase tracking-wider block">
-                  COMPLETED TODAY
-                </span>
-                <span className="text-2xl font-black text-white font-mono mt-1 block">
-                  {totalWatches} <span className="text-xs text-red-300 font-sans font-medium">/ 30 ADS</span>
-                </span>
+            <div className="grid grid-cols-2 gap-3 my-3 relative z-10">
+              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">
+                    COMPLETED TODAY
+                  </span>
+                  <span className="text-xs">🎬</span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-white font-mono tracking-tight">
+                    {totalWatches}
+                  </span>
+                  <span className="text-[11px] font-bold text-indigo-300 font-sans">
+                    / 30 ADS
+                  </span>
+                </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-md">
-                <span className="text-[9.5px] font-extrabold text-slate-300 uppercase tracking-wider block">
-                  HASHRATE GAINED
-                </span>
-                <span className="text-2xl font-black text-[#00f090] font-mono mt-1 block">
-                  +{totalPowerFromAds} <span className="text-xs text-emerald-200 font-sans font-medium">GHS</span>
-                </span>
+              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-emerald-400/20 backdrop-blur-md relative overflow-hidden shadow-inner shadow-emerald-500/10">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black text-emerald-300 uppercase tracking-wider">
+                    HASHRATE BOOST
+                  </span>
+                  <span className="text-xs">⚡</span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-black text-[#00f090] font-mono tracking-tight">
+                    +{totalPowerFromAds}
+                  </span>
+                  <span className="text-[11px] font-black text-emerald-300 font-sans">
+                    GHS
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Total Daily Progress Bar */}
-            <div className="relative z-10 pt-2 space-y-1.5">
+            <div className="relative z-10 pt-1 space-y-1.5">
               <div className="flex items-center justify-between text-[10.5px] text-slate-300 font-bold">
-                <span>Daily Boost Capacity</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span>Total Daily Yield</span>
+                </span>
                 <span className="font-mono text-amber-300 font-black">
-                  {totalDailyPercent.toFixed(0)}% (+15.00 GHS Max)
+                  {totalDailyPercent.toFixed(0)}% <span className="text-slate-400 font-normal">(+15.00 GHS Max)</span>
                 </span>
               </div>
-              <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/10 p-0.5">
+              <div className="w-full h-3 bg-black/70 rounded-full overflow-hidden border border-white/15 p-0.5 shadow-inner">
                 <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-red-600 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 via-purple-500 to-cyan-400 rounded-full transition-all duration-700 relative overflow-hidden"
                   style={{ width: `${totalDailyPercent}%` }}
-                />
+                >
+                  <div className="absolute inset-0 bg-white/20 w-full animate-sweep-shimmer" />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ── 3 DEDICATED BN RED BATCH CARDS (10 WATCHES EACH = 30 TOTAL) ── */}
-          <div className="space-y-3">
+          {/* ── 3 DISTINCT THEMATIC AD BATCHES ── */}
+          <div className="space-y-3.5">
             {[
               {
                 id: 0,
-                title: 'Crimson Flame Booster',
-                badge: 'BATCH #1',
-                accentGrad: 'from-[#dc2626] via-[#ef4444] to-[#b91c1c]',
+                title: 'Solar Plasma Booster',
+                badgeText: 'BATCH 01 • SOLAR',
+                badgeTag: '🔥 2X HOT',
+                tagClass: 'bg-amber-100 text-amber-800 border-amber-300',
+                themeBg: 'bg-gradient-to-br from-[#ffffff] via-[#fffbeb] to-[#fef3c7]',
+                themeBorder: 'border-amber-200/90 shadow-amber-500/10',
+                iconBox: 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-amber-500/30',
                 icon: '🔥',
+                accentGrad: 'from-amber-500 via-orange-500 to-rose-600',
+                accentShadow: 'shadow-orange-500/30',
+                accentText: 'text-amber-600',
+                barGrad: 'from-amber-400 via-orange-500 to-rose-500',
+                nodeActiveBg: 'bg-amber-500 shadow-amber-500/50',
               },
               {
                 id: 1,
-                title: 'Scarlet Ruby Vanguard',
-                badge: 'BATCH #2',
-                accentGrad: 'from-[#e11d48] via-[#f43f5e] to-[#be123c]',
+                title: 'Quantum Sapphire Drive',
+                badgeText: 'BATCH 02 • QUANTUM',
+                badgeTag: '⚡ POPULAR',
+                tagClass: 'bg-cyan-100 text-cyan-800 border-cyan-300',
+                themeBg: 'bg-gradient-to-br from-[#ffffff] via-[#f0f9ff] to-[#e0f2fe]',
+                themeBorder: 'border-sky-200/90 shadow-cyan-500/10',
+                iconBox: 'bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-600 text-white shadow-blue-500/30',
                 icon: '⚡',
+                accentGrad: 'from-cyan-500 via-blue-600 to-indigo-600',
+                accentShadow: 'shadow-blue-500/30',
+                accentText: 'text-blue-600',
+                barGrad: 'from-cyan-400 via-blue-500 to-indigo-600',
+                nodeActiveBg: 'bg-cyan-500 shadow-cyan-500/50',
               },
               {
                 id: 2,
-                title: 'Phoenix Inferno Sovereign',
-                badge: 'BATCH #3',
-                accentGrad: 'from-[#b91c1c] via-[#dc2626] to-[#991b1b]',
-                icon: '👑',
+                title: 'Apex Matrix Sovereign',
+                badgeText: 'BATCH 03 • APEX',
+                badgeTag: '👑 MAX YIELD',
+                tagClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                themeBg: 'bg-gradient-to-br from-[#ffffff] via-[#f0fdf4] to-[#dcfce7]',
+                themeBorder: 'border-emerald-200/90 shadow-emerald-500/10',
+                iconBox: 'bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 text-white shadow-emerald-500/30',
+                icon: '💎',
+                accentGrad: 'from-emerald-500 via-teal-600 to-slate-900',
+                accentShadow: 'shadow-emerald-500/30',
+                accentText: 'text-emerald-700',
+                barGrad: 'from-emerald-400 via-teal-500 to-emerald-600',
+                nodeActiveBg: 'bg-emerald-500 shadow-emerald-500/50',
               },
             ].map((tier, i) => {
               const count = gigaAdState.counts[i] || 0
@@ -793,11 +849,14 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
               return (
                 <div
                   key={tier.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-2.5 relative overflow-hidden"
+                  className={`p-4 rounded-3xl ${tier.themeBg} border ${tier.themeBorder} shadow-lg flex flex-col gap-3 relative overflow-hidden transition-all duration-300 hover:shadow-xl`}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  {/* Top Badge Header Row */}
+                  <div className="flex items-center justify-between gap-2 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-xl shrink-0 font-black border border-red-100">
+                      <div
+                        className={`w-11 h-11 rounded-2xl ${tier.iconBox} flex items-center justify-center text-xl shrink-0 font-black shadow-md`}
+                      >
                         {isCompleted ? '👑' : tier.icon}
                       </div>
                       <div className="min-w-0">
@@ -805,16 +864,18 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                           <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
                             {tier.title}
                           </span>
-                          <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono shrink-0">
-                            {tier.badge}
+                          <span
+                            className={`text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full border shadow-xs ${tier.tagClass}`}
+                          >
+                            {tier.badgeTag}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span>
-                            Progress: <b className="text-slate-900 font-mono">{count}/{GIGA_ADS_PER_TIER}</b>
+                        <div className="text-[11px] text-slate-500 font-semibold mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                            {tier.badgeText}
                           </span>
                           <span>•</span>
-                          <span className="text-red-600 font-black font-mono">
+                          <span className={`${tier.accentText} font-black font-mono`}>
                             +{powerEarned} / +5.00 GHS
                           </span>
                         </div>
@@ -822,60 +883,95 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <span className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-[10px] font-mono whitespace-nowrap">
-                        +0.50 GHS/Ad
+                      <span className="px-2.5 py-1 rounded-xl bg-white/90 border border-slate-200/90 text-slate-800 font-black text-[10.5px] font-mono shadow-xs block">
+                        +0.50 GHS
                       </span>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/50">
-                    <div
-                      className="h-full bg-gradient-to-r from-rose-500 via-red-500 to-red-600 transition-all duration-500 rounded-full"
-                      style={{ width: `${progressPercent}%` }}
-                    />
+                  {/* 10-Node Visual Step Meter */}
+                  <div className="space-y-1 relative z-10">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                      <span>Batch Progress</span>
+                      <span className="font-mono text-slate-800 font-black">
+                        {count} / {GIGA_ADS_PER_TIER} Complete
+                      </span>
+                    </div>
+                    {/* Continuous Glowing Progress Bar */}
+                    <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden p-0.5 border border-slate-300/40">
+                      <div
+                        className={`h-full bg-gradient-to-r ${tier.barGrad} transition-all duration-500 rounded-full relative overflow-hidden`}
+                        style={{ width: `${progressPercent}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/30 animate-sweep-shimmer" />
+                      </div>
+                    </div>
+
+                    {/* 10 Visual Micro Energy Nodes */}
+                    <div className="grid grid-cols-10 gap-1 pt-0.5">
+                      {Array.from({ length: GIGA_ADS_PER_TIER }).map((_, nodeIdx) => {
+                        const isNodeDone = nodeIdx < count
+                        return (
+                          <div
+                            key={nodeIdx}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                              isNodeDone
+                                ? `${tier.nodeActiveBg} shadow-xs`
+                                : 'bg-slate-200/80'
+                            }`}
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
 
-                  {/* High-Energy BN Red Action Button */}
-                  {isCompleted ? (
-                    <div className="w-full py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm">
-                      <span>✓</span>
-                      <span>10/10 BATCH COMPLETED (+5.00 GHS)</span>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleWatchAdTask(i)}
-                      disabled={watchAdLoadingIndex !== null}
-                      className={`w-full py-3 rounded-xl bg-gradient-to-r ${tier.accentGrad} text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-500/25 active:scale-98 transition-all flex items-center justify-center gap-2 border border-red-400/40 ${
-                        isLoading ? 'opacity-80 cursor-wait' : 'hover:brightness-110'
-                      }`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Streaming Sponsor Video...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>🔥</span>
-                          <span>Watch Sponsor Video (+0.50 GHS)</span>
-                          <span className="font-mono text-[10px] bg-black/20 px-1.5 py-0.5 rounded-md">
-                            {count + 1}/10
-                          </span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  {/* Action Button */}
+                  <div className="relative z-10">
+                    {isCompleted ? (
+                      <div className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 border border-emerald-400/40">
+                        <span className="text-sm">✓</span>
+                        <span>10/10 BATCH COMPLETED (+5.00 GHS CLAIMED)</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleWatchAdTask(i)}
+                        disabled={watchAdLoadingIndex !== null}
+                        className={`w-full py-3.5 rounded-2xl bg-gradient-to-r ${tier.accentGrad} text-white font-black text-xs uppercase tracking-wider shadow-lg ${tier.accentShadow} active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group border border-white/20 ${
+                          isLoading ? 'opacity-80 cursor-wait' : 'hover:brightness-105'
+                        }`}
+                      >
+                        {/* Shimmer Sweep Overlay */}
+                        <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+                        {isLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Verifying Sponsor Video...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm animate-float-badge">{tier.icon}</span>
+                            <span>Watch Sponsor Video (+0.50 GHS)</span>
+                            <span className="font-mono text-[10px] bg-black/25 px-2 py-0.5 rounded-lg border border-white/20">
+                              {count + 1}/10
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )
             })}
           </div>
 
           {/* ── AUTO-CREDIT INSTANT VERIFICATION FOOTER ── */}
-          <div className="p-3 rounded-2xl bg-gradient-to-r from-red-50 via-rose-50 to-amber-50 border border-red-200/60 text-slate-700 text-xs flex items-center gap-2.5">
-            <span className="text-xl shrink-0">⚡</span>
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/70 text-slate-700 text-xs flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-lg shrink-0 border border-indigo-100">
+              ⚡
+            </div>
             <div className="text-[11px] leading-snug">
-              <span className="font-black text-red-700">Instant Automatic Hashrate:</span> Watching sponsor videos automatically verifies on-chain and credits your cloud mining power in real-time.
+              <span className="font-black text-indigo-900">Real-Time Blockchain Verification:</span> Watch full 10-second sponsor streams to automatically verify and permanently attach +0.50 GHS mining power to your cloud nodes.
             </div>
           </div>
         </div>
