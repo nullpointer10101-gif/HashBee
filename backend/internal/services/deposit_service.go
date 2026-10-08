@@ -305,9 +305,9 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				planID = "queen"
 			} else if strings.HasPrefix(upperComment, "PLAN_") {
 				isPlanDeposit = true
-				if amountGram >= 25.0 {
+				if amountGram >= 22.0 {
 					planID = "matrix"
-				} else if amountGram >= 12.0 {
+				} else if amountGram >= 9.0 {
 					planID = "apex"
 				} else if amountGram >= 6.0 {
 					planID = "titan"
@@ -375,12 +375,12 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	switch planID {
 	case "matrix":
 		planName = "Infinite Mega Whale Matrix"
-		costGRAM = 25.00
+		costGRAM = 22.00
 		returnGRAM = 50.00
 		maxPerAccount = 0
 	case "apex":
 		planName = "Apex Sovereign God Hive"
-		costGRAM = 12.00
+		costGRAM = 9.00
 		returnGRAM = 22.00
 		maxPerAccount = 0
 	case "titan":
