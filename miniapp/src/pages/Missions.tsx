@@ -56,128 +56,6 @@ function saveGigaAdState(state: GigaWatchAdState) {
   localStorage.setItem(LS_KEY_GIGA_ADS, JSON.stringify(state))
 }
 
-function showAd(): Promise<boolean> {
-  return new Promise((resolve) => {
-    let finished = false
-    const done = (success: boolean) => {
-      if (!finished) {
-        finished = true
-        resolve(success)
-      }
-    }
-
-    // Safety timeout: 12 seconds for AdExium response & presentation
-    const timer = setTimeout(() => {
-      console.log('[Missions] AdExium timeout reached, fallback triggered')
-      done(false)
-    }, 12000)
-
-    // 1. Try AdExium Interstitial/Rewarded Video
-    try {
-      let adex = (window as any).adexiumWidget
-      if (!adex && typeof (window as any).initAdexium === 'function') {
-        adex = (window as any).initAdexium()
-      }
-      if (!adex) {
-        const WidgetClass = (window as any).AdexiumWidget || (window as any).TGAdsWidget
-        if (WidgetClass) {
-          const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData)
-          adex = new WidgetClass({
-            wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-            adFormat: 'interstitial',
-            debug: !isInsideTg,
-          })
-          ;(window as any).adexiumWidget = adex
-        }
-      }
-
-      if (adex && typeof adex.requestAd === 'function') {
-        const handleReceived = (ad: any) => {
-          console.log('[Missions] AdExium adReceived! Displaying now...')
-          try {
-            if (typeof adex.displayAd === 'function') {
-              adex.displayAd(ad)
-            }
-          } catch (e) {
-            console.warn('[AdExium] displayAd error:', e)
-          }
-        }
-
-        const handleClosed = () => {
-          console.log('[Missions] AdExium adClosed -> User completed view')
-          cleanup()
-          clearTimeout(timer)
-          done(true)
-        }
-
-        const handleCompleted = () => {
-          console.log('[Missions] AdExium adPlaybackCompleted')
-          cleanup()
-          clearTimeout(timer)
-          done(true)
-        }
-
-        const handleNoAd = () => {
-          console.log('[Missions] AdExium noAdFound from network')
-          cleanup()
-          clearTimeout(timer)
-          done(false)
-        }
-
-        const handleError = (err: any) => {
-          console.warn('[Missions] AdExium requestAdError:', err)
-          cleanup()
-          clearTimeout(timer)
-          done(false)
-        }
-
-        const cleanup = () => {
-          if (typeof adex.off === 'function') {
-            try {
-              adex.off('adReceived', handleReceived)
-              adex.off('adClosed', handleClosed)
-              adex.off('adPlaybackCompleted', handleCompleted)
-              adex.off('noAdFound', handleNoAd)
-              adex.off('requestAdError', handleError)
-            } catch {}
-          }
-        }
-
-        if (typeof adex.on === 'function') {
-          adex.on('adReceived', handleReceived)
-          adex.on('adClosed', handleClosed)
-          adex.on('adPlaybackCompleted', handleCompleted)
-          adex.on('noAdFound', handleNoAd)
-          adex.on('requestAdError', handleError)
-        }
-
-        console.log('[Missions] Requesting AdExium interstitial rewarded...')
-        adex.requestAd('interstitial', true).then((ads: any) => {
-          if (Array.isArray(ads) && ads.length > 0) {
-            try {
-              if (typeof adex.displayAd === 'function') {
-                adex.displayAd(ads)
-              }
-            } catch (e) {
-              console.warn('[Missions] displayAd promise resolution error:', e)
-            }
-          }
-        }).catch((err: any) => {
-          console.warn('[Missions] requestAd promise error:', err)
-        })
-
-        return
-      }
-    } catch (err) {
-      console.warn('[Missions] AdExium request error:', err)
-    }
-
-    // If AdExium is not available
-    clearTimeout(timer)
-    done(false)
-  })
-}
-
 export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   const { t } = useLanguage()
   const location = useLocation()
@@ -287,15 +165,15 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
     async (taskIndex: number) => {
       const currentCount = gigaAdState.counts[taskIndex] || 0
       if (currentCount >= GIGA_ADS_PER_TIER) {
-        toast.error(`Tier ${taskIndex + 1} completed (${GIGA_ADS_PER_TIER}/${GIGA_ADS_PER_TIER})! Try another tier or wait for reset.`)
+        toast.error(`Tier ${taskIndex + 1} completed (${GIGA_ADS_PER_TIER}/${GIGA_ADS_PER_TIER})! Try another tier or wait for 24h reset.`)
         return
       }
       if (watchAdLoadingIndex !== null) return
 
       setWatchAdLoadingIndex(taskIndex)
-      toast.loading('🎬 Launching sponsor video...', { id: 'ad-load' })
+      toast.loading('🎬 Launching sponsor video... Please watch until the end to claim your reward!', { id: 'ad-load' })
 
-      let adResult = { success: false, provider: 'none' }
+      let adResult: { success: boolean; provider: string; duration: number } = { success: false, provider: 'none', duration: 0 }
       try {
         adResult = await showRewardedAdWithWaterfall('adexium')
       } catch (err) {
@@ -307,8 +185,10 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
 
       if (adResult.success) {
         await completeAdReward(taskIndex, adResult.provider)
+      } else if (adResult.provider === 'busy') {
+        toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
       } else {
-        toast.error('⚠️ Video ad not available right now. Please try again shortly!')
+        toast.error('⚠️ Video ad was closed early or not completed. Please watch the full video to receive +0.50 GHS mining power!')
       }
     },
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]

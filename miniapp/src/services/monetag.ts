@@ -1,140 +1,160 @@
 /**
  * Multi-Provider Ad Coordinator for HashBee
  * Primary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
- * Backup 1: GigaPub (App ID: 8543)
- * Backup 2: Adsgram (Reward Controller with fallback validation)
+ * Backup: GigaPub (App ID: 8543)
+ * Automatic Ad Schedule: Strictly every 2 minutes with safety mutex
  */
 
 declare global {
   interface Window {
     showGiga?: () => Promise<any>
-    Adsgram?: {
-      init: (params: { blockId: string; debug?: boolean }) => {
-        show: () => Promise<any>
-      }
-    }
     adexiumWidget?: any
     initAdexium?: () => any
     requestAdexiumAd?: (format?: string) => boolean
   }
 }
 
-export const isAdExiumReady = (): boolean => {
-  if (typeof window === 'undefined') return false
-  if (window.adexiumWidget) return true
-  if (typeof window.initAdexium === 'function') {
-    return !!window.initAdexium()
-  }
-  return false
-}
+// Global Ad Mutex: Ensures NEVER two ads play or load at the same time
+let isAdActive = false
+let lastAdEndedTimestamp = 0
+const MIN_AD_COOLDOWN_MS = 15_000 // 15s between ambient ads
 
-let lastAdTimestamp = 0
-const AD_COOLDOWN_MS = 30_000 // 30 seconds between ambient ads
+export const isAnyAdActive = (): boolean => isAdActive
 
 /**
- * 1. AdExium Player
+ * 1. AdExium Rewarded Video Player with Strict Cleanup
  */
 export const showAdexiumAd = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
 
-  if (typeof window.initAdexium === 'function') {
-    window.initAdexium()
-  }
-
   return new Promise((resolve) => {
-    let finished = false
-    const done = (success: boolean) => {
-      if (!finished) {
-        finished = true
+    let resolved = false
+    let isDisplaying = false
+    let adStartTime = 0
+
+    const finish = (success: boolean) => {
+      if (!resolved) {
+        resolved = true
+        cleanup()
         resolve(success)
       }
     }
 
-    const timer = setTimeout(() => {
-      done(false)
-    }, 8000)
+    // Safety timeout: 10s to get response
+    const timeoutTimer = setTimeout(() => {
+      if (!isDisplaying) {
+        console.log('[AdExium] Request timeout (no ad returned in 10s)')
+        finish(false)
+      }
+    }, 10000)
 
-    try {
-      let adex = window.adexiumWidget
-      if (!adex && typeof window.initAdexium === 'function') {
+    let adex = window.adexiumWidget
+    if (!adex && typeof window.initAdexium === 'function') {
+      try {
         adex = window.initAdexium()
+      } catch (e) {
+        console.warn('[AdExium] init error:', e)
       }
-
-      if (adex && typeof adex.requestAd === 'function') {
-        const handleReceived = (ad: any) => {
-          try {
-            if (typeof adex.displayAd === 'function') {
-              adex.displayAd(ad)
-            }
-          } catch {}
-        }
-
-        const handleClosed = () => {
-          cleanup()
-          clearTimeout(timer)
-          done(true)
-        }
-
-        const handleCompleted = () => {
-          cleanup()
-          clearTimeout(timer)
-          done(true)
-        }
-
-        const handleNoAd = () => {
-          cleanup()
-          clearTimeout(timer)
-          done(false)
-        }
-
-        const handleError = () => {
-          cleanup()
-          clearTimeout(timer)
-          done(false)
-        }
-
-        const cleanup = () => {
-          if (typeof adex.off === 'function') {
-            try {
-              adex.off('adReceived', handleReceived)
-              adex.off('adClosed', handleClosed)
-              adex.off('adPlaybackCompleted', handleCompleted)
-              adex.off('noAdFound', handleNoAd)
-              adex.off('requestAdError', handleError)
-            } catch {}
-          }
-        }
-
-        if (typeof adex.on === 'function') {
-          adex.on('adReceived', handleReceived)
-          adex.on('adClosed', handleClosed)
-          adex.on('adPlaybackCompleted', handleCompleted)
-          adex.on('noAdFound', handleNoAd)
-          adex.on('requestAdError', handleError)
-        }
-
-        adex.requestAd('interstitial', true).then((ads: any) => {
-          if (Array.isArray(ads) && ads.length > 0) {
-            try {
-              if (typeof adex.displayAd === 'function') {
-                adex.displayAd(ads)
-              }
-            } catch {}
-          }
-        }).catch(() => {
-          cleanup()
-          clearTimeout(timer)
-          done(false)
-        })
-
-        return
-      }
-    } catch (e) {
-      console.warn('[Ads] AdExium request error:', e)
     }
 
-    clearTimeout(timer)
-    done(false)
+    if (!adex || typeof adex.requestAd !== 'function') {
+      clearTimeout(timeoutTimer)
+      finish(false)
+      return
+    }
+
+    const handleReceived = (ad: any) => {
+      console.log('[AdExium] Ad received from network. Displaying...')
+      isDisplaying = true
+      adStartTime = Date.now()
+      clearTimeout(timeoutTimer)
+      try {
+        if (typeof adex.displayAd === 'function') {
+          adex.displayAd(ad)
+        }
+      } catch (err) {
+        console.warn('[AdExium] displayAd error:', err)
+        finish(false)
+      }
+    }
+
+    const handleCompleted = () => {
+      console.log('✅ [AdExium] Playback completed by user')
+      const durationSec = (Date.now() - adStartTime) / 1000
+      // Ensure real playback happened
+      if (durationSec >= 4 || isDisplaying) {
+        finish(true)
+      } else {
+        finish(false)
+      }
+    }
+
+    const handleClosed = () => {
+      console.log('[AdExium] Ad closed')
+      const durationSec = (Date.now() - adStartTime) / 1000
+      // If watched for at least 8 seconds or completed
+      if (isDisplaying && durationSec >= 8) {
+        finish(true)
+      } else {
+        finish(false)
+      }
+    }
+
+    const handleNoAd = () => {
+      console.log('[AdExium] No ad available (no-fill)')
+      finish(false)
+    }
+
+    const handleError = (err: any) => {
+      console.warn('[AdExium] Error during request:', err)
+      finish(false)
+    }
+
+    const cleanup = () => {
+      clearTimeout(timeoutTimer)
+      if (adex && typeof adex.off === 'function') {
+        try {
+          adex.off('adReceived', handleReceived)
+          adex.off('adPlaybackCompleted', handleCompleted)
+          adex.off('adClosed', handleClosed)
+          adex.off('noAdFound', handleNoAd)
+          adex.off('requestAdError', handleError)
+        } catch {}
+      }
+    }
+
+    if (typeof adex.on === 'function') {
+      adex.on('adReceived', handleReceived)
+      adex.on('adPlaybackCompleted', handleCompleted)
+      adex.on('adClosed', handleClosed)
+      adex.on('noAdFound', handleNoAd)
+      adex.on('requestAdError', handleError)
+    }
+
+    try {
+      adex.requestAd('interstitial', true).then((ads: any) => {
+        if (Array.isArray(ads) && ads.length > 0) {
+          isDisplaying = true
+          adStartTime = Date.now()
+          clearTimeout(timeoutTimer)
+          try {
+            if (typeof adex.displayAd === 'function') {
+              adex.displayAd(ads)
+            }
+          } catch {
+            finish(false)
+          }
+        } else if (Array.isArray(ads) && ads.length === 0) {
+          finish(false)
+        }
+      }).catch((e: any) => {
+        console.warn('[AdExium] requestAd promise rejected:', e)
+        finish(false)
+      })
+    } catch (e) {
+      console.warn('[AdExium] requestAd exception:', e)
+      finish(false)
+    }
   })
 }
 
@@ -146,12 +166,14 @@ export const showGigaPubAd = async (): Promise<boolean> => {
 
   if (typeof window.showGiga === 'function') {
     try {
-      console.log('[Ads] Requesting GigaPub ad (App ID: 8543)...')
+      console.log('[GigaPub] Requesting ad (App ID: 8543)...')
+      const gigaStartTime = Date.now()
       await window.showGiga()
-      console.log('✅ [Ads] GigaPub ad completed successfully!')
+      const duration = (Date.now() - gigaStartTime) / 1000
+      console.log(`✅ [GigaPub] Completed in ${duration.toFixed(1)}s`)
       return true
     } catch (err) {
-      console.warn('[Ads] GigaPub ad error/skipped:', err)
+      console.warn('[GigaPub] Playback closed or error:', err)
       return false
     }
   }
@@ -160,112 +182,115 @@ export const showGigaPubAd = async (): Promise<boolean> => {
 }
 
 /**
- * 3. Adsgram Player (Backup Provider with proper validation)
- */
-export const showAdsgramAd = async (blockId = 'int-8543'): Promise<boolean> => {
-  if (typeof window === 'undefined') return false
-
-  if (window.Adsgram) {
-    try {
-      console.log('[Ads] Requesting Adsgram ad...')
-      const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData)
-      const controller = window.Adsgram.init({
-        blockId: blockId,
-        debug: !isInsideTg,
-      })
-      await controller.show()
-      console.log('✅ [Ads] Adsgram ad completed successfully!')
-      return true
-    } catch (err) {
-      console.warn('[Ads] Adsgram ad error/no-fill:', err)
-      return false
-    }
-  }
-
-  return false
-}
-
-/**
- * Full Waterfall / Cascade Rewarded Ad Player:
- * Priority 1: AdExium (Primary Provider)
- * Priority 2: GigaPub (Backup Provider, App ID 8543)
- * Priority 3: Fallback (In-App Interactive Booster Modal)
+ * Full Sequential Waterfall:
+ * 1. Checks global mutex (prevents concurrent ads).
+ * 2. Try AdExium first.
+ * 3. ONLY if AdExium fails/no-fill, try GigaPub as backup.
  */
 export const showRewardedAdWithWaterfall = async (
   preferredProvider: 'adexium' | 'gigapub' | 'any' = 'adexium'
-): Promise<{ success: boolean; provider: string }> => {
-  if (typeof window === 'undefined') return { success: false, provider: 'none' }
+): Promise<{ success: boolean; provider: string; duration: number }> => {
+  if (typeof window === 'undefined') return { success: false, provider: 'none', duration: 0 }
 
-  // 1. Primary Provider: AdExium (unless gigapub explicitly prioritized)
-  if (preferredProvider !== 'gigapub') {
-    console.log('[Ads] Waterfall Step 1/2: Requesting AdExium primary provider...')
-    const adexSuccess = await showAdexiumAd()
-    if (adexSuccess) {
-      console.log('✅ [Ads] AdExium ad delivered and completed!')
-      return { success: true, provider: 'AdExium' }
+  if (isAdActive) {
+    console.warn('[Ads] Another ad is currently active. Request ignored.')
+    return { success: false, provider: 'busy', duration: 0 }
+  }
+
+  isAdActive = true
+  const sessionStart = Date.now()
+
+  try {
+    // 1. Primary: AdExium
+    if (preferredProvider !== 'gigapub') {
+      console.log('[Ads] Step 1/2: Requesting AdExium primary provider...')
+      const adexSuccess = await showAdexiumAd()
+      if (adexSuccess) {
+        const totalDuration = (Date.now() - sessionStart) / 1000
+        lastAdEndedTimestamp = Date.now()
+        console.log('✅ [Ads] AdExium successfully finished!')
+        return { success: true, provider: 'AdExium', duration: totalDuration }
+      }
+      console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
     }
-    console.log('⚠️ [Ads] AdExium unavailable / no fill. Cascading to GigaPub backup...')
-  }
 
-  // 2. Backup Provider: GigaPub (App ID 8543)
-  console.log('[Ads] Waterfall Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
-  const gigaSuccess = await showGigaPubAd()
-  if (gigaSuccess) {
-    console.log('✅ [Ads] GigaPub ad delivered and completed!')
-    return { success: true, provider: 'GigaPub' }
-  }
-
-  // 3. Fallback: If gigapub was preferred and failed, try AdExium once more
-  if (preferredProvider === 'gigapub') {
-    console.log('[Ads] Waterfall fallback: Trying AdExium...')
-    const adexSuccess = await showAdexiumAd()
-    if (adexSuccess) {
-      return { success: true, provider: 'AdExium' }
+    // 2. Backup: GigaPub (App ID 8543)
+    console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
+    const gigaSuccess = await showGigaPubAd()
+    if (gigaSuccess) {
+      const totalDuration = (Date.now() - sessionStart) / 1000
+      lastAdEndedTimestamp = Date.now()
+      console.log('✅ [Ads] GigaPub successfully finished!')
+      return { success: true, provider: 'GigaPub', duration: totalDuration }
     }
-  }
 
-  console.log('ℹ️ [Ads] All ad networks exhausted / no fill. Launching interactive in-app booster fallback.')
-  return { success: false, provider: 'none' }
+    // 3. Fallback: If gigapub was preferred and failed, try AdExium once
+    if (preferredProvider === 'gigapub') {
+      console.log('[Ads] Waterfall fallback to AdExium...')
+      const adexSuccess = await showAdexiumAd()
+      if (adexSuccess) {
+        const totalDuration = (Date.now() - sessionStart) / 1000
+        lastAdEndedTimestamp = Date.now()
+        return { success: true, provider: 'AdExium', duration: totalDuration }
+      }
+    }
+
+    console.log('ℹ️ [Ads] No video ad available from any provider.')
+    return { success: false, provider: 'none', duration: 0 }
+  } finally {
+    isAdActive = false
+    lastAdEndedTimestamp = Date.now()
+  }
 }
 
 /**
- * Interstitial helper
+ * Ambient Interstitial Helper (used for periodic 2-minute ads)
  */
 export const showInterstitialAd = async (force = false): Promise<boolean> => {
   if (typeof window === 'undefined') return false
+  if (isAdActive) return false
 
   const now = Date.now()
-  if (!force && now - lastAdTimestamp < AD_COOLDOWN_MS) {
+  if (!force && now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) {
     return false
   }
-  lastAdTimestamp = now
 
-  const res = await showRewardedAdWithWaterfall('any')
+  // Check if page is hidden
+  if (typeof document !== 'undefined' && document.hidden) {
+    return false
+  }
+
+  const res = await showRewardedAdWithWaterfall('adexium')
   return res.success
 }
 
-export const showRewardedInterstitial = showInterstitialAd
-export const showRewardedPopup = async (): Promise<boolean> => showInterstitialAd(true)
-
-let hasInitialized = false
-let periodicTimer: ReturnType<typeof setInterval> | null = null
+let hasInitializedAutoAds = false
+let periodicAutoAdTimer: ReturnType<typeof setInterval> | null = null
 
 /**
- * Initialize automatic background ads (every 90s)
+ * Initialize automatic background ads strictly every 2 minutes (120,000ms)
  */
 export const initMonetagAutoAds = () => {
-  if (typeof window === 'undefined' || hasInitialized) return
-  hasInitialized = true
+  if (typeof window === 'undefined' || hasInitializedAutoAds) return
+  hasInitializedAutoAds = true
 
+  // Initial gentle ad after 20 seconds of user activity (not immediately on open)
   setTimeout(() => {
-    showInterstitialAd(true).catch(() => {})
-  }, 2000)
+    if (!isAdActive && location.pathname !== '/watch') {
+      showInterstitialAd(false).catch(() => {})
+    }
+  }, 20000)
 
-  if (periodicTimer) {
-    clearInterval(periodicTimer)
+  if (periodicAutoAdTimer) {
+    clearInterval(periodicAutoAdTimer)
   }
 
-  periodicTimer = setInterval(() => {
-    showInterstitialAd(true).catch(() => {})
-  }, 90000)
+  // Exactly 2 Minutes (120,000 ms) Interval
+  periodicAutoAdTimer = setInterval(() => {
+    // Only show if user is not in the middle of another ad or actively on watch tab
+    if (!isAdActive && location.pathname !== '/watch') {
+      showInterstitialAd(false).catch(() => {})
+    }
+  }, 120000)
 }
+
