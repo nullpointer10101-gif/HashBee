@@ -207,6 +207,15 @@ export const completeMission = async (missionId: string): Promise<{ reward_honey
   }
 }
 
+export const rewardAdWatch = async (provider = 'GigaPub', optionIndex = 0): Promise<{ power_gained: number; new_bp: number; message: string }> => {
+  const res = await api.post('/api/ads/reward', { provider, option_index: optionIndex })
+  return {
+    power_gained: Number(res.data?.power_gained || 0.5),
+    new_bp: Number(res.data?.new_bp || 0),
+    message: res.data?.message || '+0.5 GHS Added!',
+  }
+}
+
 export const fetchReferrals = async (): Promise<ReferralSummary> => {
   const res = await api.get('/api/swarm')
   const swarm = res.data?.swarm || {}

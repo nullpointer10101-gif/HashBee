@@ -178,6 +178,32 @@ func (h *UserHandler) Checkin(c *gin.Context) {
 	})
 }
 
+// POST /api/ads/reward — Credit +0.5 GHS reward for watching an ad
+func (h *UserHandler) RewardAd(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+
+	var req struct {
+		Provider    string `json:"provider"`
+		OptionIndex int    `json:"option_index"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if req.Provider == "" {
+		req.Provider = "GigaPub"
+	}
+
+	powerGained, newBP, err := h.userSvc.RewardAdWatch(c.Request.Context(), user.ID, req.Provider, req.OptionIndex)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"power_gained": powerGained,
+		"new_bp":       newBP,
+		"message":      fmt.Sprintf("+%.1f GHS Mining Power Added!", powerGained),
+	})
+}
+
 // GET /api/history — Transaction history
 func (h *UserHandler) GetHistory(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)

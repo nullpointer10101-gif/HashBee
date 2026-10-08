@@ -352,6 +352,9 @@ func main() {
 		// Viral 10 GRAM 7-Day Referral Bounty Event
 		protected.GET("/viral-bounty", viralBountyHandler.GetBountyInfo)
 		protected.POST("/viral-bounty/claim", viralBountyHandler.CreateClaim)
+
+		// Rewarded Ads (GigaPub, Adsgram, AdExium)
+		protected.POST("/ads/reward", userHandler.RewardAd)
 	}
 
 	// =====================================================

@@ -6,7 +6,9 @@ import {
   createCampaign,
   fetchMyCampaigns,
   checkDeposit,
+  rewardAdWatch,
 } from '../services/api'
+import { showRewardedAdWithWaterfall } from '../services/monetag'
 import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -14,36 +16,39 @@ import toast from 'react-hot-toast'
 
 type ViewMode = 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
-const WATCH_AD_TASKS_COUNT = 3
-const WATCH_AD_REFRESH_MS = 2 * 60 * 60 * 1000 // 2 hours
-const WATCH_AD_POWER_REWARD = 1 // 1 GHS Mining Power
-const LS_KEY_WATCH_ADS = 'hb_watch_ad_tasks_v2'
+const GIGA_TASKS_COUNT = 3
+const GIGA_ADS_PER_TIER = 10
+const GIGA_POWER_PER_AD = 0.5 // +0.5 GHS each watch
+const GIGA_REFRESH_MS = 24 * 60 * 60 * 1000 // 24 hours daily cycle
+const LS_KEY_GIGA_ADS = 'hb_gigapub_tasks_v3'
 
-interface WatchAdState {
+interface GigaWatchAdState {
   windowStart: number
-  completed: number[]
+  counts: [number, number, number] // progress in each of the 3 options [0..10, 0..10, 0..10]
 }
 
-function loadWatchAdState(): WatchAdState {
+function loadGigaAdState(): GigaWatchAdState {
   try {
-    const raw = localStorage.getItem(LS_KEY_WATCH_ADS)
+    const raw = localStorage.getItem(LS_KEY_GIGA_ADS)
     if (raw) {
-      const parsed: WatchAdState = JSON.parse(raw)
-      if (Date.now() - parsed.windowStart >= WATCH_AD_REFRESH_MS) {
-        const fresh = { windowStart: Date.now(), completed: [] }
-        localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(fresh))
+      const parsed: GigaWatchAdState = JSON.parse(raw)
+      if (Date.now() - parsed.windowStart >= GIGA_REFRESH_MS) {
+        const fresh: GigaWatchAdState = { windowStart: Date.now(), counts: [0, 0, 0] }
+        localStorage.setItem(LS_KEY_GIGA_ADS, JSON.stringify(fresh))
         return fresh
       }
-      return parsed
+      if (Array.isArray(parsed.counts) && parsed.counts.length === 3) {
+        return parsed
+      }
     }
   } catch {}
-  const fresh = { windowStart: Date.now(), completed: [] }
-  localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(fresh))
+  const fresh: GigaWatchAdState = { windowStart: Date.now(), counts: [0, 0, 0] }
+  localStorage.setItem(LS_KEY_GIGA_ADS, JSON.stringify(fresh))
   return fresh
 }
 
-function saveWatchAdState(state: WatchAdState) {
-  localStorage.setItem(LS_KEY_WATCH_ADS, JSON.stringify(state))
+function saveGigaAdState(state: GigaWatchAdState) {
+  localStorage.setItem(LS_KEY_GIGA_ADS, JSON.stringify(state))
 }
 
 function showAd(): Promise<boolean> {
@@ -191,7 +196,7 @@ export const Missions: React.FC = () => {
   const { user, refreshUser } = useAuth()
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
 
-  const [watchAdState, setWatchAdState] = useState<WatchAdState>(loadWatchAdState)
+  const [gigaAdState, setGigaAdState] = useState<GigaWatchAdState>(loadGigaAdState)
   const [watchAdLoadingIndex, setWatchAdLoadingIndex] = useState<number | null>(null)
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
   const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -202,19 +207,19 @@ export const Missions: React.FC = () => {
   const [inAppAdCountdown, setInAppAdCountdown] = useState(5)
   const [inAppAdCanClaim, setInAppAdCanClaim] = useState(false)
 
-  // 2-Hour Watch Ad Refresh Timer Ticker
+  // 24-Hour Watch Ad Refresh Timer Ticker
   useEffect(() => {
     const updateCountdown = () => {
       const now = Date.now()
-      const elapsed = now - watchAdState.windowStart
-      if (elapsed >= WATCH_AD_REFRESH_MS) {
-        // 2 hours passed! Reset tasks
-        const fresh: WatchAdState = { windowStart: now, completed: [] }
-        setWatchAdState(fresh)
-        saveWatchAdState(fresh)
-        setWatchAdCountdown('02:00:00')
+      const elapsed = now - gigaAdState.windowStart
+      if (elapsed >= GIGA_REFRESH_MS) {
+        // 24 hours passed! Reset all 3 task batches
+        const fresh: GigaWatchAdState = { windowStart: now, counts: [0, 0, 0] }
+        setGigaAdState(fresh)
+        saveGigaAdState(fresh)
+        setWatchAdCountdown('24:00:00')
       } else {
-        const remainingSec = Math.max(0, Math.floor((WATCH_AD_REFRESH_MS - elapsed) / 1000))
+        const remainingSec = Math.max(0, Math.floor((GIGA_REFRESH_MS - elapsed) / 1000))
         const hours = Math.floor(remainingSec / 3600)
         const mins = Math.floor((remainingSec % 3600) / 60)
         const secs = remainingSec % 60
@@ -227,7 +232,7 @@ export const Missions: React.FC = () => {
     updateCountdown()
     const timer = setInterval(updateCountdown, 1000)
     return () => clearInterval(timer)
-  }, [watchAdState.windowStart])
+  }, [gigaAdState.windowStart])
 
   useEffect(() => {
     let adInterval: any = null
@@ -247,33 +252,40 @@ export const Missions: React.FC = () => {
     }
   }, [showInAppAdModal, inAppAdCountdown])
 
-  const completeAdReward = async (taskIndex: number) => {
-    setWatchAdState((prev) => {
-      const nextCompleted = [...new Set([...prev.completed, taskIndex])]
-      const updated: WatchAdState = { ...prev, completed: nextCompleted }
-      saveWatchAdState(updated)
+  const completeAdReward = async (taskIndex: number, provider = 'GigaPub') => {
+    let powerAdded = GIGA_POWER_PER_AD
+    try {
+      const res = await rewardAdWatch(provider, taskIndex)
+      powerAdded = res.power_gained || GIGA_POWER_PER_AD
+    } catch {}
+
+    setGigaAdState((prev) => {
+      const newCounts: [number, number, number] = [...prev.counts]
+      newCounts[taskIndex] = Math.min(GIGA_ADS_PER_TIER, (newCounts[taskIndex] || 0) + 1)
+      const updated: GigaWatchAdState = { ...prev, counts: newCounts }
+      saveGigaAdState(updated)
       return updated
     })
 
-    try {
-      await completeMission(`watch_ad_${taskIndex + 1}`)
-    } catch {}
-
-    toast.success(`🎉 +${WATCH_AD_POWER_REWARD} GHS Mining Power added!`)
+    toast.success(`🎉 +${powerAdded.toFixed(2)} GHS Mining Power added! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
     await refreshUser()
   }
 
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
-      if (watchAdState.completed.includes(taskIndex)) return
+      const currentCount = gigaAdState.counts[taskIndex] || 0
+      if (currentCount >= GIGA_ADS_PER_TIER) {
+        toast.error(`Tier ${taskIndex + 1} completed (${GIGA_ADS_PER_TIER}/${GIGA_ADS_PER_TIER})! Try another tier or wait for reset.`)
+        return
+      }
       if (watchAdLoadingIndex !== null) return
 
       setWatchAdLoadingIndex(taskIndex)
-      toast.loading('🎬 Launching video booster ad...', { id: 'ad-load' })
+      toast.loading('🎬 Launching GigaPub video ad...', { id: 'ad-load' })
 
-      let adPlayed = false
+      let adResult = { success: false, provider: 'none' }
       try {
-        adPlayed = await showAd()
+        adResult = await showRewardedAdWithWaterfall('gigapub')
       } catch (err) {
         console.warn('Ad playback error:', err)
       } finally {
@@ -281,18 +293,18 @@ export const Missions: React.FC = () => {
         setWatchAdLoadingIndex(null)
       }
 
-      if (adPlayed) {
-        await completeAdReward(taskIndex)
+      if (adResult.success) {
+        await completeAdReward(taskIndex, adResult.provider)
         return
       }
 
-      // If network ad is pending / blocked, launch interactive in-app booster player
+      // If network ad has no inventory, launch interactive in-app booster player fallback
       setAdPlayingTaskIndex(taskIndex)
       setInAppAdCountdown(5)
       setInAppAdCanClaim(false)
       setShowInAppAdModal(true)
     },
-    [watchAdState.completed, watchAdLoadingIndex, refreshUser]
+    [gigaAdState.counts, watchAdLoadingIndex, refreshUser]
   )
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
@@ -815,68 +827,87 @@ export const Missions: React.FC = () => {
         </div>
       </div>
 
-      {/* ── SECTION 0: WATCH AD TASKS (REFRESH EVERY 2 HOURS) ─────────── */}
+      {/* ── SECTION 0: GIGAPUB WATCH AD REWARDS (3 OPTIONS x 10 WATCHES = 30 TOTAL) ─────────── */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <span>📺</span> WATCH AD REWARDS
+          <span className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span>📺</span> GIGAPUB WATCH BOOSTERS (30 DAILY)
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-mono font-extrabold text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+            <span className="text-[9px] font-mono font-extrabold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span>Resets in {watchAdCountdown || '02:00:00'}</span>
+              <span>Resets in {watchAdCountdown || '24:00:00'}</span>
             </span>
             <span className="text-[9px] font-extrabold text-[#0088ff] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-              +{WATCH_AD_POWER_REWARD} GHS
+              +0.50 GHS / Ad
             </span>
           </div>
         </div>
 
-        <div className="space-y-2">
-          {Array.from({ length: WATCH_AD_TASKS_COUNT }, (_, i) => {
-            const isDone = watchAdState.completed.includes(i)
+        <div className="space-y-2.5">
+          {[
+            { id: 0, title: '⚡ GigaPub Boost Option #1', badge: 'BATCH 1', color: 'from-amber-500 to-orange-500' },
+            { id: 1, title: '⚡ GigaPub Boost Option #2', badge: 'BATCH 2', color: 'from-purple-500 to-indigo-500' },
+            { id: 2, title: '⚡ GigaPub Boost Option #3', badge: 'BATCH 3', color: 'from-emerald-500 to-teal-500' },
+          ].map((tier, i) => {
+            const count = gigaAdState.counts[i] || 0
+            const isCompleted = count >= GIGA_ADS_PER_TIER
             const isLoading = watchAdLoadingIndex === i
-            const allPreviousDone = i === 0 || watchAdState.completed.includes(i - 1)
-            const isLocked = !isDone && !allPreviousDone
+            const progressPercent = Math.min(100, (count / GIGA_ADS_PER_TIER) * 100)
+            const powerEarned = (count * GIGA_POWER_PER_AD).toFixed(2)
 
             return (
-              <div key={i} className="mine-card p-3.5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0088ff] flex items-center justify-center text-sm shrink-0 font-black">
-                    {isDone ? '✅' : isLoading ? '⏳' : isLocked ? '🔒' : '📺'}
+              <div key={tier.id} className="mine-card p-3.5 flex flex-col gap-2.5 border border-slate-200/90 shadow-sm bg-white">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-base shrink-0 font-black shadow-inner">
+                      {isCompleted ? '👑' : isLoading ? '⏳' : '📺'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-slate-900">{tier.title}</span>
+                        <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 font-mono">
+                          {tier.badge}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                        <span>Progress: <b className="text-slate-900 font-mono font-bold">{count}/{GIGA_ADS_PER_TIER}</b></span>
+                        <span>•</span>
+                        <span className="text-[#0088ff] font-bold font-mono">+{powerEarned} / +5.00 GHS</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-black text-slate-900">
-                      Watch Booster Ad #{i + 1}
-                    </div>
-                    <div className="text-[10px] text-[#0088ff] font-bold mt-0.5 font-mono">
-                      {isDone ? `+${WATCH_AD_POWER_REWARD} GHS Claimed ✓` : isLoading ? 'Loading Video Ad...' : `+${WATCH_AD_POWER_REWARD} GHS Mining Power`}
-                    </div>
+
+                  <div className="shrink-0">
+                    {isCompleted ? (
+                      <span className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                        <span>✓</span>
+                        <span>10/10 DONE</span>
+                      </span>
+                    ) : isLoading ? (
+                      <span className="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 font-extrabold text-[11px] animate-pulse flex items-center gap-1">
+                        <span>⏳</span>
+                        <span>Playing...</span>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleWatchAdTask(i)}
+                        disabled={watchAdLoadingIndex !== null}
+                        className="px-3.5 py-2 rounded-xl btn-primary-blue font-black text-[11px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-1"
+                      >
+                        <span>▶</span>
+                        <span>Watch (+0.5 GHS)</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="shrink-0">
-                  {isDone ? (
-                    <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-[10px]">
-                      ✓ Done
-                    </span>
-                  ) : isLoading ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 font-extrabold text-xs animate-pulse">
-                      Loading...
-                    </span>
-                  ) : isLocked ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-extrabold text-xs">
-                      Locked
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleWatchAdTask(i)}
-                      disabled={watchAdLoadingIndex !== null}
-                      className="px-4 py-2 rounded-xl btn-primary-blue font-black text-xs uppercase shadow-sm active:scale-95 transition-transform"
-                    >
-                      ▶ Watch
-                    </button>
-                  )}
+                {/* Progress bar */}
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${tier.color} transition-all duration-500 rounded-full`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
                 </div>
               </div>
             )
@@ -1126,7 +1157,7 @@ export const Missions: React.FC = () => {
                 </div>
                 <div className="text-xs text-emerald-400 font-extrabold mt-0.5 flex items-center justify-center gap-1">
                   <span>🎁 Reward:</span>
-                  <span className="text-amber-300 font-black">+{WATCH_AD_POWER_REWARD} GHS Mining Power</span>
+                  <span className="text-amber-300 font-black">+0.50 GHS Mining Power</span>
                 </div>
               </div>
 
@@ -1135,7 +1166,7 @@ export const Missions: React.FC = () => {
                 <button
                   onClick={async () => {
                     if (adPlayingTaskIndex !== null) {
-                      await completeAdReward(adPlayingTaskIndex)
+                      await completeAdReward(adPlayingTaskIndex, 'InAppBooster')
                     }
                     setShowInAppAdModal(false)
                     setAdPlayingTaskIndex(null)
@@ -1143,7 +1174,7 @@ export const Missions: React.FC = () => {
                   className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/35 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <span>🎉</span>
-                  <span>Claim +{WATCH_AD_POWER_REWARD} GHS Mining Reward</span>
+                  <span>Claim +0.50 GHS Mining Reward</span>
                 </button>
               ) : (
                 <button

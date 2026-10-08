@@ -1,93 +1,264 @@
 /**
- * Exclusive Ad Coordinator for HashBee
- * Provider: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
+ * Multi-Provider Ad Coordinator for HashBee
+ * Primary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
+ * Backup 1: GigaPub (App ID: 8543)
+ * Backup 2: Adsgram (Reward Controller with fallback validation)
  */
+
+declare global {
+  interface Window {
+    showGiga?: () => Promise<any>
+    Adsgram?: {
+      init: (params: { blockId: string; debug?: boolean }) => {
+        show: () => Promise<any>
+      }
+    }
+    adexiumWidget?: any
+    initAdexium?: () => any
+    requestAdexiumAd?: (format?: string) => boolean
+  }
+}
 
 export const isAdExiumReady = (): boolean => {
   if (typeof window === 'undefined') return false
-  if ((window as any).adexiumWidget) return true
-  if (typeof (window as any).initAdexium === 'function') {
-    return !!(window as any).initAdexium()
+  if (window.adexiumWidget) return true
+  if (typeof window.initAdexium === 'function') {
+    return !!window.initAdexium()
   }
   return false
 }
 
 let lastAdTimestamp = 0
-const AD_COOLDOWN_MS = 45_000 // 45 seconds
+const AD_COOLDOWN_MS = 30_000 // 30 seconds between ambient ads
 
 /**
- * Show Interstitial/Rewarded Ad using AdExium exclusively
+ * 1. AdExium Player
+ */
+export const showAdexiumAd = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false
+
+  if (typeof window.initAdexium === 'function') {
+    window.initAdexium()
+  }
+
+  return new Promise((resolve) => {
+    let finished = false
+    const done = (success: boolean) => {
+      if (!finished) {
+        finished = true
+        resolve(success)
+      }
+    }
+
+    const timer = setTimeout(() => {
+      done(false)
+    }, 8000)
+
+    try {
+      let adex = window.adexiumWidget
+      if (!adex && typeof window.initAdexium === 'function') {
+        adex = window.initAdexium()
+      }
+
+      if (adex && typeof adex.requestAd === 'function') {
+        const handleReceived = (ad: any) => {
+          try {
+            if (typeof adex.displayAd === 'function') {
+              adex.displayAd(ad)
+            }
+          } catch {}
+        }
+
+        const handleClosed = () => {
+          cleanup()
+          clearTimeout(timer)
+          done(true)
+        }
+
+        const handleCompleted = () => {
+          cleanup()
+          clearTimeout(timer)
+          done(true)
+        }
+
+        const handleNoAd = () => {
+          cleanup()
+          clearTimeout(timer)
+          done(false)
+        }
+
+        const handleError = () => {
+          cleanup()
+          clearTimeout(timer)
+          done(false)
+        }
+
+        const cleanup = () => {
+          if (typeof adex.off === 'function') {
+            try {
+              adex.off('adReceived', handleReceived)
+              adex.off('adClosed', handleClosed)
+              adex.off('adPlaybackCompleted', handleCompleted)
+              adex.off('noAdFound', handleNoAd)
+              adex.off('requestAdError', handleError)
+            } catch {}
+          }
+        }
+
+        if (typeof adex.on === 'function') {
+          adex.on('adReceived', handleReceived)
+          adex.on('adClosed', handleClosed)
+          adex.on('adPlaybackCompleted', handleCompleted)
+          adex.on('noAdFound', handleNoAd)
+          adex.on('requestAdError', handleError)
+        }
+
+        adex.requestAd('interstitial', true).then((ads: any) => {
+          if (Array.isArray(ads) && ads.length > 0) {
+            try {
+              if (typeof adex.displayAd === 'function') {
+                adex.displayAd(ads)
+              }
+            } catch {}
+          }
+        }).catch(() => {
+          cleanup()
+          clearTimeout(timer)
+          done(false)
+        })
+
+        return
+      }
+    } catch (e) {
+      console.warn('[Ads] AdExium request error:', e)
+    }
+
+    clearTimeout(timer)
+    done(false)
+  })
+}
+
+/**
+ * 2. GigaPub Player (App ID 8543)
+ */
+export const showGigaPubAd = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false
+
+  if (typeof window.showGiga === 'function') {
+    try {
+      console.log('[Ads] Requesting GigaPub ad (App ID: 8543)...')
+      await window.showGiga()
+      console.log('✅ [Ads] GigaPub ad completed successfully!')
+      return true
+    } catch (err) {
+      console.warn('[Ads] GigaPub ad error/skipped:', err)
+      return false
+    }
+  }
+
+  return false
+}
+
+/**
+ * 3. Adsgram Player (Backup Provider with proper validation)
+ */
+export const showAdsgramAd = async (blockId = 'int-8543'): Promise<boolean> => {
+  if (typeof window === 'undefined') return false
+
+  if (window.Adsgram) {
+    try {
+      console.log('[Ads] Requesting Adsgram ad...')
+      const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData)
+      const controller = window.Adsgram.init({
+        blockId: blockId,
+        debug: !isInsideTg,
+      })
+      await controller.show()
+      console.log('✅ [Ads] Adsgram ad completed successfully!')
+      return true
+    } catch (err) {
+      console.warn('[Ads] Adsgram ad error/no-fill:', err)
+      return false
+    }
+  }
+
+  return false
+}
+
+/**
+ * Full Waterfall / Cascade Rewarded Ad Player:
+ * 1. Try GigaPub first for Giga tasks (or AdExium -> GigaPub -> Adsgram for general)
+ */
+export const showRewardedAdWithWaterfall = async (preferredProvider: 'gigapub' | 'adexium' | 'any' = 'any'): Promise<{ success: boolean; provider: string }> => {
+  if (typeof window === 'undefined') return { success: false, provider: 'none' }
+
+  // 1. If GigaPub is preferred (e.g. for GigaPub Tasks)
+  if (preferredProvider === 'gigapub') {
+    const gigaSuccess = await showGigaPubAd()
+    if (gigaSuccess) return { success: true, provider: 'GigaPub' }
+
+    // Fallback to AdExium
+    const adexSuccess = await showAdexiumAd()
+    if (adexSuccess) return { success: true, provider: 'AdExium' }
+
+    // Fallback to Adsgram
+    const adsgramSuccess = await showAdsgramAd()
+    if (adsgramSuccess) return { success: true, provider: 'Adsgram' }
+
+    return { success: false, provider: 'none' }
+  }
+
+  // 2. Default cascade: AdExium -> GigaPub -> Adsgram
+  const adexSuccess = await showAdexiumAd()
+  if (adexSuccess) return { success: true, provider: 'AdExium' }
+
+  const gigaSuccess = await showGigaPubAd()
+  if (gigaSuccess) return { success: true, provider: 'GigaPub' }
+
+  const adsgramSuccess = await showAdsgramAd()
+  if (adsgramSuccess) return { success: true, provider: 'Adsgram' }
+
+  return { success: false, provider: 'none' }
+}
+
+/**
+ * Interstitial helper
  */
 export const showInterstitialAd = async (force = false): Promise<boolean> => {
   if (typeof window === 'undefined') return false
 
   const now = Date.now()
   if (!force && now - lastAdTimestamp < AD_COOLDOWN_MS) {
-    const remainingSecs = Math.round((AD_COOLDOWN_MS - (now - lastAdTimestamp)) / 1000)
-    console.log(`[Ads] Ad skipped due to cooldown (${remainingSecs}s left)`)
     return false
   }
+  lastAdTimestamp = now
 
-  // Ensure AdExium is initialized
-  if (typeof (window as any).initAdexium === 'function') {
-    (window as any).initAdexium()
-  }
-
-  if (typeof (window as any).requestAdexiumAd === 'function') {
-    try {
-      lastAdTimestamp = now
-      console.log('[Ads] Requesting AdExium interstitial ad...')
-      const requested = (window as any).requestAdexiumAd('interstitial')
-      return requested
-    } catch (e) {
-      console.warn('[Ads] AdExium request error:', e)
-      return false
-    }
-  }
-
-  if (isAdExiumReady() && (window as any).adexiumWidget?.requestAd) {
-    try {
-      lastAdTimestamp = now
-      ;(window as any).adexiumWidget.requestAd('interstitial')
-      return true
-    } catch (e) {
-      console.warn('[Ads] AdExium direct request error:', e)
-    }
-  }
-
-  return false
+  const res = await showRewardedAdWithWaterfall('any')
+  return res.success
 }
 
 export const showRewardedInterstitial = showInterstitialAd
-
-export const showRewardedPopup = async (): Promise<boolean> => {
-  return showInterstitialAd(true)
-}
+export const showRewardedPopup = async (): Promise<boolean> => showInterstitialAd(true)
 
 let hasInitialized = false
 let periodicTimer: ReturnType<typeof setInterval> | null = null
 
 /**
- * Initialize automatic AdExium ads:
- * - Recurring ad every 1.5 minutes (90 seconds)
+ * Initialize automatic background ads (every 90s)
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitialized) return
   hasInitialized = true
 
-  // Initial trigger after short delay
   setTimeout(() => {
     showInterstitialAd(true).catch(() => {})
-  }, 1000)
+  }, 2000)
 
-  // Setup recurring ad trigger every 1.5 minutes (90,000 ms)
   if (periodicTimer) {
     clearInterval(periodicTimer)
   }
 
   periodicTimer = setInterval(() => {
-    console.log('[Ads] Triggering scheduled AdExium ad (every 1.5 mins)...')
     showInterstitialAd(true).catch(() => {})
-  }, 90000) // 1.5 minutes
+  }, 90000)
 }
-

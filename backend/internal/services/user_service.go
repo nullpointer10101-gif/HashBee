@@ -454,6 +454,57 @@ func (s *UserService) DailyCheckin(ctx context.Context, userID uuid.UUID) (float
 	return rewardBP, newStreak, nil
 }
 
+// RewardAdWatch validates and credits +0.5 GHS mining power for watching a rewarded ad
+func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provider string, optionIndex int) (float64, float64, error) {
+	// Daily limit: max 30 ad rewards per 24 hours (3 options of 10 watches each)
+	var todayCount int
+	_ = s.db.QueryRow(ctx,
+		`SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'ad_reward' AND created_at >= NOW() - INTERVAL '24 hours'`,
+		userID).Scan(&todayCount)
+	if todayCount >= 30 {
+		return 0, 0, fmt.Errorf("daily ad watch limit reached (30/30 watches completed today). Please come back tomorrow!")
+	}
+
+	powerGained := 0.5 // +0.5 GHS per watch
+
+	tx, err := s.db.Begin(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	var currentBP float64
+	err = tx.QueryRow(ctx, `SELECT bp FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&currentBP)
+	if err != nil {
+		return 0, 0, fmt.Errorf("user not found")
+	}
+
+	newBP := currentBP + powerGained
+
+	// Update user BP
+	_, err = tx.Exec(ctx, `UPDATE users SET bp = $1, updated_at = NOW() WHERE id = $2`, newBP, userID)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Record transaction
+	desc := fmt.Sprintf("Watched %s Ad (Option %d) - +0.50 GHS Mining Power", strings.Title(provider), optionIndex+1)
+	idempKey := fmt.Sprintf("ad_reward_%s_%d", userID, time.Now().UnixNano())
+	_, err = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at)
+		 VALUES ($1, $2, 'ad_reward', $3, 'BP', $4, $5, NOW())`,
+		uuid.New(), userID, powerGained, idempKey, desc)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return 0, 0, err
+	}
+
+	return powerGained, newBP, nil
+}
+
 func (s *SettingsService) GetBoolStr(ctx context.Context, key, defaultVal string) string {
 	v, err := s.Get(ctx, key)
 	if err != nil {
