@@ -199,13 +199,6 @@ export const Missions: React.FC = () => {
   const [gigaAdState, setGigaAdState] = useState<GigaWatchAdState>(loadGigaAdState)
   const [watchAdLoadingIndex, setWatchAdLoadingIndex] = useState<number | null>(null)
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
-  const watchAdTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // In-app interactive booster ad video player fallback
-  const [showInAppAdModal, setShowInAppAdModal] = useState(false)
-  const [adPlayingTaskIndex, setAdPlayingTaskIndex] = useState<number | null>(null)
-  const [inAppAdCountdown, setInAppAdCountdown] = useState(5)
-  const [inAppAdCanClaim, setInAppAdCanClaim] = useState(false)
 
   // 24-Hour Watch Ad Refresh Timer Ticker
   useEffect(() => {
@@ -234,30 +227,16 @@ export const Missions: React.FC = () => {
     return () => clearInterval(timer)
   }, [gigaAdState.windowStart])
 
-  useEffect(() => {
-    let adInterval: any = null
-    if (showInAppAdModal && inAppAdCountdown > 0) {
-      adInterval = setInterval(() => {
-        setInAppAdCountdown((prev) => {
-          if (prev <= 1) {
-            setInAppAdCanClaim(true)
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
-    }
-    return () => {
-      if (adInterval) clearInterval(adInterval)
-    }
-  }, [showInAppAdModal, inAppAdCountdown])
-
-  const completeAdReward = async (taskIndex: number, provider = 'GigaPub') => {
+  const completeAdReward = async (taskIndex: number, provider = 'AdExium') => {
     let powerAdded = GIGA_POWER_PER_AD
     try {
       const res = await rewardAdWatch(provider, taskIndex)
       powerAdded = res.power_gained || GIGA_POWER_PER_AD
-    } catch {}
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || err?.message || 'Failed to credit mining power'
+      toast.error(`⚠️ ${errMsg}`)
+      return
+    }
 
     setGigaAdState((prev) => {
       const newCounts: [number, number, number] = [...prev.counts]
@@ -267,7 +246,7 @@ export const Missions: React.FC = () => {
       return updated
     })
 
-    toast.success(`🎉 +${powerAdded.toFixed(2)} GHS Mining Power added! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
+    toast.success(`🎉 +${powerAdded.toFixed(2)} GHS Mining Power added automatically! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
     await refreshUser()
   }
 
@@ -295,14 +274,9 @@ export const Missions: React.FC = () => {
 
       if (adResult.success) {
         await completeAdReward(taskIndex, adResult.provider)
-        return
+      } else {
+        toast.error('⚠️ Video ad not available right now. Please try again shortly!')
       }
-
-      // If network ad has no inventory, launch interactive in-app booster player fallback
-      setAdPlayingTaskIndex(taskIndex)
-      setInAppAdCountdown(5)
-      setInAppAdCanClaim(false)
-      setShowInAppAdModal(true)
     },
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]
   )
@@ -1043,164 +1017,9 @@ export const Missions: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* ── IN-APP BOOSTER AD VIDEO PLAYER MODAL ── */}
-      {showInAppAdModal && (() => {
-        const sponsors = [
-          {
-            title: 'TON Cyber Cloud Miner',
-            tag: 'FEATURED SPONSOR',
-            desc: 'Unlock ultra high-speed TON & USDT cloud hashrate with 0% fees.',
-            icon: '⚡',
-            gradient: 'from-blue-600 via-indigo-600 to-slate-900',
-            glow: 'rgba(59,130,246,0.35)',
-            btnText: '🚀 Explore Sponsor Node',
-            btnUrl: 'https://t.me/hashbe_bot',
-          },
-          {
-            title: 'Toncoin Liquid Staking Pool',
-            tag: 'VERIFIED PARTNER',
-            desc: 'Stake TON on-chain and earn high-yield daily mining distributions.',
-            icon: '💎',
-            gradient: 'from-sky-500 via-blue-600 to-slate-900',
-            glow: 'rgba(14,165,233,0.35)',
-            btnText: '💎 View Staking Pool',
-            btnUrl: 'https://ton.org',
-          },
-          {
-            title: 'HashBee ASIC Queen Swarm',
-            tag: 'OFFICIAL AD NETWORK',
-            desc: 'Supercharge your daily revenue with 100 GHS enterprise ASIC rigs.',
-            icon: '🐝',
-            gradient: 'from-amber-500 via-orange-600 to-slate-900',
-            glow: 'rgba(245,158,11,0.35)',
-            btnText: '🐝 Boost Hashrate Now',
-            btnUrl: 'https://t.me/hashbe_bot',
-          },
-          {
-            title: 'Telegram Web3 Payout Network',
-            tag: 'LIVE SPONSOR',
-            desc: 'Direct automated on-chain TON & USDT payouts straight to your wallet.',
-            icon: '🚀',
-            gradient: 'from-emerald-500 via-teal-600 to-slate-900',
-            glow: 'rgba(16,185,129,0.35)',
-            btnText: '📢 Live Proofs Channel',
-            btnUrl: 'https://t.me/HashBeePayouts',
-          },
-        ]
-        const currentSponsor = sponsors[(adPlayingTaskIndex ?? 0) % sponsors.length]
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
-            <div className="bg-[#0b1120] border border-blue-500/40 rounded-3xl p-5 max-w-sm w-full text-white shadow-2xl relative overflow-hidden text-center">
-              {/* Ambient Background Glow */}
-              <div
-                className="absolute -top-12 -right-12 w-40 h-40 rounded-full blur-3xl pointer-events-none transition-all duration-700"
-                style={{ backgroundColor: currentSponsor.glow }}
-              />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
-
-              {/* Header Badges */}
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-300 border border-blue-500/40 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  🎬 {currentSponsor.tag}
-                </span>
-                <span className="text-xs font-mono font-black text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2.5 py-0.5 rounded-lg">
-                  {inAppAdCountdown > 0 ? `⏳ ${inAppAdCountdown}s` : '✅ Complete'}
-                </span>
-              </div>
-
-              {/* Dynamic Video Ad Player Screen */}
-              <div className={`relative w-full aspect-video rounded-2xl bg-gradient-to-br ${currentSponsor.gradient} border border-white/15 overflow-hidden flex flex-col items-center justify-center mb-4 p-4 shadow-2xl relative group`}>
-                {/* Live Scanline / Grid overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
-
-                {/* Animated Badge & Icon */}
-                <div className="relative z-10 w-16 h-16 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl mb-2.5 shadow-lg animate-pulse">
-                  <span>{currentSponsor.icon}</span>
-                  <div className="absolute -top-1 -right-1 px-1.5 py-0.2 bg-red-500 text-[8px] font-black uppercase tracking-widest text-white rounded-full">
-                    AD
-                  </div>
-                </div>
-
-                <div className="relative z-10 text-sm font-black text-white tracking-wide drop-shadow-md">
-                  {currentSponsor.title}
-                </div>
-                <p className="relative z-10 text-[11px] text-slate-200/90 mt-1 max-w-[240px] leading-snug font-medium drop-shadow-sm">
-                  {currentSponsor.desc}
-                </p>
-
-                {/* Optional sponsor direct link */}
-                <a
-                  href={currentSponsor.btnUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="relative z-10 mt-2.5 text-[10px] font-extrabold text-white bg-white/15 hover:bg-white/25 border border-white/30 px-3 py-1 rounded-full transition-all flex items-center gap-1 shadow-sm"
-                >
-                  {currentSponsor.btnText} →
-                </a>
-
-                {/* Live Video Timeline Progress Bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/60 backdrop-blur-sm">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-400 via-rose-500 to-emerald-400 transition-all duration-1000 ease-linear shadow-glow"
-                    style={{ width: `${((5 - inAppAdCountdown) / 5) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Reward Info */}
-              <div className="mb-4">
-                <div className="text-sm font-black text-white flex items-center justify-center gap-1.5">
-                  <span>Watching Booster Video #{(adPlayingTaskIndex ?? 0) + 1}</span>
-                </div>
-                <div className="text-xs text-emerald-400 font-extrabold mt-0.5 flex items-center justify-center gap-1">
-                  <span>🎁 Reward:</span>
-                  <span className="text-amber-300 font-black">+0.50 GHS Mining Power</span>
-                </div>
-              </div>
-
-              {/* Action Button */}
-              {inAppAdCanClaim ? (
-                <button
-                  onClick={async () => {
-                    if (adPlayingTaskIndex !== null) {
-                      await completeAdReward(adPlayingTaskIndex, 'InAppBooster')
-                    }
-                    setShowInAppAdModal(false)
-                    setAdPlayingTaskIndex(null)
-                  }}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-500/35 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <span>🎉</span>
-                  <span>Claim +0.50 GHS Mining Reward</span>
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="w-full py-3.5 rounded-2xl bg-slate-800/90 text-slate-400 font-bold text-xs uppercase tracking-wider cursor-not-allowed border border-slate-700/80 flex items-center justify-center gap-2"
-                >
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                  <span>Streaming Sponsor Video ({inAppAdCountdown}s)...</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => {
-                  setShowInAppAdModal(false)
-                  setAdPlayingTaskIndex(null)
-                }}
-                className="mt-3 text-[11px] text-slate-400 hover:text-slate-200 font-bold"
-              >
-                Cancel & Close
-              </button>
-            </div>
-          </div>
-        )
-      })()}
     </div>
   )
 }
 
 export default Missions
+

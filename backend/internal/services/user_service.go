@@ -456,7 +456,30 @@ func (s *UserService) DailyCheckin(ctx context.Context, userID uuid.UUID) (float
 
 // RewardAdWatch validates and credits +0.5 GHS mining power for watching a rewarded ad
 func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provider string, optionIndex int) (float64, float64, error) {
-	// Daily limit: max 30 ad rewards per 24 hours (3 options of 10 watches each)
+	if optionIndex < 0 || optionIndex > 2 {
+		return 0, 0, fmt.Errorf("invalid booster task tier")
+	}
+
+	// 1. Anti-spam duration cooldown: ensure at least 5 seconds between completed ad rewards
+	var lastAdTime *time.Time
+	_ = s.db.QueryRow(ctx,
+		`SELECT created_at FROM transactions WHERE user_id = $1 AND type = 'ad_reward' ORDER BY created_at DESC LIMIT 1`,
+		userID).Scan(&lastAdTime)
+	if lastAdTime != nil && time.Since(*lastAdTime) < 5*time.Second {
+		return 0, 0, fmt.Errorf("please wait for the video ad playback to finish before claiming")
+	}
+
+	// 2. Per-option limit: max 10 ad rewards per tier in 24 hours
+	optionPattern := fmt.Sprintf("%%Option %d%%", optionIndex+1)
+	var optionCount int
+	_ = s.db.QueryRow(ctx,
+		`SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'ad_reward' AND description ILIKE $2 AND created_at >= NOW() - INTERVAL '24 hours'`,
+		userID, optionPattern).Scan(&optionCount)
+	if optionCount >= 10 {
+		return 0, 0, fmt.Errorf("tier %d limit reached (10/10 watches completed). Please choose another tier or wait for 24h reset!", optionIndex+1)
+	}
+
+	// 3. Daily global limit: max 30 ad rewards per 24 hours
 	var todayCount int
 	_ = s.db.QueryRow(ctx,
 		`SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'ad_reward' AND created_at >= NOW() - INTERVAL '24 hours'`,
@@ -488,7 +511,11 @@ func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provi
 	}
 
 	// Record transaction
-	desc := fmt.Sprintf("Watched %s Ad (Option %d) - +0.50 GHS Mining Power", strings.Title(provider), optionIndex+1)
+	providerName := "AdExium"
+	if strings.EqualFold(provider, "gigapub") {
+		providerName = "GigaPub"
+	}
+	desc := fmt.Sprintf("Watched %s Ad (Option %d) - +0.50 GHS Mining Power", providerName, optionIndex+1)
 	idempKey := fmt.Sprintf("ad_reward_%s_%d", userID, time.Now().UnixNano())
 	_, err = tx.Exec(ctx,
 		`INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at)
