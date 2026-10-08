@@ -205,11 +205,15 @@ export const showRewardedAdWithWaterfall = async (
     if (preferredProvider !== 'gigapub') {
       console.log('[Ads] Step 1/2: Requesting AdExium primary provider...')
       const adexSuccess = await showAdexiumAd()
-      if (adexSuccess) {
-        const totalDuration = (Date.now() - sessionStart) / 1000
+      const totalDuration = (Date.now() - sessionStart) / 1000
+      if (adexSuccess && totalDuration >= 9.5) {
         lastAdEndedTimestamp = Date.now()
-        console.log('✅ [Ads] AdExium successfully finished!')
+        console.log(`✅ [Ads] AdExium successfully finished (${totalDuration.toFixed(1)}s)!`)
         return { success: true, provider: 'AdExium', duration: totalDuration }
+      }
+      if (adexSuccess && totalDuration < 9.5) {
+        console.warn(`⚠️ [Ads] AdExium closed too quickly (${totalDuration.toFixed(1)}s < 10s).`)
+        return { success: false, provider: 'AdExium', duration: totalDuration }
       }
       console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
     }
@@ -217,11 +221,15 @@ export const showRewardedAdWithWaterfall = async (
     // 2. Backup: GigaPub (App ID 8543)
     console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
     const gigaSuccess = await showGigaPubAd()
-    if (gigaSuccess) {
-      const totalDuration = (Date.now() - sessionStart) / 1000
+    const totalDuration = (Date.now() - sessionStart) / 1000
+    if (gigaSuccess && totalDuration >= 9.5) {
       lastAdEndedTimestamp = Date.now()
-      console.log('✅ [Ads] GigaPub successfully finished!')
+      console.log(`✅ [Ads] GigaPub successfully finished (${totalDuration.toFixed(1)}s)!`)
       return { success: true, provider: 'GigaPub', duration: totalDuration }
+    }
+    if (gigaSuccess && totalDuration < 9.5) {
+      console.warn(`⚠️ [Ads] GigaPub closed too quickly (${totalDuration.toFixed(1)}s < 10s).`)
+      return { success: false, provider: 'GigaPub', duration: totalDuration }
     }
 
     // 3. Fallback: If gigapub was preferred and failed, try AdExium once

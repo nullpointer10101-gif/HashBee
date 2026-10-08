@@ -183,15 +183,16 @@ func (h *UserHandler) RewardAd(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 
 	var req struct {
-		Provider    string `json:"provider"`
-		OptionIndex int    `json:"option_index"`
+		Provider        string  `json:"provider"`
+		OptionIndex     int     `json:"option_index"`
+		DurationSeconds float64 `json:"duration_seconds"`
 	}
 	_ = c.ShouldBindJSON(&req)
 	if req.Provider == "" {
 		req.Provider = "GigaPub"
 	}
 
-	powerGained, newBP, err := h.userSvc.RewardAdWatch(c.Request.Context(), user.ID, req.Provider, req.OptionIndex)
+	powerGained, newBP, err := h.userSvc.RewardAdWatch(c.Request.Context(), user.ID, req.Provider, req.OptionIndex, req.DurationSeconds)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

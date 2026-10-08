@@ -138,10 +138,10 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
     return () => clearInterval(timer)
   }, [gigaAdState.windowStart])
 
-  const completeAdReward = async (taskIndex: number, provider = 'AdExium') => {
+  const completeAdReward = async (taskIndex: number, provider = 'AdExium', durationSec = 10) => {
     let powerAdded = GIGA_POWER_PER_AD
     try {
-      const res = await rewardAdWatch(provider, taskIndex)
+      const res = await rewardAdWatch(provider, taskIndex, durationSec)
       powerAdded = res.power_gained || GIGA_POWER_PER_AD
     } catch (err: any) {
       const errMsg = err?.response?.data?.error || err?.message || 'Failed to credit mining power'
@@ -157,7 +157,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       return updated
     })
 
-    toast.success(`🎉 +${powerAdded.toFixed(2)} GHS Mining Power added automatically! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
+    toast.success(`🎉 10s+ Verified! +${powerAdded.toFixed(2)} GHS Mining Power added! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
     await refreshUser()
   }
 
@@ -171,7 +171,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       if (watchAdLoadingIndex !== null) return
 
       setWatchAdLoadingIndex(taskIndex)
-      toast.loading('🎬 Launching sponsor video... Please watch until the end to claim your reward!', { id: 'ad-load' })
+      toast.loading('🎬 Launching sponsor video... Please watch for at least 10s to earn reward!', { id: 'ad-load' })
 
       let adResult: { success: boolean; provider: string; duration: number } = { success: false, provider: 'none', duration: 0 }
       try {
@@ -183,12 +183,14 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
         setWatchAdLoadingIndex(null)
       }
 
-      if (adResult.success) {
-        await completeAdReward(taskIndex, adResult.provider)
+      if (adResult.success && adResult.duration >= 9.5) {
+        await completeAdReward(taskIndex, adResult.provider, Math.max(10, Math.round(adResult.duration)))
       } else if (adResult.provider === 'busy') {
         toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
+      } else if (adResult.duration > 0 && adResult.duration < 9.5) {
+        toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch for at least 10 seconds to earn +0.50 GHS!`)
       } else {
-        toast.error('⚠️ Video ad was closed early or not completed. Please watch the full video to receive +0.50 GHS mining power!')
+        toast.error('⚠️ Video ad was not completed. Please watch the full 10-second sponsor video to claim +0.50 GHS mining power!')
       }
     },
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]

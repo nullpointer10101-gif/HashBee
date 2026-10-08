@@ -207,8 +207,8 @@ export const completeMission = async (missionId: string): Promise<{ reward_honey
   }
 }
 
-export const rewardAdWatch = async (provider = 'GigaPub', optionIndex = 0): Promise<{ power_gained: number; new_bp: number; message: string }> => {
-  const res = await api.post('/api/ads/reward', { provider, option_index: optionIndex })
+export const rewardAdWatch = async (provider = 'GigaPub', optionIndex = 0, durationSeconds = 10): Promise<{ power_gained: number; new_bp: number; message: string }> => {
+  const res = await api.post('/api/ads/reward', { provider, option_index: optionIndex, duration_seconds: durationSeconds })
   return {
     power_gained: Number(res.data?.power_gained || 0.5),
     new_bp: Number(res.data?.new_bp || 0),
