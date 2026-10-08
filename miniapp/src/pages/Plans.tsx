@@ -257,7 +257,11 @@ export const Plans: React.FC = () => {
     }
   }
 
+  const actionLoadingRef = React.useRef<string | null>(null)
+
   const handleClaimPlan = async (userPlanId: string) => {
+    if (actionLoadingRef.current || actionLoading) return
+    actionLoadingRef.current = userPlanId
     setActionLoading(userPlanId)
     try {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
@@ -271,6 +275,9 @@ export const Plans: React.FC = () => {
       toast.error(err?.response?.data?.error || 'Failed to claim miner reward')
     } finally {
       setActionLoading(null)
+      setTimeout(() => {
+        actionLoadingRef.current = null
+      }, 500)
     }
   }
 

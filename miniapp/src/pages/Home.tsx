@@ -44,12 +44,16 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval)
   }, [user?.last_claimed_at, user?.current_unclaimed_honey, earningsPerSecond])
 
+  const claimingRef = React.useRef(false)
+
   const handleClaim = async () => {
-    if (pendingBalance < 0.001 || claiming) {
-      toast.error('Minimum claim is 0.001 USDT')
+    if (claimingRef.current || claiming) return
+    if (pendingBalance < 0.0099) {
+      toast.error('Minimum claim amount is 0.01 USDT')
       return
     }
 
+    claimingRef.current = true
     setClaiming(true)
     try {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
@@ -63,6 +67,9 @@ export const Home: React.FC = () => {
       toast.error(err?.response?.data?.error || 'Failed to claim mining yield')
     } finally {
       setClaiming(false)
+      setTimeout(() => {
+        claimingRef.current = false
+      }, 500)
     }
   }
 
@@ -324,17 +331,23 @@ export const Home: React.FC = () => {
       </div>
 
       {/* ── CARD 5: CLAIM MINING (VIBRANT MINT GRADIENT BAR) ── */}
-      <div
+      <button
+        type="button"
+        disabled={claiming || pendingBalance < 0.0099}
         onClick={handleClaim}
-        className="claim-bar-btn p-3.5 sm:p-4 mb-3.5 flex items-center justify-between cursor-pointer shadow-lg active:scale-98 transition-all"
+        className={`w-full claim-bar-btn p-3.5 sm:p-4 mb-3.5 flex items-center justify-between shadow-lg transition-all text-left ${
+          claiming || pendingBalance < 0.0099
+            ? 'opacity-65 cursor-not-allowed'
+            : 'cursor-pointer active:scale-98'
+        }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-10 h-10 rounded-2xl bg-black/10 flex items-center justify-center text-xl shrink-0">
-            ⚔️
+            {claiming ? '⏳' : '⚔️'}
           </div>
           <div className="min-w-0">
             <div className="text-sm font-black text-[#042f20] leading-tight">
-              Claim Mining
+              {claiming ? 'Claiming Mining...' : 'Claim Mining'}
             </div>
             <div className="text-[11px] font-black text-[#042f20]/90 font-mono mt-0.5 truncate">
               +{pendingBalance.toFixed(6)} USDT Mining
@@ -343,9 +356,13 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-[#042f20] font-black text-sm shrink-0 ml-2">
-          ➔
+          {claiming ? (
+            <div className="w-4 h-4 border-2 border-[#042f20] border-t-transparent rounded-full animate-spin" />
+          ) : (
+            '➔'
+          )}
         </div>
-      </div>
+      </button>
 
       {/* ── 3 VIBRANT ACTION GRID CARDS: DEPOSIT / WITHDRAW / REFERRAL ── */}
       <div className="grid grid-cols-3 gap-2 mb-3.5">

@@ -179,8 +179,10 @@ export const Spin: React.FC = () => {
     return validSlices[0] || SLICES[0]
   }
 
+  const isSpinningRef = React.useRef(false)
+
   const handleSpin = async () => {
-    if (isSpinning) return
+    if (isSpinningRef.current || isSpinning) return
     if (spinsToday >= dailyLimit) {
       toast.error(`Daily limit reached (${spinsToday}/${dailyLimit} spins). Resets at 00:00 UTC.`)
       return
@@ -190,6 +192,7 @@ export const Spin: React.FC = () => {
       return
     }
 
+    isSpinningRef.current = true
     setIsSpinning(true)
     setWonReward(null)
     setSpinsLeft((prev) => Math.max(0, prev - 1))
@@ -247,8 +250,11 @@ export const Spin: React.FC = () => {
         if (refreshUser) refreshUser()
       } finally {
         setIsSpinning(false)
+        setTimeout(() => {
+          isSpinningRef.current = false
+        }, 300)
       }
-    }, 2200)
+    }, 4200)
   }
 
   const handleShareReferral = () => {
