@@ -681,7 +681,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   return (
     <div className="pb-28 pt-3 px-4 max-w-md mx-auto min-h-screen bg-[#f4f7fb] text-[#0f172a]">
       {/* ── TOP HEADER ── */}
-      <div className="text-center mb-3.5">
+      <div className="text-center mb-3">
         <h1 className="text-base font-extrabold text-[#0f172a] uppercase tracking-wider">
           {view === 'watch' ? 'Watch & Boost Network' : 'Tasks & Missions'}
         </h1>
@@ -690,6 +690,39 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
             ? 'Watch sponsor videos to supercharge your GHS mining power'
             : 'Complete partner missions & milestones for extra rewards'}
         </p>
+      </div>
+
+      {/* ── TOP INTERACTIVE TAB SELECTOR ── */}
+      <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-white border border-slate-200/90 shadow-sm mb-3.5">
+        <button
+          onClick={() => setView('watch')}
+          className={`py-2 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+            view === 'watch'
+              ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white shadow-md shadow-orange-500/25'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <span className="text-sm">🔥</span>
+          <span>Watch & Earn</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-mono bg-black/20 text-white font-bold">
+            +15 GHS
+          </span>
+        </button>
+
+        <button
+          onClick={() => setView('tasks')}
+          className={`py-2 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
+            view === 'tasks'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <span className="text-sm">📋</span>
+          <span>Missions</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-md font-mono bg-slate-100 text-slate-700 font-bold border border-slate-200/60">
+            {missions.length}
+          </span>
+        </button>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════ */}
@@ -785,6 +818,41 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                   <div className="absolute inset-0 bg-white/20 w-full animate-sweep-shimmer" />
                 </div>
               </div>
+            </div>
+
+            {/* Quick 1-Click Interactive Stream Trigger on Hero Card */}
+            <div className="relative z-10 pt-3.5">
+              {totalWatches >= 30 ? (
+                <div className="w-full py-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 backdrop-blur-md">
+                  <span>✓</span>
+                  <span>ALL 30/30 STREAMS COMPLETED TODAY (+15.00 GHS MAX)</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    const nextTier = [0, 1, 2].find((idx) => (gigaAdState.counts[idx] || 0) < GIGA_ADS_PER_TIER) ?? 0
+                    handleWatchAdTask(nextTier)
+                  }}
+                  disabled={watchAdLoadingIndex !== null}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-rose-500 to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-rose-500/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group border border-white/40 hover:brightness-105"
+                >
+                  <div className="absolute inset-0 bg-white/30 animate-sweep-shimmer pointer-events-none" />
+                  {watchAdLoadingIndex !== null ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                      <span>STREAMING SPONSOR VIDEO...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base animate-bounce">⚡</span>
+                      <span>TAP TO WATCH AD & BOOST (+0.50 GHS)</span>
+                      <span className="text-[10px] font-mono bg-black/25 px-2 py-0.5 rounded-lg border border-black/10 text-white font-bold">
+                        #{totalWatches + 1}/30
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
