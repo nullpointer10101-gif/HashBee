@@ -125,6 +125,18 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       message: '🐝 *YOUR HONEYCOMB IS FULL!* 🍯\n\nYour bees have reached storage capacity.\nHarvest your GRAM earnings now to resume mining!\n\n👇 Collect earnings:',
       button: '🍯 Collect GRAM Now ➔',
     },
+    {
+      id: 'watch_ads_boost_hash',
+      label: '📺 Watch Ads ➔ Free Hash Boost',
+      message: '📺 *WATCH ADS & BOOST YOUR HASHRATE FOR FREE!* ⚡🚀\n\nWant to mine faster with ZERO investment?\nWatch quick sponsor videos & complete easy tasks to supercharge your miner!\n\n⚡ *Instant Free GHS Boost* (Mine 24/7 faster)\n🍯 *Direct Honey Rewards* added to your balance\n🎁 *Free Lucky Spin Energy*\n\n100% Free — No TON or deposit needed!\n\n👇 Watch sponsor ads & boost your speed now:',
+      button: '📺 Watch Ads & Boost Hashrate ⚡',
+    },
+    {
+      id: 'free_ad_tasks_surge',
+      label: '🎁 Sponsor Tasks ➔ +5.0 GHS Drops',
+      message: '🔥 *NEW SPONSOR MISSIONS: EARN UP TO +5.0 GHS!* ⭐🚀\n\nFresh partner missions and video tasks just went live!\nComplete simple 5-second tasks to unlock permanent speed:\n\n• 📺 Sponsor Ads: +1.0 Honey & Free Hash Boost\n• 📢 Partner Channels: +0.20 to +0.50 GHS each\n• 👥 Referral Milestones: Up to +500 GHS!\n\n👇 Complete tasks & claim free mining power:',
+      button: '⭐ Open Missions & Boost Hash 🚀',
+    },
   ]
   const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
   const [broadcastMsg, setBroadcastMsg] = useState(SPIN_TEMPLATES[0].message)

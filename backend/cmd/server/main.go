@@ -126,6 +126,13 @@ func main() {
 		ON CONFLICT (key) DO UPDATE SET value = '0', updated_at = NOW();
 	`)
 
+	// Ensure min_withdrawal_usdt is set to 0.10
+	_, _ = pool.Exec(ctx, `
+		INSERT INTO settings (key, value, description, updated_at)
+		VALUES ('min_withdrawal_usdt', '0.10', 'Minimum withdrawal amount in USDT', NOW())
+		ON CONFLICT (key) DO UPDATE SET value = '0.10', updated_at = NOW();
+	`)
+
 	// Set standard referral rate and welcome bonus
 	_, _ = pool.Exec(ctx, `
 		INSERT INTO settings (key, value, description, updated_at)

@@ -325,7 +325,7 @@ export const Withdraw: React.FC = () => {
                 </span>
               </div>
               <div className="flex items-center justify-between text-[10px] font-medium text-slate-500 mt-1">
-                <span>Minimum: <b className="text-slate-800 font-mono">{minWithdrawal.toFixed(2)} USDT</b></span>
+                <span>Minimum: <b className="text-slate-800 font-mono">{minWithdrawal.toFixed(2)} {selectedCrypto === 'GRAM' ? 'GRAM' : 'USDT'}</b></span>
                 <button
                   type="button"
                   onClick={() => setAmount(String(user?.honey_balance || 0))}
@@ -473,6 +473,7 @@ export const Withdraw: React.FC = () => {
             </p>
 
             <div className="mt-4 space-y-2.5 text-left">
+              {/* Option 1: Instant Unlock with NFT Miner */}
               <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-black text-xs text-slate-900 uppercase">
@@ -490,9 +491,42 @@ export const Withdraw: React.FC = () => {
                     setShowQualifyModal(false)
                     navigate('/plans')
                   }}
-                  className="w-full py-2.5 rounded-xl btn-primary-blue text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1"
+                  className="w-full py-2.5 rounded-xl btn-primary-blue text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
                 >
                   <span>⚡ ACTIVATE NFT MINER (0.70 TON)</span>
+                  <span>➔</span>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="relative flex py-1 items-center">
+                <div className="flex-grow border-t border-slate-200"></div>
+                <span className="flex-shrink mx-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">OR FREE CASHOUT</span>
+                <div className="flex-grow border-t border-slate-200"></div>
+              </div>
+
+              {/* Option 2: Free Withdrawal via Daily Ads */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-black text-xs text-amber-950 uppercase flex items-center gap-1.5">
+                    <span>📺</span>
+                    <span>Free Withdrawal Method</span>
+                  </span>
+                  <span className="bg-amber-500 text-slate-950 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                    FREE METHOD
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-900 mb-2.5 leading-snug font-medium">
+                  For free withdrawal: Kindly watch daily sponsor ads consecutively for at least <b>5 days</b> to verify activity & qualify for zero-deposit payout.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowQualifyModal(false)
+                    navigate('/missions')
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-md shadow-amber-500/20 active:scale-95 transition-all"
+                >
+                  <span>📺 WATCH DAILY ADS (MISSIONS)</span>
                   <span>➔</span>
                 </button>
               </div>
