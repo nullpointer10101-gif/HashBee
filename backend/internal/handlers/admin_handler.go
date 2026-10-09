@@ -1277,15 +1277,16 @@ Spin the Lucky Wheel today to win:
 	},
 	{
 		Key: "instant_payouts",
-		Message: `💸 *INSTANT CASHOUTS ARE LIVE!* 💎
+		Message: `💸 *INSTANT CASHOUTS LIVE: MINIMUM ONLY 0.10 GRAM!* 💎⚡
 
 Cash out your mined earnings directly:
-• 💵 Fast withdrawals to USDT (BSC BEP-20) & TON
+• 💎 Fast withdrawals starting at *0.10 GRAM / USDT*
+• 🚀 Instant settlements to TON & USDT (BSC BEP-20)
 • 🛡️ Zero withdrawal fees
 • 📢 Live payment proofs: @HashBeePayouts
 
-👇 Cash out your balance:`,
-		ButtonText: "💸 Withdraw Earnings 💎",
+👇 Cash out your balance now:`,
+		ButtonText: "💸 Withdraw Earnings (0.10 G) 💎",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{

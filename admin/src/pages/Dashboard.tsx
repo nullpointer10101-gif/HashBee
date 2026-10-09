@@ -137,6 +137,12 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       message: '🔥 *NEW SPONSOR MISSIONS: EARN UP TO +5.0 GHS!* ⭐🚀\n\nFresh partner missions and video tasks just went live!\nComplete simple 5-second tasks to unlock permanent speed:\n\n• 📺 Sponsor Ads: +1.0 Honey & Free Hash Boost\n• 📢 Partner Channels: +0.20 to +0.50 GHS each\n• 👥 Referral Milestones: Up to +500 GHS!\n\n👇 Complete tasks & claim free mining power:',
       button: '⭐ Open Missions & Boost Hash 🚀',
     },
+    {
+      id: 'withdraw_min_010_gram',
+      label: '💸 Withdraw Now ➔ Min Cashout Only 0.10 G',
+      message: '💸 *INSTANT CASHOUTS LIVE: MINIMUM ONLY 0.10 GRAM!* 💎⚡\n\nGreat news miners! You can now place withdrawals starting from just *0.10 GRAM / USDT*!\n\n🚀 *Fast On-Chain Settlements*\n💎 *Direct TON Blockchain Transfers*\n🛡️ *Low Minimum Cashout*: Only *0.10 GRAM*!\n🍯 Cash out your mined Honey, Spin wins & daily yields!\n\n👇 Check your balance & place your withdrawal now:',
+      button: '💸 Place Withdrawal (0.10 G) ➔',
+    },
   ]
   const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
   const [broadcastMsg, setBroadcastMsg] = useState(SPIN_TEMPLATES[0].message)
