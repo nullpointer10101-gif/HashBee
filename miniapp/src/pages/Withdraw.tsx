@@ -24,9 +24,9 @@ export const Withdraw: React.FC = () => {
   const navigate = useNavigate()
 
   const minWithdrawal = 0.10
-  const cratesOpened = user?.crates_opened_count || 0
+  const plansCount = Number(user?.plans_count || user?.plans_active_count || user?.plans_completed_count || user?.crates_opened_count || 0)
   const isOneTimeGranted = user?.one_time_withdrawal_granted || false
-  const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (cratesOpened >= 1 || isOneTimeGranted))
+  const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (plansCount >= 1 || isOneTimeGranted))
 
   useEffect(() => {
     refreshUser()
