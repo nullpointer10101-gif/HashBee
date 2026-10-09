@@ -174,7 +174,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 
 🎁 *Join And Get 50 GHS POWER*
 
-✅ *Minimum Withdrawal 0.05 GRAM*
+✅ *Minimum Withdrawal 0.10 GRAM*
 
 ✍️ *Earn And Withdraw Without Restrictions.*
 
