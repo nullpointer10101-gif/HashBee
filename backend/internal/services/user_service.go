@@ -567,15 +567,15 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 	var oneTimeGranted bool
 	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, user.ID).Scan(&oneTimeGranted)
 
-	var cratesOpened int
+	var plansPurchased int
 	_ = s.db.QueryRow(ctx, `
 		SELECT (
 			(SELECT COUNT(*) FROM user_plans WHERE user_id = $1) +
-			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase'))
+			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'plan_purchase')
 		)
-	`, user.ID).Scan(&cratesOpened)
+	`, user.ID).Scan(&plansPurchased)
 
-	var friendCratesOpened int
+	var friendPlansPurchased int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT uid) FROM (
 			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
@@ -588,9 +588,9 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 				SELECT referred_id FROM referrals WHERE referrer_id = $1
 				UNION
 				SELECT id FROM users WHERE referrer_id = $1
-			) AND t.type IN ('crate_purchase', 'plan_purchase')
+			) AND t.type = 'plan_purchase'
 		) q
-	`, user.ID).Scan(&friendCratesOpened)
+	`, user.ID).Scan(&friendPlansPurchased)
 
 	var activePlans int
 	_ = s.db.QueryRow(ctx, `
@@ -610,7 +610,7 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		), 0)
 	`, user.ID).Scan(&validInvites)
 
-	canWithdraw := (oneTimeGranted || cratesOpened >= 1)
+	canWithdraw := (oneTimeGranted || plansPurchased >= 1)
 
 	return &models.UserProfile{
 		ID:                       user.ID,
@@ -628,8 +628,8 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		ReferralCount:            validInvites,
 		PlansActiveCount:         activePlans,
 		PlansCompletedCount:      completedPlans,
-		CratesOpenedCount:        cratesOpened,
-		FriendCratesOpenedCount:  friendCratesOpened,
+		CratesOpenedCount:        plansPurchased,
+		FriendCratesOpenedCount:  friendPlansPurchased,
 		CanWithdrawLifetime:      canWithdraw,
 		OneTimeWithdrawalGranted: oneTimeGranted,
 	}

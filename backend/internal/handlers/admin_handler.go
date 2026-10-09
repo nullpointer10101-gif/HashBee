@@ -405,8 +405,8 @@ func (h *AdminHandler) GetUserDetail(c *gin.Context) {
 			var d DepositItem
 			if err := depRows.Scan(&d.ID, &d.Type, &d.Amount, &d.Currency, &d.Description, &d.CreatedAt); err == nil {
 				deposits = append(deposits, d)
-				// Accumulate genuine deposits & plan purchases (not internal BP adjustments)
-				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance" || d.Type == "plan_purchase" || d.Type == "crate_purchase") && strings.ToUpper(d.Currency) != "BP" {
+				// Accumulate genuine deposits & plan purchases (not internal BP adjustments or in-game honey crate opens)
+				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance" || d.Type == "plan_purchase") && strings.ToUpper(d.Currency) != "BP" {
 					switch strings.ToUpper(d.Currency) {
 					case "TON":
 						totalDepositedTON += d.Amount
@@ -1532,7 +1532,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 		FROM transactions t
 		LEFT JOIN users u ON u.id = t.user_id
 		WHERE (
-			t.type IN ('deposit', 'deposit_balance', 'plan_purchase', 'crate_purchase', 'campaign_payment')
+			t.type IN ('deposit', 'deposit_balance', 'plan_purchase', 'campaign_payment')
 			AND UPPER(t.currency) IN ('GRAM', 'TON', 'USDT')
 		)
 	`
@@ -1542,7 +1542,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 	if depositType == "miner" {
 		query += " AND t.type IN ('deposit', 'deposit_balance')"
 	} else if depositType == "plan" || depositType == "plans" {
-		query += " AND t.type IN ('plan_purchase', 'crate_purchase')"
+		query += " AND t.type = 'plan_purchase'"
 	} else if depositType == "campaign" {
 		query += " AND t.type = 'campaign_payment'"
 	}
@@ -1591,7 +1591,7 @@ func (h *AdminHandler) GetDeposits(c *gin.Context) {
 	_ = h.db.QueryRow(ctx, `
 		SELECT COUNT(*), COALESCE(SUM(amount), 0)
 		FROM transactions
-		WHERE type IN ('deposit', 'deposit_balance', 'plan_purchase', 'crate_purchase', 'campaign_payment')
+		WHERE type IN ('deposit', 'deposit_balance', 'plan_purchase', 'campaign_payment')
 		  AND UPPER(currency) IN ('GRAM', 'TON', 'USDT')
 	`).Scan(&totalDepositsCount, &totalGramDeposited)
 

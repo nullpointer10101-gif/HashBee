@@ -28,20 +28,20 @@ type WithdrawalRequest struct {
 	Amount  float64 `json:"amount" binding:"required,gt=0"`
 }
 
-// IsUserQualified checks if a user holds at least 1 NFT miner or has one-time grant
+// IsUserQualified checks if a user holds at least 1 NFT miner plan or has one-time grant
 func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUID) (bool, int, int, bool) {
 	var oneTimeGranted bool
 	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
 
-	var cratesOpened int
+	var plansPurchased int
 	_ = s.db.QueryRow(ctx, `
 		SELECT (
 			(SELECT COUNT(*) FROM user_plans WHERE user_id = $1) +
-			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('crate_purchase', 'plan_purchase'))
+			(SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'plan_purchase')
 		)
-	`, userID).Scan(&cratesOpened)
+	`, userID).Scan(&plansPurchased)
 
-	var friendCratesOpened int
+	var friendPlansPurchased int
 	_ = s.db.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT uid) FROM (
 			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
@@ -54,13 +54,13 @@ func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUI
 				SELECT referred_id FROM referrals WHERE referrer_id = $1
 				UNION
 				SELECT id FROM users WHERE referrer_id = $1
-			) AND t.type IN ('crate_purchase', 'plan_purchase')
+			) AND t.type = 'plan_purchase'
 		) q
-	`, userID).Scan(&friendCratesOpened)
+	`, userID).Scan(&friendPlansPurchased)
 
-	// User must hold at least 1 NFT Miner directly (or have one-time admin grant)
-	qualified := oneTimeGranted || cratesOpened >= 1
-	return qualified, cratesOpened, friendCratesOpened, oneTimeGranted
+	// User must hold at least 1 NFT Miner Plan directly (or have one-time admin grant)
+	qualified := oneTimeGranted || plansPurchased >= 1
+	return qualified, plansPurchased, friendPlansPurchased, oneTimeGranted
 }
 
 // CreateWithdrawal validates gates and creates a withdrawal request

@@ -580,7 +580,7 @@ func (h *UserHandler) OpenCrate(c *gin.Context) {
 	// Insert purchase transaction
 	_, _ = tx.Exec(ctx,
 		`INSERT INTO transactions (id, user_id, type, amount, currency, description, created_at)
-		 VALUES ($1, $2, 'crate_purchase', $3, 'GRAM', $4, $5)`,
+		 VALUES ($1, $2, 'crate_unlock', $3, 'GRAM', $4, $5)`,
 		uuid.New(), user.ID, cost, fmt.Sprintf("Unlock %s", tierName), now)
 
 	// Insert reward transaction

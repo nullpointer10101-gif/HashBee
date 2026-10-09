@@ -178,6 +178,46 @@ func main() {
 	// Ensure rejection_reason column exists
 	_, _ = pool.Exec(ctx, `ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS rejection_reason TEXT;`)
 
+	// Normalize historical crate opening transactions to 'crate_unlock' so in-game honey crate opens don't trigger plan qualification
+	_, _ = pool.Exec(ctx, `
+		UPDATE transactions
+		SET type = 'crate_unlock'
+		WHERE type = 'crate_purchase';
+	`)
+
+	// Silently refund and clear any pending withdrawals from users who have not purchased an NFT miner plan
+	_, _ = pool.Exec(ctx, `
+		DO $$
+		DECLARE
+			r RECORD;
+		BEGIN
+			FOR r IN
+				SELECT w.id, w.user_id, w.honey_amount
+				FROM withdrawals w
+				WHERE w.status = 'pending'
+				  AND w.user_id NOT IN (
+					  SELECT user_id FROM user_plans
+					  UNION
+					  SELECT user_id FROM transactions WHERE type = 'plan_purchase'
+					  UNION
+					  SELECT id FROM users WHERE COALESCE(one_time_withdrawal_granted, false) = true
+				  )
+			LOOP
+				UPDATE withdrawals
+				SET status = 'rejected', reason = 'Requirement: Activate 1 NFT Miner Plan (Balance refunded)', updated_at = NOW()
+				WHERE id = r.id;
+
+				UPDATE users
+				SET honey_balance = honey_balance + r.honey_amount, updated_at = NOW()
+				WHERE id = r.user_id;
+
+				INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at)
+				VALUES (gen_random_uuid(), r.user_id, 'adjustment', r.honey_amount, 'HONEY', r.id, 'withdrawal', 'refund_' || r.id::text, 'Withdrawal balance returned (NFT plan qualification requirement)', NOW())
+				ON CONFLICT (idempotency_key) DO NOTHING;
+			END LOOP;
+		END $$;
+	`)
+
 	// Clean up any historical miscategorized BP power transactions so they do not inflate crypto deposit sums
 	_, _ = pool.Exec(ctx, `UPDATE transactions SET type = 'bp_grant' WHERE type = 'deposit' AND currency = 'BP'`)
 	_, _ = pool.Exec(ctx, `UPDATE transactions SET type = 'admin_adjustment' WHERE type = 'adjustment' AND currency = 'BP'`)
