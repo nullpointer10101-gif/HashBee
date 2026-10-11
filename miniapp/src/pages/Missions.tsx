@@ -206,9 +206,8 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
     [gigaAdState.counts, watchAdLoadingIndex, refreshUser]
   )
 
-  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || ''
-  const inviteLink = 'https://t.me/' + botUsername + '?start=' + userTgId
+  const inviteLink = 'https://t.me/hashbe_bot?start=' + userTgId
 
   const loadMissions = async () => {
     try {

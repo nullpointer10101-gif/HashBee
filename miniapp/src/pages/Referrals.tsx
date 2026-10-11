@@ -24,7 +24,7 @@ export const Referrals: React.FC = () => {
     } catch (err) {
       setSummary({
         ref_code: String(userTgId),
-        invite_link: "https://t.me/" + botUsername + "?start=" + userTgId,
+        invite_link: "https://t.me/hashbe_bot?start=" + userTgId,
         tier1_count: 0,
         tier2_count: 0,
         tier1_earnings: 0,
@@ -40,9 +40,10 @@ export const Referrals: React.FC = () => {
     loadReferrals()
   }, [user])
 
-  const link = summary?.invite_link?.includes('?')
-    ? summary.invite_link
-    : "https://t.me/" + botUsername + "?start=" + userTgId
+  const rawLink = summary?.invite_link || ("https://t.me/hashbe_bot?start=" + userTgId)
+  const link = rawLink
+    .replace(/hashbee_bot/gi, 'hashbe_bot')
+    .replace(/\/app\?startapp=/gi, '?start=')
 
   const copyInviteLink = () => {
     navigator.clipboard.writeText(link)

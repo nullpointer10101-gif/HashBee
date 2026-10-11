@@ -228,7 +228,9 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
 
   return {
     ref_code: refCode,
-    invite_link: referralLink || `https://t.me/hashbe_bot?start=${refCode}`,
+    invite_link: (referralLink || `https://t.me/hashbe_bot?start=${refCode}`)
+      .replace(/hashbee_bot/gi, 'hashbe_bot')
+      .replace(/\/app\?startapp=/gi, '?start='),
     tier1_count: swarm.level1_count || 0,
     tier2_count: swarm.level2_count || 0,
     tier1_earnings: swarm.level1_honey_earned || 0,

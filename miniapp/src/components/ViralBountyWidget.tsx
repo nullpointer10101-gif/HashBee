@@ -18,9 +18,8 @@ export const ViralBountyWidget: React.FC = () => {
   const [copiedMemo, setCopiedMemo] = useState(false)
   const [copiedAddr, setCopiedAddr] = useState(false)
 
-  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
   const userTgId = user?.telegram_id || ''
-  const inviteLink = `https://t.me/${botUsername}?start=${userTgId}`
+  const inviteLink = `https://t.me/hashbe_bot?start=${userTgId}`
 
   const loadBounty = async () => {
     try {
