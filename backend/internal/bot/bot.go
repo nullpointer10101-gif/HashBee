@@ -73,6 +73,11 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 	}
 
 	log.Printf("🐝 HashBee Bot authorized as @%s", api.Self.UserName)
+	if api.Self.UserName != "" {
+		cfg.BotUsername = api.Self.UserName
+	} else {
+		cfg.BotUsername = "hashbe_bot"
+	}
 	return &Bot{api: api, cfg: cfg, userSvc: userSvc}, nil
 }
 
@@ -278,8 +283,11 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("👥 View My Swarm", miniAppURL)
 
-	botName := b.cfg.BotUsername
-	if botName == "" {
+	botName := "hashbe_bot"
+	if b.api != nil && b.api.Self.UserName != "" {
+		botName = b.api.Self.UserName
+	}
+	if strings.EqualFold(botName, "hashbee_bot") || botName == "" {
 		botName = "hashbe_bot"
 	}
 

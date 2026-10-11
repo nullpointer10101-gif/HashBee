@@ -73,7 +73,7 @@ func Load() (*Config, error) {
 		Port:          getEnv("PORT", "8080"),
 		Env:           getEnv("ENV", "development"),
 		BotToken:      getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", "")),
-		BotUsername:   getEnv("BOT_USERNAME", "hashbe_bot"),
+		BotUsername:   "hashbe_bot",
 		MiniAppURL:    getEnv("MINIAPP_URL", "https://miniapp-five-topaz.vercel.app"),
 		WebhookURL:    getEnv("WEBHOOK_URL", ""),
 		WebhookSecret: getEnv("WEBHOOK_SECRET", ""),
