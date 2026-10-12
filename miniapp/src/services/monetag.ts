@@ -9,17 +9,78 @@ declare global {
   interface Window {
     showGiga?: () => Promise<any>
     adexiumWidget?: any
+    AdexiumWidget?: any
+    TGAdsWidget?: any
     initAdexium?: () => any
     requestAdexiumAd?: (format?: string) => boolean
+    _adexiumReady?: boolean
   }
 }
 
 // Global Ad Mutex: Ensures NEVER two ads play or load at the same time
 let isAdActive = false
 let lastAdEndedTimestamp = 0
-const MIN_AD_COOLDOWN_MS = 15_000 // 15s between ambient ads
+const MIN_AD_COOLDOWN_MS = 15_000 // 15s min between ambient ads
 
 export const isAnyAdActive = (): boolean => isAdActive
+
+// -------------------------------------------------------------------
+// Pre-warm: Initialise AdExium widget as soon as the script is ready.
+// Called from initMonetagAutoAds() AND lazily inside showAdexiumAd().
+// -------------------------------------------------------------------
+const ensureAdexiumWidget = (): any => {
+  if (typeof window === 'undefined') return null
+
+  // Already cached
+  if (window.adexiumWidget) return window.adexiumWidget
+
+  // Try the page-level initAdexium helper (defined in index.html)
+  if (typeof window.initAdexium === 'function') {
+    try {
+      const w = window.initAdexium()
+      if (w) return w
+    } catch (e) {
+      console.warn('[AdExium] initAdexium() error:', e)
+    }
+  }
+
+  // Last-resort: construct directly if script class is available
+  const WidgetClass = window.AdexiumWidget || window.TGAdsWidget
+  if (WidgetClass) {
+    try {
+      const isInsideTg = !!(
+        window.Telegram?.WebApp?.initDataUnsafe?.user?.id ||
+        window.Telegram?.WebApp?.initData
+      )
+      const adex = new WidgetClass({
+        wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
+        adFormat: 'interstitial',
+        debug: !isInsideTg,
+      })
+      window.adexiumWidget = adex
+      console.log('[AdExium] ✅ Widget pre-warmed from ensureAdexiumWidget()')
+      return adex
+    } catch (e) {
+      console.warn('[AdExium] Direct widget construction error:', e)
+    }
+  }
+
+  return null
+}
+
+/**
+ * Wait up to `maxMs` for the AdExium script to finish loading.
+ * Polls every 200 ms — avoids the "no widget yet" race on slow connections.
+ */
+const waitForAdexiumScript = async (maxMs = 8000): Promise<boolean> => {
+  if (ensureAdexiumWidget()) return true
+  const start = Date.now()
+  while (Date.now() - start < maxMs) {
+    await new Promise((r) => setTimeout(r, 200))
+    if (ensureAdexiumWidget()) return true
+  }
+  return false
+}
 
 /**
  * 1. AdExium Rewarded Video Player with Strict Cleanup
@@ -27,10 +88,19 @@ export const isAnyAdActive = (): boolean => isAdActive
 export const showAdexiumAd = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
 
+  // Wait up to 8s for AdExium script if widget isn't ready yet
+  const ready = await waitForAdexiumScript(8000)
+  if (!ready) {
+    console.warn('[AdExium] Script not loaded / widget unavailable after waiting 8s')
+    return false
+  }
+
   return new Promise((resolve) => {
     let resolved = false
     let isDisplaying = false
     let adStartTime = 0
+
+    const adex = ensureAdexiumWidget()
 
     const finish = (success: boolean) => {
       if (!resolved) {
@@ -40,22 +110,13 @@ export const showAdexiumAd = async (): Promise<boolean> => {
       }
     }
 
-    // Safety timeout: give enough time for network response and display initialization
+    // Timeout: 20s total (10s for network + 10s buffer for slow mobile)
     const timeoutTimer = setTimeout(() => {
       if (!isDisplaying) {
-        console.log('[AdExium] Request timeout (no ad returned in 12s)')
+        console.log('[AdExium] Request timeout (no ad returned in 20s)')
         finish(false)
       }
-    }, 12000)
-
-    let adex = window.adexiumWidget
-    if (!adex && typeof window.initAdexium === 'function') {
-      try {
-        adex = window.initAdexium()
-      } catch (e) {
-        console.warn('[AdExium] init error:', e)
-      }
-    }
+    }, 20000)
 
     if (!adex || typeof adex.requestAd !== 'function') {
       clearTimeout(timeoutTimer)
@@ -88,32 +149,20 @@ export const showAdexiumAd = async (): Promise<boolean> => {
 
     const handleCompleted = () => {
       const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
-      console.log(`✅ [AdExium] Playback completed by user (${durationSec.toFixed(1)}s)`)
-      if (durationSec >= 9.5) {
-        finish(true)
-      } else {
-        finish(false)
-      }
+      console.log(`✅ [AdExium] Playback completed (${durationSec.toFixed(1)}s)`)
+      finish(durationSec >= 9.5)
     }
 
     const handleClosed = () => {
       const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
       console.log(`[AdExium] Ad closed after ${durationSec.toFixed(1)}s`)
-      if (isDisplaying && durationSec >= 9.5) {
-        finish(true)
-      } else {
-        finish(false)
-      }
+      finish(isDisplaying && durationSec >= 9.5)
     }
 
     const handleRedirected = () => {
       const durationSec = adStartTime ? (Date.now() - adStartTime) / 1000 : 0
       console.log(`[AdExium] User clicked/redirected after ${durationSec.toFixed(1)}s`)
-      if (isDisplaying && durationSec >= 9.5) {
-        finish(true)
-      } else {
-        finish(false)
-      }
+      finish(isDisplaying && durationSec >= 9.5)
     }
 
     const handleNoAd = () => {
@@ -190,17 +239,17 @@ export const showGigaPubAd = async (): Promise<{ success: boolean; duration: num
   if (typeof window === 'undefined') return { success: false, duration: 0 }
 
   const now = Date.now()
-  if (isGigaPubActive || (now - lastGigaPubEndTime < 3000)) {
-    console.warn('[GigaPub] Ad cooldown in effect or already active. Ignoring duplicate invocation.')
+  if (isGigaPubActive || now - lastGigaPubEndTime < 3000) {
+    console.warn('[GigaPub] Ad cooldown or already active.')
     return { success: false, duration: 0 }
   }
 
-  // If window.showGiga is not ready yet, wait up to 3 seconds for script initialization
+  // Wait up to 5s for GigaPub script to load
   if (typeof window.showGiga !== 'function') {
     const startWait = Date.now()
-    while (Date.now() - startWait < 3000) {
+    while (Date.now() - startWait < 5000) {
       if (typeof window.showGiga === 'function') break
-      await new Promise((r) => setTimeout(r, 150))
+      await new Promise((r) => setTimeout(r, 200))
     }
   }
 
@@ -242,7 +291,6 @@ export const showRewardedAdWithWaterfall = async (
   }
 
   isAdActive = true
-  const sessionStart = Date.now()
 
   try {
     // 1. Primary: AdExium
@@ -311,6 +359,22 @@ export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
 }
 
 /**
+ * Helper: check if current page is one where we should not auto-show an ad.
+ * Works with both hash-router and path-router, and inside Telegram's iframe.
+ */
+const isAdSuppressedPage = (): boolean => {
+  if (typeof window === 'undefined') return false
+  const path = window.location.pathname + window.location.hash
+  // suppress on watch/tasks/missions/withdraw pages
+  return (
+    path.includes('/watch') ||
+    path.includes('/tasks') ||
+    path.includes('/missions') ||
+    path.includes('/withdraw')
+  )
+}
+
+/**
  * Periodic 2-Minute Automatic Ad: 1st AdExium -> Backup GigaPub
  */
 export const showPeriodic2MinAd = async (): Promise<boolean> => {
@@ -318,18 +382,13 @@ export const showPeriodic2MinAd = async (): Promise<boolean> => {
   if (isAdActive) return false
 
   const now = Date.now()
-  if (now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) {
-    return false
-  }
+  if (now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) return false
 
-  // Suppress if tab is hidden or user is on watch/tasks/missions page
+  // Suppress if tab is hidden
   if (typeof document !== 'undefined' && document.hidden) return false
-  if (typeof location !== 'undefined') {
-    const p = location.pathname
-    if (p === '/watch' || p === '/tasks' || p === '/missions' || p === '/withdraw') {
-      return false
-    }
-  }
+
+  // Suppress on ad/missions pages
+  if (isAdSuppressedPage()) return false
 
   console.log('[Ads] 2-Minute Periodic Trigger: Requesting AdExium (1st) with GigaPub fallback...')
   const res = await showRewardedAdWithWaterfall('adexium')
@@ -341,30 +400,42 @@ let periodicAutoAdTimer: ReturnType<typeof setInterval> | null = null
 
 /**
  * Initialize automatic background ads:
- * 1. Gentle launch ad (AdExium ONLY - no fallback if unavailable).
- * 2. Strictly every 2 minutes (120,000ms): 1st AdExium, backup GigaPub.
+ * 1. Pre-warm AdExium widget immediately (so first ad request is instant).
+ * 2. Launch ad after 15s (AdExium ONLY - no fallback if unavailable).
+ *    Delayed to 15s (was 8s) to ensure: Telegram auth done, widget loaded, user settled.
+ * 3. Strictly every 2 minutes (120,000ms): 1st AdExium, backup GigaPub.
  */
 export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitializedAutoAds) return
   hasInitializedAutoAds = true
 
-  // 1. Launch Ad after 8 seconds (AdExium ONLY)
-  setTimeout(() => {
-    if (typeof location !== 'undefined') {
-      const p = location.pathname
-      if (!isAdActive && p !== '/watch' && p !== '/tasks' && p !== '/missions' && p !== '/withdraw') {
-        showOpeningAdOnlyAdExium().catch(() => {})
-      }
+  // Step 0: Pre-warm the AdExium widget as soon as possible.
+  // This starts the SDK connection to the ad network early so the first real
+  // ad request completes much faster (avoids cold-start RTT on first show).
+  const tryPrewarm = () => {
+    const w = ensureAdexiumWidget()
+    if (w) {
+      console.log('[Ads] ✅ AdExium widget pre-warmed on init')
+    } else {
+      // Script not yet parsed — retry once after 3s
+      setTimeout(() => {
+        ensureAdexiumWidget()
+      }, 3000)
     }
-  }, 8000)
-
-  if (periodicAutoAdTimer) {
-    clearInterval(periodicAutoAdTimer)
   }
+  tryPrewarm()
 
-  // 2. Periodic 2-Minute (120,000ms) Ad Waterfall (AdExium -> GigaPub)
+  // Step 1: Launch Ad after 15 seconds (AdExium ONLY, no GigaPub fallback)
+  // 15s gives enough time for: Telegram auth, widget script load, user to settle in.
+  setTimeout(() => {
+    if (!isAdActive && !isAdSuppressedPage()) {
+      showOpeningAdOnlyAdExium().catch(() => {})
+    }
+  }, 15000)
+
+  // Step 2: Periodic 2-Minute (120,000ms) Ad Waterfall (AdExium -> GigaPub)
+  if (periodicAutoAdTimer) clearInterval(periodicAutoAdTimer)
   periodicAutoAdTimer = setInterval(() => {
     showPeriodic2MinAd().catch(() => {})
   }, 120000)
 }
-

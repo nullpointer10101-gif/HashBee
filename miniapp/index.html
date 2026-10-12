@@ -11,36 +11,46 @@
     <title>HashBee 🐝</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnect to ad CDNs so DNS/TLS is resolved before we need them -->
     <link rel="preconnect" href="https://cdn.tgads.space" crossorigin />
+    <link rel="preconnect" href="https://ad.gigapub.tech" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    
-    <!-- Telegram WebApp SDK -->
+
+    <!-- Telegram WebApp SDK (must be synchronous per Telegram docs) -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- Ad Providers: AdExium (Primary), GigaPub (Backup ID 8543) -->
-    <link rel="stylesheet" href="https://cdn.tgads.space/assets/css/style.min.css?ver=1.81" />
-    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js" id="adexium-script"></script>
-    <script type="text/javascript">
-      // Suppress GigaPub background auto-loop so GigaPub ONLY shows on programmatic single invocation
-      window.__giga_inter_running__ = true;
+    <!-- AdExium CSS: loaded async via JS to avoid render blocking -->
+    <script>
+      (function() {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.tgads.space/assets/css/style.min.css?ver=1.81';
+        document.head.appendChild(link);
+      })();
     </script>
-    <script src="https://ad.gigapub.tech/script?id=8543"></script>
 
-    <script type="text/javascript">
-      // AdExium Safe Initializer
+    <!--
+      AdExium Widget Script: async so it does NOT block page render.
+      We pre-warm the widget instance the moment the script loads (onload).
+    -->
+    <script>
+      // AdExium Safe Initializer — callable anytime (idempotent)
       window.initAdexium = function() {
         if (window.adexiumWidget) return window.adexiumWidget;
         try {
-          const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
+          var WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
           if (WidgetClass) {
-            const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData);
-            const adex = new WidgetClass({
+            var isInsideTg = !!(window.Telegram && window.Telegram.WebApp &&
+              (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.id
+               || window.Telegram.WebApp.initData));
+            var adex = new WidgetClass({
               wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
               adFormat: 'interstitial',
               debug: !isInsideTg
             });
             window.adexiumWidget = adex;
-            console.log('✅ [AdExium] Initialized with HashBee WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
+            window._adexiumReady = true;
+            console.log('[AdExium] ✅ Widget initialized. WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
             return adex;
           }
         } catch(e) {
@@ -49,10 +59,38 @@
         return null;
       };
 
+      // Load AdExium script async — call initAdexium() immediately when it's done
+      var adexScript = document.createElement('script');
+      adexScript.src = 'https://cdn.tgads.space/assets/js/adexium-widget.min.js';
+      adexScript.async = true;
+      adexScript.id = 'adexium-script';
+      adexScript.onload = function() {
+        // Pre-warm immediately so first ad request needs 0 cold-start time
+        window.initAdexium();
+      };
+      adexScript.onerror = function() {
+        console.warn('[AdExium] Script failed to load.');
+      };
+      document.head.appendChild(adexScript);
+
+      // Load GigaPub script async — suppress background auto-loop so GigaPub
+      // only shows on programmatic single invocation from our waterfall
+      var gigaScript = document.createElement('script');
+      // Set the loop-suppression flag BEFORE the script executes
+      window.__giga_inter_running__ = true;
+      gigaScript.src = 'https://ad.gigapub.tech/script?id=8543';
+      gigaScript.async = true;
+      gigaScript.onload = function() {
+        console.log('[GigaPub] ✅ Script loaded. App ID: 8543');
+      };
+      document.head.appendChild(gigaScript);
+    </script>
+
+    <script>
       // Initialize Telegram WebApp SDK safely
       document.addEventListener('DOMContentLoaded', function() {
         try {
-          if (window.Telegram?.WebApp) {
+          if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
           }
@@ -65,3 +103,4 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
