@@ -287,20 +287,17 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "hashbee", "timestamp": time.Now()})
 	})
 
-	// Serve Admin Panel static frontend
+	// NOTE: Static frontend assets are NOT served from here.
+	// The MiniApp is deployed on Vercel (free 100 GB CDN) and the Admin panel
+	// is served separately. Serving them from Render wastes the 5 GB/month free
+	// bandwidth limit. Render is API-only.
+
+	// Serve Admin Panel only (lightweight, internal use)
 	r.StaticFile("/admin", "./public/admin/index.html")
 	r.StaticFile("/admin/", "./public/admin/index.html")
 	r.Static("/admin/assets", "./public/admin/assets")
 
-	// Serve MiniApp static frontend
-	r.StaticFile("/", "./public/app/index.html")
-	r.StaticFile("/index.html", "./public/app/index.html")
-	r.Static("/assets", "./public/app/assets")
-	r.StaticFile("/app", "./public/app/index.html")
-	r.StaticFile("/app/", "./public/app/index.html")
-	r.Static("/app/assets", "./public/app/assets")
-
-	// SPA Fallback for client-side routing
+	// Catch-all: API 404 for unknown /api routes, otherwise redirect to Vercel app
 	r.NoRoute(func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if strings.HasPrefix(path, "/api") {
@@ -311,7 +308,8 @@ func main() {
 			c.File("./public/admin/index.html")
 			return
 		}
-		c.File("./public/app/index.html")
+		// For any other path, redirect to Vercel-hosted frontend
+		c.JSON(http.StatusOK, gin.H{"service": "hashbee-api", "docs": "https://hashbee1.onrender.com/health"})
 	})
 
 	// =====================================================
