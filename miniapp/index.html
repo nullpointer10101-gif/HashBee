@@ -23,14 +23,9 @@
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', () => {
-            try {
-                const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
-                window.adexiumWidget = adexiumWidget;
-                adexiumWidget.autoMode();
-                console.log('[AdExium] ✅ Initialized with autoMode. WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
-            } catch (e) {
-                console.warn('[AdExium] Initialization notice:', e);
-            }
+            const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
+            window.adexiumWidget = adexiumWidget;
+            adexiumWidget.autoMode();
         });
     </script>
 
