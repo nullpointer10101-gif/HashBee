@@ -11,55 +11,47 @@
     <title>HashBee 🐝</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnect to ad CDNs so DNS/TLS is resolved before we need them -->
     <link rel="preconnect" href="https://cdn.tgads.space" crossorigin />
+    <link rel="preconnect" href="https://ad.gigapub.tech" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    
-    <!-- Telegram WebApp SDK -->
+
+    <!-- Telegram WebApp SDK (provided by Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- Ad Providers: AdExium (Primary), GigaPub (Backup ID 8543) -->
-    <link rel="stylesheet" href="https://cdn.tgads.space/assets/css/style.min.css?ver=1.81" />
-    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js" id="adexium-script"></script>
+    <!-- Adexium Monetization Script (Required for Adexium Verification & autoMode) -->
+    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
-      // Suppress GigaPub background auto-loop so GigaPub ONLY shows on programmatic single invocation
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
+                window.adexiumWidget = adexiumWidget;
+                adexiumWidget.autoMode();
+                console.log('[AdExium] ✅ Initialized with autoMode. WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
+            } catch (e) {
+                console.warn('[AdExium] Initialization notice:', e);
+            }
+        });
+    </script>
+
+    <!-- GigaPub Backup Player (App ID 8543) - Loop suppressed for controlled waterfall -->
+    <script type="text/javascript">
       window.__giga_inter_running__ = true;
     </script>
-    <script src="https://ad.gigapub.tech/script?id=8543"></script>
+    <script src="https://ad.gigapub.tech/script?id=8543" async></script>
 
-    <script type="text/javascript">
-      // AdExium Safe Initializer
-      window.initAdexium = function() {
-        if (window.adexiumWidget) return window.adexiumWidget;
-        try {
-          const WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
-          if (WidgetClass) {
-            const isInsideTg = !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.Telegram?.WebApp?.initData);
-            const adex = new WidgetClass({
-              wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-              adFormat: 'interstitial',
-              debug: !isInsideTg
-            });
-            window.adexiumWidget = adex;
-            console.log('✅ [AdExium] Initialized with HashBee WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
-            return adex;
-          }
-        } catch(e) {
-          console.error('[AdExium] Initialization error:', e);
-        }
-        return null;
-      };
-
+    <script>
       // Initialize Telegram WebApp SDK safely
       document.addEventListener('DOMContentLoaded', function() {
         try {
-          if (window.Telegram?.WebApp) {
+          if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
           }
         } catch(e) {}
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-CW2gc6tj.js"></script>
+    <script type="module" crossorigin src="/assets/index-DTOoUcIT.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/vendor-B0sXmqWz.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-5j4nD7dR.js">
     <link rel="stylesheet" crossorigin href="/assets/index-wqnRQjuO.css">
@@ -68,3 +60,4 @@
     <div id="root"></div>
   </body>
 </html>
+

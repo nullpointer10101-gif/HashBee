@@ -16,75 +16,29 @@
     <link rel="preconnect" href="https://ad.gigapub.tech" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-    <!-- Telegram WebApp SDK (must be synchronous per Telegram docs) -->
+    <!-- Telegram WebApp SDK (provided by Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- AdExium CSS: loaded async via JS to avoid render blocking -->
-    <script>
-      (function() {
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.tgads.space/assets/css/style.min.css?ver=1.81';
-        document.head.appendChild(link);
-      })();
+    <!-- Adexium Monetization Script (Required for Adexium Verification & autoMode) -->
+    <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
+                window.adexiumWidget = adexiumWidget;
+                adexiumWidget.autoMode();
+                console.log('[AdExium] ✅ Initialized with autoMode. WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
+            } catch (e) {
+                console.warn('[AdExium] Initialization notice:', e);
+            }
+        });
     </script>
 
-    <!--
-      AdExium Widget Script: async so it does NOT block page render.
-      We pre-warm the widget instance the moment the script loads (onload).
-    -->
-    <script>
-      // AdExium Safe Initializer — callable anytime (idempotent)
-      window.initAdexium = function() {
-        if (window.adexiumWidget) return window.adexiumWidget;
-        try {
-          var WidgetClass = window.AdexiumWidget || window.TGAdsWidget;
-          if (WidgetClass) {
-            var isInsideTg = !!(window.Telegram && window.Telegram.WebApp &&
-              (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user && window.Telegram.WebApp.initDataUnsafe.user.id
-               || window.Telegram.WebApp.initData));
-            var adex = new WidgetClass({
-              wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00',
-              adFormat: 'interstitial',
-              debug: !isInsideTg
-            });
-            window.adexiumWidget = adex;
-            window._adexiumReady = true;
-            console.log('[AdExium] ✅ Widget initialized. WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00');
-            return adex;
-          }
-        } catch(e) {
-          console.error('[AdExium] Initialization error:', e);
-        }
-        return null;
-      };
-
-      // Load AdExium script async — call initAdexium() immediately when it's done
-      var adexScript = document.createElement('script');
-      adexScript.src = 'https://cdn.tgads.space/assets/js/adexium-widget.min.js';
-      adexScript.async = true;
-      adexScript.id = 'adexium-script';
-      adexScript.onload = function() {
-        // Pre-warm immediately so first ad request needs 0 cold-start time
-        window.initAdexium();
-      };
-      adexScript.onerror = function() {
-        console.warn('[AdExium] Script failed to load.');
-      };
-      document.head.appendChild(adexScript);
-
-      // Load GigaPub script async — suppress background auto-loop so GigaPub
-      // only shows on programmatic single invocation from our waterfall
-      var gigaScript = document.createElement('script');
-      // Set the loop-suppression flag BEFORE the script executes
+    <!-- GigaPub Backup Player (App ID 8543) - Loop suppressed for controlled waterfall -->
+    <script type="text/javascript">
       window.__giga_inter_running__ = true;
-      gigaScript.src = 'https://ad.gigapub.tech/script?id=8543';
-      gigaScript.async = true;
-      gigaScript.onload = function() {
-        console.log('[GigaPub] ✅ Script loaded. App ID: 8543');
-      };
-      document.head.appendChild(gigaScript);
     </script>
+    <script src="https://ad.gigapub.tech/script?id=8543" async></script>
 
     <script>
       // Initialize Telegram WebApp SDK safely

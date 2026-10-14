@@ -110,13 +110,13 @@ export const showAdexiumAd = async (): Promise<boolean> => {
       }
     }
 
-    // Timeout: 20s total (10s for network + 10s buffer for slow mobile)
+    // Timeout: 7s total to receive an ad from AdExium before cascading to GigaPub backup
     const timeoutTimer = setTimeout(() => {
       if (!isDisplaying) {
-        console.log('[AdExium] Request timeout (no ad returned in 20s)')
+        console.log('[AdExium] Request timeout (no ad returned in 7s). Cascading to GigaPub backup...')
         finish(false)
       }
-    }, 20000)
+    }, 7000)
 
     if (!adex || typeof adex.requestAd !== 'function') {
       clearTimeout(timeoutTimer)
