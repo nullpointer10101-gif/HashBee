@@ -319,6 +319,21 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 					} else {
 						planID = "starter"
 					}
+				} else if targetTelegramID == 8700203028 {
+					// 0.70 GRAM discount on all plans except starter
+					if amountGram >= 24.30 {
+						planID = "matrix"
+					} else if amountGram >= 11.30 {
+						planID = "apex"
+					} else if amountGram >= 5.30 {
+						planID = "titan"
+					} else if amountGram >= 2.30 {
+						planID = "queen"
+					} else if amountGram >= 0.60 {
+						planID = "standard"
+					} else {
+						planID = "starter"
+					}
 				} else {
 					if amountGram >= 25.0 {
 						planID = "matrix"
@@ -393,6 +408,8 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		planName = "Infinite Mega Whale Matrix"
 		if telegramID == 8842934236 {
 			costGRAM = 22.00
+		} else if telegramID == 8700203028 {
+			costGRAM = 24.30 // 0.70 GRAM discount
 		} else {
 			costGRAM = 25.00
 		}
@@ -402,6 +419,8 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		planName = "Apex Sovereign God Hive"
 		if telegramID == 8842934236 {
 			costGRAM = 9.00
+		} else if telegramID == 8700203028 {
+			costGRAM = 11.30 // 0.70 GRAM discount
 		} else {
 			costGRAM = 12.00
 		}
@@ -409,12 +428,20 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		maxPerAccount = 0
 	case "titan":
 		planName = "Cyber Titan Hive"
-		costGRAM = 6.00
+		if telegramID == 8700203028 {
+			costGRAM = 5.30 // 0.70 GRAM discount
+		} else {
+			costGRAM = 6.00
+		}
 		returnGRAM = 10.00
 		maxPerAccount = 0
 	case "queen":
 		planName = "Royal Queen Miner"
-		costGRAM = 3.00
+		if telegramID == 8700203028 {
+			costGRAM = 2.30 // 0.70 GRAM discount
+		} else {
+			costGRAM = 3.00
+		}
 		returnGRAM = 4.50
 		maxPerAccount = 0
 	case "starter":
@@ -425,7 +452,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	default:
 		planID = "standard"
 		planName = "Standard Worker Miner"
-		costGRAM = 1.30
+		if telegramID == 8700203028 {
+			costGRAM = 0.60 // 0.70 GRAM discount
+		} else {
+			costGRAM = 1.30
+		}
 		returnGRAM = 2.00
 		maxPerAccount = 0
 	}
