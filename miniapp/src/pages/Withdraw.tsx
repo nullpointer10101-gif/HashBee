@@ -517,7 +517,7 @@ export const Withdraw: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-900 mb-2.5 leading-snug font-medium">
-                  For free withdrawal: Kindly watch daily sponsor ads consecutively for at least <b>5 days</b> to verify activity & qualify for zero-deposit payout.
+                  For free withdrawal: Kindly watch daily sponsor ads consecutively for at least <b>10 days</b> to verify activity & qualify for zero-deposit payout.
                 </p>
                 <button
                   onClick={() => {
