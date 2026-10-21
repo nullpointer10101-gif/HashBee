@@ -312,8 +312,15 @@ export const showRewardedAdWithWaterfall = async (
       console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
     }
 
-    // 2. Backup: GigaPub (App ID 8543)
-    console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
+    // 2. Backup: GigaPub (App ID 8543) - Restricted to ~10% traffic to preserve payout threshold
+    // 90% of the time when AdExium has no-fill, skip GigaPub and prompt user to try again shortly.
+    const allowGigaPub = preferredProvider === 'gigapub' || Math.random() < 0.10
+    if (!allowGigaPub) {
+      console.log('ℹ️ [Ads] GigaPub backup skipped (throttled to 10% limit). Directing user to try again later.')
+      return { success: false, provider: 'none', duration: 0 }
+    }
+
+    console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543, 10% tier triggered)...')
     const gigaRes = await showGigaPubAd()
 
     if (gigaRes.success && gigaRes.duration >= 9.5) {
