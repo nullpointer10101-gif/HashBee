@@ -86,6 +86,23 @@ export const Plans: React.FC = () => {
       accent_color: '#0088ff',
     },
     {
+      id: 'flash2x',
+      name: '⚡ FLASH 2.0X CYBER HIVE',
+      subtitle: '🔥 LIMITED FLASH DROP: Pay 2.00 TON ➔ Instant 4.00 GRAM in 24h (100% PROFIT)',
+      badge: '🔥 2X FLASH SALE (+100%)',
+      cost_gram: 2.0,
+      return_gram: 4.0,
+      profit_gram: 2.0,
+      profit_percent: 100.0,
+      duration_hours: 24,
+      max_per_account: 0,
+      is_limited: true,
+      user_purchased: 0,
+      can_purchase: true,
+      icon: '🔥',
+      accent_color: '#f43f5e',
+    },
+    {
       id: 'queen',
       name: 'Royal Node Miner',
       subtitle: 'High power computing contract with guaranteed 4.50 GRAM payout',
@@ -393,19 +410,19 @@ export const Plans: React.FC = () => {
         </div>
 
         {/* Quick selector pills */}
-        <div className="grid grid-cols-6 gap-1.5 mb-3">
+        <div className="grid grid-cols-7 gap-1 mb-3">
           {availablePlans.map((p) => (
             <button
               key={p.id}
               onClick={() => setCalcSelectedId(p.id)}
-              className={`py-2 rounded-xl text-[10px] font-extrabold transition-all flex flex-col items-center justify-center ${
+              className={`py-1.5 px-0.5 rounded-xl text-[9px] font-extrabold transition-all flex flex-col items-center justify-center ${
                 calcSelectedId === p.id
                   ? 'bg-gradient-to-r from-[#0052d4] to-[#00c6ff] text-white font-black shadow-md scale-105'
                   : 'bg-slate-50 text-slate-500 border border-slate-200 hover:text-slate-900'
               }`}
             >
               <span className="text-xs">{p.icon}</span>
-              <span className="text-[9px] font-mono mt-0.5">{p.cost_gram}T</span>
+              <span className="text-[8px] font-mono mt-0.5 leading-none">{p.cost_gram}T</span>
             </button>
           ))}
         </div>
@@ -467,15 +484,51 @@ export const Plans: React.FC = () => {
       {/* Tab 1: Available Plans Store */}
       {activeTab === 'store' && (
         <div className="space-y-4 relative z-10">
+          {/* 🔥 24H FLASH SALE EVENT BANNER */}
+          <div className="p-4 rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white shadow-xl shadow-red-500/20 border-2 border-red-300 relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
+              <span className="px-2.5 py-0.5 rounded-full bg-white text-red-700 text-[10px] font-black tracking-wider uppercase shadow animate-pulse">
+                🔥 LIVE FLASH DROP
+              </span>
+              <span className="text-[10px] font-bold text-amber-200">
+                ⚡ Only 14 / 50 Spots Left Today
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight uppercase relative z-10">
+              Deposit 2.00 TON ➔ Get 4.00 GRAM (100% Profit)
+            </h2>
+            <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
+              Limited 24-Hour Special Yield Contract. Exact 2X return unlocked directly to your wallet in 24h!
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
+              <div className="flex-1 bg-black/25 rounded-full h-2 overflow-hidden border border-white/20">
+                <div className="bg-gradient-to-r from-amber-300 to-yellow-400 h-full w-[72%] rounded-full" />
+              </div>
+              <button
+                onClick={() => {
+                  const flashPlan = availablePlans.find((p) => p.id === 'flash2x')
+                  if (flashPlan) handleOpenPayment(flashPlan)
+                }}
+                className="px-3.5 py-1.5 bg-white text-red-600 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg active:scale-95 transition-all shrink-0"
+              >
+                CLAIM 2X (2 TON) ➔
+              </button>
+            </div>
+          </div>
+
           {availablePlans.map((plan, index) => {
             const isStarter = plan.id === 'starter'
+            const isFlash = plan.id === 'flash2x'
             const isDouble = plan.id === 'matrix'
             const isMythic = plan.id === 'apex'
             const isLegendary = plan.id === 'titan'
             const isEpic = plan.id === 'queen'
 
             // Dynamic card tint & glow
-            const cardTintClass = isDouble
+            const cardTintClass = isFlash
+              ? 'bg-gradient-to-br from-rose-50 via-red-50/60 to-amber-50/50 border-2 border-red-500 shadow-red-200'
+              : isDouble
               ? 'card-tint-red border-pink-300'
               : isMythic
               ? 'card-tint-amber border-amber-300'
@@ -485,7 +538,9 @@ export const Plans: React.FC = () => {
               ? 'card-tint-purple border-purple-300'
               : 'card-tint-blue border-blue-300'
 
-            const buttonClass = isDouble
+            const buttonClass = isFlash
+              ? 'bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-red-500/40'
+              : isDouble
               ? 'btn-primary-red'
               : isMythic
               ? 'btn-primary-amber'

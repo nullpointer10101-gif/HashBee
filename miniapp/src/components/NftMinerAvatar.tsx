@@ -198,6 +198,28 @@ export const NftMinerAvatar: React.FC<NftMinerAvatarProps> = ({
         </svg>
       ),
     },
+    flash2x: {
+      glowColor: '#e11d48',
+      bgGradient: 'from-[#4c0519] via-[#1c0209] to-[#881337]',
+      title: 'FLASH 2X VIP',
+      subtitle: '2.00 TON',
+      primaryColor: '#fb7185',
+      accentColor: '#e11d48',
+      svgIcon: (color) => (
+        <svg viewBox="0 0 64 64" className="w-12 h-12 drop-shadow-[0_0_12px_rgba(244,63,94,0.8)]">
+          <circle cx="32" cy="32" r="28" fill="url(#flash-grad)" stroke={color} strokeWidth="2.5" />
+          {/* Flaming Lightning Bolt */}
+          <path d="M36 8L18 32h14l-4 24 20-28H34z" fill="#f43f5e" stroke="#ffe4e6" strokeWidth="2" className="animate-pulse" />
+          <circle cx="32" cy="32" r="4" fill="#fbbf24" />
+          <defs>
+            <linearGradient id="flash-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#881337" />
+              <stop offset="100%" stopColor="#1c0209" />
+            </linearGradient>
+          </defs>
+        </svg>
+      ),
+    },
   }
 
   const config = tierConfig[planId.toLowerCase()] || tierConfig.starter

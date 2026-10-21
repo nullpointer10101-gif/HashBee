@@ -40,14 +40,22 @@ export const Navbar: React.FC = () => {
     },
     {
       id: 'nft',
-      name: 'NFT',
+      name: 'NFT 2X',
       path: '/plans',
-      color: '#0088ff',
-      activeBg: 'bg-[#eff6ff]',
+      color: '#e11d48',
+      activeBg: 'bg-rose-50',
+      isHot: true,
+      badge: '2X',
       icon: (active: boolean) => (
-        <svg className={`w-5 h-5 ${active ? 'text-[#0088ff]' : 'text-slate-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
+        <div className="relative">
+          <svg className={`w-5 h-5 ${active ? 'text-[#e11d48]' : 'text-slate-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <span className="absolute -top-1.5 -right-2 flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+          </span>
+        </div>
       ),
     },
     {

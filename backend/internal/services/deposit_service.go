@@ -259,6 +259,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
 			for _, pfx := range []string{
+				"PLAN_FLASH2X_HB_", "PLAN_FLASH2X_HB", "PLAN_FLASH2X_", "PLAN_FLASH2X",
+				"PLAN_FLASH_HB_", "PLAN_FLASH_HB", "PLAN_FLASH_", "PLAN_FLASH",
 				"PLAN_MATRIX_HB_", "PLAN_MATRIX_HB", "PLAN_MATRIX_", "PLAN_MATRIX",
 				"PLAN_APEX_HB_", "PLAN_APEX_HB", "PLAN_APEX_", "PLAN_APEX",
 				"PLAN_TITAN_HB_", "PLAN_TITAN_HB", "PLAN_TITAN_", "PLAN_TITAN",
@@ -294,6 +296,9 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			} else if strings.HasPrefix(upperComment, "PLAN_TITAN") {
 				isPlanDeposit = true
 				planID = "titan"
+			} else if strings.HasPrefix(upperComment, "PLAN_FLASH2X") || strings.HasPrefix(upperComment, "PLAN_FLASH") {
+				isPlanDeposit = true
+				planID = "flash2x"
 			} else if strings.HasPrefix(upperComment, "PLAN_STARTER") {
 				isPlanDeposit = true
 				planID = "starter"
@@ -314,6 +319,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "titan"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
+					} else if amountGram >= 2.0 {
+						planID = "flash2x"
 					} else if amountGram >= 1.3 {
 						planID = "standard"
 					} else {
@@ -329,6 +336,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "titan"
 					} else if amountGram >= 2.30 {
 						planID = "queen"
+					} else if amountGram >= 2.0 {
+						planID = "flash2x"
 					} else if amountGram >= 0.60 {
 						planID = "standard"
 					} else {
@@ -343,6 +352,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "titan"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
+					} else if amountGram >= 2.0 {
+						planID = "flash2x"
 					} else if amountGram >= 1.3 {
 						planID = "standard"
 					} else {
@@ -434,6 +445,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 			costGRAM = 6.00
 		}
 		returnGRAM = 10.00
+		maxPerAccount = 0
+	case "flash2x":
+		planName = "Flash 2X Cyber Hive"
+		costGRAM = 2.00
+		returnGRAM = 4.00
 		maxPerAccount = 0
 	case "queen":
 		planName = "Royal Queen Miner"

@@ -235,6 +235,63 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* ── 🔥 MEGA HYPE 24H FLASH SALE NFT CARD (ALL USERS VISIBLE) ── */}
+      <div
+        onClick={() => navigate('/plans')}
+        className="p-4 mb-3.5 relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-xl shadow-red-500/25 border-2 border-amber-300 cursor-pointer active:scale-98 transition-all"
+      >
+        {/* Animated Background Rays */}
+        <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-300/25 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-red-900/40 rounded-full blur-xl pointer-events-none" />
+
+        {/* Top Badges Row */}
+        <div className="flex items-center justify-between relative z-10 mb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
+            <span className="px-2.5 py-0.5 rounded-full bg-white text-red-700 text-[10px] font-black tracking-wider uppercase shadow-sm">
+              🔥 24H FLASH NFT DROP
+            </span>
+          </div>
+          <span className="text-[10px] font-extrabold text-amber-200 bg-black/25 px-2 py-0.5 rounded-full border border-white/10 font-mono">
+            100% NET ROI
+          </span>
+        </div>
+
+        {/* Offer Headline & Interactive NFT Avatar */}
+        <div className="flex items-center gap-3 relative z-10 my-2">
+          <div className="shrink-0">
+            <NftMinerAvatar planId="flash2x" size="md" badgeText="2X" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug uppercase text-white drop-shadow">
+              Flash 2.0X Cyber Hive
+            </h3>
+            <p className="text-[11px] text-amber-100 font-bold leading-tight mt-0.5">
+              Pay <span className="text-yellow-300 font-black">2.00 TON</span> ➔ Receive{' '}
+              <span className="text-white font-black underline decoration-yellow-400">4.00 GRAM</span> in 24h!
+            </p>
+          </div>
+        </div>
+
+        {/* Scarcity Bar & CTA Button */}
+        <div className="mt-3 pt-2.5 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between text-[9px] font-bold text-amber-100 mb-1">
+              <span>Limited Stock:</span>
+              <span className="text-yellow-300 font-mono font-black">14 / 50 Left</span>
+            </div>
+            <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/15">
+              <div className="h-full bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full w-[72%]" />
+            </div>
+          </div>
+
+          <button className="px-3.5 py-2 rounded-xl bg-white text-red-600 font-black text-xs uppercase tracking-wider shadow-lg shrink-0 flex items-center gap-1">
+            <span>GET 2X</span>
+            <span>➔</span>
+          </button>
+        </div>
+      </div>
+
       {/* ── CARD 2: YOUR ACTIVE NFT MINER (LARGE PROPER 3D SHOWCASE) ── */}
       <div className="mine-card p-4.5 mb-3.5 relative overflow-hidden">
         {/* Top Header Row */}
