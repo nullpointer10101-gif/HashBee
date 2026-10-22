@@ -627,6 +627,23 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		`SELECT COUNT(*), COALESCE(SUM(return_gram), 0) FROM user_plans WHERE user_id = $1 AND status = 'claimed'`,
 		user.ID).Scan(&claimedCount, &totalEarned)
 
+	// 24H Flash Miner Deadline (ends after 24 hours)
+	flashSaleDeadline := time.Date(2026, 10, 23, 11, 15, 0, 0, time.UTC)
+	now := time.Now().UTC()
+	isFlashEnded := now.After(flashSaleDeadline)
+
+	var flashSubtitle, flashBadge string
+	var canPurchaseFlash bool
+	if isFlashEnded {
+		flashSubtitle = "⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)"
+		flashBadge = "⏳ EVENT ENDED"
+		canPurchaseFlash = false
+	} else {
+		flashSubtitle = "🔥 LIMITED 24H FLASH: 2.50 GRAM -> 5.00 GRAM (100% PROFIT)"
+		flashBadge = "🔥 2X FLASH SALE (+100%)"
+		canPurchaseFlash = true
+	}
+
 	plans := []models.PlanTier{
 		{
 			ID:            "starter",
@@ -665,17 +682,17 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		{
 			ID:            "flash2x",
 			Name:          "⚡ Flash 2X Cyber Hive",
-			Subtitle:      "🔥 LIMITED 24H FLASH SALE: 2.00 TON -> 4.00 GRAM (100% PROFIT)",
-			Badge:         "🔥 2X FLASH SALE (+100%)",
-			CostGRAM:      2.00,
-			ReturnGRAM:    4.00,
-			ProfitGRAM:    2.00,
+			Subtitle:      flashSubtitle,
+			Badge:         flashBadge,
+			CostGRAM:      2.50,
+			ReturnGRAM:    5.00,
+			ProfitGRAM:    2.50,
 			ProfitPercent: 100.00,
 			DurationHours: 24,
 			MaxPerAccount: 0,
 			IsLimited:     true,
 			UserPurchased: 0,
-			CanPurchase:   true,
+			CanPurchase:   canPurchaseFlash,
 			Icon:          "🔥",
 			AccentColor:   "#f43f5e",
 		},
@@ -756,6 +773,8 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		"total_locked_gram":     totalLocked,
 		"total_earned_gram":     totalEarned,
 		"can_buy_starter":       starterCount < 1,
+		"flash_sale_ends_at":    flashSaleDeadline.Format(time.RFC3339),
+		"flash_sale_ended":      isFlashEnded,
 	})
 }
 

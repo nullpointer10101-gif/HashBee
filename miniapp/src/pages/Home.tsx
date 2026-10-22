@@ -19,6 +19,33 @@ export const Home: React.FC = () => {
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
+  // 24H Flash Miner Countdown Timer (Live 24h ending countdown)
+  const FLASH_SALE_DEADLINE = '2026-10-23T11:15:00Z'
+  const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
+    hours: 24,
+    minutes: 0,
+    seconds: 0,
+    isEnded: false,
+  })
+
+  useEffect(() => {
+    const calcTimer = () => {
+      const target = new Date(FLASH_SALE_DEADLINE).getTime()
+      const diff = Math.max(0, Math.floor((target - Date.now()) / 1000))
+      if (diff <= 0) {
+        setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
+        return
+      }
+      const hours = Math.floor(diff / 3600)
+      const minutes = Math.floor((diff % 3600) / 60)
+      const seconds = diff % 60
+      setFlashTimeLeft({ hours, minutes, seconds, isEnded: false })
+    }
+    calcTimer()
+    const timer = setInterval(calcTimer, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const ghs = user?.bee_power || 50
   // 100 GHS = 0.05 GRAM/USDT per day (0.0005 per GHS)
   const earningsPerDay = ghs * 0.0005
@@ -237,22 +264,44 @@ export const Home: React.FC = () => {
 
       {/* ── 🔥 MEGA HYPE 24H FLASH SALE NFT CARD (ALL USERS VISIBLE) ── */}
       <div
-        onClick={() => navigate('/plans')}
-        className="p-4 mb-3.5 relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-xl shadow-red-500/25 border-2 border-amber-300 cursor-pointer active:scale-98 transition-all"
+        onClick={() => {
+          if (!flashTimeLeft.isEnded) {
+            navigate('/plans')
+          }
+        }}
+        className={`p-4 mb-3.5 relative overflow-hidden rounded-3xl transition-all ${
+          flashTimeLeft.isEnded
+            ? 'bg-gradient-to-r from-slate-900 via-stone-900 to-slate-950 text-slate-300 border-2 border-slate-700 shadow-md opacity-85 cursor-not-allowed'
+            : 'bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-xl shadow-red-500/25 border-2 border-amber-300 cursor-pointer active:scale-98'
+        }`}
       >
         {/* Animated Background Rays */}
-        <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-300/25 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-red-900/40 rounded-full blur-xl pointer-events-none" />
+        {!flashTimeLeft.isEnded && (
+          <>
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-300/25 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-red-900/40 rounded-full blur-xl pointer-events-none" />
+          </>
+        )}
 
         {/* Top Badges Row */}
         <div className="flex items-center justify-between relative z-10 mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
-            <span className="px-2.5 py-0.5 rounded-full bg-white text-red-700 text-[10px] font-black tracking-wider uppercase shadow-sm">
-              🔥 24H FLASH NFT DROP
+            {!flashTimeLeft.isEnded && (
+              <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
+            )}
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shadow-sm ${
+              flashTimeLeft.isEnded
+                ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                : 'bg-white text-red-700'
+            }`}>
+              {flashTimeLeft.isEnded ? '⏳ 24H FLASH CONCLUDED' : '🔥 24H FLASH NFT DROP'}
             </span>
           </div>
-          <span className="text-[10px] font-extrabold text-amber-200 bg-black/25 px-2 py-0.5 rounded-full border border-white/10 font-mono">
+          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${
+            flashTimeLeft.isEnded
+              ? 'text-slate-400 bg-black/40 border-slate-700'
+              : 'text-amber-200 bg-black/25 border-white/10'
+          }`}>
             100% NET ROI
           </span>
         </div>
@@ -264,30 +313,64 @@ export const Home: React.FC = () => {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug uppercase text-white drop-shadow">
-              Flash 2.0X Cyber Hive
+              Flash 2X Cyber Hive
             </h3>
-            <p className="text-[11px] text-amber-100 font-bold leading-tight mt-0.5">
-              Pay <span className="text-yellow-300 font-black">2.00 TON</span> ➔ Receive{' '}
-              <span className="text-white font-black underline decoration-yellow-400">4.00 GRAM</span> in 24h!
+            <p className={`text-[11px] font-bold leading-tight mt-0.5 ${flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
+              Pay <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>2.50 TON</span> ➔ Receive{' '}
+              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>5.00 GRAM</span> in 24h!
             </p>
           </div>
         </div>
 
+        {/* 24-Hour Live Countdown Timer Bar */}
+        <div className="my-2 bg-black/35 backdrop-blur-md rounded-2xl p-2.5 border border-white/15 flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs">{flashTimeLeft.isEnded ? '⏳' : '⏱️'}</span>
+            <span className="text-[10px] uppercase font-black tracking-wider text-amber-200">
+              {flashTimeLeft.isEnded ? 'Offer Expired:' : '24H Timer Ending in:'}
+            </span>
+          </div>
+          <div className={`font-mono text-xs font-black px-2.5 py-0.5 rounded-lg border ${
+            flashTimeLeft.isEnded
+              ? 'bg-rose-950/70 text-rose-300 border-rose-500/30'
+              : 'bg-black/60 text-yellow-300 border-yellow-400/40'
+          }`}>
+            {flashTimeLeft.isEnded
+              ? '00:00:00 (ENDED)'
+              : `${String(flashTimeLeft.hours).padStart(2, '0')}h : ${String(flashTimeLeft.minutes).padStart(2, '0')}m : ${String(flashTimeLeft.seconds).padStart(2, '0')}s`}
+          </div>
+        </div>
+
         {/* Scarcity Bar & CTA Button */}
-        <div className="mt-3 pt-2.5 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
+        <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between text-[9px] font-bold text-amber-100 mb-1">
-              <span>Limited Stock:</span>
-              <span className="text-yellow-300 font-mono font-black">14 / 50 Left</span>
+              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : 'Limited Stock:'}</span>
+              <span className={`font-mono font-black ${flashTimeLeft.isEnded ? 'text-rose-400' : 'text-yellow-300'}`}>
+                {flashTimeLeft.isEnded ? 'OFFER CLOSED' : '14 / 50 Left'}
+              </span>
             </div>
             <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/15">
-              <div className="h-full bg-gradient-to-r from-yellow-300 to-amber-400 rounded-full w-[72%]" />
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  flashTimeLeft.isEnded
+                    ? 'w-full bg-slate-600'
+                    : 'bg-gradient-to-r from-yellow-300 to-amber-400 w-[72%]'
+                }`}
+              />
             </div>
           </div>
 
-          <button className="px-3.5 py-2 rounded-xl bg-white text-red-600 font-black text-xs uppercase tracking-wider shadow-lg shrink-0 flex items-center gap-1">
-            <span>GET 2X</span>
-            <span>➔</span>
+          <button
+            disabled={flashTimeLeft.isEnded}
+            className={`px-3.5 py-2 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shrink-0 flex items-center gap-1 ${
+              flashTimeLeft.isEnded
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                : 'bg-white text-red-600 active:scale-95'
+            }`}
+          >
+            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : 'GET 2X'}</span>
+            {!flashTimeLeft.isEnded && <span>➔</span>}
           </button>
         </div>
       </div>

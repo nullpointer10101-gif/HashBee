@@ -139,6 +139,11 @@ export const ViralBountyWidget: React.FC = () => {
     return Math.min(100, Math.round((bounty.referrals_count / bounty.min_referrals_target) * 100))
   }, [bounty])
 
+  // If bounty has expired, do not display the floating widget
+  if (!bounty || bounty.is_expired) {
+    return null
+  }
+
   return (
     <>
       {/* ── 1. FLOATING RIGHT-SIDE WIDGET BADGE ── */}

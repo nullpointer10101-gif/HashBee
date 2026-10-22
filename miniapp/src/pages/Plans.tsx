@@ -37,6 +37,33 @@ export const Plans: React.FC = () => {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
 
+  // 24H Flash Miner Countdown Timer
+  const FLASH_SALE_DEADLINE = '2026-10-23T11:15:00Z'
+  const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
+    hours: 24,
+    minutes: 0,
+    seconds: 0,
+    isEnded: false,
+  })
+
+  useEffect(() => {
+    const calcTimer = () => {
+      const target = new Date(FLASH_SALE_DEADLINE).getTime()
+      const diff = Math.max(0, Math.floor((target - Date.now()) / 1000))
+      if (diff <= 0) {
+        setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
+        return
+      }
+      const hours = Math.floor(diff / 3600)
+      const minutes = Math.floor((diff % 3600) / 60)
+      const seconds = diff % 60
+      setFlashTimeLeft({ hours, minutes, seconds, isEnded: false })
+    }
+    calcTimer()
+    const timer = setInterval(calcTimer, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const DEPOSIT_WALLET = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
   const userTelegramId =
     user?.telegram_id ||
@@ -87,18 +114,20 @@ export const Plans: React.FC = () => {
     },
     {
       id: 'flash2x',
-      name: '⚡ FLASH 2.0X CYBER HIVE',
-      subtitle: '🔥 LIMITED FLASH DROP: Pay 2.00 TON ➔ Instant 4.00 GRAM in 24h (100% PROFIT)',
-      badge: '🔥 2X FLASH SALE (+100%)',
-      cost_gram: 2.0,
-      return_gram: 4.0,
-      profit_gram: 2.0,
+      name: '⚡ FLASH 2X CYBER HIVE',
+      subtitle: flashTimeLeft.isEnded
+        ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
+        : '🔥 LIMITED 24H FLASH: Pay 2.50 TON ➔ Instant 5.00 GRAM in 24h (100% PROFIT)',
+      badge: flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2X FLASH SALE (+100%)',
+      cost_gram: 2.5,
+      return_gram: 5.0,
+      profit_gram: 2.5,
       profit_percent: 100.0,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: true,
       user_purchased: 0,
-      can_purchase: true,
+      can_purchase: !flashTimeLeft.isEnded,
       icon: '🔥',
       accent_color: '#f43f5e',
     },
@@ -325,8 +354,9 @@ export const Plans: React.FC = () => {
         return_gram: tier.return_gram,
         profit_gram: tier.profit_gram,
         profit_percent: tier.profit_percent,
-        badge: tier.badge,
-        subtitle: tier.subtitle,
+        badge: tier.id === 'flash2x' ? tier.badge : serverPlan.badge,
+        subtitle: tier.id === 'flash2x' ? tier.subtitle : serverPlan.subtitle,
+        can_purchase: tier.id === 'flash2x' ? !flashTimeLeft.isEnded : serverPlan.can_purchase,
       }
     }
     return tier
@@ -489,30 +519,38 @@ export const Plans: React.FC = () => {
             <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
               <span className="px-2.5 py-0.5 rounded-full bg-white text-red-700 text-[10px] font-black tracking-wider uppercase shadow animate-pulse">
-                🔥 LIVE FLASH DROP
+                {flashTimeLeft.isEnded ? '⏳ FLASH EVENT ENDED' : '🔥 LIVE 24H FLASH DROP'}
               </span>
-              <span className="text-[10px] font-bold text-amber-200">
-                ⚡ Only 14 / 50 Spots Left Today
+              <span className="text-[10px] font-mono font-bold text-amber-200 bg-black/30 px-2.5 py-0.5 rounded-lg border border-white/10">
+                ⏱️ {flashTimeLeft.isEnded ? '00:00:00 (EXPIRED)' : `${String(flashTimeLeft.hours).padStart(2, '0')}h : ${String(flashTimeLeft.minutes).padStart(2, '0')}m : ${String(flashTimeLeft.seconds).padStart(2, '0')}s Left`}
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight uppercase relative z-10">
-              Deposit 2.00 TON ➔ Get 4.00 GRAM (100% Profit)
+              {flashTimeLeft.isEnded ? '24-Hour Flash Sale Has Ended' : 'Deposit 2.50 TON ➔ Get 5.00 GRAM (100% Profit)'}
             </h2>
             <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
-              Limited 24-Hour Special Yield Contract. Exact 2X return unlocked directly to your wallet in 24h!
+              {flashTimeLeft.isEnded
+                ? 'This limited 24-hour contract has expired and is no longer available.'
+                : 'Limited 24-Hour Special Yield Contract. Exact 2X return unlocked directly to your wallet in 24h!'}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
               <div className="flex-1 bg-black/25 rounded-full h-2 overflow-hidden border border-white/20">
-                <div className="bg-gradient-to-r from-amber-300 to-yellow-400 h-full w-[72%] rounded-full" />
+                <div className={`h-full rounded-full transition-all duration-500 ${flashTimeLeft.isEnded ? 'bg-slate-500 w-full' : 'bg-gradient-to-r from-amber-300 to-yellow-400 w-[72%]'}`} />
               </div>
               <button
+                disabled={flashTimeLeft.isEnded}
                 onClick={() => {
+                  if (flashTimeLeft.isEnded) return
                   const flashPlan = availablePlans.find((p) => p.id === 'flash2x')
                   if (flashPlan) handleOpenPayment(flashPlan)
                 }}
-                className="px-3.5 py-1.5 bg-white text-red-600 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg active:scale-95 transition-all shrink-0"
+                className={`px-3.5 py-1.5 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg transition-all shrink-0 ${
+                  flashTimeLeft.isEnded
+                    ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-700'
+                    : 'bg-white text-red-600 active:scale-95'
+                }`}
               >
-                CLAIM 2X (2 TON) ➔
+                {flashTimeLeft.isEnded ? 'ENDED ⏳' : 'CLAIM 2X (2.5 TON) ➔'}
               </button>
             </div>
           </div>
@@ -572,21 +610,32 @@ export const Plans: React.FC = () => {
               >
                 {/* Header Tag Bar */}
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
-                      isDouble
-                        ? 'bg-rose-100 text-rose-900 border border-rose-300'
-                        : isMythic
-                        ? 'bg-amber-100 text-amber-950 border border-amber-300'
-                        : isLegendary
-                        ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
-                        : isEpic
-                        ? 'bg-purple-100 text-purple-950 border border-purple-300'
-                        : 'bg-blue-100 text-blue-950 border border-blue-300'
-                    }`}
-                  >
-                    {plan.badge}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
+                        isFlash
+                          ? flashTimeLeft.isEnded
+                            ? 'bg-slate-200 text-slate-700 border border-slate-300'
+                            : 'bg-rose-100 text-rose-900 border border-rose-300 animate-pulse'
+                          : isDouble
+                          ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                          : isMythic
+                          ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                          : isLegendary
+                          ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+                          : isEpic
+                          ? 'bg-purple-100 text-purple-950 border border-purple-300'
+                          : 'bg-blue-100 text-blue-950 border border-blue-300'
+                      }`}
+                    >
+                      {isFlash && flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : plan.badge}
+                    </span>
+                    {isFlash && !flashTimeLeft.isEnded && (
+                      <span className="text-[9px] font-mono font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full border border-red-200">
+                        ⏱️ {String(flashTimeLeft.hours).padStart(2, '0')}:{String(flashTimeLeft.minutes).padStart(2, '0')}:{String(flashTimeLeft.seconds).padStart(2, '0')} Left
+                      </span>
+                    )}
+                  </div>
                   <span className="px-2.5 py-1 rounded-full text-[9px] font-black bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-mono shadow-sm">
                     +{plan.profit_percent.toFixed(1)}% NET 24H ROI
                   </span>
@@ -638,6 +687,10 @@ export const Plans: React.FC = () => {
                 {isStarter && plansOverview?.can_buy_starter === false ? (
                   <div className="w-full py-3 rounded-2xl bg-slate-200 text-slate-600 font-black text-xs text-center uppercase tracking-wider">
                     ✓ 1-TIME TRIAL COMPLETED
+                  </div>
+                ) : isFlash && flashTimeLeft.isEnded ? (
+                  <div className="w-full py-3.5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs text-center uppercase tracking-wider border border-slate-300">
+                    OFFER EXPIRED (24H ENDED)
                   </div>
                 ) : (
                   <button

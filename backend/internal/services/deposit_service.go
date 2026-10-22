@@ -447,10 +447,19 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		returnGRAM = 10.00
 		maxPerAccount = 0
 	case "flash2x":
-		planName = "Flash 2X Cyber Hive"
-		costGRAM = 2.00
-		returnGRAM = 4.00
-		maxPerAccount = 0
+		flashSaleDeadline := time.Date(2026, 10, 23, 11, 15, 0, 0, time.UTC)
+		if time.Now().UTC().After(flashSaleDeadline) {
+			// 24H flash event ended, fallback to standard plan
+			planID = "standard"
+			planName = "Standard Worker Miner"
+			costGRAM = 1.30
+			returnGRAM = 2.00
+		} else {
+			planName = "Flash 2X Cyber Hive"
+			costGRAM = 2.50
+			returnGRAM = 5.00
+			maxPerAccount = 0
+		}
 	case "queen":
 		planName = "Royal Queen Miner"
 		if telegramID == 8700203028 {

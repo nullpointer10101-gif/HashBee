@@ -202,7 +202,7 @@ export const NftMinerAvatar: React.FC<NftMinerAvatarProps> = ({
       glowColor: '#e11d48',
       bgGradient: 'from-[#4c0519] via-[#1c0209] to-[#881337]',
       title: 'FLASH 2X VIP',
-      subtitle: '2.00 TON',
+      subtitle: '2.50 GRAM',
       primaryColor: '#fb7185',
       accentColor: '#e11d48',
       svgIcon: (color) => (
