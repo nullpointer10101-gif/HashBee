@@ -101,7 +101,11 @@
     <span>🐝 HASHBEE</span>
     <span class="brand-badge">ADMIN CONTROL</span>
   </div>
-  <div id="authControls" style="display:none; align-items:center; gap:16px;">
+  <div id="authControls" style="display:none; align-items:center; gap:12px;">
+    <div onclick="promptChangeApiUrl()" style="cursor:pointer; display:flex; align-items:center; gap:6px; background:#12201b; padding:5px 12px; border-radius:8px; border:1px solid #10b981; font-size:11px;" title="Click to change Backend API URL">
+      <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
+      <span id="apiIndicator" class="font-mono" style="color:#10b981; font-weight:700;">hashbee2.onrender.com</span>
+    </div>
     <span id="adminEmail" class="font-mono" style="font-size:12px; color:#10b981; background:#12201b; padding:4px 10px; border-radius:6px; border:1px solid #1d332b;"></span>
     <button onclick="logout()" class="btn btn-secondary" style="padding:6px 12px;">Logout</button>
   </div>
@@ -126,7 +130,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Backend API URL</label>
-          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee1.onrender.com" placeholder="https://hashbee1.onrender.com">
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee2.onrender.com" placeholder="https://hashbee2.onrender.com">
         </div>
         <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
@@ -405,9 +409,9 @@
             <option value="daily_streak_bonus">🔥 Daily Bonus Waiting ➔ Claim Free Honey ({name})</option>
             <option value="custom">✍️ Custom Message Below</option>
           </select>
-        </div>
-
-          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
+          <div class="form-group">
+            <label class="form-label">Auto-Broadcast Message Content (Markdown Supported)</label>
+            <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
 
 Double your TON in exactly 24 hours:
 💰 *Pay 2.50 TON ➔ Receive 5.00 GRAM*
@@ -415,18 +419,18 @@ Double your TON in exactly 24 hours:
 ⏳ Limited slots available today!
 
 👇 Double your TON in 1-click:</textarea>
-        </div>
+          </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="form-group">
-            <label class="form-label">Button Text</label>
-            <input type="text" id="autoBroadcastBtnText" class="form-input" value="⚡ Double TON Now (5.00 G) ➔">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Button Text</label>
+              <input type="text" id="autoBroadcastBtnText" class="form-input" value="⚡ Double TON Now (5.00 G) ➔">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Button WebApp URL</label>
+              <input type="text" id="autoBroadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Button WebApp URL</label>
-            <input type="text" id="autoBroadcastBtnUrl" class="form-input font-mono" value="https://miniapp-five-topaz.vercel.app">
-          </div>
-        </div>
         </div> <!-- End of autoBroadcastFixedOptions -->
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
@@ -1030,7 +1034,7 @@ Double your TON in exactly 24 hours:
 <div id="toast"></div>
 
 <script>
-var API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.com';
+var API_URL = (localStorage.getItem('hb_api_url') || '').replace(/hashbee1\.onrender\.com/g, 'hashbee2.onrender.com') || 'https://hashbee2.onrender.com';
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -1273,11 +1277,38 @@ function copyToClipboard(text, elem) {
 
 function getApiUrl() {
   let stored = localStorage.getItem('hb_api_url') || '';
-  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1')) {
-    stored = 'https://hashbee1.onrender.com';
+  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1') || stored.includes('hashbee1.onrender.com')) {
+    stored = 'https://hashbee2.onrender.com';
     localStorage.setItem('hb_api_url', stored);
   }
   return stored.replace(/\/$/, '');
+}
+
+function updateApiIndicator() {
+  const el = document.getElementById('apiIndicator');
+  if (el) {
+    try {
+      const u = new URL(getApiUrl());
+      el.innerText = u.hostname;
+    } catch {
+      el.innerText = getApiUrl();
+    }
+  }
+}
+
+function promptChangeApiUrl() {
+  const current = getApiUrl();
+  const next = prompt('Change Backend API URL:', current);
+  if (next && next.trim() && next.trim() !== current) {
+    const cleaned = next.trim().replace(/\/$/, '');
+    localStorage.setItem('hb_api_url', cleaned);
+    API_URL = cleaned;
+    updateApiIndicator();
+    showToast('Updated API URL to ' + cleaned);
+    loadStats();
+    loadCampaigns();
+    loadAutoBroadcast();
+  }
 }
 
 API_URL = getApiUrl();
@@ -1300,7 +1331,7 @@ async function handleLogin(e) {
   const loginId = (document.getElementById('loginId')?.value || '').trim();
   const password = (document.getElementById('loginPw')?.value || '').trim();
   let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
-  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee1.onrender.com';
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee2.onrender.com';
   localStorage.setItem('hb_api_url', API_URL);
 
   if (!loginId || !password) {
@@ -1315,7 +1346,7 @@ async function handleLogin(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee2.onrender.com';
     console.log('Attempting login to:', activeUrl + '/api/admin/login');
     const res = await fetch(activeUrl + '/api/admin/login', {
       method: 'POST',
@@ -1345,6 +1376,7 @@ async function handleLogin(e) {
 
 function initDashboard(admin) {
   API_URL = getApiUrl();
+  updateApiIndicator();
   token = localStorage.getItem('hb_admin_token') || token || '';
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('dashboardView').style.display = 'block';
@@ -1393,6 +1425,7 @@ function switchTab(tabId, el) {
   if (tabId === 'deposits') loadDeposits();
   if (tabId === 'settings') loadSettings();
   if (tabId === 'broadcast') {
+    API_URL = getApiUrl();
     loadAutoBroadcast();
     loadPayoutMirrorStatus();
     if (!document.getElementById('broadcastMsg').value) {
@@ -1529,7 +1562,7 @@ async function handleCreateCampaign(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee1.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee2.onrender.com';
     console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
     const res = await fetch(activeUrl + '/api/admin/campaigns', {
       method: 'POST',
@@ -1653,6 +1686,7 @@ function toggleSpecificTgId(val) {
 let broadcastPollTimer = null;
 
 function startBroadcastPolling() {
+  API_URL = getApiUrl();
   const box = document.getElementById('broadcastProgressBox');
   if (box) box.style.display = 'block';
 
@@ -1689,6 +1723,7 @@ function startBroadcastPolling() {
 }
 
 async function sendBroadcast() {
+  API_URL = getApiUrl();
   const msg = document.getElementById('broadcastMsg').value.trim();
   const btnText = document.getElementById('broadcastBtnText').value.trim();
   const btnUrl = document.getElementById('broadcastBtnUrl').value.trim();
@@ -1755,6 +1790,7 @@ function applyAutoTemplate(key) {
 
 async function loadAutoBroadcast() {
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/auto-broadcast', { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
@@ -1813,6 +1849,7 @@ async function loadAutoBroadcast() {
 }
 
 async function saveAutoBroadcast() {
+  API_URL = getApiUrl();
   const enabled = document.getElementById('autoBroadcastEnabled').value === 'true';
   const interval = parseInt(document.getElementById('autoBroadcastInterval').value) || 60;
   const mode = document.getElementById('autoBroadcastMode')?.value || 'rotate';
@@ -1861,6 +1898,7 @@ async function saveAutoBroadcast() {
 }
 
 async function testSendAutoBroadcast() {
+  API_URL = getApiUrl();
   const message = document.getElementById('autoBroadcastMsg').value.trim();
   const buttonText = document.getElementById('autoBroadcastBtnText').value.trim();
   const buttonUrl = document.getElementById('autoBroadcastBtnUrl').value.trim();
@@ -1897,6 +1935,7 @@ async function testSendAutoBroadcast() {
 // Payout Mirror Handlers
 async function loadPayoutMirrorStatus() {
   try {
+    API_URL = getApiUrl();
     const res = await fetch(API_URL + '/api/admin/payout-mirror/status', { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
@@ -1941,6 +1980,7 @@ async function loadPayoutMirrorStatus() {
 }
 
 async function savePayoutMirrorConfig() {
+  API_URL = getApiUrl();
   const enabled = document.getElementById('payoutMirrorEnabled').value === 'true';
   const source = document.getElementById('payoutMirrorSource').value.trim();
   const target = document.getElementById('payoutMirrorTarget').value.trim();
@@ -1972,6 +2012,7 @@ async function savePayoutMirrorConfig() {
 }
 
 async function syncPayoutMirror() {
+  API_URL = getApiUrl();
   const btn = document.getElementById('syncPayoutMirrorBtn');
   btn.disabled = true;
   btn.innerText = '⚡ Syncing Proofs...';
@@ -1994,6 +2035,7 @@ async function syncPayoutMirror() {
 }
 
 async function testPayoutMirror() {
+  API_URL = getApiUrl();
   const target = document.getElementById('payoutMirrorTarget').value.trim();
   if (!target) {
     showToast('Please enter a target channel first', true);
@@ -2902,6 +2944,7 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  API_URL = getApiUrl();
   const inputs = document.querySelectorAll('#settingsForm input');
   const payload = {};
   inputs.forEach(i => {
