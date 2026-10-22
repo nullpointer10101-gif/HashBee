@@ -234,19 +234,22 @@
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
               <option value="custom">✍️ Custom Message</option>
-              <option value="withdraw_min_010">💸 Withdraw Now ➔ Min Cashout Only 0.10 GRAM!</option>
+              <option value="flash_2x_double">⚡ FLASH 2X: 2.50 TON ➔ 5.00 G (+100% Profit)</option>
+              <option value="withdraw_min_010">💸 Withdraw Now ➔ Min Cashout Only 0.10 G!</option>
+              <option value="spin_free_waiting">🎰 Free Spin Waiting ➔ Win 1.00 GRAM Jackpot</option>
+              <option value="watch_ads_boost">📺 Watch Ads ➔ Free Instant Hashrate Boost</option>
+              <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (+10 TON Pure Profit)</option>
               <option value="plan_standard_53pct">⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit Plan)</option>
-              <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (Apex God Hive +83.3% ROI)</option>
-              <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (2X Double Whale Matrix)</option>
-              <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Starter Trial Miner)</option>
-              <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive)</option>
-              <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Queen Miner)</option>
-              <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win)</option>
-              <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin & Mining Boost</option>
-              <option value="watch_ads_boost">📺 Watch Ads ➔ Free Hashrate Boost</option>
-              <option value="tasks_drop">⭐ Sponsor Missions & Free GHS Drops</option>
-              <option value="personalized_buzz">🐝 Hive Capacity Full Reminder (Hey {name})</option>
-              <option value="withdraw_alert">💸 Daily Cashouts Processed & Verified</option>
+              <option value="hive_full_alert">🚨 Miner Stopped ➔ Hive Full Reminder ({name})</option>
+              <option value="mystery_crate_drop">📦 Mystery Crate Drop ➔ Open & Win Big</option>
+              <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (Whale 2X Double Matrix)</option>
+              <option value="viral_referrals_rush">👥 1 Invite = 1 Free Spin & +5 GHS Boost</option>
+              <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive +66%)</option>
+              <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Node Miner +50%)</option>
+              <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Quick Starter Trial)</option>
+              <option value="withdraw_proof_alert">💎 Payouts Verified ➔ On-Chain Proofs Sent</option>
+              <option value="missions_bounty">⭐ Sponsor Missions ➔ Free GHS Drops</option>
+              <option value="daily_streak_bonus">🔥 Daily Bonus Waiting ➔ Claim Free Honey ({name})</option>
             </select>
           </div>
 
@@ -384,34 +387,40 @@
             </button>
           </div>
           <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
-            <option value="plan_standard_53pct" selected>⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit Plan)</option>
-            <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (Apex God Hive +83.3% ROI)</option>
-            <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (2X Double Whale Matrix)</option>
-            <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Starter Trial Miner)</option>
-            <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive)</option>
-            <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Queen Miner)</option>
-            <option value="spin_dopamine_jackpot">🎡 Lucky Wheel Mega Jackpot (Spin & Win)</option>
-            <option value="spin_viral_referrals">👥 1 Invite = 1 Free Spin & Mining Boost</option>
-            <option value="personalized_buzz">🐝 Hive Capacity Full Reminder (Hey {name})</option>
-            <option value="withdraw_alert">💸 Daily Cashouts Processed & Verified</option>
+            <option value="flash_2x_double" selected>⚡ FLASH 2X: 2.50 TON ➔ 5.00 G (+100% Profit)</option>
+            <option value="withdraw_min_010">💸 Withdraw Now ➔ Min Cashout Only 0.10 G!</option>
+            <option value="spin_free_waiting">🎰 Free Spin Waiting ➔ Win 1.00 GRAM Jackpot</option>
+            <option value="watch_ads_boost">📺 Watch Ads ➔ Free Instant Hashrate Boost</option>
+            <option value="plan_god_tier">🔥 12.00 TON ➔ 22.00 G (+10 TON Pure Profit)</option>
+            <option value="plan_standard_53pct">⚡ 1.30 TON ➔ 2.00 G (+53.8% Profit Plan)</option>
+            <option value="hive_full_alert">🚨 Miner Stopped ➔ Hive Full Reminder ({name})</option>
+            <option value="mystery_crate_drop">📦 Mystery Crate Drop ➔ Open & Win Big</option>
+            <option value="plan_matrix_2x">🌌 25.00 TON ➔ 50.00 G (Whale 2X Double Matrix)</option>
+            <option value="viral_referrals_rush">👥 1 Invite = 1 Free Spin & +5 GHS Boost</option>
+            <option value="plan_titan_66pct">💎 6.00 TON ➔ 10.00 G (Cyber Titan Hive +66%)</option>
+            <option value="plan_queen_whale">👑 3.00 TON ➔ 4.50 G (Royal Node Miner +50%)</option>
+            <option value="plan_starter_trial">🐝 0.70 TON ➔ 0.80 G (Quick Starter Trial)</option>
+            <option value="withdraw_proof_alert">💎 Payouts Verified ➔ On-Chain Proofs Sent</option>
+            <option value="missions_bounty">⭐ Sponsor Missions ➔ Free GHS Drops</option>
+            <option value="daily_streak_bonus">🔥 Daily Bonus Waiting ➔ Claim Free Honey ({name})</option>
             <option value="custom">✍️ Custom Message Below</option>
           </select>
         </div>
 
-          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H MINING PLAN IS LIVE!* 🍯
+          <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
 
-Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
+Double your TON in exactly 24 hours:
+💰 *Pay 2.50 TON ➔ Receive 5.00 GRAM*
+📈 *+100% Guaranteed 2X Profit*
+⏳ Limited slots available today!
 
-✅ Guaranteed next-day payout
-✅ Unlocks lifetime instant withdrawals
-
-👇 Activate in 1-click:</textarea>
+👇 Double your TON in 1-click:</textarea>
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
           <div class="form-group">
             <label class="form-label">Button Text</label>
-            <input type="text" id="autoBroadcastBtnText" class="form-input" value="⚡ Activate 1.30 TON Plan (+53.8%) ➔">
+            <input type="text" id="autoBroadcastBtnText" class="form-input" value="⚡ Double TON Now (5.00 G) ➔">
           </div>
           <div class="form-group">
             <label class="form-label">Button WebApp URL</label>
@@ -1025,247 +1034,196 @@ var API_URL = localStorage.getItem('hb_api_url') || 'https://hashbee1.onrender.c
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
+  flash_2x_double: {
+    msg: `⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
+
+Double your TON in exactly 24 hours:
+💰 *Pay 2.50 TON ➔ Receive 5.00 GRAM*
+📈 *+100% Guaranteed 2X Profit*
+⏳ Limited slots available today!
+
+👇 Double your TON in 1-click:`,
+    btn: '⚡ Double TON Now (5.00 G) ➔'
+  },
   withdraw_min_010: {
-    msg: `💸 *INSTANT CASHOUTS LIVE: MINIMUM ONLY 0.10 GRAM!* 💎⚡
+    msg: `💸 *INSTANT CASHOUT: MINIMUM JUST 0.10 G!* 💎⚡
 
-Great news miners! You can now place withdrawals starting from just *0.10 GRAM / USDT*!
+Withdraw your mining balance right now:
+• 🚀 *Min Cashout*: Only *0.10 GRAM / USDT*
+• ⚡ Instant settlements to TON & BSC
+• 🛡️ Zero withdrawal fees
 
-🚀 *Fast On-Chain Settlements*
-💎 *Direct TON Blockchain Transfers*
-🛡️ *Low Minimum Cashout*: Only *0.10 GRAM*!
-🍯 Cash out all your mined Honey, Spin wins & daily yields!
+👇 Check balance & cash out:`,
+    btn: '💸 Cashout My Earnings Now ➔'
+  },
+  spin_free_waiting: {
+    msg: `🎰 *FREE LUCKY SPIN WAITING FOR YOU!* 🎡
 
-👇 Check your balance & place your withdrawal now:`,
-    btn: '💸 Place Withdrawal (0.10 G) ➔'
+Hey {name}, your turn is ready on the Lucky Wheel:
+👑 *1.00 GRAM Jackpot*
+💵 *Instant USDT Cash Drops*
+⚡ *Permanent Hashrate Boosts*
+
+👇 Spin now and claim your prize:`,
+    btn: '🎡 Spin Lucky Wheel Free 🎰'
   },
   watch_ads_boost: {
-    msg: `📺 *FREE HONEY & HASHRATE BOOST IS LIVE!* 🐝⚡
+    msg: `📺 *FREE BOOST: WATCH ADS & MINE FASTER!* ⚡
 
-Hey {name}, you can now earn free Honey and boost your mining power without spending anything!
+Zero deposit needed:
+• 🎬 3 Quick Ads = Free Honey credited
+• ⚡ Permanent GHS Mining Speed
+• 🔄 Refreshes every 3 hours 24/7!
 
-• 🎬 *3 Watch Ad Tasks* available every 3 hours
-• 🍯 *+1.0 Honey Reward* credited per 15-second ad
-• ⚡ *Boost Mining Hashrate* to accelerate your passive harvest
-• ⏱️ Refreshes automatically every 3 hours 24/7
-
-💰 100% Free • Direct Balance Credit • Withdrawable on TON & BSC!
-
-👇 Watch your 3 daily ads and boost your gains:`,
-    btn: '📺 Watch Ads & Earn Honey 🍯'
-  },
-  plan_standard_53pct: {
-    msg: `⚡ *24H MINING PLAN IS LIVE!* 🍯
-
-Lock *1.30 TON* ➔ Get *2.00 GRAM* in 24 hours (+53.8% Profit)!
-
-✅ Guaranteed next-day payout
-✅ Unlocks lifetime instant withdrawals
-
-👇 Activate in 1-click:`,
-    btn: '⚡ Activate 1.30 TON Plan (+53.8%) ➔'
+👇 Boost your miner for free:`,
+    btn: '⚡ Watch Ads & Boost Speed ➔'
   },
   plan_god_tier: {
-    msg: `🔥 *APEX GOD HIVE ACTIVATED!* 💎
+    msg: `🔥 *APEX WHALE: +10.00 TON PURE PROFIT!* 💎
 
-Pay *12.00 TON* ➔ Receive *22.00 GRAM* in 24 Hours!
-💰 *+10.00 GRAM Pure Profit* (+83.3% ROI)
+Highest yield contract on HashBee:
+• 💎 *Pay 12.00 TON ➔ Get 22.00 GRAM*
+• 💰 *+83.3% Net Profit in 24 Hours*
+• ⚡ Instant on-chain confirmation
 
-✅ Instant on-chain confirmation
-✅ Maximum daily yield
+👇 Claim your Apex Node:`,
+    btn: '🔥 Claim Apex Hive (22 G) ➔'
+  },
+  plan_standard_53pct: {
+    msg: `⚡ *24H PROFIT: 1.30 TON ➔ 2.00 GRAM!* 🍯
 
-👇 Claim Apex God Hive:`,
-    btn: '🚀 Activate God Hive Plan 💎'
+Get guaranteed daily mining yield:
+• 💰 *1.30 TON in ➔ 2.00 GRAM out*
+• 🚀 *+53.8% Profit in 24 hours*
+• 🛡️ Instant next-day settlement
+
+👇 Activate your Cyber Miner:`,
+    btn: '⚡ Activate 1.30 TON Plan (+53%) ➔'
+  },
+  hive_full_alert: {
+    msg: `🚨 *ATTENTION {name}: MINING RIG FULL!* 🍯⚠️
+
+Your honeycomb reached 100% capacity!
+• 🛑 Mining has paused until you harvest
+• 🍯 Unclaimed Honey waiting in your hive
+• ⚡ Collect in 1 tap to resume 24/7 mining
+
+👇 Harvest now to keep earning:`,
+    btn: '🍯 Harvest Honey & Resume Mining ➔'
+  },
+  mystery_crate_drop: {
+    msg: `📦 *MYSTERY CRATE DROP UNLOCKED!* 🎁✨
+
+Special loot crates are ready to open:
+• 💎 Hidden TON & GRAM rewards
+• ⚡ Massive Hashrate multipliers
+• 🔓 Instant unlock with 1 tap!
+
+👇 Open your Mystery Crate:`,
+    btn: '🎁 Open Mystery Crate ➔'
   },
   plan_matrix_2x: {
-    msg: `🌌 *2X DOUBLE WHALE MATRIX!* 🚀
+    msg: `🌌 *WHALE MATRIX: 25 TON ➔ 50 GRAM!* 🚀
 
-Pay *25.00 TON* ➔ Receive *50.00 GRAM* tomorrow!
-💎 *100% DOUBLE PROFIT* in 24 hours!
+The ultimate 24h double contract:
+• 💎 *Deposit 25.00 TON ➔ Payout 50.00 GRAM*
+• 👑 *+100% 2X Double Settlement*
+• 🛡️ Direct blockchain transfer
 
-✅ Guaranteed 24h settlement
-✅ Instant blockchain activation
-
-👇 Double your TON now:`,
-    btn: '🌌 Double Your TON (50 GRAM) ➔'
+👇 Lock your 2X Whale Node:`,
+    btn: '🌌 Double 25 TON (Get 50 G) ➔'
   },
-  plan_starter_trial: {
-    msg: `🐝 *0.70 TON STARTER TRIAL!* ⚡
+  viral_referrals_rush: {
+    msg: `👥 *INVITE 1 FRIEND = 1 FREE SPIN + GHS!* 🚀
 
-Pay *0.70 TON* ➔ Receive *0.80 GRAM* next day!
+Turn your friends into daily passive income:
+• 🎁 *+1 Free Lucky Wheel Spin* per friend
+• ⚡ *+5.0 GHS Mining Power* per invite
+• 🍯 *10% + 5% Lifetime Commissions*
 
-✅ Unlocks lifetime instant cashouts
-✅ 1-per-account trial pack
-
-👇 Activate Starter Plan:`,
-    btn: '🐝 Start Miner (0.70 TON) ➔'
+👇 Share your personal invite link:`,
+    btn: '👥 Invite Friends & Get Spins 🚀'
   },
   plan_titan_66pct: {
-    msg: `💎 *CYBER TITAN HIVE LIVE!* ⚡
+    msg: `💎 *CYBER TITAN: 6.00 TON ➔ 10.00 GRAM!* ⚡
 
-Pay *6.00 TON* ➔ Receive *10.00 GRAM* in 24 hours!
-💰 *+66.7% Guaranteed Daily Profit*
+Rapid high-yield 24-hour payout:
+• 💰 *Pay 6.00 TON ➔ Receive 10.00 GRAM*
+• 📈 *+4.00 GRAM Profit (+66.7% ROI)*
+• 🚀 Automatic on-chain release
 
-✅ Instant on-chain confirmation
-✅ 24-hour rapid payout
-
-👇 Activate Cyber Titan Hive:`,
-    btn: '💎 Activate Titan Hive (6.00 TON) ➔'
+👇 Activate Titan Miner:`,
+    btn: '💎 Start Titan Hive (10 G) ➔'
   },
   plan_queen_whale: {
-    msg: `👑 *ROYAL QUEEN MINER CONTRACT!* 💎
+    msg: `👑 *ROYAL NODE: 3.00 TON ➔ 4.50 GRAM!* 💎
 
-Pay *3.00 TON* ➔ Receive *4.50 GRAM* in 24 hours!
-💰 *+50.0% Guaranteed Profit*
+Solid daily income guaranteed:
+• 💰 *Deposit 3.00 TON ➔ Get 4.50 GRAM*
+• ⚡ *+50.0% Profit in 24 Hours*
+• 🛡️ 100% Verified yield
 
-✅ Instant blockchain verification
-✅ Guaranteed daily returns
-
-👇 Activate Queen Miner:`,
-    btn: '👑 Activate Queen Miner 💎'
+👇 Activate Royal Miner:`,
+    btn: '👑 Activate Royal Node ➔'
   },
-  spin_dopamine_jackpot: {
-    msg: `🎡 *LUCKY HONEY WHEEL: SPIN TO WIN USDT & GRAM!* 🎰⚡
+  plan_starter_trial: {
+    msg: `🐝 *TEST WITH 0.70 TON ➔ GET 0.80 G!* ⚡
 
-Hey {name}, your Lucky Wheel turn is ready to roll!
-👑 *1.00 GRAM Jackpot* • 💵 *Real USDT Cash* • ⚡ *+10 GHS Boosts*
+Low-risk 24-hour starter trial:
+• ⚡ *Pay 0.70 TON ➔ Receive 0.80 GRAM*
+• 🔓 Unlocks instant lifetime withdrawals
+• 🛡️ 1 trial allowed per miner
 
-🎁 *Invite Friends = +1 Free Spin for every active referral!*
-Spin daily to stack your balance before the next reward epoch.
-
-👇 Spin the Lucky Wheel now:`,
-    btn: '🎡 Spin The Lucky Wheel 🎰'
+👇 Start your trial miner:`,
+    btn: '🐝 Try Starter Plan (0.70 TON) ➔'
   },
-  spin_viral_referrals: {
-    msg: `👥 *INVITE FRIENDS = UNLIMITED FREE SPINS & GHS!* 🚀💎
+  withdraw_proof_alert: {
+    msg: `💎 *PAYOUTS SENT! ALL CASHOUTS VERIFIED* 💸
 
-Boost your passive earnings with HashBee's 2-Tier Referral System:
-• 🎁 *+1 Free Lucky Wheel Spin* per referral
-• ⚡ *+5.0 GHS Mining Power* per active friend
-• 🍯 *10% Tier 1 + 5% Tier 2 Commission* on all honey mined
-• 🏆 Milestone bonuses up to *+500 GHS Mining Power*!
+All pending user withdrawals dispatched on-chain!
+• 🚀 Hundreds of miners paid today
+• 🔎 Live proofs in @HashBeePayouts
+• 💰 Got balance? Cash out from 0.10 G!
 
-👇 Grab your personal invite link:`,
-    btn: '👥 Invite Friends & Get Free Spins 🚀'
+👇 Withdraw your mined crypto:`,
+    btn: '💸 Withdraw To My Wallet ➔'
   },
-  spin_vip_drop: {
-    msg: `⚡ *VIP BONUS: FREE LUCKY SPIN WAITING FOR YOU!* 🎡💎
+  missions_bounty: {
+    msg: `⭐ *NEW SPONSOR MISSIONS: EARN FREE GHS!* 🚀
 
-Hey {name}, an exclusive free turn on the Lucky Honey Wheel is ready on your account!
-Will you hit the *1.00 GRAM Jackpot*, instant USDT, or a permanent Hashrate upgrade?
+Quick 5-second tasks just dropped:
+• 📢 Join partner channels: +0.50 GHS each
+• 🎬 Watch video ads: +1.0 Honey each
+• ⚡ Speed up your passive income!
 
-👇 Tap below to claim your free spin:`,
-    btn: '🎰 Claim Free Spin ⚡'
+👇 Complete tasks & claim rewards:`,
+    btn: '⭐ Claim Free Mission Rewards ➔'
   },
-  personalized_buzz: {
-    msg: `🐝 *HEY {name}, YOUR HONEYCOMB IS FULL!* 🍯⚡
+  daily_streak_bonus: {
+    msg: `🔥 *DAILY BONUS WAITING FOR YOU!* 🎁
 
-Your cloud mining rig has reached maximum capacity and accumulated unclaimed Honey.
-Collect your earnings now so your swarm can continue mining at 100% speed!
+Hey {name}, don't break your mining streak:
+• 🍯 Free daily Honey credit ready
+• ⚡ Hashpower accelerator active
+• 💎 Only takes 3 seconds to claim!
 
-• 🍯 Current Unclaimed Honey ready to harvest
-• ⚡ Reinvest balance to unlock up to +50 GHS mining power
-
-👇 Tap to harvest your Honey:`,
-    btn: '🐝 Harvest Honey Now 🚀'
-  },
-  viral_25k: {
-    msg: `🚀 *25,000+ MINERS ACTIVE ON HASHBEE!* 🔥🎉
-
-The HashBee network has crossed 25,000 registered miners worldwide!
-Thank you to all community members. Here's how to maximize your daily gains:
-1️⃣ Watch 3 daily ads every 3 hours for Free Honey (+1 Honey each)
-2️⃣ Open Mystery Crates from 0.5 G to unlock lifetime withdrawals
-3️⃣ Spin the Lucky Wheel daily for instant USDT & GRAM rewards
-
-👇 Join the mining rush now:`,
-    btn: '🐝 Open HashBee App 🚀'
-  },
-  viral_20k: {
-    msg: `🚀 *25,000+ MINERS ACTIVE ON HASHBEE!* 🔥🎉
-
-The HashBee network has crossed 25,000 registered miners worldwide!
-Thank you to all community members. Here's how to maximize your daily gains:
-1️⃣ Watch 3 daily ads every 3 hours for Free Honey (+1 Honey each)
-2️⃣ Open Mystery Crates from 0.5 G to unlock lifetime withdrawals
-3️⃣ Spin the Lucky Wheel daily for instant USDT & GRAM rewards
-
-👇 Join the mining rush now:`,
-    btn: '🐝 Open HashBee App 🚀'
-  },
-  mining_boost: {
-    msg: `⛏️ *2X HASHRATE POWER SURGE ACTIVE!* ⚡🔥
-
-Cloud mining hashpower is currently accelerated across all active hives!
-Your bees are extracting Honey at top speeds 24 hours a day.
-
-• 🍯 Maximize your harvest before storage caps out
-• ⚡ Reinvest your Honey (1 USDT = +50 GHS) for permanent boosts
-
-👇 Collect & supercharge your miner:`,
-    btn: '🐝 Open HashBee & Mine ⚡'
-  },
-  ghs_drop: {
-    msg: `🎁 *FREE MINING POWER BONUS READY!* ⚡🍯
-
-Hey {name}, an extra GHS Hashrate boost is available to power up your miner!
-Increase your passive Honey production rate per second with zero downtime.
-
-👇 Claim your Hashpower boost now:`,
-    btn: '🎁 Claim Free GHS Power ⚡'
-  },
-  watch_ads_boost: {
-    msg: `📺 *WATCH ADS & BOOST YOUR HASHRATE FOR FREE!* ⚡🚀
-
-Want to mine faster with ZERO investment?
-Watch quick sponsor videos & complete easy tasks to supercharge your miner!
-
-⚡ *Instant Free GHS Boost* (Mine 24/7 faster)
-🍯 *Direct Honey Rewards* added to your balance
-🎁 *Free Lucky Spin Energy*
-
-100% Free — No TON or deposit needed!
-
-👇 Watch sponsor ads & boost your speed now:`,
-    btn: '📺 Watch Ads & Boost Hashrate ⚡'
-  },
-  tasks_drop: {
-    msg: `🔥 *NEW SPONSOR MISSIONS: EARN UP TO +5.0 GHS!* ⭐🚀
-
-New verified sponsor channels & partner tasks have just gone live!
-Complete simple 5-second missions to earn permanent Hashrate bonuses:
-• 📢 Telegram Channels: +0.1 to +0.5 GHS each
-• 👥 Referral Milestones: Up to +500 GHS
-• 📺 3-Hour Ad Tasks: +1.0 Honey per ad
-
-👇 Complete missions and boost your speed:`,
-    btn: '⭐ Complete Tasks & Earn 🚀'
-  },
-  withdraw_alert: {
-    msg: `💸 *INSTANT ON-CHAIN CASHOUTS ARE LIVE!* 💎⚡
-
-Over 1,200+ miner withdrawals have been processed directly on-chain!
-You can cash out all your mined Honey, Spin wins, and Crate prizes:
-• 💎 *GRAM Network (TON Blockchain)* – Instant transfer
-• 💵 *USDT (BNB Smart Chain BEP-20)* – Fast & low fees
-• 🛡️ *Minimum Cashout*: Only 0.30 GRAM / USDT!
-
-👇 Check your balance & request cashout:`,
-    btn: '💸 Open HashBee Wallet 💎'
-  },
-  withdraw_min_010: {
-    msg: `💸 *INSTANT CASHOUTS LIVE: MINIMUM ONLY 0.10 GRAM!* 💎⚡
-
-Great news miners! You can now place withdrawals starting from just *0.10 GRAM / USDT*!
-
-🚀 *Fast On-Chain Settlements*
-💎 *Direct TON Blockchain Transfers*
-🛡️ *Low Minimum Cashout*: Only *0.10 GRAM*!
-🍯 Cash out all your mined Honey, Spin wins & daily yields!
-
-👇 Check your balance & place your withdrawal now:`,
-    btn: '💸 Place Withdrawal (0.10 G) ➔'
+👇 Claim your daily bonus:`,
+    btn: '🎁 Claim Daily Bonus Now ➔'
   }
 };
+
+// Backwards compatibility aliases
+HYPE_TEMPLATES.spin_dopamine_jackpot = HYPE_TEMPLATES.spin_free_waiting;
+HYPE_TEMPLATES.spin_viral_referrals = HYPE_TEMPLATES.viral_referrals_rush;
+HYPE_TEMPLATES.personalized_buzz = HYPE_TEMPLATES.hive_full_alert;
+HYPE_TEMPLATES.withdraw_alert = HYPE_TEMPLATES.withdraw_proof_alert;
+HYPE_TEMPLATES.tasks_drop = HYPE_TEMPLATES.missions_bounty;
+HYPE_TEMPLATES.spin_vip_drop = HYPE_TEMPLATES.spin_free_waiting;
+HYPE_TEMPLATES.crate_mega_jackpot = HYPE_TEMPLATES.mystery_crate_drop;
+HYPE_TEMPLATES.viral_25k = HYPE_TEMPLATES.missions_bounty;
+HYPE_TEMPLATES.viral_20k = HYPE_TEMPLATES.missions_bounty;
+HYPE_TEMPLATES.mining_boost = HYPE_TEMPLATES.watch_ads_boost;
+HYPE_TEMPLATES.ghs_drop = HYPE_TEMPLATES.missions_bounty;
 
 function showToast(msg, isErr=false) {
   const t = document.getElementById('toast');
@@ -1437,6 +1395,11 @@ function switchTab(tabId, el) {
   if (tabId === 'broadcast') {
     loadAutoBroadcast();
     loadPayoutMirrorStatus();
+    if (!document.getElementById('broadcastMsg').value) {
+      applyTemplate('flash_2x_double');
+      const sel = document.getElementById('broadcastTemplate');
+      if (sel) sel.value = 'flash_2x_double';
+    }
   }
 }
 

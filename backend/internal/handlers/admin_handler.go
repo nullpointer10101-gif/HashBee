@@ -1224,95 +1224,211 @@ type AutoBroadcastTemplate struct {
 
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
-		Key: "ton_deposit_boost",
-		Message: `⚡ *BOOST YOUR MINING SPEED* ⚡
+		Key: "flash_2x_double",
+		Message: `⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
 
-Deposit TON to upgrade your miner:
-💎 *1 TON = 520 GHS Hashrate*
-⚡ Min Deposit: *0.50 TON*
-📈 Instant on-chain credit & 24/7 passive earnings!
+Double your TON in exactly 24 hours:
+💰 *Pay 2.50 TON ➔ Receive 5.00 GRAM*
+📈 *+100% Guaranteed 2X Profit*
+⏳ Limited slots available today!
 
-👇 Upgrade your hashrate now:`,
-		ButtonText: "💎 Boost Mining Power ⚡",
+👇 Double your TON in 1-click:`,
+		ButtonText: "⚡ Double TON Now (5.00 G) ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "withdraw_min_010",
+		Message: `💸 *INSTANT CASHOUT: MINIMUM JUST 0.10 G!* 💎⚡
+
+Withdraw your mining balance right now:
+• 🚀 *Min Cashout*: Only *0.10 GRAM / USDT*
+• ⚡ Instant settlements to TON & BSC
+• 🛡️ Zero withdrawal fees
+
+👇 Check balance & cash out:`,
+		ButtonText: "💸 Cashout My Earnings Now ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "spin_free_waiting",
+		Message: `🎰 *FREE LUCKY SPIN WAITING FOR YOU!* 🎡
+
+Hey {name}, your turn is ready on the Lucky Wheel:
+👑 *1.00 GRAM Jackpot*
+💵 *Instant USDT Cash Drops*
+⚡ *Permanent Hashrate Boosts*
+
+👇 Spin now and claim your prize:`,
+		ButtonText: "🎡 Spin Lucky Wheel Free 🎰",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "watch_ads_boost",
-		Message: `📺 *FREE HASHRATE BOOST IS LIVE!* ⚡
+		Message: `📺 *FREE BOOST: WATCH ADS & MINE FASTER!* ⚡
 
-Boost your cloud miner 100% free:
-• 🎬 Watch 3 daily booster ads
-• ⚡ Earn *+1 GHS Mining Power* per ad
-• 🔄 Tasks refresh every 3 hours
+Zero deposit needed:
+• 🎬 3 Quick Ads = Free Honey credited
+• ⚡ Permanent GHS Mining Speed
+• 🔄 Refreshes every 3 hours 24/7!
 
-👇 Watch ads & claim bonus GHS:`,
-		ButtonText: "📺 Watch Ads & Boost ⚡",
+👇 Boost your miner for free:`,
+		ButtonText: "⚡ Watch Ads & Boost Speed ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "nft_cloud_miners",
-		Message: `🤖 *NFT CLOUD MINERS ACTIVE!* ⚡
+		Key: "plan_god_tier",
+		Message: `🔥 *APEX WHALE: +10.00 TON PURE PROFIT!* 💎
 
-Deploy high-power AI mining rigs:
-• ⚡ Up to *52,000 GHS* mining speed
-• 💎 Daily passive USDT earnings 24/7
-• 🛡️ Direct on-chain TON smart contracts
+Highest yield contract on HashBee:
+• 💎 *Pay 12.00 TON ➔ Get 22.00 GRAM*
+• 💰 *+83.3% Net Profit in 24 Hours*
+• ⚡ Instant on-chain confirmation
 
-👇 Explore NFT Miners:`,
-		ButtonText: "🤖 View NFT Miners 🚀",
+👇 Claim your Apex Node:`,
+		ButtonText: "🔥 Claim Apex Hive (22 G) ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "spin_wheel_daily",
-		Message: `🎡 *CLAIM YOUR DAILY FREE SPIN!* 🎁
+		Key: "plan_standard_53pct",
+		Message: `⚡ *24H PROFIT: 1.30 TON ➔ 2.00 GRAM!* 🍯
 
-Spin the Lucky Wheel today to win:
-• 💵 Real USDT Cash Credits
-• ⚡ Bonus GHS Mining Power
-• 🎁 Free spins for every invited friend!
+Get guaranteed daily mining yield:
+• 💰 *1.30 TON in ➔ 2.00 GRAM out*
+• 🚀 *+53.8% Profit in 24 hours*
+• 🛡️ Instant next-day settlement
 
-👇 Test your luck now:`,
-		ButtonText: "🎡 Spin Lucky Wheel 🎁",
+👇 Activate your Cyber Miner:`,
+		ButtonText: "⚡ Activate 1.30 TON Plan (+53%) ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "instant_payouts",
-		Message: `💸 *INSTANT CASHOUTS LIVE: MINIMUM ONLY 0.10 GRAM!* 💎⚡
+		Key: "hive_full_alert",
+		Message: `🚨 *ATTENTION {name}: MINING RIG FULL!* 🍯⚠️
 
-Cash out your mined earnings directly:
-• 💎 Fast withdrawals starting at *0.10 GRAM / USDT*
-• 🚀 Instant settlements to TON & USDT (BSC BEP-20)
-• 🛡️ Zero withdrawal fees
-• 📢 Live payment proofs: @HashBeePayouts
+Your honeycomb reached 100% capacity!
+• 🛑 Mining has paused until you harvest
+• 🍯 Unclaimed Honey waiting in your hive
+• ⚡ Collect in 1 tap to resume 24/7 mining
 
-👇 Cash out your balance now:`,
-		ButtonText: "💸 Withdraw Earnings (0.10 G) 💎",
+👇 Harvest now to keep earning:`,
+		ButtonText: "🍯 Harvest Honey & Resume Mining ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "referral_power",
-		Message: `👥 *EARN +3 GHS PER INVITED FRIEND!* 🚀
+		Key: "mystery_crate_drop",
+		Message: `📦 *MYSTERY CRATE DROP UNLOCKED!* 🎁✨
 
-Invite friends and grow your swarm:
-• ⚡ *+3 GHS Mining Power* per active referral
-• 🍯 *10% Tier 1 + 5% Tier 2* mining commission
-• 🎡 +1 Free Lucky Wheel Spin per invite!
+Special loot crates are ready to open:
+• 💎 Hidden TON & GRAM rewards
+• ⚡ Massive Hashrate multipliers
+• 🔓 Instant unlock with 1 tap!
 
-👇 Copy your referral link:`,
-		ButtonText: "👥 Invite & Earn GHS 🚀",
+👇 Open your Mystery Crate:`,
+		ButtonText: "🎁 Open Mystery Crate ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "harvest_alert",
-		Message: `⛏️ *HEY {name}, COLLECT YOUR MINING!* 🐝
+		Key: "viral_referrals_rush",
+		Message: `👥 *INVITE 1 FRIEND = 1 FREE SPIN + GHS!* 🚀
 
-Your cloud miner has accumulated pending earnings:
-• ⚡ Mining continuously 24/7
-• 🍯 Collect before storage reaches capacity
-• 📈 Keep your mining rig running at full speed!
+Turn your friends into daily passive income:
+• 🎁 *+1 Free Lucky Wheel Spin* per friend
+• ⚡ *+5.0 GHS Mining Power* per invite
+• 🍯 *10% + 5% Lifetime Commissions*
 
-👇 Harvest your rewards:`,
-		ButtonText: "⛏️ Harvest My Mined USDT 🚀",
+👇 Share your personal invite link:`,
+		ButtonText: "👥 Invite Friends & Get Spins 🚀",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "daily_streak_bonus",
+		Message: `🔥 *DAILY BONUS WAITING FOR YOU!* 🎁
+
+Hey {name}, don't break your mining streak:
+• 🍯 Free daily Honey credit ready
+• ⚡ Hashpower accelerator active
+• 💎 Only takes 3 seconds to claim!
+
+👇 Claim your daily bonus:`,
+		ButtonText: "🎁 Claim Daily Bonus Now ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "plan_matrix_2x",
+		Message: `🌌 *WHALE MATRIX: 25 TON ➔ 50 GRAM!* 🚀
+
+The ultimate 24h double contract:
+• 💎 *Deposit 25.00 TON ➔ Payout 50.00 GRAM*
+• 👑 *+100% 2X Double Settlement*
+• 🛡️ Direct blockchain transfer
+
+👇 Lock your 2X Whale Node:`,
+		ButtonText: "🌌 Double 25 TON (Get 50 G) ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "plan_titan_66pct",
+		Message: `💎 *CYBER TITAN: 6.00 TON ➔ 10.00 GRAM!* ⚡
+
+Rapid high-yield 24-hour payout:
+• 💰 *Pay 6.00 TON ➔ Receive 10.00 GRAM*
+• 📈 *+4.00 GRAM Profit (+66.7% ROI)*
+• 🚀 Automatic on-chain release
+
+👇 Activate Titan Miner:`,
+		ButtonText: "💎 Start Titan Hive (10 G) ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "plan_queen_whale",
+		Message: `👑 *ROYAL NODE: 3.00 TON ➔ 4.50 GRAM!* 💎
+
+Solid daily income guaranteed:
+• 💰 *Deposit 3.00 TON ➔ Get 4.50 GRAM*
+• ⚡ *+50.0% Profit in 24 Hours*
+• 🛡️ 100% Verified yield
+
+👇 Activate Royal Miner:`,
+		ButtonText: "👑 Activate Royal Node ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "plan_starter_trial",
+		Message: `🐝 *TEST WITH 0.70 TON ➔ GET 0.80 G!* ⚡
+
+Low-risk 24-hour starter trial:
+• ⚡ *Pay 0.70 TON ➔ Receive 0.80 GRAM*
+• 🔓 Unlocks instant lifetime withdrawals
+• 🛡️ 1 trial allowed per miner
+
+👇 Start your trial miner:`,
+		ButtonText: "🐝 Try Starter Plan (0.70 TON) ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "withdraw_proof_alert",
+		Message: `💎 *PAYOUTS SENT! ALL CASHOUTS VERIFIED* 💸
+
+All pending user withdrawals dispatched on-chain!
+• 🚀 Hundreds of miners paid today
+• 🔎 Live proofs in @HashBeePayouts
+• 💰 Got balance? Cash out from 0.10 G!
+
+👇 Withdraw your mined crypto:`,
+		ButtonText: "💸 Withdraw To My Wallet ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "missions_bounty",
+		Message: `⭐ *NEW SPONSOR MISSIONS: EARN FREE GHS!* 🚀
+
+Quick 5-second tasks just dropped:
+• 📢 Join partner channels: +0.50 GHS each
+• 🎬 Watch video ads: +1.0 Honey each
+• ⚡ Speed up your passive income!
+
+👇 Complete tasks & claim rewards:`,
+		ButtonText: "⭐ Claim Free Mission Rewards ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 }
@@ -1451,6 +1567,32 @@ func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
 						msg, _ = h.settings.Get(cctx, "auto_broadcast_message")
 						btnText, _ = h.settings.Get(cctx, "auto_broadcast_button_text")
 						btnURL, _ = h.settings.Get(cctx, "auto_broadcast_button_url")
+						templateKey, _ := h.settings.Get(cctx, "auto_broadcast_template_key")
+						if msg == "" && templateKey != "" {
+							for _, tpl := range RotatingBroadcastTemplates {
+								if tpl.Key == templateKey {
+									msg = tpl.Message
+									if btnText == "" {
+										btnText = tpl.ButtonText
+									}
+									if btnURL == "" {
+										btnURL = tpl.ButtonURL
+									}
+									break
+								}
+							}
+						}
+					}
+
+					if msg == "" && len(RotatingBroadcastTemplates) > 0 {
+						tpl := RotatingBroadcastTemplates[0]
+						msg = tpl.Message
+						if btnText == "" {
+							btnText = tpl.ButtonText
+						}
+						if btnURL == "" {
+							btnURL = tpl.ButtonURL
+						}
 					}
 
 					if msg == "" {
