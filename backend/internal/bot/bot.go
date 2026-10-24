@@ -580,10 +580,14 @@ func (b *Bot) SendChannelPayoutProof(channelTarget string, htmlText string, btnT
 	}
 
 	if btnText == "" {
-		btnText = "🐝 Open HashBee Miner 🚀"
+		btnText = "⚡ Start Bot ➔"
 	}
 	if btnURL == "" {
-		btnURL = b.getFreshMiniAppURL()
+		botUser := b.cfg.BotUsername
+		if botUser == "" {
+			botUser = "hashbe_bot"
+		}
+		btnURL = fmt.Sprintf("https://t.me/%s?start=start", botUser)
 	}
 
 	keyboard := newWebAppKeyboard(btnText, btnURL)

@@ -294,52 +294,42 @@ func (s *PayoutMirrorService) parseTelegramPosts(htmlContent string) []PayoutPos
 	return results
 }
 
-// formatHashBeePayoutProof transforms raw data into a premium HashBee branded payout proof with real on-chain transaction link
+// formatHashBeePayoutProof transforms raw data into a clean HashBee branded payout proof with real on-chain transaction link
 func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (string, string, string) {
-	// Pick appropriate plan name based on amount
-	var planName string
 	var usdVal float64 = data.Amount
-	switch {
-	case data.Amount >= 45.0:
-		planName = "25.00 TON ➔ 50.00 G (2X Double Whale Matrix)"
-	case data.Amount >= 20.0:
-		planName = "12.00 TON ➔ 22.00 G (Apex God Hive +83.3% ROI)"
-	case data.Amount >= 8.0:
-		planName = "6.00 TON ➔ 10.00 G (Cyber Titan Hive +66.7% Profit)"
-	case data.Amount >= 3.5:
-		planName = "3.00 TON ➔ 4.50 G (Royal Queen Miner +50.0% Profit)"
-	case data.Amount >= 1.5:
-		planName = "1.30 TON ➔ 2.00 G (Standard Miner +53.8% Profit)"
-	default:
-		planName = "0.70 TON ➔ 0.80 G (Starter Trial Miner)"
-	}
 
-	// Anonymized user tags
-	userNum := 100 + rand.Intn(899)
-	userHandle := fmt.Sprintf("HB_user_%d***", userNum)
-
-	// Short hash display
+	// Short hash display with spaces around ellipsis (e.g. 0x9ff ... 25b88)
 	shortHash := data.TxHash
-	if len(shortHash) > 16 {
-		shortHash = shortHash[:8] + "..." + shortHash[len(shortHash)-8:]
+	if len(shortHash) > 14 {
+		shortHash = shortHash[:5] + " ... " + shortHash[len(shortHash)-5:]
 	}
-	msg := fmt.Sprintf(`🐝 <b>HashBee Instant Payout Confirmed</b> ✅
 
-💸 <b>Amount:</b> <b>+%.2f GRAM</b> ($%.2f USD)
-👤 <b>Miner:</b> <code>%s</code>
-⚡ <b>Plan:</b> %s
-🌐 <b>Tx Proof:</b> <a href="%s">%s (%s ↗)</a>`,
+	currency := data.Currency
+	if currency == "" {
+		currency = "GRAM"
+	}
+
+	msg := fmt.Sprintf(`✅ <b>HashBee Withdrawal Complete</b>
+
+🔹 Amount: %.2f %s
+🔹 In USD: $%.2f
+🌐 TxId: <a href="%s">%s</a>`,
 		data.Amount,
+		currency,
 		usdVal,
-		userHandle,
-		planName,
 		data.TxURL,
 		shortHash,
-		data.ExplorerName,
 	)
 
-	btnText := "🐝 Start Mining Now (24H Cashout) ➔"
-	btnURL := "https://t.me/hashbe_bot/app"
+	botUsername := "hashbe_bot"
+	if s.settings != nil {
+		if u := s.settings.GetString(context.Background(), "bot_username", ""); u != "" {
+			botUsername = strings.TrimPrefix(u, "@")
+		}
+	}
+
+	btnText := "⚡ Start Bot ➔"
+	btnURL := fmt.Sprintf("https://t.me/%s?start=start", botUsername)
 
 	return msg, btnText, btnURL
 }
