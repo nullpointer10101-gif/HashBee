@@ -313,12 +313,12 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				if targetTelegramID == 8842934236 {
 					if amountGram >= 22.0 {
 						planID = "matrix"
+					} else if amountGram >= 15.0 {
+						planID = "flash2x"
 					} else if amountGram >= 9.0 {
 						planID = "apex"
 					} else if amountGram >= 6.0 {
 						planID = "titan"
-					} else if amountGram >= 4.0 {
-						planID = "flash2x"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
 					} else if amountGram >= 1.3 {
@@ -455,10 +455,17 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 			costGRAM = 1.30
 			returnGRAM = 2.00
 		} else {
-			planName = "Flash 2.5X Mega Hive"
-			costGRAM = 4.00
-			returnGRAM = 10.00
-			maxPerAccount = 0
+			if telegramID == 8842934236 {
+				planName = "Flash 2.67X VIP Ultra Hive"
+				costGRAM = 15.00
+				returnGRAM = 40.00
+				maxPerAccount = 0
+			} else {
+				planName = "Flash 2.5X Mega Hive"
+				costGRAM = 4.00
+				returnGRAM = 10.00
+				maxPerAccount = 0
+			}
 		}
 	case "queen":
 		planName = "Royal Queen Miner"

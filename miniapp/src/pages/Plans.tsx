@@ -151,15 +151,21 @@ export const Plans: React.FC = () => {
     },
     {
       id: 'flash2x',
-      name: '⚡ FLASH 2.5X MEGA HIVE',
+      name: isVipDiscount ? '⚡ FLASH 2.67X VIP ULTRA HIVE' : '⚡ FLASH 2.5X MEGA HIVE',
       subtitle: flashTimeLeft.isEnded
         ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
+        : isVipDiscount
+        ? '🔥 EXCLUSIVE 24H VIP FLASH: Pay 15.00 TON ➔ Instant 40.00 GRAM in 24h (+166.7% PROFIT)'
         : '🔥 LIMITED 24H FLASH: Pay 4.00 TON ➔ Instant 10.00 GRAM in 24h (+150% PROFIT)',
-      badge: flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2.5X FLASH SALE (+150%)',
-      cost_gram: 4.0,
-      return_gram: 10.0,
-      profit_gram: 6.0,
-      profit_percent: 150.0,
+      badge: flashTimeLeft.isEnded
+        ? '⏳ EVENT ENDED'
+        : isVipDiscount
+        ? '🔥 2.67X VIP FLASH (+166.7%)'
+        : '🔥 2.5X FLASH SALE (+150%)',
+      cost_gram: isVipDiscount ? 15.0 : 4.0,
+      return_gram: isVipDiscount ? 40.0 : 10.0,
+      profit_gram: isVipDiscount ? 25.0 : 6.0,
+      profit_percent: isVipDiscount ? 166.67 : 150.0,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: true,
@@ -563,25 +569,35 @@ export const Plans: React.FC = () => {
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight uppercase relative z-10">
-              {flashTimeLeft.isEnded ? '24-Hour Flash Sale Has Ended' : 'Deposit 4.00 TON ➔ Get 10.00 GRAM (+150% Profit)'}
+              {flashTimeLeft.isEnded
+                ? '24-Hour Flash Sale Has Ended'
+                : isVipDiscount
+                ? 'Deposit 15.00 TON ➔ Get 40.00 GRAM (+166.7% Profit)'
+                : 'Deposit 4.00 TON ➔ Get 10.00 GRAM (+150% Profit)'}
             </h2>
             <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
               {flashTimeLeft.isEnded
                 ? 'This limited 24-hour contract has expired and is no longer available.'
+                : isVipDiscount
+                ? 'Exclusive 24-Hour Special VIP Contract. Exact 2.67X return (40.00 GRAM) unlocked directly to your wallet in 24h!'
                 : 'Limited 24-Hour Special Yield Contract. Exact 2.5X return (10.00 GRAM) unlocked directly to your wallet in 24h!'}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
               <div className="flex-1">
                 <div className="flex items-center justify-between text-[9px] font-bold text-rose-100 mb-1">
-                  <span>Limited Slots:</span>
+                  <span>{isVipDiscount ? 'VIP Allocation:' : 'Limited Slots:'}</span>
                   <span className="font-mono font-black text-yellow-300">
-                    {flashTimeLeft.isEnded ? 'OFFER CLOSED' : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
+                    {flashTimeLeft.isEnded
+                      ? 'OFFER CLOSED'
+                      : isVipDiscount
+                      ? '1 / 1 EXCLUSIVE SLOT ACTIVE'
+                      : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
                   </span>
                 </div>
                 <div className="w-full bg-black/25 rounded-full h-2 overflow-hidden border border-white/20">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${flashTimeLeft.isEnded ? 'bg-slate-500 w-full' : 'bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400'}`}
-                    style={{ width: flashTimeLeft.isEnded ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%` }}
+                    style={{ width: flashTimeLeft.isEnded ? '100%' : isVipDiscount ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%` }}
                   />
                 </div>
               </div>
@@ -598,7 +614,11 @@ export const Plans: React.FC = () => {
                     : 'bg-white text-red-600 active:scale-95'
                 }`}
               >
-                {flashTimeLeft.isEnded ? 'ENDED ⏳' : 'CLAIM 2.5X (4 TON) ➔'}
+                {flashTimeLeft.isEnded
+                  ? 'ENDED ⏳'
+                  : isVipDiscount
+                  ? 'CLAIM 2.67X (15 TON) ➔'
+                  : 'CLAIM 2.5X (4 TON) ➔'}
               </button>
             </div>
           </div>

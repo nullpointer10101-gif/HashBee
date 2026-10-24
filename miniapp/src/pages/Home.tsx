@@ -83,6 +83,11 @@ export const Home: React.FC = () => {
     }
   }, [])
 
+  const isGauravSoni =
+    user?.telegram_id === 8842934236 ||
+    String(user?.telegram_id).trim() === '8842934236' ||
+    (user?.first_name?.toLowerCase().includes('gaurav') && (user?.last_name?.toLowerCase().includes('soni') || user?.telegram_id === 8842934236))
+
   const ghs = user?.bee_power || 50
   // 100 GHS = 0.05 GRAM/USDT per day (0.0005 per GHS)
   const earningsPerDay = ghs * 0.0005
@@ -329,9 +334,15 @@ export const Home: React.FC = () => {
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shadow-sm ${
               flashTimeLeft.isEnded
                 ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                : isGauravSoni
+                ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-rose-950 font-black'
                 : 'bg-white text-red-700'
             }`}>
-              {flashTimeLeft.isEnded ? '⏳ 24H FLASH CONCLUDED' : '🔥 24H FLASH NFT DROP'}
+              {flashTimeLeft.isEnded
+                ? '⏳ 24H FLASH CONCLUDED'
+                : isGauravSoni
+                ? '🔥 EXCLUSIVE 24H VIP FLASH'
+                : '🔥 24H FLASH NFT DROP'}
             </span>
           </div>
           <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${
@@ -339,22 +350,29 @@ export const Home: React.FC = () => {
               ? 'text-slate-400 bg-black/40 border-slate-700'
               : 'text-amber-200 bg-black/25 border-white/10'
           }`}>
-            150% NET ROI
+            {isGauravSoni ? '+166.7% NET ROI' : '150% NET ROI'}
           </span>
         </div>
 
         {/* Offer Headline & Interactive NFT Avatar */}
         <div className="flex items-center gap-3 relative z-10 my-2">
           <div className="shrink-0">
-            <NftMinerAvatar planId="flash2x" size="md" badgeText="2.5X" />
+            <NftMinerAvatar planId="flash2x" size="md" badgeText={isGauravSoni ? 'VIP' : '2.5X'} />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug uppercase text-white drop-shadow">
-              Flash 2.5X Mega Hive
+              {isGauravSoni ? 'Flash 2.67X VIP Ultra Hive' : 'Flash 2.5X Mega Hive'}
             </h3>
             <p className={`text-[11px] font-bold leading-tight mt-0.5 ${flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
-              Pay <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>4.00 TON</span> ➔ Receive{' '}
-              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>10.00 GRAM</span> in 24h!
+              Pay{' '}
+              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>
+                {isGauravSoni ? '15.00 TON' : '4.00 TON'}
+              </span>{' '}
+              ➔ Receive{' '}
+              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>
+                {isGauravSoni ? '40.00 GRAM' : '10.00 GRAM'}
+              </span>{' '}
+              in 24h!
             </p>
           </div>
         </div>
@@ -382,9 +400,13 @@ export const Home: React.FC = () => {
         <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between text-[9px] font-bold text-amber-100 mb-1">
-              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : 'Limited Slots:'}</span>
+              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : isGauravSoni ? 'VIP Allocation:' : 'Limited Slots:'}</span>
               <span className={`font-mono font-black ${flashTimeLeft.isEnded ? 'text-rose-400' : 'text-yellow-300'}`}>
-                {flashTimeLeft.isEnded ? 'OFFER CLOSED' : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
+                {flashTimeLeft.isEnded
+                  ? 'OFFER CLOSED'
+                  : isGauravSoni
+                  ? '1 / 1 EXCLUSIVE SLOT ACTIVE'
+                  : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
               </span>
             </div>
             <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/15">
@@ -395,7 +417,7 @@ export const Home: React.FC = () => {
                     : 'bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400'
                 }`}
                 style={{
-                  width: flashTimeLeft.isEnded ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%`,
+                  width: flashTimeLeft.isEnded ? '100%' : isGauravSoni ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%`,
                 }}
               />
             </div>
@@ -409,7 +431,7 @@ export const Home: React.FC = () => {
                 : 'bg-white text-red-600 active:scale-95'
             }`}
           >
-            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : 'GET 2.5X'}</span>
+            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : isGauravSoni ? 'GET VIP (15 TON)' : 'GET 2.5X'}</span>
             {!flashTimeLeft.isEnded && <span>➔</span>}
           </button>
         </div>
