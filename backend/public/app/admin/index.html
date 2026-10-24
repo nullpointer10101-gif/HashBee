@@ -409,7 +409,9 @@
             <option value="daily_streak_bonus">🔥 Daily Bonus Waiting ➔ Claim Free Honey ({name})</option>
             <option value="custom">✍️ Custom Message Below</option>
           </select>
-          <div class="form-group">
+        </div>
+
+        <div class="form-group">
             <label class="form-label">Auto-Broadcast Message Content (Markdown Supported)</label>
             <textarea id="autoBroadcastMsg" class="form-input font-mono" rows="6" style="resize:vertical;" placeholder="Message to automatically send every hour...">⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
 
@@ -2066,6 +2068,7 @@ async function testPayoutMirror() {
 // 3. USERS (With Full Database-Wide Pagination, Sorting & 360° Inspection)
 let currentUserOffset = 0;
 let totalUsersCount = 0;
+let loadedUsersCache = {};
 let selectedUserId = null;
 let selectedUserTelegramId = null;
 let selectedUserName = '';
@@ -2105,9 +2108,18 @@ async function loadUsers(offset = 0) {
       logout();
       return;
     }
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const msg = errData.error || res.statusText || ('HTTP ' + res.status);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:30px;">⚠️ Failed to load users: ${escapeHtml(msg)}</td></tr>`;
+      showToast('Failed to load users: ' + msg, true);
+      return;
+    }
     const data = await res.json();
     const list = data.users || [];
     totalUsersCount = data.total !== undefined ? data.total : list.length;
+    loadedUsersCache = {};
+    list.forEach(u => { loadedUsersCache[u.id] = u; });
 
     // Update total badge
     const badge = document.getElementById('usersTotalBadge');
@@ -2172,7 +2184,7 @@ async function loadUsers(offset = 0) {
           <td style="text-align:right;" onclick="event.stopPropagation();">
             <div style="display:flex; gap:6px; justify-content:flex-end;">
               <button onclick="openUserDetailModal('${u.id}')" class="btn btn-gold" style="padding:5px 9px; font-size:11px;">🔍 Inspect</button>
-              <button onclick="openAdjustModal('${u.id}', '${escapeHtml(u.first_name || u.username || '')}', '${escapeHtml(u.username || '')}')" class="btn btn-secondary" style="padding:5px 9px; font-size:11px;">⚡ Adjust</button>
+              <button onclick="openAdjustModal('${u.id}')" class="btn btn-secondary" style="padding:5px 9px; font-size:11px;">⚡ Adjust</button>
               <button onclick="toggleUserStatus('${u.id}', '${u.status}')" class="btn ${isBanned ? 'btn-primary' : 'btn-danger'}" style="padding:5px 9px; font-size:11px;">${isBanned ? 'Unban' : 'Ban'}</button>
             </div>
           </td>
@@ -2516,7 +2528,8 @@ async function submitDirectMessage() {
 // ADJUST BALANCE MODAL
 function openAdjustModal(userId, name, username) {
   const uid = userId || selectedUserId;
-  const uname = name || username || selectedUserName;
+  const cached = (typeof loadedUsersCache !== 'undefined' && loadedUsersCache[uid]) || null;
+  const uname = name || (cached ? (cached.first_name || cached.username) : '') || username || selectedUserName;
   if (!uid) {
     showToast('Please select a user first', true);
     return;
@@ -2967,7 +2980,7 @@ async function saveSettings() {
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 if (token) {
