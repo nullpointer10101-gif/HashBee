@@ -19,31 +19,68 @@ export const Home: React.FC = () => {
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
-  // 24H Flash Miner Countdown Timer (Live 24h ending countdown)
-  const FLASH_SALE_DEADLINE = '2026-10-23T11:15:00Z'
+  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots
+  const TOTAL_FLASH_SLOTS = 500
+  const FLASH_SALE_DEADLINE = '2026-10-25T19:00:00Z'
   const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
     hours: 24,
     minutes: 0,
     seconds: 0,
     isEnded: false,
   })
+  const [flashSlots, setFlashSlots] = useState<{ filled: number; left: number }>({
+    filled: 284,
+    left: 216,
+  })
 
   useEffect(() => {
-    const calcTimer = () => {
+    let liveRandomBonus = 0
+
+    const calcTimerAndSlots = () => {
       const target = new Date(FLASH_SALE_DEADLINE).getTime()
-      const diff = Math.max(0, Math.floor((target - Date.now()) / 1000))
+      const totalDuration = 24 * 3600 * 1000
+      const startTime = target - totalDuration
+      const now = Date.now()
+      const diff = Math.max(0, Math.floor((target - now) / 1000))
+
       if (diff <= 0) {
         setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
+        setFlashSlots({ filled: TOTAL_FLASH_SLOTS, left: 0 })
         return
       }
+
       const hours = Math.floor(diff / 3600)
       const minutes = Math.floor((diff % 3600) / 60)
       const seconds = diff % 60
       setFlashTimeLeft({ hours, minutes, seconds, isEnded: false })
+
+      // Calculate smooth progression across 24 hours (0 at start, 1 at end)
+      const elapsed = Math.max(0, Math.min(totalDuration, now - startTime))
+      const progress = elapsed / totalDuration
+
+      // Base slots filled starts around ~185 (37%) and curves up naturally to ~488 (97.6%)
+      const baseFilled = Math.floor(185 + 303 * Math.pow(progress, 0.75))
+      const wave = Math.floor(((Math.sin(now / 30000) + 1) / 2) * 4)
+      const finalFilled = Math.min(TOTAL_FLASH_SLOTS - 2, baseFilled + wave + liveRandomBonus)
+      const finalLeft = Math.max(2, TOTAL_FLASH_SLOTS - finalFilled)
+
+      setFlashSlots({ filled: finalFilled, left: finalLeft })
     }
-    calcTimer()
-    const timer = setInterval(calcTimer, 1000)
-    return () => clearInterval(timer)
+
+    calcTimerAndSlots()
+    const timer = setInterval(calcTimerAndSlots, 1000)
+
+    // Random slot fill-up live ticker: every 10-20 seconds someone claims a slot
+    const randomInterval = setInterval(() => {
+      if (Math.random() > 0.3) {
+        liveRandomBonus += 1
+      }
+    }, 12000)
+
+    return () => {
+      clearInterval(timer)
+      clearInterval(randomInterval)
+    }
   }, [])
 
   const ghs = user?.bee_power || 50
@@ -302,22 +339,22 @@ export const Home: React.FC = () => {
               ? 'text-slate-400 bg-black/40 border-slate-700'
               : 'text-amber-200 bg-black/25 border-white/10'
           }`}>
-            100% NET ROI
+            150% NET ROI
           </span>
         </div>
 
         {/* Offer Headline & Interactive NFT Avatar */}
         <div className="flex items-center gap-3 relative z-10 my-2">
           <div className="shrink-0">
-            <NftMinerAvatar planId="flash2x" size="md" badgeText="2X" />
+            <NftMinerAvatar planId="flash2x" size="md" badgeText="2.5X" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug uppercase text-white drop-shadow">
-              Flash 2X Cyber Hive
+              Flash 2.5X Mega Hive
             </h3>
             <p className={`text-[11px] font-bold leading-tight mt-0.5 ${flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
-              Pay <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>2.50 TON</span> ➔ Receive{' '}
-              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>5.00 GRAM</span> in 24h!
+              Pay <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>4.00 TON</span> ➔ Receive{' '}
+              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>10.00 GRAM</span> in 24h!
             </p>
           </div>
         </div>
@@ -345,9 +382,9 @@ export const Home: React.FC = () => {
         <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between text-[9px] font-bold text-amber-100 mb-1">
-              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : 'Limited Stock:'}</span>
+              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : 'Limited Slots:'}</span>
               <span className={`font-mono font-black ${flashTimeLeft.isEnded ? 'text-rose-400' : 'text-yellow-300'}`}>
-                {flashTimeLeft.isEnded ? 'OFFER CLOSED' : '14 / 50 Left'}
+                {flashTimeLeft.isEnded ? 'OFFER CLOSED' : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
               </span>
             </div>
             <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/15">
@@ -355,8 +392,11 @@ export const Home: React.FC = () => {
                 className={`h-full rounded-full transition-all duration-500 ${
                   flashTimeLeft.isEnded
                     ? 'w-full bg-slate-600'
-                    : 'bg-gradient-to-r from-yellow-300 to-amber-400 w-[72%]'
+                    : 'bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400'
                 }`}
+                style={{
+                  width: flashTimeLeft.isEnded ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%`,
+                }}
               />
             </div>
           </div>
@@ -369,7 +409,7 @@ export const Home: React.FC = () => {
                 : 'bg-white text-red-600 active:scale-95'
             }`}
           >
-            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : 'GET 2X'}</span>
+            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : 'GET 2.5X'}</span>
             {!flashTimeLeft.isEnded && <span>➔</span>}
           </button>
         </div>

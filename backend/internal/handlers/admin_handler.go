@@ -1225,15 +1225,15 @@ type AutoBroadcastTemplate struct {
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
 		Key: "flash_2x_double",
-		Message: `⚡ *24H FLASH: 2.50 TON ➔ 5.00 GRAM!* 🔥
+		Message: `⚡ *24H FLASH: 4.00 TON ➔ 10.00 GRAM!* 🔥
 
-Double your TON in exactly 24 hours:
-💰 *Pay 2.50 TON ➔ Receive 5.00 GRAM*
-📈 *+100% Guaranteed 2X Profit*
-⏳ Limited slots available today!
+Grow your TON in exactly 24 hours:
+💰 *Pay 4.00 TON ➔ Receive 10.00 GRAM*
+📈 *+150% Guaranteed 2.5X Profit*
+⏳ Only 500 total slots available today!
 
-👇 Double your TON in 1-click:`,
-		ButtonText: "⚡ Double TON Now (5.00 G) ➔",
+👇 Claim your 10.00 GRAM in 1-click:`,
+		ButtonText: "⚡ Claim 2.5X Yield (10.00 G) ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{

@@ -317,10 +317,10 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "apex"
 					} else if amountGram >= 6.0 {
 						planID = "titan"
+					} else if amountGram >= 4.0 {
+						planID = "flash2x"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
-					} else if amountGram >= 2.0 {
-						planID = "flash2x"
 					} else if amountGram >= 1.3 {
 						planID = "standard"
 					} else {
@@ -334,10 +334,10 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "apex"
 					} else if amountGram >= 5.30 {
 						planID = "titan"
+					} else if amountGram >= 3.30 {
+						planID = "flash2x"
 					} else if amountGram >= 2.30 {
 						planID = "queen"
-					} else if amountGram >= 2.0 {
-						planID = "flash2x"
 					} else if amountGram >= 0.60 {
 						planID = "standard"
 					} else {
@@ -350,10 +350,10 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "apex"
 					} else if amountGram >= 6.0 {
 						planID = "titan"
+					} else if amountGram >= 4.0 {
+						planID = "flash2x"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
-					} else if amountGram >= 2.0 {
-						planID = "flash2x"
 					} else if amountGram >= 1.3 {
 						planID = "standard"
 					} else {
@@ -447,7 +447,7 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		returnGRAM = 10.00
 		maxPerAccount = 0
 	case "flash2x":
-		flashSaleDeadline := time.Date(2026, 10, 23, 11, 15, 0, 0, time.UTC)
+		flashSaleDeadline := time.Date(2026, 10, 25, 19, 0, 0, 0, time.UTC)
 		if time.Now().UTC().After(flashSaleDeadline) {
 			// 24H flash event ended, fallback to standard plan
 			planID = "standard"
@@ -455,9 +455,9 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 			costGRAM = 1.30
 			returnGRAM = 2.00
 		} else {
-			planName = "Flash 2X Cyber Hive"
-			costGRAM = 2.50
-			returnGRAM = 5.00
+			planName = "Flash 2.5X Mega Hive"
+			costGRAM = 4.00
+			returnGRAM = 10.00
 			maxPerAccount = 0
 		}
 	case "queen":

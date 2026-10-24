@@ -37,31 +37,68 @@ export const Plans: React.FC = () => {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
 
-  // 24H Flash Miner Countdown Timer
-  const FLASH_SALE_DEADLINE = '2026-10-23T11:15:00Z'
+  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots
+  const TOTAL_FLASH_SLOTS = 500
+  const FLASH_SALE_DEADLINE = '2026-10-25T19:00:00Z'
   const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
     hours: 24,
     minutes: 0,
     seconds: 0,
     isEnded: false,
   })
+  const [flashSlots, setFlashSlots] = useState<{ filled: number; left: number }>({
+    filled: 284,
+    left: 216,
+  })
 
   useEffect(() => {
-    const calcTimer = () => {
+    let liveRandomBonus = 0
+
+    const calcTimerAndSlots = () => {
       const target = new Date(FLASH_SALE_DEADLINE).getTime()
-      const diff = Math.max(0, Math.floor((target - Date.now()) / 1000))
+      const totalDuration = 24 * 3600 * 1000
+      const startTime = target - totalDuration
+      const now = Date.now()
+      const diff = Math.max(0, Math.floor((target - now) / 1000))
+
       if (diff <= 0) {
         setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
+        setFlashSlots({ filled: TOTAL_FLASH_SLOTS, left: 0 })
         return
       }
+
       const hours = Math.floor(diff / 3600)
       const minutes = Math.floor((diff % 3600) / 60)
       const seconds = diff % 60
       setFlashTimeLeft({ hours, minutes, seconds, isEnded: false })
+
+      // Calculate smooth progression across 24 hours (0 at start, 1 at end)
+      const elapsed = Math.max(0, Math.min(totalDuration, now - startTime))
+      const progress = elapsed / totalDuration
+
+      // Base slots filled starts around ~185 (37%) and curves up naturally to ~488 (97.6%)
+      const baseFilled = Math.floor(185 + 303 * Math.pow(progress, 0.75))
+      const wave = Math.floor(((Math.sin(now / 30000) + 1) / 2) * 4)
+      const finalFilled = Math.min(TOTAL_FLASH_SLOTS - 2, baseFilled + wave + liveRandomBonus)
+      const finalLeft = Math.max(2, TOTAL_FLASH_SLOTS - finalFilled)
+
+      setFlashSlots({ filled: finalFilled, left: finalLeft })
     }
-    calcTimer()
-    const timer = setInterval(calcTimer, 1000)
-    return () => clearInterval(timer)
+
+    calcTimerAndSlots()
+    const timer = setInterval(calcTimerAndSlots, 1000)
+
+    // Random slot fill-up live ticker: every 10-20 seconds someone claims a slot
+    const randomInterval = setInterval(() => {
+      if (Math.random() > 0.3) {
+        liveRandomBonus += 1
+      }
+    }, 12000)
+
+    return () => {
+      clearInterval(timer)
+      clearInterval(randomInterval)
+    }
   }, [])
 
   const DEPOSIT_WALLET = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
@@ -114,15 +151,15 @@ export const Plans: React.FC = () => {
     },
     {
       id: 'flash2x',
-      name: '⚡ FLASH 2X CYBER HIVE',
+      name: '⚡ FLASH 2.5X MEGA HIVE',
       subtitle: flashTimeLeft.isEnded
         ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
-        : '🔥 LIMITED 24H FLASH: Pay 2.50 TON ➔ Instant 5.00 GRAM in 24h (100% PROFIT)',
-      badge: flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2X FLASH SALE (+100%)',
-      cost_gram: 2.5,
-      return_gram: 5.0,
-      profit_gram: 2.5,
-      profit_percent: 100.0,
+        : '🔥 LIMITED 24H FLASH: Pay 4.00 TON ➔ Instant 10.00 GRAM in 24h (+150% PROFIT)',
+      badge: flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2.5X FLASH SALE (+150%)',
+      cost_gram: 4.0,
+      return_gram: 10.0,
+      profit_gram: 6.0,
+      profit_percent: 150.0,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: true,
@@ -526,16 +563,27 @@ export const Plans: React.FC = () => {
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight uppercase relative z-10">
-              {flashTimeLeft.isEnded ? '24-Hour Flash Sale Has Ended' : 'Deposit 2.50 TON ➔ Get 5.00 GRAM (100% Profit)'}
+              {flashTimeLeft.isEnded ? '24-Hour Flash Sale Has Ended' : 'Deposit 4.00 TON ➔ Get 10.00 GRAM (+150% Profit)'}
             </h2>
             <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
               {flashTimeLeft.isEnded
                 ? 'This limited 24-hour contract has expired and is no longer available.'
-                : 'Limited 24-Hour Special Yield Contract. Exact 2X return unlocked directly to your wallet in 24h!'}
+                : 'Limited 24-Hour Special Yield Contract. Exact 2.5X return (10.00 GRAM) unlocked directly to your wallet in 24h!'}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
-              <div className="flex-1 bg-black/25 rounded-full h-2 overflow-hidden border border-white/20">
-                <div className={`h-full rounded-full transition-all duration-500 ${flashTimeLeft.isEnded ? 'bg-slate-500 w-full' : 'bg-gradient-to-r from-amber-300 to-yellow-400 w-[72%]'}`} />
+              <div className="flex-1">
+                <div className="flex items-center justify-between text-[9px] font-bold text-rose-100 mb-1">
+                  <span>Limited Slots:</span>
+                  <span className="font-mono font-black text-yellow-300">
+                    {flashTimeLeft.isEnded ? 'OFFER CLOSED' : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
+                  </span>
+                </div>
+                <div className="w-full bg-black/25 rounded-full h-2 overflow-hidden border border-white/20">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${flashTimeLeft.isEnded ? 'bg-slate-500 w-full' : 'bg-gradient-to-r from-amber-300 via-yellow-400 to-orange-400'}`}
+                    style={{ width: flashTimeLeft.isEnded ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%` }}
+                  />
+                </div>
               </div>
               <button
                 disabled={flashTimeLeft.isEnded}
@@ -550,7 +598,7 @@ export const Plans: React.FC = () => {
                     : 'bg-white text-red-600 active:scale-95'
                 }`}
               >
-                {flashTimeLeft.isEnded ? 'ENDED ⏳' : 'CLAIM 2X (2.5 TON) ➔'}
+                {flashTimeLeft.isEnded ? 'ENDED ⏳' : 'CLAIM 2.5X (4 TON) ➔'}
               </button>
             </div>
           </div>
@@ -633,6 +681,11 @@ export const Plans: React.FC = () => {
                     {isFlash && !flashTimeLeft.isEnded && (
                       <span className="text-[9px] font-mono font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full border border-red-200">
                         ⏱️ {String(flashTimeLeft.hours).padStart(2, '0')}:{String(flashTimeLeft.minutes).padStart(2, '0')}:{String(flashTimeLeft.seconds).padStart(2, '0')} Left
+                      </span>
+                    )}
+                    {isFlash && !flashTimeLeft.isEnded && (
+                      <span className="text-[9px] font-mono font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
+                        🔥 {flashSlots.filled} / 500 Claimed
                       </span>
                     )}
                   </div>

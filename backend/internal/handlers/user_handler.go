@@ -628,7 +628,7 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		user.ID).Scan(&claimedCount, &totalEarned)
 
 	// 24H Flash Miner Deadline (ends after 24 hours)
-	flashSaleDeadline := time.Date(2026, 10, 23, 11, 15, 0, 0, time.UTC)
+	flashSaleDeadline := time.Date(2026, 10, 25, 19, 0, 0, 0, time.UTC)
 	now := time.Now().UTC()
 	isFlashEnded := now.After(flashSaleDeadline)
 
@@ -639,8 +639,8 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		flashBadge = "⏳ EVENT ENDED"
 		canPurchaseFlash = false
 	} else {
-		flashSubtitle = "🔥 LIMITED 24H FLASH: 2.50 GRAM -> 5.00 GRAM (100% PROFIT)"
-		flashBadge = "🔥 2X FLASH SALE (+100%)"
+		flashSubtitle = "🔥 LIMITED 24H FLASH: 4.00 GRAM -> 10.00 GRAM (+150% PROFIT)"
+		flashBadge = "🔥 2.5X FLASH SALE (+150%)"
 		canPurchaseFlash = true
 	}
 
@@ -681,13 +681,13 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		},
 		{
 			ID:            "flash2x",
-			Name:          "⚡ Flash 2X Cyber Hive",
+			Name:          "⚡ Flash 2.5X Mega Hive",
 			Subtitle:      flashSubtitle,
 			Badge:         flashBadge,
-			CostGRAM:      2.50,
-			ReturnGRAM:    5.00,
-			ProfitGRAM:    2.50,
-			ProfitPercent: 100.00,
+			CostGRAM:      4.00,
+			ReturnGRAM:    10.00,
+			ProfitGRAM:    6.00,
+			ProfitPercent: 150.00,
 			DurationHours: 24,
 			MaxPerAccount: 0,
 			IsLimited:     true,
