@@ -604,7 +604,7 @@ func (b *Bot) SendChannelPayoutProof(channelTarget string, htmlText string, btnT
 	}
 
 	msg.ParseMode = "HTML"
-	msg.DisableWebPagePreview = false
+	msg.DisableWebPagePreview = true
 	msg.ReplyMarkup = keyboard
 
 	_, err := b.api.Send(msg)
