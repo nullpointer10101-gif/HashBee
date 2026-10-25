@@ -465,13 +465,17 @@ func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provi
 		return 0, 0, fmt.Errorf("video playback was too short (minimum 10 seconds required to earn +0.50 GHS)")
 	}
 
-	// 2. Anti-spam duration cooldown: ensure at least 10 seconds between completed ad rewards
+	// 2. Anti-spam duration cooldown: ensure at least 30 seconds between completed ad rewards
 	var lastAdTime *time.Time
 	_ = s.db.QueryRow(ctx,
 		`SELECT created_at FROM transactions WHERE user_id = $1 AND type = 'ad_reward' ORDER BY created_at DESC LIMIT 1`,
 		userID).Scan(&lastAdTime)
-	if lastAdTime != nil && time.Since(*lastAdTime) < 10*time.Second {
-		return 0, 0, fmt.Errorf("please watch the sponsor video for at least 10 seconds before claiming")
+	if lastAdTime != nil && time.Since(*lastAdTime) < 30*time.Second {
+		remaining := int((30*time.Second - time.Since(*lastAdTime)).Seconds())
+		if remaining <= 0 {
+			remaining = 1
+		}
+		return 0, 0, fmt.Errorf("ad cooldown active: please wait %d seconds before watching another ad", remaining)
 	}
 
 	// 2. Per-option limit: max 10 ad rewards per tier in 24 hours

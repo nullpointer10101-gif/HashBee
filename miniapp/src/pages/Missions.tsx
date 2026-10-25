@@ -9,7 +9,11 @@ import {
   checkDeposit,
   rewardAdWatch,
 } from '../services/api'
-import { showRewardedAdWithWaterfall } from '../services/monetag'
+import {
+  showRewardedAdWithWaterfall,
+  getAdCooldownRemaining,
+  setAdCooldown,
+} from '../services/monetag'
 import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -95,6 +99,18 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   const [gigaAdState, setGigaAdState] = useState<GigaWatchAdState>(loadGigaAdState)
   const [watchAdLoadingIndex, setWatchAdLoadingIndex] = useState<number | null>(null)
   const [watchAdCountdown, setWatchAdCountdown] = useState('')
+  const [adCooldownRemaining, setAdCooldownRemaining] = useState<number>(() => getAdCooldownRemaining())
+
+  // 30-Second Ad Cooldown / Breakdown Timer Ticker
+  useEffect(() => {
+    const checkCooldown = () => {
+      const remaining = getAdCooldownRemaining()
+      setAdCooldownRemaining(remaining)
+    }
+    checkCooldown()
+    const timer = setInterval(checkCooldown, 500)
+    return () => clearInterval(timer)
+  }, [])
 
   const totalWatches = (gigaAdState.counts[0] || 0) + (gigaAdState.counts[1] || 0) + (gigaAdState.counts[2] || 0)
   const totalPowerFromAds = (totalWatches * GIGA_POWER_PER_AD).toFixed(2)
@@ -162,6 +178,10 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       return updated
     })
 
+    // Enforce 30-second breakdown delay between ads to allow ad network inventory refresh
+    setAdCooldown(30)
+    setAdCooldownRemaining(30)
+
     toast.success(`🎉 10s+ Verified! +${powerAdded.toFixed(2)} GHS Mining Power added! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
     await refreshUser()
   }
@@ -171,6 +191,13 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
   const handleWatchAdTask = useCallback(
     async (taskIndex: number) => {
       if (isAdTaskInProgressRef.current || watchAdLoadingIndex !== null) return
+
+      const cooldown = getAdCooldownRemaining()
+      if (cooldown > 0) {
+        setAdCooldownRemaining(cooldown)
+        toast.error(`⏳ Network breakdown: Please wait ${cooldown}s before watching the next ad!`)
+        return
+      }
 
       const currentCount = gigaAdState.counts[taskIndex] || 0
       if (currentCount >= GIGA_ADS_PER_TIER) {
@@ -195,6 +222,12 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
 
       if (adResult.success && adResult.duration >= 9.5) {
         await completeAdReward(taskIndex, adResult.provider, Math.round(adResult.duration))
+        setAdCooldown(30)
+        setAdCooldownRemaining(30)
+      } else if (adResult.provider === 'cooldown') {
+        const rem = getAdCooldownRemaining() || 30
+        setAdCooldownRemaining(rem)
+        toast.error(`⏳ Ad network breakdown active. Please wait ${rem}s before requesting another ad!`)
       } else if (adResult.provider === 'busy') {
         toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
       } else if (adResult.duration > 0 && adResult.duration < 9.5) {
@@ -826,6 +859,26 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                   <span>✓</span>
                   <span>ALL 30/30 STREAMS COMPLETED TODAY (+15.00 GHS MAX)</span>
                 </div>
+              ) : adCooldownRemaining > 0 ? (
+                <button
+                  disabled
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500/25 via-orange-500/25 to-amber-600/25 text-amber-200 font-black text-xs uppercase tracking-wider shadow-lg border border-amber-400/40 cursor-not-allowed flex flex-col items-center justify-center gap-1 relative overflow-hidden backdrop-blur-sm"
+                >
+                  <div
+                    className="absolute inset-y-0 left-0 bg-amber-500/20 transition-all duration-300 pointer-events-none"
+                    style={{ width: `${Math.min(100, Math.max(0, ((30 - adCooldownRemaining) / 30) * 100))}%` }}
+                  />
+                  <div className="flex items-center gap-2 relative z-10">
+                    <span className="text-base animate-pulse">⏳</span>
+                    <span>30S BREAKDOWN COOLDOWN • READY IN {adCooldownRemaining}S</span>
+                    <span className="text-[10px] font-mono bg-black/40 px-2 py-0.5 rounded-lg border border-amber-300/30 text-amber-300 font-black">
+                      {adCooldownRemaining}s
+                    </span>
+                  </div>
+                  <span className="text-[9.5px] font-semibold text-amber-300/80 normal-case tracking-normal relative z-10">
+                    Allowing sponsor network 30s breakdown to refill fresh video inventory
+                  </span>
+                </button>
               ) : (
                 <button
                   onClick={() => {
@@ -854,6 +907,37 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
               )}
             </div>
           </div>
+
+          {/* ── 30-SECOND BREAKDOWN COOLDOWN BANNER ── */}
+          {adCooldownRemaining > 0 && (
+            <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border border-amber-400/40 shadow-lg shadow-amber-500/10 backdrop-blur-md relative overflow-hidden">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black text-base flex items-center justify-center shadow-md animate-pulse">
+                    ⏱️
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>30s Sponsor Fill Breakdown</span>
+                      <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-md font-mono">
+                        {adCooldownRemaining}s
+                      </span>
+                    </h4>
+                    <p className="text-[10.5px] text-slate-600 font-semibold mt-0.5">
+                      30-second delay between ads prevents "No Ads Available" errors and guarantees full rewards.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Animated Progress Bar */}
+              <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden p-0.5 border border-amber-300/40">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 transition-all duration-500 rounded-full"
+                  style={{ width: `${Math.min(100, Math.max(0, ((30 - adCooldownRemaining) / 30) * 100))}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* ── 3 DISTINCT THEMATIC AD BATCHES ── */}
           <div className="space-y-3.5">
@@ -1002,18 +1086,32 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
                     ) : (
                       <button
                         onClick={() => handleWatchAdTask(i)}
-                        disabled={watchAdLoadingIndex !== null}
-                        className={`w-full py-3.5 rounded-2xl bg-gradient-to-r ${tier.accentGrad} text-white font-black text-xs uppercase tracking-wider shadow-lg ${tier.accentShadow} active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group border border-white/20 ${
-                          isLoading ? 'opacity-80 cursor-wait' : 'hover:brightness-105'
+                        disabled={watchAdLoadingIndex !== null || adCooldownRemaining > 0}
+                        className={`w-full py-3.5 rounded-2xl bg-gradient-to-r ${
+                          adCooldownRemaining > 0
+                            ? 'from-slate-600 to-slate-700 text-slate-300 opacity-80 cursor-not-allowed border-slate-500'
+                            : `${tier.accentGrad} text-white shadow-lg ${tier.accentShadow} active:scale-[0.98] hover:brightness-105 border-white/20`
+                        } font-black text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group border ${
+                          isLoading ? 'opacity-80 cursor-wait' : ''
                         }`}
                       >
                         {/* Shimmer Sweep Overlay */}
-                        <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                        {adCooldownRemaining === 0 && !isLoading && (
+                          <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                        )}
 
                         {isLoading ? (
                           <>
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             <span>Verifying Sponsor Video...</span>
+                          </>
+                        ) : adCooldownRemaining > 0 ? (
+                          <>
+                            <span className="text-sm animate-pulse">⏳</span>
+                            <span>Break: Ready in {adCooldownRemaining}s</span>
+                            <span className="font-mono text-[10px] bg-black/40 px-2 py-0.5 rounded-lg border border-white/20 text-amber-300">
+                              {adCooldownRemaining}s
+                            </span>
                           </>
                         ) : (
                           <>

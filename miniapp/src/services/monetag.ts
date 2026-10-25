@@ -20,9 +20,44 @@ declare global {
 // Global Ad Mutex: Ensures NEVER two ads play or load at the same time
 let isAdActive = false
 let lastAdEndedTimestamp = 0
-const MIN_AD_COOLDOWN_MS = 15_000 // 15s min between ambient ads
+export const AD_COOLDOWN_SECONDS = 30
+export const LS_KEY_AD_COOLDOWN = 'hb_ad_cooldown_until'
+export const MIN_AD_COOLDOWN_MS = 30_000 // 30s min between ads
 
 export const isAnyAdActive = (): boolean => isAdActive
+
+/**
+ * Returns remaining cooldown seconds (0 if cooldown has expired)
+ */
+export const getAdCooldownRemaining = (): number => {
+  if (typeof window === 'undefined') return 0
+  const now = Date.now()
+  let until = 0
+  try {
+    const stored = localStorage.getItem(LS_KEY_AD_COOLDOWN)
+    if (stored) {
+      until = Math.max(until, Number(stored) || 0)
+    }
+  } catch {}
+  if (lastAdEndedTimestamp > 0) {
+    until = Math.max(until, lastAdEndedTimestamp + AD_COOLDOWN_SECONDS * 1000)
+  }
+  const remainingMs = until - now
+  return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0
+}
+
+/**
+ * Sets the breakdown cooldown timer (default 30 seconds)
+ */
+export const setAdCooldown = (seconds = AD_COOLDOWN_SECONDS) => {
+  const until = Date.now() + seconds * 1000
+  lastAdEndedTimestamp = Date.now()
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LS_KEY_AD_COOLDOWN, String(until))
+    }
+  } catch {}
+}
 
 // -------------------------------------------------------------------
 // Pre-warm: Initialise AdExium widget as soon as the script is ready.
@@ -290,6 +325,13 @@ export const showRewardedAdWithWaterfall = async (
     return { success: false, provider: 'busy', duration: 0 }
   }
 
+  // 30s breakdown cooldown enforcement
+  const cooldownRemaining = getAdCooldownRemaining()
+  if (cooldownRemaining > 0) {
+    console.warn(`[Ads] 30s network cooldown active (${cooldownRemaining}s remaining). Request prevented.`)
+    return { success: false, provider: 'cooldown', duration: 0 }
+  }
+
   isAdActive = true
 
   try {
@@ -301,8 +343,8 @@ export const showRewardedAdWithWaterfall = async (
       const adDuration = (Date.now() - adStartTime) / 1000
 
       if (adexSuccess && adDuration >= 9.5) {
-        lastAdEndedTimestamp = Date.now()
-        console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)!`)
+        setAdCooldown(AD_COOLDOWN_SECONDS)
+        console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)! 30s breakdown cooldown activated.`)
         return { success: true, provider: 'AdExium', duration: adDuration }
       }
       if (adexSuccess && adDuration < 9.5) {
@@ -324,8 +366,8 @@ export const showRewardedAdWithWaterfall = async (
     const gigaRes = await showGigaPubAd()
 
     if (gigaRes.success && gigaRes.duration >= 9.5) {
-      lastAdEndedTimestamp = Date.now()
-      console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)!`)
+      setAdCooldown(AD_COOLDOWN_SECONDS)
+      console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)! 30s breakdown cooldown activated.`)
       return { success: true, provider: 'GigaPub', duration: gigaRes.duration }
     }
     if (gigaRes.duration > 0 && gigaRes.duration < 9.5) {
