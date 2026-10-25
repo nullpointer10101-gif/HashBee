@@ -19,13 +19,16 @@
     <!-- Telegram WebApp SDK (provided by Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- Adexium Monetization Script (Required for Adexium Verification & autoMode) -->
+    <!-- Adexium Monetization Script -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', () => {
-            const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
-            window.adexiumWidget = adexiumWidget;
-            adexiumWidget.autoMode();
+            try {
+                const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
+                window.adexiumWidget = adexiumWidget;
+            } catch(e) {
+                console.warn('[AdExium] widget init error:', e);
+            }
         });
     </script>
 
