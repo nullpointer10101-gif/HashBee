@@ -186,7 +186,7 @@ export const Home: React.FC = () => {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {/* Robust 3D Robot Avatar */}
-          <NftMinerAvatar planId="starter" size="sm" />
+          <NftMinerAvatar planId="standard" size="sm" />
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-base font-black text-[#0f172a] tracking-tight">
@@ -458,16 +458,16 @@ export const Home: React.FC = () => {
         {/* Large NFT Showcase Box */}
         <div className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-purple-50/40 to-blue-50/40 p-3 rounded-2xl border border-slate-200/90 mb-3.5">
           {/* Robust 3D NFT Frame */}
-          <NftMinerAvatar planId="starter" size="lg" badgeText="LVL 1" />
+          <NftMinerAvatar planId="standard" size="lg" badgeText="LVL 1" />
 
           {/* Details Column */}
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm sm:text-base font-black text-slate-950 truncate">
-                Starter Bee Miner
+                Cyber Worker Miner
               </h3>
-              <span className="px-2 py-0.5 rounded-full bg-purple-100 text-[#7c3aed] border border-purple-200 text-[9px] font-black uppercase tracking-wider">
-                COMMON NFT
+              <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0066ff] border border-blue-200 text-[9px] font-black uppercase tracking-wider">
+                BASE NFT
               </span>
             </div>
             

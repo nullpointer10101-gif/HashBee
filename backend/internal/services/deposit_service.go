@@ -299,10 +299,7 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			} else if strings.HasPrefix(upperComment, "PLAN_FLASH2X") || strings.HasPrefix(upperComment, "PLAN_FLASH") {
 				isPlanDeposit = true
 				planID = "flash2x"
-			} else if strings.HasPrefix(upperComment, "PLAN_STARTER") {
-				isPlanDeposit = true
-				planID = "starter"
-			} else if strings.HasPrefix(upperComment, "PLAN_STANDARD") {
+			} else if strings.HasPrefix(upperComment, "PLAN_STARTER") || strings.HasPrefix(upperComment, "PLAN_STANDARD") {
 				isPlanDeposit = true
 				planID = "standard"
 			} else if strings.HasPrefix(upperComment, "PLAN_QUEEN") {
@@ -321,13 +318,11 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "titan"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
-					} else if amountGram >= 1.3 {
-						planID = "standard"
 					} else {
-						planID = "starter"
+						planID = "standard"
 					}
 				} else if targetTelegramID == 8700203028 {
-					// 0.70 GRAM discount on all plans except starter
+					// 0.70 GRAM discount on all plans
 					if amountGram >= 24.30 {
 						planID = "matrix"
 					} else if amountGram >= 11.30 {
@@ -338,10 +333,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "flash2x"
 					} else if amountGram >= 2.30 {
 						planID = "queen"
-					} else if amountGram >= 0.60 {
-						planID = "standard"
 					} else {
-						planID = "starter"
+						planID = "standard"
 					}
 				} else {
 					if amountGram >= 25.0 {
@@ -354,10 +347,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "flash2x"
 					} else if amountGram >= 3.0 {
 						planID = "queen"
-					} else if amountGram >= 1.3 {
-						planID = "standard"
 					} else {
-						planID = "starter"
+						planID = "standard"
 					}
 				}
 			}
@@ -476,14 +467,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		}
 		returnGRAM = 4.50
 		maxPerAccount = 0
-	case "starter":
-		planName = "Starter Bee Miner"
-		costGRAM = 0.70
-		returnGRAM = 0.80
-		maxPerAccount = 1
+	case "starter", "standard":
+		fallthrough
 	default:
 		planID = "standard"
-		planName = "Standard Worker Miner"
+		planName = "Cyber Worker Miner"
 		if telegramID == 8700203028 {
 			costGRAM = 0.60 // 0.70 GRAM discount
 		} else {

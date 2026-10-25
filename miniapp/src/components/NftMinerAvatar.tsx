@@ -11,7 +11,7 @@ interface NftMinerAvatarProps {
 }
 
 export const NftMinerAvatar: React.FC<NftMinerAvatarProps> = ({
-  planId = 'starter',
+  planId = 'standard',
   className = '',
   size = 'md',
   badgeText,
@@ -222,7 +222,7 @@ export const NftMinerAvatar: React.FC<NftMinerAvatarProps> = ({
     },
   }
 
-  const config = tierConfig[planId.toLowerCase()] || tierConfig.starter
+  const config = tierConfig[planId.toLowerCase()] || tierConfig.standard
 
   const sizeClasses = {
     sm: 'w-10 h-10 text-xs',

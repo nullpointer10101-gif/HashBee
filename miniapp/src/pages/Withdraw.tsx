@@ -484,7 +484,7 @@ export const Withdraw: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 mb-2.5 leading-snug">
-                  Activate any 24h NFT Miner (starts from <b>0.70 TON/GRAM</b>) to earn daily yields & unlock unlimited lifetime withdrawals.
+                  Activate any 24h NFT Miner (starts from <b>1.30 TON/GRAM</b>) to earn daily yields & unlock unlimited lifetime withdrawals.
                 </p>
                 <button
                   onClick={() => {
@@ -493,7 +493,7 @@ export const Withdraw: React.FC = () => {
                   }}
                   className="w-full py-2.5 rounded-xl btn-primary-blue text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
                 >
-                  <span>⚡ ACTIVATE NFT MINER (0.70 TON)</span>
+                  <span>⚡ ACTIVATE NFT MINER (1.30 TON)</span>
                   <span>➔</span>
                 </button>
               </div>

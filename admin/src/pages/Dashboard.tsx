@@ -163,9 +163,9 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     },
     {
       id: 'plan_starter_trial',
-      label: '🐝 0.70 TON ➔ 0.80 G Starter Trial',
-      message: '🐝 *TEST WITH 0.70 TON ➔ GET 0.80 G!* ⚡\n\nLow-risk 24-hour starter trial:\n• ⚡ *Pay 0.70 TON ➔ Receive 0.80 GRAM*\n• 🔓 Unlocks instant lifetime withdrawals\n• 🛡️ 1 trial allowed per miner\n\n👇 Start your trial miner:',
-      button: '🐝 Try Starter Plan (0.70 TON) ➔',
+      label: '⚡ 1.30 TON ➔ 2.00 G Cyber Worker',
+      message: '⚡ *ACTIVATE CYBER WORKER: 1.30 TON ➔ 2.00 G!* 💎\n\nHigh-value 24-hour daily yield miner:\n• ⚡ *Pay 1.30 TON ➔ Receive 2.00 GRAM (+53.8% Profit)*\n• 🔓 Unlocks instant lifetime withdrawals\n• 🚀 24H Guaranteed cycle\n\n👇 Start your miner:',
+      button: '⚡ Activate Worker (1.30 TON) ➔',
     },
     {
       id: 'withdraw_proof_alert',

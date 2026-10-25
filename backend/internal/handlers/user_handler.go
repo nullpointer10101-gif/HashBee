@@ -646,27 +646,10 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 
 	plans := []models.PlanTier{
 		{
-			ID:            "starter",
-			Name:          "Starter Bee Miner",
-			Subtitle:      "Fast 24h trial pack — entry-level miner contract",
-			Badge:         "⚡ 1 PER ACCOUNT",
-			CostGRAM:      0.70,
-			ReturnGRAM:    0.80,
-			ProfitGRAM:    0.10,
-			ProfitPercent: 14.28,
-			DurationHours: 24,
-			MaxPerAccount: 1,
-			IsLimited:     true,
-			UserPurchased: starterCount,
-			CanPurchase:   starterCount < 1,
-			Icon:          "🐝",
-			AccentColor:   "#f59e0b",
-		},
-		{
 			ID:            "standard",
-			Name:          "Standard Worker Miner",
+			Name:          "Cyber Worker Miner",
 			Subtitle:      "High value daily yield contract with massive returns",
-			Badge:         "🔥 BEST VALUE",
+			Badge:         "🔥 BASE MINER (+53.8%)",
 			CostGRAM:      1.30,
 			ReturnGRAM:    2.00,
 			ProfitGRAM:    0.70,
@@ -677,7 +660,7 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 			UserPurchased: 0,
 			CanPurchase:   true,
 			Icon:          "⚡",
-			AccentColor:   "#10b981",
+			AccentColor:   "#0088ff",
 		},
 		func() models.PlanTier {
 			if user.TelegramID == 8842934236 || strings.EqualFold(user.FirstName, "Gaurav") && user.TelegramID == 8842934236 {
@@ -793,7 +776,7 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		"completed_plans_count": claimedCount,
 		"total_locked_gram":     totalLocked,
 		"total_earned_gram":     totalEarned,
-		"can_buy_starter":       starterCount < 1,
+		"can_buy_starter":       false,
 		"flash_sale_ends_at":    flashSaleDeadline.Format(time.RFC3339),
 		"flash_sale_ended":      isFlashEnded,
 	})

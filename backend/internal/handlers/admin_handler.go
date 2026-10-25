@@ -1394,15 +1394,15 @@ Solid daily income guaranteed:
 	},
 	{
 		Key: "plan_starter_trial",
-		Message: `🐝 *TEST WITH 0.70 TON ➔ GET 0.80 G!* ⚡
+		Message: `⚡ *ACTIVATE CYBER WORKER: 1.30 TON ➔ 2.00 G!* 💎
 
-Low-risk 24-hour starter trial:
-• ⚡ *Pay 0.70 TON ➔ Receive 0.80 GRAM*
+High-value 24-hour daily yield miner:
+• ⚡ *Pay 1.30 TON ➔ Receive 2.00 GRAM (+53.8% Profit)*
 • 🔓 Unlocks instant lifetime withdrawals
-• 🛡️ 1 trial allowed per miner
+• 🚀 24H Guaranteed cycle
 
-👇 Start your trial miner:`,
-		ButtonText: "🐝 Try Starter Plan (0.70 TON) ➔",
+👇 Start your miner:`,
+		ButtonText: "⚡ Activate Worker (1.30 TON) ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{

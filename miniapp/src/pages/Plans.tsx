@@ -114,28 +114,10 @@ export const Plans: React.FC = () => {
 
   const ALL_PLAN_TIERS: PlanTier[] = [
     {
-      id: 'starter',
-      name: 'Starter NFT Miner',
-      subtitle: 'Fast 24h entry miner contract — 1 per account trial',
-      badge: 'COMMON',
-      cost_gram: 0.7,
-      return_gram: 0.8,
-      profit_gram: 0.1,
-      profit_percent: 14.28,
-      duration_hours: 24,
-      max_per_account: 1,
-      is_limited: true,
-      user_purchased: 0,
-      can_purchase: true,
-      icon: '🤖',
-      image: robotMinerImg,
-      accent_color: '#8b5cf6',
-    },
-    {
       id: 'standard',
       name: 'Cyber Worker Miner',
       subtitle: 'High value daily yield contract with massive returns',
-      badge: 'RARE (+53.8%)',
+      badge: 'BASE (+53.8%)',
       cost_gram: 1.3,
       return_gram: 2.0,
       profit_gram: 0.7,
@@ -624,7 +606,6 @@ export const Plans: React.FC = () => {
           </div>
 
           {availablePlans.map((plan, index) => {
-            const isStarter = plan.id === 'starter'
             const isFlash = plan.id === 'flash2x'
             const isDouble = plan.id === 'matrix'
             const isMythic = plan.id === 'apex'
@@ -664,8 +645,6 @@ export const Plans: React.FC = () => {
               ? 'glow-ring-emerald'
               : isEpic
               ? 'glow-ring-purple'
-              : isStarter
-              ? 'glow-ring-violet'
               : 'glow-ring-blue'
 
             return (
@@ -757,11 +736,7 @@ export const Plans: React.FC = () => {
                 </div>
 
                 {/* Action Button */}
-                {isStarter && plansOverview?.can_buy_starter === false ? (
-                  <div className="w-full py-3 rounded-2xl bg-slate-200 text-slate-600 font-black text-xs text-center uppercase tracking-wider">
-                    ✓ 1-TIME TRIAL COMPLETED
-                  </div>
-                ) : isFlash && flashTimeLeft.isEnded ? (
+                {isFlash && flashTimeLeft.isEnded ? (
                   <div className="w-full py-3.5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs text-center uppercase tracking-wider border border-slate-300">
                     OFFER EXPIRED (24H ENDED)
                   </div>

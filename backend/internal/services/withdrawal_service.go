@@ -133,7 +133,7 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	// Check Lifetime Withdrawal Qualification (Must hold >= 1 NFT Miner)
 	qualified, _, _, _ := s.IsUserQualified(ctx, userID)
 	if !qualified {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must hold at least 1 NFT Miner (starts from 0.70 GRAM / TON)")
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must hold at least 1 NFT Miner (starts from 1.30 GRAM / TON)")
 	}
 
 	// Check cooldown

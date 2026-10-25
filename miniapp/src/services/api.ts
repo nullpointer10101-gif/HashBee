@@ -422,7 +422,7 @@ export interface PlansOverview {
   completed_plans_count: number
   total_locked_gram: number
   total_earned_gram: number
-  can_buy_starter: boolean
+  can_buy_starter?: boolean
 }
 
 export const fetchPlans = async (): Promise<PlansOverview> => {
