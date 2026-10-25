@@ -19,15 +19,16 @@ declare global {
 
 // Global Ad Mutex: Ensures NEVER two ads play or load at the same time
 let isAdActive = false
-let lastAdEndedTimestamp = 0
+let lastAdCompletedTimestamp = 0
 export const AD_COOLDOWN_SECONDS = 30
 export const LS_KEY_AD_COOLDOWN = 'hb_ad_cooldown_until'
-export const MIN_AD_COOLDOWN_MS = 30_000 // 30s min between ads
+export const MIN_AD_COOLDOWN_MS = 30_000 // 30s min between ambient ads
 
 export const isAnyAdActive = (): boolean => isAdActive
 
 /**
- * Returns remaining cooldown seconds (0 if cooldown has expired)
+ * Returns remaining cooldown seconds (0 if cooldown has expired or no ad played)
+ * ONLY returns > 0 if an ad was actually watched and completed!
  */
 export const getAdCooldownRemaining = (): number => {
   if (typeof window === 'undefined') return 0
@@ -36,25 +37,42 @@ export const getAdCooldownRemaining = (): number => {
   try {
     const stored = localStorage.getItem(LS_KEY_AD_COOLDOWN)
     if (stored) {
-      until = Math.max(until, Number(stored) || 0)
+      until = Number(stored) || 0
     }
   } catch {}
-  if (lastAdEndedTimestamp > 0) {
-    until = Math.max(until, lastAdEndedTimestamp + AD_COOLDOWN_SECONDS * 1000)
-  }
   const remainingMs = until - now
-  return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0
+  if (remainingMs <= 0) {
+    if (until > 0) {
+      try {
+        localStorage.removeItem(LS_KEY_AD_COOLDOWN)
+      } catch {}
+    }
+    return 0
+  }
+  return Math.ceil(remainingMs / 1000)
 }
 
 /**
  * Sets the breakdown cooldown timer (default 30 seconds)
+ * MUST ONLY be called when an ad is confirmed to have played and completed!
  */
 export const setAdCooldown = (seconds = AD_COOLDOWN_SECONDS) => {
   const until = Date.now() + seconds * 1000
-  lastAdEndedTimestamp = Date.now()
+  lastAdCompletedTimestamp = Date.now()
   try {
     if (typeof window !== 'undefined') {
       localStorage.setItem(LS_KEY_AD_COOLDOWN, String(until))
+    }
+  } catch {}
+}
+
+/**
+ * Clears any cooldown immediately (used when no ad was available or playback failed)
+ */
+export const clearAdCooldown = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(LS_KEY_AD_COOLDOWN)
     }
   } catch {}
 }
@@ -354,12 +372,13 @@ export const showRewardedAdWithWaterfall = async (
       const adDuration = (Date.now() - adStartTime) / 1000
 
       if (adexSuccess && adDuration >= 9.5) {
-        setAdCooldown(AD_COOLDOWN_SECONDS)
-        console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)! 30s breakdown cooldown activated.`)
+        lastAdCompletedTimestamp = Date.now()
+        console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)!`)
         return { success: true, provider: 'AdExium', duration: adDuration }
       }
       if (adexSuccess && adDuration < 9.5) {
         console.warn(`⚠️ [Ads] AdExium closed too quickly (${adDuration.toFixed(1)}s < 10s).`)
+        clearAdCooldown()
         return { success: false, provider: 'AdExium', duration: adDuration }
       }
       console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
@@ -370,16 +389,16 @@ export const showRewardedAdWithWaterfall = async (
     const gigaRes = await showGigaPubAd()
 
     if (gigaRes.success) {
-      setAdCooldown(AD_COOLDOWN_SECONDS)
-      console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)! 30s breakdown cooldown activated.`)
+      lastAdCompletedTimestamp = Date.now()
+      console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)!`)
       return { success: true, provider: 'GigaPub', duration: gigaRes.duration }
     }
 
     console.log('ℹ️ [Ads] No video ad available from any provider.')
+    clearAdCooldown()
     return { success: false, provider: 'none', duration: 0 }
   } finally {
     isAdActive = false
-    lastAdEndedTimestamp = Date.now()
   }
 }
 
@@ -395,7 +414,7 @@ export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
   try {
     const success = await showAdexiumAd()
     if (success) {
-      lastAdEndedTimestamp = Date.now()
+      lastAdCompletedTimestamp = Date.now()
       console.log('✅ [Ads] AdExium opening ad displayed successfully!')
       return true
     }
@@ -403,7 +422,6 @@ export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
     return false
   } finally {
     isAdActive = false
-    lastAdEndedTimestamp = Date.now()
   }
 }
 
@@ -431,7 +449,7 @@ export const showPeriodic2MinAd = async (): Promise<boolean> => {
   if (isAdActive) return false
 
   const now = Date.now()
-  if (now - lastAdEndedTimestamp < MIN_AD_COOLDOWN_MS) return false
+  if (now - lastAdCompletedTimestamp < MIN_AD_COOLDOWN_MS) return false
 
   // Suppress if tab is hidden
   if (typeof document !== 'undefined' && document.hidden) return false

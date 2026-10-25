@@ -13,6 +13,7 @@ import {
   showRewardedAdWithWaterfall,
   getAdCooldownRemaining,
   setAdCooldown,
+  clearAdCooldown,
 } from '../services/monetag'
 import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
@@ -156,6 +157,8 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
 
   const completeAdReward = async (taskIndex: number, provider = 'AdExium', durationSec = 10) => {
     if (durationSec < 9.5) {
+      clearAdCooldown()
+      setAdCooldownRemaining(0)
       toast.error(`⚠️ Video was closed too early (${durationSec.toFixed(0)}s). Minimum 10 seconds required to earn +0.50 GHS!`)
       return
     }
@@ -165,6 +168,8 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       const res = await rewardAdWatch(provider, taskIndex, durationSec)
       powerAdded = res.power_gained || GIGA_POWER_PER_AD
     } catch (err: any) {
+      clearAdCooldown()
+      setAdCooldownRemaining(0)
       const errMsg = err?.response?.data?.error || err?.message || 'Failed to credit mining power'
       toast.error(`⚠️ ${errMsg}`)
       return
@@ -178,7 +183,7 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       return updated
     })
 
-    // Enforce 30-second breakdown delay between ads to allow ad network inventory refresh
+    // Enforce 30-second breakdown delay ONLY because the ad actually completed and was verified!
     setAdCooldown(30)
     setAdCooldownRemaining(30)
 
@@ -221,18 +226,27 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       }
 
       if (adResult.success && adResult.duration >= 9.5) {
+        // ONLY valid completed ads trigger the cooldown inside completeAdReward!
         await completeAdReward(taskIndex, adResult.provider, Math.round(adResult.duration))
-        setAdCooldown(30)
-        setAdCooldownRemaining(30)
       } else if (adResult.provider === 'cooldown') {
-        const rem = getAdCooldownRemaining() || 30
-        setAdCooldownRemaining(rem)
-        toast.error(`⏳ Ad network breakdown active. Please wait ${rem}s before requesting another ad!`)
+        const rem = getAdCooldownRemaining()
+        if (rem > 0) {
+          setAdCooldownRemaining(rem)
+          toast.error(`⏳ Ad network breakdown active. Please wait ${rem}s before requesting another ad!`)
+        } else {
+          clearAdCooldown()
+          setAdCooldownRemaining(0)
+        }
       } else if (adResult.provider === 'busy') {
         toast.error('⚠️ Ad system is busy with another video. Please wait a moment!')
       } else if (adResult.duration > 0 && adResult.duration < 9.5) {
+        clearAdCooldown()
+        setAdCooldownRemaining(0)
         toast.error(`⚠️ Video was closed too early (${adResult.duration.toFixed(0)}s). Please watch for at least 10 seconds to earn +0.50 GHS!`)
       } else {
+        // Ad not available or failed — ensure NO timer is shown!
+        clearAdCooldown()
+        setAdCooldownRemaining(0)
         toast.error('⚠️ Sponsor video is currently unavailable. Please try again in a moment!')
       }
     },
