@@ -401,6 +401,31 @@ func (b *Bot) SendCampaignDepositNotification(ownerID uuid.UUID, title string, a
 	b.api.Send(adminMsg)
 }
 
+// SendPlanActivationNotification notifies user of successfully activated mining plan contract
+func (b *Bot) SendPlanActivationNotification(telegramID int64, planName string, costGram, returnGram, ghsPower float64) {
+	if b == nil || b.api == nil || telegramID == 0 {
+		return
+	}
+	miniAppURL := b.getFreshMiniAppURL()
+	keyboard := newWebAppKeyboard("🤖 View Active Miner", miniAppURL)
+
+	text := fmt.Sprintf("🎉 *MINING CONTRACT ACTIVATED!* 💎\n\n🤖 *NFT Miner:* *%s*\n💰 *Paid:* *%.2f TON*\n📈 *Guaranteed Return:* *%.2f GRAM*\n⚡ *Mining Power Added:* *+%.0f GHS*\n⏱️ *Duration:* *24 Hours (Guaranteed Settlement)*\n\nYour miner is accumulating rewards 24/7! Open the app anytime to track your contract.",
+		planName, costGram, returnGram, ghsPower)
+
+	msg := tgbotapi.NewMessage(telegramID, text)
+	msg.ParseMode = "Markdown"
+	msg.ReplyMarkup = keyboard
+	b.api.Send(msg)
+
+	// Instant alert to Kanzx (@kiopajje / 6446145632)
+	kanzxID := int64(6446145632)
+	adminAlert := fmt.Sprintf("🚨 *NEW PLAN CONTRACT ACTIVATED!*\n\n👤 *User TG ID:* `%d`\n🤖 *Plan:* `%s`\n💰 *Cost:* `%.2f TON`\n📈 *Return:* `%.2f GRAM`\n⚡ *Power Added:* `+%.0f GHS`\n⏰ *Time:* `%s UTC`",
+		telegramID, planName, costGram, returnGram, ghsPower, time.Now().UTC().Format("2006-01-02 15:04:05"))
+	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
+	adminMsg.ParseMode = "Markdown"
+	b.api.Send(adminMsg)
+}
+
 // BroadcastWithButtonProgress sends messages concurrently with rate limiting and progress callback
 func (b *Bot) BroadcastWithButtonProgress(ctx context.Context, text string, buttonText, buttonURL string, telegramIDs []int64, onProgress func(sent, failed, total int)) (int, int) {
 	if b == nil || b.api == nil || len(telegramIDs) == 0 {

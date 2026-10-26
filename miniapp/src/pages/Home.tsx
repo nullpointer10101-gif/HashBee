@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { LanguageModal } from '../components/LanguageModal'
-import { claimHoney } from '../services/api'
+import { claimHoney, fetchMyPlans, UserPlanItem } from '../services/api'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
@@ -19,6 +19,11 @@ export const Home: React.FC = () => {
   const [claiming, setClaiming] = useState(false)
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
+  const [myPlans, setMyPlans] = useState<UserPlanItem[]>([])
+
+  useEffect(() => {
+    fetchMyPlans().then(setMyPlans).catch(() => {})
+  }, [user])
 
   // 24H Flash Miner Countdown Timer & 500 Dynamic Slots (Round 2: 10 TON -> 25 GRAM)
   const TOTAL_FLASH_SLOTS = 500
@@ -529,33 +534,53 @@ export const Home: React.FC = () => {
         </div>
 
         {/* Large NFT Showcase Box */}
-        <div className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-purple-50/40 to-blue-50/40 p-3 rounded-2xl border border-slate-200/90 mb-3.5">
-          {/* Robust 3D NFT Frame */}
-          <NftMinerAvatar planId="standard" size="lg" badgeText="LVL 1" />
+        {(() => {
+          const activeMiner = myPlans.find(p => p.status === 'active')
+          const minerPlanId = activeMiner?.plan_id || 'standard'
+          const minerName = activeMiner?.plan_name || 'Cyber Worker Miner'
+          const minerBadge = activeMiner?.plan_id === 'matrix' ? '2X DOUBLE' :
+                             activeMiner?.plan_id === 'apex' ? 'MYTHIC' :
+                             activeMiner?.plan_id === 'titan' ? 'LEGENDARY' :
+                             activeMiner?.plan_id === 'queen' ? 'EPIC' :
+                             activeMiner?.plan_id === 'flash10' ? '2.5X FLASH' : 'LVL 1'
+          const minerTag = activeMiner ? 'UPGRADED NFT' : 'BASE NFT'
 
-          {/* Details Column */}
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="text-sm sm:text-base font-black text-slate-950 truncate">
-                Cyber Worker Miner
-              </h3>
-              <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0066ff] border border-blue-200 text-[9px] font-black uppercase tracking-wider">
-                BASE NFT
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-600">Auto-Mining:</span>
-              <span className="font-mono bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 text-[#0066ff] text-xs font-black">
-                {ghs} GHS
-              </span>
-            </div>
+          return (
+            <div
+              onClick={() => navigate('/plans')}
+              className="flex items-center gap-3.5 bg-gradient-to-r from-slate-50 via-purple-50/40 to-blue-50/40 p-3 rounded-2xl border border-slate-200/90 mb-3.5 cursor-pointer hover:border-blue-400 transition-all shadow-sm"
+            >
+              {/* Robust 3D NFT Frame */}
+              <NftMinerAvatar planId={minerPlanId} size="lg" badgeText={minerBadge} />
 
-            <div className="text-[10px] text-slate-500 font-semibold">
-              Contract: <b className="text-slate-800">24H Guaranteed Cycle</b>
+              {/* Details Column */}
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-black text-slate-950 truncate">
+                    {minerName}
+                  </h3>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    activeMiner ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-[#0066ff] border border-blue-200'
+                  }`}>
+                    {minerTag}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-600">Auto-Mining:</span>
+                  <span className="font-mono bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 text-[#0066ff] text-xs font-black">
+                    {ghs} GHS
+                  </span>
+                </div>
+
+                <div className="text-[10px] text-slate-500 font-semibold flex items-center justify-between">
+                  <span>Contract: <b className="text-slate-800">{activeMiner ? 'Active 24H Yield' : '24H Guaranteed Cycle'}</b></span>
+                  <span className="text-[#0088ff] font-bold text-[9px] underline">Manage ➔</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )
+        })()}
 
         {/* 3 Stats Row */}
         <div className="grid grid-cols-3 gap-1.5 bg-[#f8fafc] border border-slate-200 rounded-2xl p-2.5 text-center mb-3">

@@ -532,11 +532,31 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		return false, fmt.Errorf("failed to insert transaction: %w", err)
 	}
 
+	// Grant mining hashrate (1 TON = 520 GHS) and unlock withdrawal gate
+	powerGained := costGRAM * 520.0
+	_, err = tx.Exec(ctx,
+		`UPDATE users SET bp = bp + $1, one_time_withdrawal_granted = true, updated_at = NOW() WHERE id = $2`,
+		powerGained, userID)
+	if err != nil {
+		log.Printf("⚠️ [DepositService] Failed to update user power for %d: %v", telegramID, err)
+	}
+
+	bpTxID := fmt.Sprintf("bp_plan_%s", eventID)
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO transactions (id, user_id, type, amount, currency, idempotency_key, description, created_at)
+		 VALUES ($1, $2, 'bp_grant', $3, 'BP', $4, $5, NOW()) ON CONFLICT (idempotency_key) DO NOTHING`,
+		uuid.New(), userID, powerGained, bpTxID, fmt.Sprintf("%s Upgrade (+%.0f GHS)", planName, powerGained))
+
 	if err := tx.Commit(ctx); err != nil {
 		return false, err
 	}
 
-	log.Printf("🎉 [DepositService] Activated %s for user %d via blockchain tx %s!", planName, telegramID, eventID)
+	log.Printf("🎉 [DepositService] Activated %s for user %d via blockchain tx %s (+%.0f GHS)!", planName, telegramID, eventID, powerGained)
+
+	if s.bot != nil && telegramID > 0 {
+		go s.bot.SendPlanActivationNotification(telegramID, planName, costGRAM, returnGRAM, powerGained)
+	}
+
 	return true, nil
 }
 

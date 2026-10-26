@@ -783,6 +783,23 @@ export const Plans: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Active Contract Status Banner */}
+                {activePlans.some(ap => ap.plan_id === plan.id) && (
+                  <div className="mb-2.5 py-1.5 px-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-black flex items-center justify-between shadow-sm">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      MINER ACTIVE & MINING NOW
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setActiveTab('active'); }} 
+                      className="text-[#0088ff] underline text-[9px] font-black"
+                    >
+                      View Live Contract ➔
+                    </button>
+                  </div>
+                )}
+
                 {/* Action Button */}
                 {isFlashRound1 ? (
                   <div className="w-full py-3.5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs text-center uppercase tracking-wider border border-slate-300">

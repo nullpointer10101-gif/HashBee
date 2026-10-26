@@ -580,21 +580,16 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 	`, user.ID).Scan(&plansPurchased)
 
 	var friendPlansPurchased int
-	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(DISTINCT uid) FROM (
-			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
-				SELECT referred_id FROM referrals WHERE referrer_id = $1
-				UNION
-				SELECT id FROM users WHERE referrer_id = $1
-			)
-			UNION
-			SELECT t.user_id as uid FROM transactions t WHERE t.user_id IN (
-				SELECT referred_id FROM referrals WHERE referrer_id = $1
-				UNION
-				SELECT id FROM users WHERE referrer_id = $1
-			) AND t.type = 'plan_purchase'
-		) q
-	`, user.ID).Scan(&friendPlansPurchased)
+	if !oneTimeGranted && plansPurchased == 0 {
+		_ = s.db.QueryRow(ctx, `
+			SELECT COUNT(DISTINCT r.referred_id) FROM referrals r
+			WHERE r.referrer_id = $1
+			  AND (
+				EXISTS (SELECT 1 FROM user_plans up WHERE up.user_id = r.referred_id)
+				OR EXISTS (SELECT 1 FROM transactions t WHERE t.user_id = r.referred_id AND t.type = 'plan_purchase')
+			  )
+		`, user.ID).Scan(&friendPlansPurchased)
+	}
 
 	var activePlans int
 	_ = s.db.QueryRow(ctx, `
