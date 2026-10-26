@@ -19,6 +19,7 @@ import { Mission, Campaign } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useLocation } from 'react-router-dom'
+import { DailyAdStation } from '../components/DailyAdStation'
 
 export type ViewMode = 'watch' | 'tasks' | 'campaigns' | 'new_campaign' | 'pay_campaign'
 
@@ -776,182 +777,13 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       {/* ═══════════════════════════════════════════════════════════ */}
       {view === 'watch' && (
         <div className="space-y-4">
-          {/* ── LUXURY CYBER REACTOR HERO VAULT CARD ── */}
-          <div className="p-5 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0f172a] via-[#1e1b4b] to-[#090d16] text-white border border-indigo-500/30 shadow-2xl shadow-indigo-950/50">
-            {/* Ambient Animated Cyber Particle Glows */}
-            <div className="absolute -top-12 -right-12 w-44 h-44 bg-amber-500/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
-            <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Header Row */}
-            <div className="flex items-center justify-between relative z-10 mb-3.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-600 p-0.5 shadow-lg shadow-rose-500/30">
-                  <div className="w-full h-full rounded-[10px] bg-black/40 backdrop-blur-md flex items-center justify-center text-lg">
-                    ⚡
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[11px] font-black tracking-widest bg-gradient-to-r from-amber-300 via-rose-300 to-cyan-300 bg-clip-text text-transparent uppercase block leading-none">
-                    GHS ACCELERATOR
-                  </span>
-                  <span className="text-[9px] text-indigo-200/70 font-semibold mt-0.5 block">
-                    Daily 30-Stream Energy Grid
-                  </span>
-                </div>
-              </div>
-
-              {/* Reset Countdown Timer Badge */}
-              <div className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-[10.5px] font-mono font-bold text-amber-300 flex items-center gap-1.5 shrink-0 shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>{watchAdCountdown || '24:00:00'}</span>
-              </div>
-            </div>
-
-            {/* Live Stats Row */}
-            <div className="grid grid-cols-2 gap-3 my-3 relative z-10">
-              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-md relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">
-                    COMPLETED TODAY
-                  </span>
-                  <span className="text-xs">🎬</span>
-                </div>
-                <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-white font-mono tracking-tight">
-                    {totalWatches}
-                  </span>
-                  <span className="text-[11px] font-bold text-indigo-300 font-sans">
-                    / 30 ADS
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-emerald-400/20 backdrop-blur-md relative overflow-hidden shadow-inner shadow-emerald-500/10">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black text-emerald-300 uppercase tracking-wider">
-                    HASHRATE BOOST
-                  </span>
-                  <span className="text-xs">⚡</span>
-                </div>
-                <div className="mt-1 flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-[#00f090] font-mono tracking-tight">
-                    +{totalPowerFromAds}
-                  </span>
-                  <span className="text-[11px] font-black text-emerald-300 font-sans">
-                    GHS
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Daily Progress Bar */}
-            <div className="relative z-10 pt-1 space-y-1.5">
-              <div className="flex items-center justify-between text-[10.5px] text-slate-300 font-bold">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  <span>Total Daily Yield</span>
-                </span>
-                <span className="font-mono text-amber-300 font-black">
-                  {totalDailyPercent.toFixed(0)}% <span className="text-slate-400 font-normal">(+15.00 GHS Max)</span>
-                </span>
-              </div>
-              <div className="w-full h-3 bg-black/70 rounded-full overflow-hidden border border-white/15 p-0.5 shadow-inner">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-rose-500 via-purple-500 to-cyan-400 rounded-full transition-all duration-700 relative overflow-hidden"
-                  style={{ width: `${totalDailyPercent}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 w-full animate-sweep-shimmer" />
-                </div>
-              </div>
-            </div>
-
-            {/* Quick 1-Click Interactive Stream Trigger on Hero Card */}
-            <div className="relative z-10 pt-3.5">
-              {totalWatches >= 30 ? (
-                <div className="w-full py-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 backdrop-blur-md">
-                  <span>✓</span>
-                  <span>ALL 30/30 STREAMS COMPLETED TODAY (+15.00 GHS MAX)</span>
-                </div>
-              ) : adCooldownRemaining > 0 ? (
-                <button
-                  disabled
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500/25 via-orange-500/25 to-amber-600/25 text-amber-200 font-black text-xs uppercase tracking-wider shadow-lg border border-amber-400/40 cursor-not-allowed flex flex-col items-center justify-center gap-1 relative overflow-hidden backdrop-blur-sm"
-                >
-                  <div
-                    className="absolute inset-y-0 left-0 bg-amber-500/20 transition-all duration-300 pointer-events-none"
-                    style={{ width: `${Math.min(100, Math.max(0, ((30 - adCooldownRemaining) / 30) * 100))}%` }}
-                  />
-                  <div className="flex items-center gap-2 relative z-10">
-                    <span className="text-base animate-pulse">⏳</span>
-                    <span>30S BREAKDOWN COOLDOWN • READY IN {adCooldownRemaining}S</span>
-                    <span className="text-[10px] font-mono bg-black/40 px-2 py-0.5 rounded-lg border border-amber-300/30 text-amber-300 font-black">
-                      {adCooldownRemaining}s
-                    </span>
-                  </div>
-                  <span className="text-[9.5px] font-semibold text-amber-300/80 normal-case tracking-normal relative z-10">
-                    Allowing sponsor network 30s breakdown to refill fresh video inventory
-                  </span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    const nextTier = [0, 1, 2].find((idx) => (gigaAdState.counts[idx] || 0) < GIGA_ADS_PER_TIER) ?? 0
-                    handleWatchAdTask(nextTier)
-                  }}
-                  disabled={watchAdLoadingIndex !== null}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-rose-500 to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-xl shadow-rose-500/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 relative overflow-hidden group border border-white/40 hover:brightness-105"
-                >
-                  <div className="absolute inset-0 bg-white/30 animate-sweep-shimmer pointer-events-none" />
-                  {watchAdLoadingIndex !== null ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                      <span>STREAMING SPONSOR VIDEO...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-base animate-bounce">⚡</span>
-                      <span>TAP TO WATCH AD & BOOST (+0.50 GHS)</span>
-                      <span className="text-[10px] font-mono bg-black/25 px-2 py-0.5 rounded-lg border border-black/10 text-white font-bold">
-                        #{totalWatches + 1}/30
-                      </span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ── 30-SECOND BREAKDOWN COOLDOWN BANNER ── */}
-          {adCooldownRemaining > 0 && (
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border border-amber-400/40 shadow-lg shadow-amber-500/10 backdrop-blur-md relative overflow-hidden">
-              <div className="flex items-center justify-between gap-3 mb-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-slate-950 font-black text-base flex items-center justify-center shadow-md animate-pulse">
-                    ⏱️
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <span>30s Sponsor Fill Breakdown</span>
-                      <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-md font-mono">
-                        {adCooldownRemaining}s
-                      </span>
-                    </h4>
-                    <p className="text-[10.5px] text-slate-600 font-semibold mt-0.5">
-                      30-second delay between ads prevents "No Ads Available" errors and guarantees full rewards.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {/* Animated Progress Bar */}
-              <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden p-0.5 border border-amber-300/40">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 transition-all duration-500 rounded-full"
-                  style={{ width: `${Math.min(100, Math.max(0, ((30 - adCooldownRemaining) / 30) * 100))}%` }}
-                />
-              </div>
-            </div>
-          )}
+          {/* ── DAILY AD STATION (FOCUSED 20/DAY BOOST STATION) ── */}
+          <DailyAdStation
+            totalDailyAds={20}
+            powerPerAd={25}
+            ghsPerAd={0.5}
+            onRewardClaimed={() => refreshUser()}
+          />
 
           {/* ── 3 DISTINCT THEMATIC AD BATCHES ── */}
           <div className="space-y-3.5">

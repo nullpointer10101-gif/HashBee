@@ -746,21 +746,21 @@ export const Home: React.FC = () => {
 
         {/* Missions & Tasks (Electric Blue / Cyan) */}
         <div
-          onClick={() => navigate('/missions')}
+          onClick={() => navigate('/watch')}
           className="card-tint-blue p-3 relative overflow-hidden cursor-pointer hover:border-blue-400 active:scale-95 transition-all"
         >
           <div className="flex items-center justify-between mb-1.5">
             <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#0088ff] to-[#00c6ff] text-white flex items-center justify-center text-sm shadow-sm">
-              🎯
+              📺
             </div>
             <span className="px-1.5 py-0.5 rounded-full bg-blue-200/90 text-blue-950 text-[8px] font-black uppercase">
-              FREE GHS
+              20 / DAY
             </span>
           </div>
-          <h4 className="text-xs font-extrabold text-blue-950">Daily Missions</h4>
-          <p className="text-[10px] text-blue-900 font-semibold mt-0.5">Watch ads & earn power</p>
-          <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-[#0066ff]">
-            <span>COMPLETE</span>
+          <h4 className="text-xs font-extrabold text-blue-950">Daily Ad Station</h4>
+          <p className="text-[10px] text-blue-900 font-semibold mt-0.5">Watch & earn +500 Power</p>
+          <div className="mt-2 flex items-center gap-1 text-[10px] font-black text-[#0088ff]">
+            <span>WATCH NOW</span>
             <span>➔</span>
           </div>
         </div>
