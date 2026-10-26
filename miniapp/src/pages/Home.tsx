@@ -8,14 +8,12 @@ import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
 import { NftMinerAvatar } from '../components/NftMinerAvatar'
 import { TeslaMiningBanner } from '../components/TeslaMiningBanner'
-import { TeslaMiningTakeover } from '../components/TeslaMiningTakeover'
 import inviteBannerImg from '../assets/images/invite_banner.jpg'
 
 export const Home: React.FC = () => {
   const { user, refreshUser, loading } = useAuth()
   const { currentLanguage } = useLanguage()
   const [showLangModal, setShowLangModal] = useState(false)
-  const [showTeslaModal, setShowTeslaModal] = useState(false)
   const navigate = useNavigate()
 
   const [claiming, setClaiming] = useState(false)
@@ -308,10 +306,7 @@ export const Home: React.FC = () => {
       </div>
 
       {/* ── 🚗 TESLA MINING: 1-TIME FREE 1 USDT CLAIM BANNER (TOP PROMINENT) ── */}
-      <TeslaMiningBanner
-        onOpenModal={() => setShowTeslaModal(true)}
-        className="mb-3.5 shadow-2xl border-2 border-red-500/40"
-      />
+      <TeslaMiningBanner className="mb-3.5 shadow-2xl border-2 border-red-500/40" />
 
       {/* ── 🔥 MEGA HYPE 24H FLASH SALE NFT CARD (ALL USERS VISIBLE) ── */}
       <div
@@ -678,10 +673,7 @@ export const Home: React.FC = () => {
       </div>
 
       {/* ── 🚗 TESLA MINING: 1-TIME FREE 1 USDT CLAIM BANNER ── */}
-      <TeslaMiningBanner
-        onOpenModal={() => setShowTeslaModal(true)}
-        className="mb-3.5"
-      />
+      <TeslaMiningBanner className="mb-3.5" />
 
       {/* ── BANNER: INVITE FRIEND / EARN MORE ─────────────────── */}
       <div
@@ -723,12 +715,6 @@ export const Home: React.FC = () => {
 
       {/* Deposit Modal */}
       <DepositModal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} />
-
-      {/* Tesla Mining Takeover Full Impressive Page (when manually clicked from banner) */}
-      <TeslaMiningTakeover
-        forceOpen={showTeslaModal}
-        onClose={() => setShowTeslaModal(false)}
-      />
     </div>
   )
 }

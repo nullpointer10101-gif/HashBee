@@ -48,6 +48,12 @@ export const openTeslaMiningBot = (telegramId?: number | string) => {
   window.open(TESLA_BOT_URL, '_blank')
 }
 
+export const triggerTeslaMiningTakeover = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('open-tesla-takeover'))
+  }
+}
+
 export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
   forceOpen = false,
   onClose,
@@ -57,6 +63,18 @@ export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
 
   const [isOpen, setIsOpen] = useState(false)
   const [currentViewNumber, setCurrentViewNumber] = useState(1)
+
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-tesla-takeover', handleOpen)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-tesla-takeover', handleOpen)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (forceOpen) {

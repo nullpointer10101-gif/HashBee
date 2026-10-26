@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import teslaBannerImg from '../assets/images/tesla_mining_banner.jpg'
-import { openTeslaMiningBot } from './TeslaMiningTakeover'
+import { triggerTeslaMiningTakeover } from './TeslaMiningTakeover'
 
 interface TeslaMiningBannerProps {
   onOpenModal?: () => void
@@ -12,14 +12,11 @@ export const TeslaMiningBanner: React.FC<TeslaMiningBannerProps> = ({
   onOpenModal,
   className = '',
 }) => {
-  const { user } = useAuth()
-  const activeTgId = user?.telegram_id || (typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user?.id : '') || ''
-
   const handleClick = () => {
     if (onOpenModal) {
       onOpenModal()
     } else {
-      openTeslaMiningBot(activeTgId)
+      triggerTeslaMiningTakeover()
     }
   }
 
