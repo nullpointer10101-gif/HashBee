@@ -25,7 +25,7 @@ export const Plans: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   // Interactive Live Yield Simulator
-  const [calcSelectedId, setCalcSelectedId] = useState<string>('apex')
+  const [calcSelectedId, setCalcSelectedId] = useState<string>('flash10')
 
   // Live Activity Ticker state
   const [tickerIndex, setTickerIndex] = useState(0)
@@ -37,29 +37,45 @@ export const Plans: React.FC = () => {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
 
-  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots
+  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots (Round 2: 10 TON -> 25 GRAM)
   const TOTAL_FLASH_SLOTS = 500
-  const FLASH_SALE_DEADLINE = '2026-10-25T19:00:00Z'
   const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
-    hours: 24,
-    minutes: 0,
-    seconds: 0,
+    hours: 23,
+    minutes: 48,
+    seconds: 15,
     isEnded: false,
   })
   const [flashSlots, setFlashSlots] = useState<{ filled: number; left: number }>({
-    filled: 284,
-    left: 216,
+    filled: 318,
+    left: 182,
   })
 
   useEffect(() => {
     let liveRandomBonus = 0
 
+    // Consistent session deadline for Round 2: stored in localStorage so it ticks naturally for 24 hours
+    const getDeadline = () => {
+      try {
+        const stored = localStorage.getItem('hb_flash_round2_end')
+        if (stored) {
+          const val = parseInt(stored, 10)
+          if (val > Date.now()) return val
+        }
+      } catch (_) {}
+      const dl = Date.now() + (23 * 3600 + 48 * 60 + 30) * 1000
+      try {
+        localStorage.setItem('hb_flash_round2_end', String(dl))
+      } catch (_) {}
+      return dl
+    }
+
+    const targetDeadline = getDeadline()
+    const totalDuration = 24 * 3600 * 1000
+    const startTime = targetDeadline - totalDuration
+
     const calcTimerAndSlots = () => {
-      const target = new Date(FLASH_SALE_DEADLINE).getTime()
-      const totalDuration = 24 * 3600 * 1000
-      const startTime = target - totalDuration
       const now = Date.now()
-      const diff = Math.max(0, Math.floor((target - now) / 1000))
+      const diff = Math.max(0, Math.floor((targetDeadline - now) / 1000))
 
       if (diff <= 0) {
         setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
@@ -76,8 +92,8 @@ export const Plans: React.FC = () => {
       const elapsed = Math.max(0, Math.min(totalDuration, now - startTime))
       const progress = elapsed / totalDuration
 
-      // Base slots filled starts around ~185 (37%) and curves up naturally to ~488 (97.6%)
-      const baseFilled = Math.floor(185 + 303 * Math.pow(progress, 0.75))
+      // Base slots filled starts around ~290 (58%) and curves up naturally to ~488 (97.6%) out of 500
+      const baseFilled = Math.floor(290 + 196 * Math.pow(progress, 0.75))
       const wave = Math.floor(((Math.sin(now / 30000) + 1) / 2) * 4)
       const finalFilled = Math.min(TOTAL_FLASH_SLOTS - 2, baseFilled + wave + liveRandomBonus)
       const finalLeft = Math.max(2, TOTAL_FLASH_SLOTS - finalFilled)
@@ -88,12 +104,12 @@ export const Plans: React.FC = () => {
     calcTimerAndSlots()
     const timer = setInterval(calcTimerAndSlots, 1000)
 
-    // Random slot fill-up live ticker: every 10-20 seconds someone claims a slot
+    // Random slot fill-up live ticker: every 11 seconds someone claims a slot
     const randomInterval = setInterval(() => {
-      if (Math.random() > 0.3) {
+      if (Math.random() > 0.25) {
         liveRandomBonus += 1
       }
-    }, 12000)
+    }, 11000)
 
     return () => {
       clearInterval(timer)
@@ -132,18 +148,31 @@ export const Plans: React.FC = () => {
       accent_color: '#0088ff',
     },
     {
-      id: 'flash2x',
-      name: isVipDiscount ? '⚡ FLASH 2.67X VIP ULTRA HIVE' : '⚡ FLASH 2.5X MEGA HIVE',
+      id: 'flash10',
+      name: '⚡ FLASH 2.5X HYPER HIVE',
       subtitle: flashTimeLeft.isEnded
         ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
-        : isVipDiscount
-        ? '🔥 EXCLUSIVE 24H VIP FLASH: Pay 15.00 TON ➔ Instant 40.00 GRAM in 24h (+166.7% PROFIT)'
-        : '🔥 LIMITED 24H FLASH: Pay 4.00 TON ➔ Instant 10.00 GRAM in 24h (+150% PROFIT)',
+        : '🔥 24H FLASH DROP: Pay 10.00 TON ➔ Instant 25.00 GRAM in 24h (+150% PROFIT)',
       badge: flashTimeLeft.isEnded
         ? '⏳ EVENT ENDED'
-        : isVipDiscount
-        ? '🔥 2.67X VIP FLASH (+166.7%)'
-        : '🔥 2.5X FLASH SALE (+150%)',
+        : '🔥 2.5X FLASH (+150%)',
+      cost_gram: 10.0,
+      return_gram: 25.0,
+      profit_gram: 15.0,
+      profit_percent: 150.0,
+      duration_hours: 24,
+      max_per_account: 0,
+      is_limited: true,
+      user_purchased: 0,
+      can_purchase: !flashTimeLeft.isEnded,
+      icon: '⚡',
+      accent_color: '#f43f5e',
+    },
+    {
+      id: 'flash2x',
+      name: isVipDiscount ? '⚡ FLASH 2.67X VIP ULTRA HIVE' : '⚡ FLASH 2.5X MEGA HIVE (ROUND 1)',
+      subtitle: '⚠️ ROUND 1 CONCLUDED (500/500 SLOTS SOLD OUT)',
+      badge: '⏳ ROUND 1 ENDED',
       cost_gram: isVipDiscount ? 15.0 : 4.0,
       return_gram: isVipDiscount ? 40.0 : 10.0,
       profit_gram: isVipDiscount ? 25.0 : 6.0,
@@ -152,9 +181,9 @@ export const Plans: React.FC = () => {
       max_per_account: 0,
       is_limited: true,
       user_purchased: 0,
-      can_purchase: !flashTimeLeft.isEnded,
+      can_purchase: false,
       icon: '🔥',
-      accent_color: '#f43f5e',
+      accent_color: '#64748b',
     },
     {
       id: 'queen',
@@ -229,11 +258,11 @@ export const Plans: React.FC = () => {
   ]
 
   const LIVE_ACTIVITIES = [
-    { user: '@alex_ton', action: 'Activated Apex Sovereign Node', returnG: '+22.00 G', time: '1m ago' },
+    { user: '@alex_ton', action: 'Activated Flash 2.5X Hyper Hive', returnG: '+25.00 G', time: '1m ago' },
     { user: '@whale_99', action: 'Activated Quantum Sovereign 2X', returnG: '+50.00 G', time: '3m ago' },
-    { user: '@crypto_pro', action: 'Claimed 24H Yield Reward', returnG: '+10.00 G', time: '5m ago' },
-    { user: '@sergey_k', action: 'Activated Cyber Titan Hive', returnG: '+10.00 G', time: '7m ago' },
-    { user: '@ton_whale', action: 'Claimed Royal Node Payout', returnG: '+4.50 G', time: '11m ago' },
+    { user: '@crypto_pro', action: 'Claimed Flash 2.5X Reward', returnG: '+25.00 G', time: '4m ago' },
+    { user: '@sergey_k', action: 'Activated Flash 2.5X Hyper Hive', returnG: '+25.00 G', time: '6m ago' },
+    { user: '@ton_whale', action: 'Activated Apex Sovereign Node', returnG: '+22.00 G', time: '9m ago' },
     { user: '@ton_miner', action: 'Activated Cyber Worker Miner', returnG: '+2.00 G', time: '14m ago' },
   ]
 
@@ -379,9 +408,9 @@ export const Plans: React.FC = () => {
         return_gram: tier.return_gram,
         profit_gram: tier.profit_gram,
         profit_percent: tier.profit_percent,
-        badge: tier.id === 'flash2x' ? tier.badge : serverPlan.badge,
-        subtitle: tier.id === 'flash2x' ? tier.subtitle : serverPlan.subtitle,
-        can_purchase: tier.id === 'flash2x' ? !flashTimeLeft.isEnded : serverPlan.can_purchase,
+        badge: (tier.id === 'flash10' || tier.id === 'flash2x') ? tier.badge : serverPlan.badge,
+        subtitle: (tier.id === 'flash10' || tier.id === 'flash2x') ? tier.subtitle : serverPlan.subtitle,
+        can_purchase: tier.id === 'flash10' ? !flashTimeLeft.isEnded : tier.id === 'flash2x' ? false : serverPlan.can_purchase,
       }
     }
     return tier
@@ -555,14 +584,14 @@ export const Plans: React.FC = () => {
                 ? '24-Hour Flash Sale Has Ended'
                 : isVipDiscount
                 ? 'Deposit 15.00 TON ➔ Get 40.00 GRAM (+166.7% Profit)'
-                : 'Deposit 4.00 TON ➔ Get 10.00 GRAM (+150% Profit)'}
+                : 'Deposit 10.00 TON ➔ Get 25.00 GRAM (+150% Profit)'}
             </h2>
             <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
               {flashTimeLeft.isEnded
                 ? 'This limited 24-hour contract has expired and is no longer available.'
                 : isVipDiscount
                 ? 'Exclusive 24-Hour Special VIP Contract. Exact 2.67X return (40.00 GRAM) unlocked directly to your wallet in 24h!'
-                : 'Limited 24-Hour Special Yield Contract. Exact 2.5X return (10.00 GRAM) unlocked directly to your wallet in 24h!'}
+                : 'Limited 24-Hour Special Yield Contract (Round 2). Exact 2.5X return (25.00 GRAM) unlocked directly to your wallet in 24h!'}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
               <div className="flex-1">
@@ -587,7 +616,9 @@ export const Plans: React.FC = () => {
                 disabled={flashTimeLeft.isEnded}
                 onClick={() => {
                   if (flashTimeLeft.isEnded) return
-                  const flashPlan = availablePlans.find((p) => p.id === 'flash2x')
+                  const flashPlan = isVipDiscount
+                    ? availablePlans.find((p) => p.id === 'flash2x')
+                    : availablePlans.find((p) => p.id === 'flash10') || availablePlans.find((p) => p.id === 'flash2x')
                   if (flashPlan) handleOpenPayment(flashPlan)
                 }}
                 className={`px-3.5 py-1.5 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg transition-all shrink-0 ${
@@ -600,21 +631,25 @@ export const Plans: React.FC = () => {
                   ? 'ENDED ⏳'
                   : isVipDiscount
                   ? 'CLAIM 2.67X (15 TON) ➔'
-                  : 'CLAIM 2.5X (4 TON) ➔'}
+                  : 'CLAIM 2.5X (10 TON) ➔'}
               </button>
             </div>
           </div>
 
           {availablePlans.map((plan, index) => {
-            const isFlash = plan.id === 'flash2x'
+            const isFlashRound2 = plan.id === 'flash10'
+            const isFlashRound1 = plan.id === 'flash2x'
+            const isFlash = isFlashRound2 || isFlashRound1
             const isDouble = plan.id === 'matrix'
             const isMythic = plan.id === 'apex'
             const isLegendary = plan.id === 'titan'
             const isEpic = plan.id === 'queen'
 
             // Dynamic card tint & glow
-            const cardTintClass = isFlash
-              ? 'bg-gradient-to-br from-rose-50 via-red-50/60 to-amber-50/50 border-2 border-red-500 shadow-red-200'
+            const cardTintClass = isFlashRound2
+              ? 'bg-gradient-to-br from-amber-50 via-rose-50/70 to-red-50/60 border-2 border-amber-500 shadow-amber-200/50'
+              : isFlashRound1
+              ? 'bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100/90 border border-slate-300 opacity-80'
               : isDouble
               ? 'card-tint-red border-pink-300'
               : isMythic
@@ -625,8 +660,10 @@ export const Plans: React.FC = () => {
               ? 'card-tint-purple border-purple-300'
               : 'card-tint-blue border-blue-300'
 
-            const buttonClass = isFlash
-              ? 'bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-red-500/40'
+            const buttonClass = isFlashRound2
+              ? 'bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 text-white shadow-amber-500/40'
+              : isFlashRound1
+              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
               : isDouble
               ? 'btn-primary-red'
               : isMythic
@@ -660,10 +697,12 @@ export const Plans: React.FC = () => {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span
                       className={`px-3 py-1 rounded-full text-[9px] font-black tracking-wider uppercase shadow-sm ${
-                        isFlash
+                        isFlashRound2
                           ? flashTimeLeft.isEnded
                             ? 'bg-slate-200 text-slate-700 border border-slate-300'
                             : 'bg-rose-100 text-rose-900 border border-rose-300 animate-pulse'
+                          : isFlashRound1
+                          ? 'bg-slate-200 text-slate-600 border border-slate-300'
                           : isDouble
                           ? 'bg-rose-100 text-rose-900 border border-rose-300'
                           : isMythic
@@ -675,16 +714,25 @@ export const Plans: React.FC = () => {
                           : 'bg-blue-100 text-blue-950 border border-blue-300'
                       }`}
                     >
-                      {isFlash && flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : plan.badge}
+                      {isFlashRound1
+                        ? '⏳ ROUND 1 ENDED'
+                        : isFlashRound2 && flashTimeLeft.isEnded
+                        ? '⏳ EVENT ENDED'
+                        : plan.badge}
                     </span>
-                    {isFlash && !flashTimeLeft.isEnded && (
+                    {isFlashRound2 && !flashTimeLeft.isEnded && (
                       <span className="text-[9px] font-mono font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full border border-red-200">
                         ⏱️ {String(flashTimeLeft.hours).padStart(2, '0')}:{String(flashTimeLeft.minutes).padStart(2, '0')}:{String(flashTimeLeft.seconds).padStart(2, '0')} Left
                       </span>
                     )}
-                    {isFlash && !flashTimeLeft.isEnded && (
+                    {isFlashRound2 && !flashTimeLeft.isEnded && (
                       <span className="text-[9px] font-mono font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">
                         🔥 {flashSlots.filled} / 500 Claimed
+                      </span>
+                    )}
+                    {isFlashRound1 && (
+                      <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full border border-slate-300">
+                        500/500 Sold Out
                       </span>
                     )}
                   </div>
@@ -736,7 +784,11 @@ export const Plans: React.FC = () => {
                 </div>
 
                 {/* Action Button */}
-                {isFlash && flashTimeLeft.isEnded ? (
+                {isFlashRound1 ? (
+                  <div className="w-full py-3.5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs text-center uppercase tracking-wider border border-slate-300">
+                    ROUND 1 CONCLUDED (500/500 SOLD OUT)
+                  </div>
+                ) : isFlashRound2 && flashTimeLeft.isEnded ? (
                   <div className="w-full py-3.5 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs text-center uppercase tracking-wider border border-slate-300">
                     OFFER EXPIRED (24H ENDED)
                   </div>
@@ -745,7 +797,11 @@ export const Plans: React.FC = () => {
                     onClick={() => handleOpenPayment(plan)}
                     className={`w-full py-3.5 rounded-2xl ${buttonClass} text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all`}
                   >
-                    <span>⚡ ACTIVATE MINER ({plan.cost_gram.toFixed(2)} TON)</span>
+                    <span>
+                      {isFlashRound2
+                        ? '⚡ ACTIVATE FLASH 2.5X (10.00 TON)'
+                        : `⚡ ACTIVATE MINER (${plan.cost_gram.toFixed(2)} TON)`}
+                    </span>
                     <span>➔</span>
                   </button>
                 )}

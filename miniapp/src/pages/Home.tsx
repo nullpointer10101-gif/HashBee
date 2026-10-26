@@ -20,29 +20,46 @@ export const Home: React.FC = () => {
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
 
-  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots
+  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots (Round 2: 10 TON -> 25 GRAM)
   const TOTAL_FLASH_SLOTS = 500
-  const FLASH_SALE_DEADLINE = '2026-10-25T19:00:00Z'
+  const [selectedFlashRound, setSelectedFlashRound] = useState<1 | 2>(2)
   const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
-    hours: 24,
-    minutes: 0,
-    seconds: 0,
+    hours: 23,
+    minutes: 48,
+    seconds: 15,
     isEnded: false,
   })
   const [flashSlots, setFlashSlots] = useState<{ filled: number; left: number }>({
-    filled: 284,
-    left: 216,
+    filled: 318,
+    left: 182,
   })
 
   useEffect(() => {
     let liveRandomBonus = 0
 
+    // Consistent session deadline for Round 2: stored in localStorage so it ticks naturally for 24 hours
+    const getDeadline = () => {
+      try {
+        const stored = localStorage.getItem('hb_flash_round2_end')
+        if (stored) {
+          const val = parseInt(stored, 10)
+          if (val > Date.now()) return val
+        }
+      } catch (_) {}
+      const dl = Date.now() + (23 * 3600 + 48 * 60 + 30) * 1000
+      try {
+        localStorage.setItem('hb_flash_round2_end', String(dl))
+      } catch (_) {}
+      return dl
+    }
+
+    const targetDeadline = getDeadline()
+    const totalDuration = 24 * 3600 * 1000
+    const startTime = targetDeadline - totalDuration
+
     const calcTimerAndSlots = () => {
-      const target = new Date(FLASH_SALE_DEADLINE).getTime()
-      const totalDuration = 24 * 3600 * 1000
-      const startTime = target - totalDuration
       const now = Date.now()
-      const diff = Math.max(0, Math.floor((target - now) / 1000))
+      const diff = Math.max(0, Math.floor((targetDeadline - now) / 1000))
 
       if (diff <= 0) {
         setFlashTimeLeft({ hours: 0, minutes: 0, seconds: 0, isEnded: true })
@@ -59,8 +76,8 @@ export const Home: React.FC = () => {
       const elapsed = Math.max(0, Math.min(totalDuration, now - startTime))
       const progress = elapsed / totalDuration
 
-      // Base slots filled starts around ~185 (37%) and curves up naturally to ~488 (97.6%)
-      const baseFilled = Math.floor(185 + 303 * Math.pow(progress, 0.75))
+      // Base slots filled starts around ~290 (58%) and curves up naturally to ~488 (97.6%) out of 500
+      const baseFilled = Math.floor(290 + 196 * Math.pow(progress, 0.75))
       const wave = Math.floor(((Math.sin(now / 30000) + 1) / 2) * 4)
       const finalFilled = Math.min(TOTAL_FLASH_SLOTS - 2, baseFilled + wave + liveRandomBonus)
       const finalLeft = Math.max(2, TOTAL_FLASH_SLOTS - finalFilled)
@@ -71,12 +88,12 @@ export const Home: React.FC = () => {
     calcTimerAndSlots()
     const timer = setInterval(calcTimerAndSlots, 1000)
 
-    // Random slot fill-up live ticker: every 10-20 seconds someone claims a slot
+    // Random slot fill-up live ticker: every 11 seconds someone claims a slot
     const randomInterval = setInterval(() => {
-      if (Math.random() > 0.3) {
+      if (Math.random() > 0.25) {
         liveRandomBonus += 1
       }
-    }, 12000)
+    }, 11000)
 
     return () => {
       clearInterval(timer)
@@ -311,90 +328,136 @@ export const Home: React.FC = () => {
       {/* ── 🔥 MEGA HYPE 24H FLASH SALE NFT CARD (ALL USERS VISIBLE) ── */}
       <div
         onClick={() => {
-          if (!flashTimeLeft.isEnded) {
+          if (selectedFlashRound === 2 && !flashTimeLeft.isEnded) {
             navigate('/plans')
           }
         }}
         className={`p-4 mb-3.5 relative overflow-hidden rounded-3xl transition-all ${
-          flashTimeLeft.isEnded
-            ? 'bg-gradient-to-r from-slate-900 via-stone-900 to-slate-950 text-slate-300 border-2 border-slate-700 shadow-md opacity-85 cursor-not-allowed'
-            : 'bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white shadow-xl shadow-red-500/25 border-2 border-amber-300 cursor-pointer active:scale-98'
+          selectedFlashRound === 1 || flashTimeLeft.isEnded
+            ? 'bg-gradient-to-r from-slate-900 via-stone-900 to-slate-950 text-slate-300 border-2 border-slate-700 shadow-md opacity-90'
+            : 'bg-gradient-to-br from-amber-600 via-rose-600 to-red-600 text-white shadow-2xl shadow-red-500/30 border-2 border-amber-300 cursor-pointer active:scale-98'
         }`}
       >
         {/* Animated Background Rays */}
-        {!flashTimeLeft.isEnded && (
+        {selectedFlashRound === 2 && !flashTimeLeft.isEnded && (
           <>
-            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-300/25 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-red-900/40 rounded-full blur-xl pointer-events-none" />
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-300/30 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-red-950/50 rounded-full blur-xl pointer-events-none" />
           </>
         )}
+
+        {/* ── Round Switcher / History Selector ── */}
+        <div className="flex items-center gap-1.5 p-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 mb-2.5 relative z-10">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedFlashRound(2)
+            }}
+            className={`flex-1 py-1 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+              selectedFlashRound === 2
+                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-rose-950 shadow-md font-black scale-[1.02]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>🔥 Round 2 (10 TON) • ACTIVE</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelectedFlashRound(1)
+            }}
+            className={`flex-1 py-1 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+              selectedFlashRound === 1
+                ? 'bg-slate-800 text-slate-200 border border-slate-700 shadow-md font-black scale-[1.02]'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <span>⏳ Round 1 (4 TON) • ENDED</span>
+          </button>
+        </div>
 
         {/* Top Badges Row */}
         <div className="flex items-center justify-between relative z-10 mb-2">
           <div className="flex items-center gap-1.5">
-            {!flashTimeLeft.isEnded && (
+            {selectedFlashRound === 2 && !flashTimeLeft.isEnded && (
               <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
             )}
             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase shadow-sm ${
-              flashTimeLeft.isEnded
+              selectedFlashRound === 1 || flashTimeLeft.isEnded
                 ? 'bg-slate-800 text-slate-400 border border-slate-700'
                 : isGauravSoni
                 ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-rose-950 font-black'
                 : 'bg-white text-red-700'
             }`}>
-              {flashTimeLeft.isEnded
+              {selectedFlashRound === 1
+                ? '⏳ ROUND 1 CONCLUDED'
+                : flashTimeLeft.isEnded
                 ? '⏳ 24H FLASH CONCLUDED'
                 : isGauravSoni
                 ? '🔥 EXCLUSIVE 24H VIP FLASH'
-                : '🔥 24H FLASH NFT DROP'}
+                : '🔥 24H FLASH DROP • ROUND 2'}
             </span>
           </div>
           <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${
-            flashTimeLeft.isEnded
+            selectedFlashRound === 1 || flashTimeLeft.isEnded
               ? 'text-slate-400 bg-black/40 border-slate-700'
-              : 'text-amber-200 bg-black/25 border-white/10'
+              : 'text-amber-200 bg-black/35 border-white/15'
           }`}>
-            {isGauravSoni ? '+166.7% NET ROI' : '150% NET ROI'}
+            {isGauravSoni && selectedFlashRound === 2 ? '+166.7% NET ROI' : '150% NET ROI'}
           </span>
         </div>
 
         {/* Offer Headline & Interactive NFT Avatar */}
         <div className="flex items-center gap-3 relative z-10 my-2">
           <div className="shrink-0">
-            <NftMinerAvatar planId="flash2x" size="md" badgeText={isGauravSoni ? 'VIP' : '2.5X'} />
+            <NftMinerAvatar
+              planId={selectedFlashRound === 2 ? 'flash10' : 'flash2x'}
+              size="md"
+              badgeText={isGauravSoni && selectedFlashRound === 2 ? 'VIP' : '2.5X'}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-black tracking-tight leading-snug uppercase text-white drop-shadow">
-              {isGauravSoni ? 'Flash 2.67X VIP Ultra Hive' : 'Flash 2.5X Mega Hive'}
+              {selectedFlashRound === 1
+                ? 'Flash 2.5X Mega Hive (Round 1)'
+                : isGauravSoni
+                ? 'Flash 2.67X VIP Ultra Hive'
+                : 'Flash 2.5X Hyper Hive'}
             </h3>
-            <p className={`text-[11px] font-bold leading-tight mt-0.5 ${flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
+            <p className={`text-[11px] font-bold leading-tight mt-0.5 ${selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
               Pay{' '}
-              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>
-                {isGauravSoni ? '15.00 TON' : '4.00 TON'}
+              <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>
+                {selectedFlashRound === 1 ? '4.00 TON' : isGauravSoni ? '15.00 TON' : '10.00 TON'}
               </span>{' '}
               ➔ Receive{' '}
-              <span className={flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>
-                {isGauravSoni ? '40.00 GRAM' : '10.00 GRAM'}
+              <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>
+                {selectedFlashRound === 1 ? '10.00 GRAM' : isGauravSoni ? '40.00 GRAM' : '25.00 GRAM'}
               </span>{' '}
               in 24h!
             </p>
+            <div className="text-[9px] text-amber-200/80 font-semibold mt-1">
+              {selectedFlashRound === 1 ? 'Round 1 Completed (100% Payout Disbursed)' : '500 Pieces Limited Supply • Instant 24h Settlement'}
+            </div>
           </div>
         </div>
 
         {/* 24-Hour Live Countdown Timer Bar */}
-        <div className="my-2 bg-black/35 backdrop-blur-md rounded-2xl p-2.5 border border-white/15 flex items-center justify-between relative z-10">
+        <div className="my-2 bg-black/40 backdrop-blur-md rounded-2xl p-2.5 border border-white/15 flex items-center justify-between relative z-10">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs">{flashTimeLeft.isEnded ? '⏳' : '⏱️'}</span>
+            <span className="text-xs">{selectedFlashRound === 1 || flashTimeLeft.isEnded ? '⏳' : '⏱️'}</span>
             <span className="text-[10px] uppercase font-black tracking-wider text-amber-200">
-              {flashTimeLeft.isEnded ? 'Offer Expired:' : '24H Timer Ending in:'}
+              {selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'Offer Expired:' : '24H Timer Ending in:'}
             </span>
           </div>
           <div className={`font-mono text-xs font-black px-2.5 py-0.5 rounded-lg border ${
-            flashTimeLeft.isEnded
+            selectedFlashRound === 1 || flashTimeLeft.isEnded
               ? 'bg-rose-950/70 text-rose-300 border-rose-500/30'
               : 'bg-black/60 text-yellow-300 border-yellow-400/40'
           }`}>
-            {flashTimeLeft.isEnded
+            {selectedFlashRound === 1 || flashTimeLeft.isEnded
               ? '00:00:00 (ENDED)'
               : `${String(flashTimeLeft.hours).padStart(2, '0')}h : ${String(flashTimeLeft.minutes).padStart(2, '0')}m : ${String(flashTimeLeft.seconds).padStart(2, '0')}s`}
           </div>
@@ -404,39 +467,45 @@ export const Home: React.FC = () => {
         <div className="mt-2.5 pt-2 border-t border-white/20 flex items-center justify-between gap-3 relative z-10">
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between text-[9px] font-bold text-amber-100 mb-1">
-              <span>{flashTimeLeft.isEnded ? 'Flash Status:' : isGauravSoni ? 'VIP Allocation:' : 'Limited Slots:'}</span>
-              <span className={`font-mono font-black ${flashTimeLeft.isEnded ? 'text-rose-400' : 'text-yellow-300'}`}>
-                {flashTimeLeft.isEnded
+              <span>{selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'Flash Status:' : isGauravSoni ? 'VIP Allocation:' : 'Limited Slots:'}</span>
+              <span className={`font-mono font-black ${selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-rose-400' : 'text-yellow-300'}`}>
+                {selectedFlashRound === 1 || flashTimeLeft.isEnded
                   ? 'OFFER CLOSED'
                   : isGauravSoni
                   ? '1 / 1 EXCLUSIVE SLOT ACTIVE'
                   : `${flashSlots.filled} / 500 Taken (${flashSlots.left} Left)`}
               </span>
             </div>
-            <div className="w-full h-2 bg-black/30 rounded-full overflow-hidden border border-white/15">
+            <div className="w-full h-2.5 bg-black/40 rounded-full overflow-hidden border border-white/20">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  flashTimeLeft.isEnded
+                  selectedFlashRound === 1 || flashTimeLeft.isEnded
                     ? 'w-full bg-slate-600'
                     : 'bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400'
                 }`}
                 style={{
-                  width: flashTimeLeft.isEnded ? '100%' : isGauravSoni ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%`,
+                  width: selectedFlashRound === 1 || flashTimeLeft.isEnded ? '100%' : isGauravSoni ? '100%' : `${((flashSlots.filled / 500) * 100).toFixed(1)}%`,
                 }}
               />
             </div>
           </div>
 
           <button
-            disabled={flashTimeLeft.isEnded}
-            className={`px-3.5 py-2 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shrink-0 flex items-center gap-1 ${
-              flashTimeLeft.isEnded
+            disabled={selectedFlashRound === 1 || flashTimeLeft.isEnded}
+            className={`px-3.5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider shadow-lg shrink-0 flex items-center gap-1 ${
+              selectedFlashRound === 1 || flashTimeLeft.isEnded
                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                : 'bg-white text-red-600 active:scale-95'
+                : 'bg-white text-red-600 active:scale-95 shadow-red-500/40'
             }`}
           >
-            <span>{flashTimeLeft.isEnded ? 'ENDED ⏳' : isGauravSoni ? 'GET VIP (15 TON)' : 'GET 2.5X'}</span>
-            {!flashTimeLeft.isEnded && <span>➔</span>}
+            <span>
+              {selectedFlashRound === 1 || flashTimeLeft.isEnded
+                ? 'ENDED ⏳'
+                : isGauravSoni
+                ? 'GET VIP (15 TON)'
+                : 'GET 2.5X (10 TON)'}
+            </span>
+            {selectedFlashRound === 2 && !flashTimeLeft.isEnded && <span>➔</span>}
           </button>
         </div>
       </div>

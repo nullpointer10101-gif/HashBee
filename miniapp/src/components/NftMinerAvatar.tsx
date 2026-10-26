@@ -220,6 +220,48 @@ export const NftMinerAvatar: React.FC<NftMinerAvatarProps> = ({
         </svg>
       ),
     },
+    flash10: {
+      glowColor: '#f59e0b',
+      bgGradient: 'from-[#450a0a] via-[#1c0209] to-[#78350f]',
+      title: 'FLASH 2.5X HYPER',
+      subtitle: '10.00 TON',
+      primaryColor: '#fbbf24',
+      accentColor: '#f59e0b',
+      svgIcon: (color) => (
+        <svg viewBox="0 0 64 64" className="w-12 h-12 drop-shadow-[0_0_14px_rgba(245,158,11,0.9)]">
+          <circle cx="32" cy="32" r="28" fill="url(#flash10-grad)" stroke={color} strokeWidth="2.5" />
+          <path d="M38 6L16 32h16l-6 26 24-32H34z" fill="#f59e0b" stroke="#fef3c7" strokeWidth="2" className="animate-pulse" />
+          <circle cx="32" cy="32" r="5" fill="#f43f5e" />
+          <defs>
+            <linearGradient id="flash10-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#b45309" />
+              <stop offset="100%" stopColor="#18040a" />
+            </linearGradient>
+          </defs>
+        </svg>
+      ),
+    },
+    flash25: {
+      glowColor: '#f59e0b',
+      bgGradient: 'from-[#450a0a] via-[#1c0209] to-[#78350f]',
+      title: 'FLASH 2.5X HYPER',
+      subtitle: '10.00 TON',
+      primaryColor: '#fbbf24',
+      accentColor: '#f59e0b',
+      svgIcon: (color) => (
+        <svg viewBox="0 0 64 64" className="w-12 h-12 drop-shadow-[0_0_14px_rgba(245,158,11,0.9)]">
+          <circle cx="32" cy="32" r="28" fill="url(#flash10-grad)" stroke={color} strokeWidth="2.5" />
+          <path d="M38 6L16 32h16l-6 26 24-32H34z" fill="#f59e0b" stroke="#fef3c7" strokeWidth="2" className="animate-pulse" />
+          <circle cx="32" cy="32" r="5" fill="#f43f5e" />
+          <defs>
+            <linearGradient id="flash10-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#b45309" />
+              <stop offset="100%" stopColor="#18040a" />
+            </linearGradient>
+          </defs>
+        </svg>
+      ),
+    },
   }
 
   const config = tierConfig[planId.toLowerCase()] || tierConfig.standard

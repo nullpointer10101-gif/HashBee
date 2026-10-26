@@ -627,22 +627,10 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		`SELECT COUNT(*), COALESCE(SUM(return_gram), 0) FROM user_plans WHERE user_id = $1 AND status = 'claimed'`,
 		user.ID).Scan(&claimedCount, &totalEarned)
 
-	// 24H Flash Miner Deadline (ends after 24 hours)
-	flashSaleDeadline := time.Date(2026, 10, 25, 19, 0, 0, 0, time.UTC)
+	// 24H Flash Miner Deadline (Round 2 active for 24 hours)
+	flashSaleDeadline := time.Date(2026, 10, 27, 23, 59, 59, 0, time.UTC)
 	now := time.Now().UTC()
 	isFlashEnded := now.After(flashSaleDeadline)
-
-	var flashSubtitle, flashBadge string
-	var canPurchaseFlash bool
-	if isFlashEnded {
-		flashSubtitle = "⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)"
-		flashBadge = "⏳ EVENT ENDED"
-		canPurchaseFlash = false
-	} else {
-		flashSubtitle = "🔥 LIMITED 24H FLASH: 4.00 GRAM -> 10.00 GRAM (+150% PROFIT)"
-		flashBadge = "🔥 2.5X FLASH SALE (+150%)"
-		canPurchaseFlash = true
-	}
 
 	plans := []models.PlanTier{
 		{
@@ -662,6 +650,23 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 			Icon:          "⚡",
 			AccentColor:   "#0088ff",
 		},
+		{
+			ID:            "flash10",
+			Name:          "⚡ Flash 2.5X Hyper Hive",
+			Subtitle:      "🔥 24H FLASH DROP: Pay 10.00 TON ➔ Instant 25.00 GRAM in 24h (+150% PROFIT)",
+			Badge:         "🔥 2.5X FLASH (+150%)",
+			CostGRAM:      10.00,
+			ReturnGRAM:    25.00,
+			ProfitGRAM:    15.00,
+			ProfitPercent: 150.00,
+			DurationHours: 24,
+			MaxPerAccount: 0,
+			IsLimited:     true,
+			UserPurchased: 0,
+			CanPurchase:   !isFlashEnded,
+			Icon:          "⚡",
+			AccentColor:   "#f43f5e",
+		},
 		func() models.PlanTier {
 			if user.TelegramID == 8842934236 || strings.EqualFold(user.FirstName, "Gaurav") && user.TelegramID == 8842934236 {
 				return models.PlanTier{
@@ -677,16 +682,16 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 					MaxPerAccount: 0,
 					IsLimited:     true,
 					UserPurchased: 0,
-					CanPurchase:   canPurchaseFlash,
+					CanPurchase:   !isFlashEnded,
 					Icon:          "🔥",
 					AccentColor:   "#f43f5e",
 				}
 			}
 			return models.PlanTier{
 				ID:            "flash2x",
-				Name:          "⚡ Flash 2.5X Mega Hive",
-				Subtitle:      flashSubtitle,
-				Badge:         flashBadge,
+				Name:          "⚡ Flash 2.5X Mega Hive (Round 1)",
+				Subtitle:      "⚠️ ROUND 1 CONCLUDED (500/500 SLOTS SOLD OUT)",
+				Badge:         "⏳ ROUND 1 ENDED",
 				CostGRAM:      4.00,
 				ReturnGRAM:    10.00,
 				ProfitGRAM:    6.00,
@@ -695,9 +700,9 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 				MaxPerAccount: 0,
 				IsLimited:     true,
 				UserPurchased: 0,
-				CanPurchase:   canPurchaseFlash,
+				CanPurchase:   false,
 				Icon:          "🔥",
-				AccentColor:   "#f43f5e",
+				AccentColor:   "#64748b",
 			}
 		}(),
 		{
