@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import teslaBannerImg from '../assets/images/tesla_mining_banner.jpg'
 
 export const TESLA_BOT_URL = 'https://t.me/teslaFarmbot?start=8823265955'
-export const TESLA_TAKEOVER_VIEWS_KEY = 'hb_tesla_takeover_v3_'
+export const TESLA_TAKEOVER_VIEWS_KEY = 'hb_tesla_open_count_v4_'
 const MAX_AUTO_SHOW_COUNT = 2
 
 interface TeslaMiningTakeoverProps {
@@ -34,8 +34,7 @@ export const incrementTeslaTakeoverSeenCount = (telegramId?: number | string): n
   }
 }
 
-export const openTeslaMiningBot = (telegramId?: number | string) => {
-  incrementTeslaTakeoverSeenCount(telegramId)
+export const openTeslaMiningBot = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
     if (window.Telegram.WebApp.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('success')
@@ -58,7 +57,7 @@ export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
   forceOpen = false,
   onClose,
 }) => {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const activeTgId = user?.telegram_id || (typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user?.id : '') || ''
 
   const [isOpen, setIsOpen] = useState(false)
@@ -82,30 +81,45 @@ export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
       return
     }
 
-    // Check count for this user
-    const seen = getTeslaTakeoverSeenCount(activeTgId)
-    if (seen < MAX_AUTO_SHOW_COUNT) {
-      setCurrentViewNumber(seen + 1)
+    if (loading) return
+
+    // Prevent re-triggering multiple times in the SAME app session
+    try {
+      if (sessionStorage.getItem('hb_tesla_session_shown_v4') === 'true') {
+        return
+      }
+    } catch {}
+
+    const tgId = activeTgId || 'guest'
+    const seenCount = getTeslaTakeoverSeenCount(tgId)
+
+    // Show up to 2 times per user when opening HashBee
+    if (seenCount < MAX_AUTO_SHOW_COUNT) {
+      try {
+        sessionStorage.setItem('hb_tesla_session_shown_v4', 'true')
+      } catch {}
+
+      const nextCount = incrementTeslaTakeoverSeenCount(tgId)
+      setCurrentViewNumber(nextCount)
       setIsOpen(true)
     }
-  }, [forceOpen, activeTgId])
+  }, [forceOpen, activeTgId, loading])
 
   const handleDismiss = () => {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light')
-    }
-    // Only count when auto-opened, not forced
-    if (!forceOpen) {
-      incrementTeslaTakeoverSeenCount(activeTgId)
     }
     setIsOpen(false)
     if (onClose) onClose()
   }
 
   const handleClaim = () => {
-    openTeslaMiningBot(activeTgId)
+    // 1. Immediately hide banner
     setIsOpen(false)
     if (onClose) onClose()
+
+    // 2. Open Tesla Bot
+    openTeslaMiningBot()
   }
 
   return (
@@ -115,7 +129,7 @@ export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 z-[9999999] bg-[#050811] text-white flex flex-col justify-between overflow-y-auto font-sans select-none"
         >
           {/* Ambient Cyber Neon Lighting */}
@@ -265,7 +279,7 @@ export const TeslaMiningTakeover: React.FC<TeslaMiningTakeoverProps> = ({
 
             {/* Appearance Notice */}
             <div className="text-center text-[10px] text-slate-500 font-mono pt-1">
-              Notice: Promotional screen {currentViewNumber}/2 • Tap Claim to open Tesla Bot
+              Notice: Promotional screen {currentViewNumber}/2 for your account
             </div>
           </div>
         </motion.div>
