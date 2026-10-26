@@ -600,7 +600,7 @@ Grow your TON in exactly 24 hours:
           <h2 style="font-size:20px; font-weight:900;">Withdrawal Requests Queue</h2>
           <p style="font-size:13px; color:var(--text-muted);">Click on any user name to inspect full anti-fraud profile and deposit/referral history</p>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <select id="withdrawalStatusFilter" class="form-input" style="width:140px; padding:8px 10px; font-size:12px;" onchange="loadWithdrawals()">
             <option value="">All Statuses</option>
             <option value="pending" selected>Pending</option>
@@ -608,6 +608,7 @@ Grow your TON in exactly 24 hours:
             <option value="rejected">Rejected</option>
           </select>
           <button onclick="loadWithdrawals()" class="btn btn-secondary">🔄 Refresh</button>
+          <button onclick="triggerAutoRefund()" class="btn" style="background:#7c2d12; color:#fed7aa; border:1px solid #ea580c; font-size:11px;" title="Auto-refund all pending requests from users without an NFT miner">🛡️ Auto-Refund Unqualified</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -2670,12 +2671,19 @@ async function loadWithdrawals() {
       logout();
       return;
     }
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || ('Server returned HTTP ' + res.status));
+    }
     const data = await res.json();
     const list = data.withdrawals || [];
     
     // Update top pending count
     const pendingCount = list.filter(w => w.status === 'pending').length;
-    document.getElementById('statWithdrawals').innerText = pendingCount;
+    if (!filterStatus || filterStatus === 'pending') {
+      const statEl = document.getElementById('statWithdrawals');
+      if (statEl) statEl.innerText = pendingCount;
+    }
 
     if (list.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:30px;">No withdrawal requests found.</td></tr>';
@@ -2713,7 +2721,25 @@ async function loadWithdrawals() {
       </tr>
     `).join('');
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error loading withdrawals: ' + err.message + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#ef4444; padding:20px;">Failed to load withdrawals: ' + escapeHtml(err.message) + '<br><button onclick="loadWithdrawals()" class="btn btn-secondary" style="margin-top:10px; font-size:11px;">Retry</button></td></tr>';
+  }
+}
+
+async function triggerAutoRefund() {
+  if (!confirm('Auto-refund and reject pending requests for users who do NOT hold an active NFT miner plan? This will return Honey directly to user balances.')) return;
+  try {
+    API_URL = getApiUrl();
+    const res = await fetch(API_URL + '/api/admin/withdrawals/auto-refund', {
+      method: 'POST',
+      headers: authHeaders()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to auto-refund');
+    showToast('🛡️ ' + (data.message || 'Auto-refund completed!'));
+    loadWithdrawals();
+    loadStats();
+  } catch (err) {
+    showToast(err.message, true);
   }
 }
 

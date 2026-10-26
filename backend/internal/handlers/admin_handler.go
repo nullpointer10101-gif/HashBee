@@ -605,12 +605,8 @@ func (h *AdminHandler) ResetStreak(c *gin.Context) {
 
 // GET /api/admin/withdrawals
 func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
-	if h.withdrawSvc != nil {
-		_, _ = h.withdrawSvc.AutoRefundUnqualifiedPendingWithdrawals(c.Request.Context())
-	}
-
 	status := c.Query("status")
-	limit := 50
+	limit := 100
 	offset := 0
 	if l := c.Query("limit"); l != "" {
 		if v, _ := strconv.Atoi(l); v > 0 {
@@ -634,9 +630,10 @@ func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
 
 	args = append(args, limit, offset)
 	rows, err := h.db.Query(c.Request.Context(),
-		`SELECT w.id, w.user_id, u.username, u.first_name, u.telegram_id,
-		        w.address, w.network, w.amount, w.honey_amount, w.fee, w.status, w.tx_hash, w.reason, w.created_at, w.updated_at
-		 FROM withdrawals w JOIN users u ON u.id = w.user_id
+		`SELECT w.id, w.user_id, COALESCE(u.username, ''), COALESCE(u.first_name, ''), COALESCE(u.telegram_id, 0),
+		        w.address, COALESCE(w.network, 'TON'), w.amount, w.honey_amount, w.fee, w.status, w.tx_hash,
+		        COALESCE(w.reason, w.rejection_reason, ''), w.created_at, w.updated_at
+		 FROM withdrawals w LEFT JOIN users u ON u.id = w.user_id
 		 `+where+` ORDER BY w.created_at DESC LIMIT $`+strconv.Itoa(argIdx)+` OFFSET $`+strconv.Itoa(argIdx+1), args...)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -651,15 +648,39 @@ func (h *AdminHandler) ListWithdrawals(c *gin.Context) {
 		TelegramID int64  `json:"telegram_id"`
 	}
 
-	var withdrawals []WithdrawalRow
+	withdrawals := make([]WithdrawalRow, 0)
 	for rows.Next() {
 		var w WithdrawalRow
-		rows.Scan(&w.ID, &w.UserID, &w.Username, &w.FirstName, &w.TelegramID,
-			&w.Address, &w.Network, &w.Amount, &w.HoneyAmount, &w.Fee, &w.Status, &w.TxHash, &w.Reason, &w.CreatedAt, &w.UpdatedAt)
+		var reasonStr string
+		if err := rows.Scan(&w.ID, &w.UserID, &w.Username, &w.FirstName, &w.TelegramID,
+			&w.Address, &w.Network, &w.Amount, &w.HoneyAmount, &w.Fee, &w.Status, &w.TxHash, &reasonStr, &w.CreatedAt, &w.UpdatedAt); err != nil {
+			log.Printf("⚠️ Scan error in ListWithdrawals: %v", err)
+			continue
+		}
+		if reasonStr != "" {
+			w.Reason = &reasonStr
+		}
 		withdrawals = append(withdrawals, w)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"withdrawals": withdrawals})
+}
+
+// POST /api/admin/withdrawals/auto-refund
+func (h *AdminHandler) AutoRefundWithdrawals(c *gin.Context) {
+	if h.withdrawSvc == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "withdrawal service unavailable"})
+		return
+	}
+	count, err := h.withdrawSvc.AutoRefundUnqualifiedPendingWithdrawals(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message":        fmt.Sprintf("Successfully refunded and processed %d unqualified withdrawals", count),
+		"refunded_count": count,
+	})
 }
 
 // PATCH /api/admin/withdrawals/:id
@@ -703,9 +724,9 @@ func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
 	)
 
 	err = h.db.QueryRow(ctx,
-		`SELECT w.user_id, u.telegram_id, u.first_name, w.amount, w.network, w.address, w.honey_amount, w.status
+		`SELECT w.user_id, COALESCE(u.telegram_id, 0), COALESCE(u.first_name, ''), w.amount, COALESCE(w.network, 'TON'), w.address, w.honey_amount, w.status
 		 FROM withdrawals w
-		 JOIN users u ON u.id = w.user_id
+		 LEFT JOIN users u ON u.id = w.user_id
 		 WHERE w.id = $1`, wID).
 		Scan(&targetUserID, &targetTelegramID, &targetFirstName, &targetAmount, &targetNetwork, &targetAddress, &honeyAmount, &currentStatus)
 	if err != nil {

@@ -420,6 +420,7 @@ func main() {
 			adminProtected.POST("/users/:id/message", adminHandler.SendDirectMessage)
 			adminProtected.POST("/users/:id/reset-streak", adminHandler.ResetStreak)
 			adminProtected.GET("/withdrawals", adminHandler.ListWithdrawals)
+			adminProtected.POST("/withdrawals/auto-refund", adminHandler.AutoRefundWithdrawals)
 			adminProtected.PATCH("/withdrawals/:id", adminHandler.UpdateWithdrawal)
 			adminProtected.GET("/deposits", adminHandler.GetDeposits)
 			adminProtected.GET("/settings", adminHandler.GetSettings)

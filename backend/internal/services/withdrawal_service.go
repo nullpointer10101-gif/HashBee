@@ -42,21 +42,16 @@ func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUI
 	`, userID).Scan(&plansPurchased)
 
 	var friendPlansPurchased int
-	_ = s.db.QueryRow(ctx, `
-		SELECT COUNT(DISTINCT uid) FROM (
-			SELECT up.user_id as uid FROM user_plans up WHERE up.user_id IN (
-				SELECT referred_id FROM referrals WHERE referrer_id = $1
-				UNION
-				SELECT id FROM users WHERE referrer_id = $1
-			)
-			UNION
-			SELECT t.user_id as uid FROM transactions t WHERE t.user_id IN (
-				SELECT referred_id FROM referrals WHERE referrer_id = $1
-				UNION
-				SELECT id FROM users WHERE referrer_id = $1
-			) AND t.type = 'plan_purchase'
-		) q
-	`, userID).Scan(&friendPlansPurchased)
+	if !oneTimeGranted && plansPurchased == 0 {
+		_ = s.db.QueryRow(ctx, `
+			SELECT COUNT(DISTINCT r.referred_id) FROM referrals r
+			WHERE r.referrer_id = $1
+			  AND (
+				EXISTS (SELECT 1 FROM user_plans up WHERE up.user_id = r.referred_id)
+				OR EXISTS (SELECT 1 FROM transactions t WHERE t.user_id = r.referred_id AND t.type = 'plan_purchase')
+			  )
+		`, userID).Scan(&friendPlansPurchased)
+	}
 
 	// User must hold at least 1 NFT Miner Plan directly (or have one-time admin grant)
 	qualified := oneTimeGranted || plansPurchased >= 1
@@ -311,69 +306,41 @@ func validateWalletAddress(network, address string) error {
 
 // AutoRefundUnqualifiedPendingWithdrawals cancels pending withdrawals for users who don't meet qualification and refunds their balance
 func (s *WithdrawalService) AutoRefundUnqualifiedPendingWithdrawals(ctx context.Context) (int, error) {
-	rows, err := s.db.Query(ctx, `SELECT id, user_id, honey_amount FROM withdrawals WHERE status = 'pending'`)
+	tag, err := s.db.Exec(ctx, `
+		DO $$
+		DECLARE
+			r RECORD;
+		BEGIN
+			FOR r IN
+				SELECT w.id, w.user_id, w.honey_amount
+				FROM withdrawals w
+				WHERE w.status = 'pending'
+				  AND w.user_id NOT IN (
+					  SELECT user_id FROM user_plans
+					  UNION
+					  SELECT user_id FROM transactions WHERE type = 'plan_purchase'
+					  UNION
+					  SELECT id FROM users WHERE COALESCE(one_time_withdrawal_granted, false) = true
+				  )
+			LOOP
+				UPDATE withdrawals
+				SET status = 'rejected', reason = 'Requirement: Activate 1 NFT Miner Plan (Balance refunded)', updated_at = NOW()
+				WHERE id = r.id;
+
+				UPDATE users
+				SET honey_balance = honey_balance + r.honey_amount, updated_at = NOW()
+				WHERE id = r.user_id;
+
+				INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at)
+				VALUES (gen_random_uuid(), r.user_id, 'adjustment', r.honey_amount, 'HONEY', r.id, 'withdrawal', 'refund_' || r.id::text, 'Withdrawal balance returned (NFT plan qualification requirement)', NOW())
+				ON CONFLICT (idempotency_key) DO NOTHING;
+			END LOOP;
+		END $$;
+	`)
 	if err != nil {
+		log.Printf("⚠️ AutoRefundUnqualifiedPendingWithdrawals error: %v", err)
 		return 0, err
 	}
-	defer rows.Close()
-
-	type PendingW struct {
-		ID          uuid.UUID
-		UserID      uuid.UUID
-		HoneyAmount float64
-	}
-
-	var toRefund []PendingW
-	for rows.Next() {
-		var pw PendingW
-		if err := rows.Scan(&pw.ID, &pw.UserID, &pw.HoneyAmount); err == nil {
-			toRefund = append(toRefund, pw)
-		}
-	}
-	rows.Close()
-
-	refundedCount := 0
-	for _, pw := range toRefund {
-		qualified, _, _, _ := s.IsUserQualified(ctx, pw.UserID)
-		if !qualified {
-			tx, err := s.db.Begin(ctx)
-			if err != nil {
-				continue
-			}
-
-			// Mark rejected with clear reason
-			_, err = tx.Exec(ctx,
-				`UPDATE withdrawals SET status = 'rejected', reason = 'Requirement: Hold 1 NFT Miner (Balance refunded)', updated_at = NOW() WHERE id = $1`,
-				pw.ID)
-			if err != nil {
-				tx.Rollback(ctx)
-				continue
-			}
-
-			// Silently give balance back
-			_, err = tx.Exec(ctx,
-				`UPDATE users SET honey_balance = honey_balance + $1, updated_at = NOW() WHERE id = $2`,
-				pw.HoneyAmount, pw.UserID)
-			if err != nil {
-				tx.Rollback(ctx)
-				continue
-			}
-
-			// Record refund transaction
-			idempKey := fmt.Sprintf("refund_%s", pw.ID)
-			_, _ = tx.Exec(ctx,
-				`INSERT INTO transactions (id, user_id, type, amount, currency, ref_id, ref_type, idempotency_key, description, created_at)
-				 VALUES ($1, $2, 'adjustment', $3, 'HONEY', $4, 'withdrawal', $5, 'Withdrawal balance returned (NFT qualification requirement)', NOW())
-				 ON CONFLICT (idempotency_key) DO NOTHING`,
-				uuid.New(), pw.UserID, pw.HoneyAmount, pw.ID, idempKey)
-
-			if err := tx.Commit(ctx); err == nil {
-				refundedCount++
-				log.Printf("🛡️ [WithdrawalService] Silently refunded %.4f Honey to unqualified user %s and removed withdrawal %s from admin queue", pw.HoneyAmount, pw.UserID, pw.ID)
-			}
-		}
-	}
-
-	return refundedCount, nil
+	return int(tag.RowsAffected()), nil
 }
 
