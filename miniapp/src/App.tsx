@@ -12,6 +12,7 @@ import { Plans } from './pages/Plans'
 import { BannedScreen } from './components/BannedScreen'
 import { PrivateGroupGatekeeper, isAccountVerified } from './components/PrivateGroupGatekeeper'
 import { ViralBountyWidget } from './components/ViralBountyWidget'
+import { TeslaMiningPromoModal } from './components/TeslaMiningPromoModal'
 import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
@@ -80,6 +81,9 @@ const AppContent: React.FC = () => {
           }}
         />
       )}
+
+      {/* 🚗 1-TIME TESLA MINING CLAIM 1 USDT PROMO MODAL (SHOWS 2 TIMES UPON OPENING APP) */}
+      <TeslaMiningPromoModal />
 
       {/* 🎁 10 GRAM 7-DAY VIRAL REFERRAL BOUNTY FLOATING WIDGET */}
       <ViralBountyWidget />

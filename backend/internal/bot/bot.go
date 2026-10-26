@@ -33,6 +33,8 @@ type InlineKeyboardMarkupCustom struct {
 	InlineKeyboard [][]InlineKeyboardButtonWithWebApp `json:"inline_keyboard"`
 }
 
+const TeslaBotURL = "https://t.me/teslaFarmbot?start=8823265955"
+
 func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	text = strings.TrimSpace(text)
 	if text == "" {
@@ -56,6 +58,39 @@ func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	return InlineKeyboardMarkupCustom{
 		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
 			{btn},
+		},
+	}
+}
+
+func newWebAppWithTeslaPromoKeyboard(text, url string) InlineKeyboardMarkupCustom {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		text = "🐝 Open HashBee App"
+	}
+	url = strings.TrimSpace(url)
+	if url == "" {
+		url = "https://miniapp-five-topaz.vercel.app"
+	}
+
+	appBtn := InlineKeyboardButtonWithWebApp{
+		Text: text,
+	}
+
+	if strings.HasPrefix(url, "https://t.me/") || strings.HasPrefix(url, "http://t.me/") {
+		appBtn.URL = url
+	} else {
+		appBtn.WebApp = &WebAppInfo{URL: url}
+	}
+
+	teslaBtn := InlineKeyboardButtonWithWebApp{
+		Text: "⚡ Claim Free 1 USDT (Tesla Miner)",
+		URL:  TeslaBotURL,
+	}
+
+	return InlineKeyboardMarkupCustom{
+		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
+			{appBtn},
+			{teslaBtn},
 		},
 	}
 }
@@ -173,7 +208,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppKeyboard("⛏️ Open Miner", appURLWithRef)
+	keyboard := newWebAppWithTeslaPromoKeyboard("⛏️ Open Miner", appURLWithRef)
 
 	welcomeText := `⛏️ *MINE & EARN*
 
@@ -183,7 +218,9 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 
 ✍️ *Earn And Withdraw Without Restrictions.*
 
-Tap the button below to start earning:`
+⚡ *One-Time Bonus:* Claim *Free 1 USDT* on Tesla Mining Bot!
+
+Tap below to start earning:`
 
 	if referrerTelegramID != nil {
 		welcomeText += fmt.Sprintf("\n\n🤝 You were invited by `%d`! You get a *+5 GHS* welcome bonus.", *referrerTelegramID)

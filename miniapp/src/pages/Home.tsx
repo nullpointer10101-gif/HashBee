@@ -7,12 +7,15 @@ import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import { DepositModal } from '../components/DepositModal'
 import { NftMinerAvatar } from '../components/NftMinerAvatar'
+import { TeslaMiningBanner } from '../components/TeslaMiningBanner'
+import { TeslaMiningPromoModal } from '../components/TeslaMiningPromoModal'
 import inviteBannerImg from '../assets/images/invite_banner.jpg'
 
 export const Home: React.FC = () => {
   const { user, refreshUser, loading } = useAuth()
   const { currentLanguage } = useLanguage()
   const [showLangModal, setShowLangModal] = useState(false)
+  const [showTeslaModal, setShowTeslaModal] = useState(false)
   const navigate = useNavigate()
 
   const [claiming, setClaiming] = useState(false)
@@ -668,6 +671,12 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* ── 🚗 TESLA MINING: 1-TIME FREE 1 USDT CLAIM BANNER ── */}
+      <TeslaMiningBanner
+        onOpenModal={() => setShowTeslaModal(true)}
+        className="mb-3.5"
+      />
+
       {/* ── BANNER: INVITE FRIEND / EARN MORE ─────────────────── */}
       <div
         onClick={() => navigate('/earn')}
@@ -708,6 +717,12 @@ export const Home: React.FC = () => {
 
       {/* Deposit Modal */}
       <DepositModal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} />
+
+      {/* Tesla Mining Promo Modal (when manually clicked from banner) */}
+      <TeslaMiningPromoModal
+        forceOpen={showTeslaModal}
+        onClose={() => setShowTeslaModal(false)}
+      />
     </div>
   )
 }
