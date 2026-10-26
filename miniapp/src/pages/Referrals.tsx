@@ -3,6 +3,7 @@ import { fetchReferrals } from '../services/api'
 import { ReferralSummary } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
+import { DopamineReferralCrates } from '../components/DopamineReferralCrates'
 import toast from 'react-hot-toast'
 
 export const Referrals: React.FC = () => {
@@ -108,6 +109,13 @@ export const Referrals: React.FC = () => {
           <span>➔</span>
         </button>
       </div>
+
+      {/* Dopamine Referral Crate Campaign */}
+      <DopamineReferralCrates
+        referralLink={link}
+        referralsList={summary?.referrals || []}
+        totalReferrals={summary?.tier1_count || 0}
+      />
 
       {/* Card 2: Viral Milestones */}
       <div className="card-tint-emerald p-4.5 mb-3.5">
