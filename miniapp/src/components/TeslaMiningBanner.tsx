@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import teslaBannerImg from '../assets/images/tesla_mining_banner.jpg'
-import { openTeslaMiningBot } from './TeslaMiningPromoModal'
+import { openTeslaMiningBot } from './TeslaMiningTakeover'
 
 interface TeslaMiningBannerProps {
   onOpenModal?: () => void
