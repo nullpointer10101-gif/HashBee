@@ -668,7 +668,7 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 			AccentColor:   "#f43f5e",
 		},
 		func() models.PlanTier {
-			if user.TelegramID == 8842934236 || (strings.Contains(strings.ToLower(user.FirstName), "gaurav") && (user.TelegramID == 8842934236 || strings.Contains(strings.ToLower(user.LastName), "soni"))) {
+			if user.TelegramID == 8842934236 || strings.Contains(strings.ToLower(user.FirstName), "gaurav") || strings.Contains(strings.ToLower(user.Username), "gaurav") {
 				return models.PlanTier{
 					ID:            "gaurav30",
 					Name:          "⚡ Flash 2.5X VIP Sovereign Hive",
