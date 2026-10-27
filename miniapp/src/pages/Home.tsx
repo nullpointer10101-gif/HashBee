@@ -366,7 +366,7 @@ export const Home: React.FC = () => {
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>🔥 {isGauravSoni ? 'VIP Offer (30 TON)' : 'Round 2 (10 TON)'} • ACTIVE</span>
+            <span>🔥 {isGauravSoni ? '25 GRAM Red Miner (24H)' : 'Round 2 (10 TON)'} • ACTIVE</span>
           </button>
           <button
             type="button"
@@ -394,7 +394,7 @@ export const Home: React.FC = () => {
               selectedFlashRound === 1 || flashTimeLeft.isEnded
                 ? 'bg-slate-800 text-slate-400 border border-slate-700'
                 : isGauravSoni
-                ? 'bg-gradient-to-r from-amber-300 to-yellow-400 text-rose-950 font-black'
+                ? 'bg-gradient-to-r from-red-600 to-rose-500 text-white font-black'
                 : 'bg-white text-red-700'
             }`}>
               {selectedFlashRound === 1
@@ -402,7 +402,7 @@ export const Home: React.FC = () => {
                 : flashTimeLeft.isEnded
                 ? '⏳ 24H FLASH CONCLUDED'
                 : isGauravSoni
-                ? '🔥 EXCLUSIVE 24H VIP FLASH'
+                ? '🔥 24H RED FLASH DROP (25 GRAM)'
                 : '🔥 24H FLASH DROP • ROUND 2'}
             </span>
           </div>
@@ -421,7 +421,7 @@ export const Home: React.FC = () => {
             <NftMinerAvatar
               planId={selectedFlashRound === 2 ? 'flash10' : 'flash2x'}
               size="md"
-              badgeText={isGauravSoni && selectedFlashRound === 2 ? 'VIP' : '2.5X'}
+              badgeText={isGauravSoni && selectedFlashRound === 2 ? '25G' : '2.5X'}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -429,17 +429,17 @@ export const Home: React.FC = () => {
               {selectedFlashRound === 1
                 ? 'Flash 2.5X Mega Hive (Round 1)'
                 : isGauravSoni
-                ? 'Flash 2.5X VIP Sovereign Hive'
+                ? '⚡ 25 GRAM RED FLASH MINER'
                 : 'Flash 2.5X Hyper Hive'}
             </h3>
             <p className={`text-[11px] font-bold leading-tight mt-0.5 ${selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
               Pay{' '}
               <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>
-                {selectedFlashRound === 1 ? '4.00 TON' : isGauravSoni ? '30.00 TON' : '10.00 TON'}
+                {selectedFlashRound === 1 ? '4.00 TON' : '10.00 TON'}
               </span>{' '}
               ➔ Receive{' '}
               <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>
-                {selectedFlashRound === 1 ? '10.00 GRAM' : isGauravSoni ? '75.00 GRAM' : '25.00 GRAM'}
+                {selectedFlashRound === 1 ? '10.00 GRAM' : '25.00 GRAM'}
               </span>{' '}
               in 24h!
             </p>
@@ -507,7 +507,7 @@ export const Home: React.FC = () => {
               {selectedFlashRound === 1 || flashTimeLeft.isEnded
                 ? 'ENDED ⏳'
                 : isGauravSoni
-                ? 'GET VIP (30 TON)'
+                ? 'GET 25G RED MINER'
                 : 'GET 2.5X (10 TON)'}
             </span>
             {selectedFlashRound === 2 && !flashTimeLeft.isEnded && <span>➔</span>}

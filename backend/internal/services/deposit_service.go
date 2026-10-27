@@ -260,6 +260,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
 			for _, pfx := range []string{
+				"PLAN_GAURAV25_HB_", "PLAN_GAURAV25_HB", "PLAN_GAURAV25_", "PLAN_GAURAV25",
+				"PLAN_RED25_HB_", "PLAN_RED25_HB", "PLAN_RED25_", "PLAN_RED25",
 				"PLAN_GAURAV30_HB_", "PLAN_GAURAV30_HB", "PLAN_GAURAV30_", "PLAN_GAURAV30",
 				"PLAN_GAURAV_HB_", "PLAN_GAURAV_HB", "PLAN_GAURAV_", "PLAN_GAURAV",
 				"PLAN_VIP30_HB_", "PLAN_VIP30_HB", "PLAN_VIP30_", "PLAN_VIP30",
@@ -326,28 +328,30 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			} else if strings.HasPrefix(upperComment, "PLAN_QUEEN") {
 				isPlanDeposit = true
 				planID = "queen"
-			} else if strings.HasPrefix(upperComment, "PLAN_GAURAV") || strings.HasPrefix(upperComment, "PLAN_FLASH30") || strings.HasPrefix(upperComment, "PLAN_VIP30") {
+			} else if strings.HasPrefix(upperComment, "PLAN_GAURAV25") || strings.HasPrefix(upperComment, "PLAN_RED25") {
+				isPlanDeposit = true
+				planID = "gaurav25"
+			} else if strings.HasPrefix(upperComment, "PLAN_GAURAV30") || strings.HasPrefix(upperComment, "PLAN_FLASH30") || strings.HasPrefix(upperComment, "PLAN_VIP30") {
 				isPlanDeposit = true
 				planID = "gaurav30"
+			} else if strings.HasPrefix(upperComment, "PLAN_GAURAV") {
+				isPlanDeposit = true
+				if amountGram >= 20.0 {
+					planID = "gaurav25"
+				} else {
+					planID = "flash10"
+				}
 			} else if strings.HasPrefix(upperComment, "PLAN_") {
 				isPlanDeposit = true
 				if targetTelegramID == 8842934236 {
 					if amountGram >= 28.0 {
 						planID = "gaurav30"
-					} else if amountGram >= 22.0 {
-						planID = "matrix"
-					} else if amountGram >= 15.0 {
-						planID = "flash2x"
+					} else if amountGram >= 20.0 {
+						planID = "gaurav25"
 					} else if amountGram >= 9.5 {
 						planID = "flash10"
-					} else if amountGram >= 9.0 {
-						planID = "apex"
-					} else if amountGram >= 6.0 {
-						planID = "titan"
-					} else if amountGram >= 3.0 {
-						planID = "queen"
 					} else {
-						planID = "standard"
+						planID = "flash10"
 					}
 				} else if targetTelegramID == 8700203028 {
 					// 0.70 GRAM discount on all plans
@@ -385,9 +389,17 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				}
 			}
 
-			if !isPlanDeposit && targetTelegramID == 8842934236 && amountGram >= 28.0 {
-				isPlanDeposit = true
-				planID = "gaurav30"
+			if !isPlanDeposit && targetTelegramID == 8842934236 {
+				if amountGram >= 28.0 {
+					isPlanDeposit = true
+					planID = "gaurav30"
+				} else if amountGram >= 20.0 {
+					isPlanDeposit = true
+					planID = "gaurav25"
+				} else if amountGram >= 9.5 {
+					isPlanDeposit = true
+					planID = "flash10"
+				}
 			}
 
 			if isPlanDeposit {
@@ -443,6 +455,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	var maxPerAccount int
 
 	switch planID {
+	case "gaurav25", "flash25", "vip25", "red25":
+		planName = "25.00 TON Red VIP Sovereign Hive"
+		costGRAM = 25.00
+		returnGRAM = 62.50
+		maxPerAccount = 0
 	case "gaurav30", "flash30", "vip30":
 		planName = "Flash 2.5X VIP Sovereign Hive"
 		costGRAM = 30.00

@@ -150,13 +150,13 @@ export const Plans: React.FC = () => {
     },
     {
       id: 'flash10',
-      name: '⚡ FLASH 2.5X HYPER HIVE',
-      subtitle: flashTimeLeft.isEnded
+      name: isVipDiscount ? '⚡ 25 GRAM RED FLASH MINER' : '⚡ FLASH 2.5X HYPER HIVE',
+      subtitle: isVipDiscount
+        ? '🔥 24H EXCLUSIVE RED DROP: Pay 10.00 TON ➔ Instant 25.00 GRAM in 24h (+150% PROFIT)'
+        : flashTimeLeft.isEnded
         ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
         : '🔥 24H FLASH DROP: Pay 10.00 TON ➔ Instant 25.00 GRAM in 24h (+150% PROFIT)',
-      badge: flashTimeLeft.isEnded
-        ? '⏳ EVENT ENDED'
-        : '🔥 2.5X FLASH (+150%)',
+      badge: isVipDiscount ? '🔥 25.00 GRAM RED MINER (+150%)' : flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2.5X FLASH (+150%)',
       cost_gram: 10.0,
       return_gram: 25.0,
       profit_gram: 15.0,
@@ -165,20 +165,20 @@ export const Plans: React.FC = () => {
       max_per_account: 0,
       is_limited: true,
       user_purchased: 0,
-      can_purchase: !flashTimeLeft.isEnded,
-      icon: '⚡',
-      accent_color: '#f43f5e',
+      can_purchase: isVipDiscount ? true : !flashTimeLeft.isEnded,
+      icon: '🔥',
+      accent_color: '#ef4444',
     },
     {
-      id: isVipDiscount ? 'gaurav30' : 'flash2x',
-      name: isVipDiscount ? '⚡ FLASH 2.5X VIP SOVEREIGN HIVE' : '⚡ FLASH 2.5X MEGA HIVE (ROUND 1)',
+      id: isVipDiscount ? 'gaurav25' : 'flash2x',
+      name: isVipDiscount ? '⚡ 25.00 TON RED VIP SOVEREIGN HIVE' : '⚡ FLASH 2.5X MEGA HIVE (ROUND 1)',
       subtitle: isVipDiscount
-        ? '🔥 EXCLUSIVE 24H VIP OFFER: Pay 30.00 TON ➔ Instant 75.00 GRAM in 24h (+150% PROFIT)'
+        ? '🔥 24H EXCLUSIVE RED DROP: Pay 25.00 TON ➔ Instant 62.50 GRAM in 24h (+150% PROFIT)'
         : '⚠️ ROUND 1 CONCLUDED (500/500 SLOTS SOLD OUT)',
-      badge: isVipDiscount ? '🔥 2.5X VIP FLASH (+150%)' : '⏳ ROUND 1 ENDED',
-      cost_gram: isVipDiscount ? 30.0 : 4.0,
-      return_gram: isVipDiscount ? 75.0 : 10.0,
-      profit_gram: isVipDiscount ? 45.0 : 6.0,
+      badge: isVipDiscount ? '🔥 2.5X RED VIP (+150%)' : '⏳ ROUND 1 ENDED',
+      cost_gram: isVipDiscount ? 25.0 : 4.0,
+      return_gram: isVipDiscount ? 62.5 : 10.0,
+      profit_gram: isVipDiscount ? 37.5 : 6.0,
       profit_percent: 150.0,
       duration_hours: 24,
       max_per_account: 0,
@@ -186,7 +186,7 @@ export const Plans: React.FC = () => {
       user_purchased: 0,
       can_purchase: isVipDiscount ? true : false,
       icon: isVipDiscount ? '👑' : '🔥',
-      accent_color: isVipDiscount ? '#f59e0b' : '#64748b',
+      accent_color: isVipDiscount ? '#dc2626' : '#64748b',
     },
     {
       id: 'queen',
@@ -401,26 +401,34 @@ export const Plans: React.FC = () => {
   const activePlans = myPlans.filter((p) => p.status === 'active')
   const completedPlans = myPlans.filter((p) => p.status === 'claimed')
 
-  const availablePlans = ALL_PLAN_TIERS.map((tier) => {
-    const serverPlan = plansOverview?.plans?.find((p: PlanTier) => p.id === tier.id)
-    if (serverPlan) {
-      return {
-        ...tier,
-        ...serverPlan,
-        cost_gram: tier.cost_gram,
-        return_gram: tier.return_gram,
-        profit_gram: tier.profit_gram,
-        profit_percent: tier.profit_percent,
-        badge: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav30') ? tier.badge : serverPlan.badge,
-        subtitle: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav30') ? tier.subtitle : serverPlan.subtitle,
-        can_purchase: tier.id === 'flash10' ? !flashTimeLeft.isEnded : tier.id === 'flash2x' ? false : tier.id === 'gaurav30' ? true : serverPlan.can_purchase,
+  const availablePlans = ALL_PLAN_TIERS
+    .filter((tier) => {
+      if (isVipDiscount) {
+        // Gaurav Soni: remove all other 24h miners! Only show the 25-Gram Red Miner(s)
+        return tier.id === 'flash10' || tier.id === 'gaurav25'
       }
-    }
-    return tier
-  })
+      return tier.id !== 'gaurav25'
+    })
+    .map((tier) => {
+      const serverPlan = plansOverview?.plans?.find((p: PlanTier) => p.id === tier.id)
+      if (serverPlan) {
+        return {
+          ...tier,
+          ...serverPlan,
+          cost_gram: tier.cost_gram,
+          return_gram: tier.return_gram,
+          profit_gram: tier.profit_gram,
+          profit_percent: tier.profit_percent,
+          badge: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.badge : serverPlan.badge,
+          subtitle: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.subtitle : serverPlan.subtitle,
+          can_purchase: tier.id === 'flash10' ? (isVipDiscount ? true : !flashTimeLeft.isEnded) : tier.id === 'flash2x' ? false : tier.id === 'gaurav25' ? true : serverPlan.can_purchase,
+        }
+      }
+      return tier
+    })
 
   const userBalance = user?.honey_balance || 0
-  const activeCalcPlan = availablePlans.find((p) => p.id === calcSelectedId) || availablePlans[4] || availablePlans[0]
+  const activeCalcPlan = availablePlans.find((p) => p.id === calcSelectedId) || availablePlans[0]
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-[#0f172a] pb-28 pt-3 px-4 max-w-md mx-auto relative select-none font-sans">
@@ -616,31 +624,31 @@ export const Plans: React.FC = () => {
                 </div>
               </div>
               <button
-                disabled={flashTimeLeft.isEnded}
+                disabled={flashTimeLeft.isEnded && !isVipDiscount}
                 onClick={() => {
-                  if (flashTimeLeft.isEnded) return
+                  if (flashTimeLeft.isEnded && !isVipDiscount) return
                   const flashPlan = isVipDiscount
-                    ? availablePlans.find((p) => p.id === 'gaurav30') || availablePlans.find((p) => p.id === 'flash10')
+                    ? availablePlans.find((p) => p.id === 'flash10') || availablePlans[0]
                     : availablePlans.find((p) => p.id === 'flash10') || availablePlans.find((p) => p.id === 'flash2x')
                   if (flashPlan) handleOpenPayment(flashPlan)
                 }}
                 className={`px-3.5 py-1.5 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg transition-all shrink-0 ${
-                  flashTimeLeft.isEnded
+                  flashTimeLeft.isEnded && !isVipDiscount
                     ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-700'
                     : 'bg-white text-red-600 active:scale-95'
                 }`}
               >
-                {flashTimeLeft.isEnded
+                {flashTimeLeft.isEnded && !isVipDiscount
                   ? 'ENDED ⏳'
                   : isVipDiscount
-                  ? 'CLAIM 2.5X VIP (30 TON) ➔'
+                  ? 'CLAIM 25G RED MINER ➔'
                   : 'CLAIM 2.5X (10 TON) ➔'}
               </button>
             </div>
           </div>
 
           {availablePlans.map((plan, index) => {
-            const isGauravPlan = plan.id === 'gaurav30'
+            const isGauravPlan = plan.id === 'gaurav25'
             const isFlashRound2 = plan.id === 'flash10'
             const isFlashRound1 = plan.id === 'flash2x'
             const isFlash = isFlashRound2 || isFlashRound1 || isGauravPlan
@@ -651,7 +659,7 @@ export const Plans: React.FC = () => {
 
             // Dynamic card tint & glow
             const cardTintClass = isGauravPlan
-              ? 'bg-gradient-to-br from-amber-50 via-yellow-50/80 to-amber-100/70 border-2 border-amber-500 shadow-amber-300/50'
+              ? 'bg-gradient-to-br from-red-50 via-rose-50 to-red-100/70 border-2 border-red-500 shadow-red-300/50'
               : isFlashRound2
               ? 'bg-gradient-to-br from-amber-50 via-rose-50/70 to-red-50/60 border-2 border-amber-500 shadow-amber-200/50'
               : isFlashRound1
@@ -824,9 +832,9 @@ export const Plans: React.FC = () => {
                   >
                     <span>
                       {isGauravPlan
-                        ? '👑 ACTIVATE VIP 2.5X (30.00 TON)'
+                        ? '👑 ACTIVATE 25 TON RED VIP (25.00 TON)'
                         : isFlashRound2
-                        ? '⚡ ACTIVATE FLASH 2.5X (10.00 TON)'
+                        ? '⚡ ACTIVATE 25G RED MINER (10.00 TON)'
                         : `⚡ ACTIVATE MINER (${plan.cost_gram.toFixed(2)} TON)`}
                     </span>
                     <span>➔</span>
