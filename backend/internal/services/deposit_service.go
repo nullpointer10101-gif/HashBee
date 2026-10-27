@@ -496,7 +496,7 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		}
 		returnGRAM = 10.00
 		maxPerAccount = 0
-	case "flash10", "flash25":
+	case "flash10":
 		planName = "Flash 2.5X Hyper Hive"
 		costGRAM = 10.00
 		returnGRAM = 25.00
