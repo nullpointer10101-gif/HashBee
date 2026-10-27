@@ -70,10 +70,18 @@ func Load() (*Config, error) {
 	// Load .env file if it exists (dev mode)
 	_ = godotenv.Load()
 
+	rawBotToken := strings.Trim(strings.TrimSpace(getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", ""))), "\"' \r\n\t")
+	if strings.Contains(rawBotToken, "dgo1XgjU") {
+		rawBotToken = strings.ReplaceAll(rawBotToken, "dgo1XgjU", "dgolXgjU")
+	}
+	if rawBotToken == "" {
+		rawBotToken = "8883872480:AAFcNCc0Id1aC4Z81_yCEMVkXr_dgolXgjU"
+	}
+
 	cfg := &Config{
 		Port:          getEnv("PORT", "8080"),
 		Env:           getEnv("ENV", "development"),
-		BotToken:      strings.Trim(strings.TrimSpace(getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", ""))), "\"' \r\n\t"),
+		BotToken:      rawBotToken,
 		BotUsername:   "hashbe_bot",
 		MiniAppURL:    getEnv("MINIAPP_URL", "https://miniapp-five-topaz.vercel.app"),
 		WebhookURL:    getEnv("WEBHOOK_URL", "https://hashbee3.onrender.com"),

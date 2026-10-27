@@ -321,8 +321,13 @@ func main() {
 		if len(tok) > 8 {
 			preview = tok[:4] + "..." + tok[len(tok)-4:]
 		}
+		var botUsername string
+		if tgBot != nil && tgBot.GetSelf() != nil {
+			botUsername = tgBot.GetSelf().UserName
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"bot_initialized":   tgBot != nil,
+			"bot_username":      botUsername,
 			"bot_token_length":  len(tok),
 			"bot_token_preview": preview,
 			"webhook_url":       cfg.WebhookURL,

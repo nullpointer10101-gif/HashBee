@@ -102,7 +102,16 @@ type Bot struct {
 }
 
 func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
-	api, err := tgbotapi.NewBotAPI(cfg.BotToken)
+	token := strings.Trim(strings.TrimSpace(cfg.BotToken), "\"' \r\n\t")
+	if strings.Contains(token, "dgo1XgjU") {
+		token = strings.ReplaceAll(token, "dgo1XgjU", "dgolXgjU")
+	}
+	if token == "" {
+		token = "8883872480:AAFcNCc0Id1aC4Z81_yCEMVkXr_dgolXgjU"
+	}
+	cfg.BotToken = token
+
+	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
@@ -114,6 +123,13 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 		cfg.BotUsername = "hashbe_bot"
 	}
 	return &Bot{api: api, cfg: cfg, userSvc: userSvc}, nil
+}
+
+func (b *Bot) GetSelf() *tgbotapi.User {
+	if b == nil || b.api == nil {
+		return nil
+	}
+	return &b.api.Self
 }
 
 // SetWebhook sets the bot webhook URL
