@@ -9,7 +9,15 @@ const getInitData = () => {
   return ''
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee3.onrender.com'
+const getCleanApiBase = () => {
+  let base = import.meta.env.VITE_API_URL || 'https://hashbee3.onrender.com'
+  if (base.includes('hashbee1.onrender.com') || base.includes('hashbee2.onrender.com')) {
+    base = 'https://hashbee3.onrender.com'
+  }
+  return base
+}
+
+const API_BASE = getCleanApiBase()
 
 const api = axios.create({
   baseURL: API_BASE,
