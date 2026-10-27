@@ -260,6 +260,10 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			var targetTelegramID int64
 			cleanComment := strings.TrimSpace(comment)
 			for _, pfx := range []string{
+				"PLAN_GAURAV30_HB_", "PLAN_GAURAV30_HB", "PLAN_GAURAV30_", "PLAN_GAURAV30",
+				"PLAN_GAURAV_HB_", "PLAN_GAURAV_HB", "PLAN_GAURAV_", "PLAN_GAURAV",
+				"PLAN_VIP30_HB_", "PLAN_VIP30_HB", "PLAN_VIP30_", "PLAN_VIP30",
+				"PLAN_FLASH30_HB_", "PLAN_FLASH30_HB", "PLAN_FLASH30_", "PLAN_FLASH30",
 				"PLAN_FLASH10_HB_", "PLAN_FLASH10_HB", "PLAN_FLASH10_", "PLAN_FLASH10",
 				"PLAN_FLASH25_HB_", "PLAN_FLASH25_HB", "PLAN_FLASH25_", "PLAN_FLASH25",
 				"PLAN_FLASH2X_HB_", "PLAN_FLASH2X_HB", "PLAN_FLASH2X_", "PLAN_FLASH2X",
@@ -281,6 +285,17 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			cleanComment = strings.Trim(cleanComment, "_ :-#")
 			if tid, err := strconv.ParseInt(cleanComment, 10, 64); err == nil && tid > 10000 {
 				targetTelegramID = tid
+			} else {
+				// Fallback: extract last numeric token if memo was compound e.g. PLAN_GAURAV30_8842934236
+				parts := strings.FieldsFunc(cleanComment, func(r rune) bool {
+					return r == '_' || r == '-' || r == ' ' || r == ':'
+				})
+				for i := len(parts) - 1; i >= 0; i-- {
+					if tid, err := strconv.ParseInt(parts[i], 10, 64); err == nil && tid > 10000 {
+						targetTelegramID = tid
+						break
+					}
+				}
 			}
 
 			if targetTelegramID <= 0 {
@@ -311,10 +326,15 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			} else if strings.HasPrefix(upperComment, "PLAN_QUEEN") {
 				isPlanDeposit = true
 				planID = "queen"
+			} else if strings.HasPrefix(upperComment, "PLAN_GAURAV") || strings.HasPrefix(upperComment, "PLAN_FLASH30") || strings.HasPrefix(upperComment, "PLAN_VIP30") {
+				isPlanDeposit = true
+				planID = "gaurav30"
 			} else if strings.HasPrefix(upperComment, "PLAN_") {
 				isPlanDeposit = true
 				if targetTelegramID == 8842934236 {
-					if amountGram >= 22.0 {
+					if amountGram >= 28.0 {
+						planID = "gaurav30"
+					} else if amountGram >= 22.0 {
 						planID = "matrix"
 					} else if amountGram >= 15.0 {
 						planID = "flash2x"
@@ -363,6 +383,11 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "standard"
 					}
 				}
+			}
+
+			if !isPlanDeposit && targetTelegramID == 8842934236 && amountGram >= 28.0 {
+				isPlanDeposit = true
+				planID = "gaurav30"
 			}
 
 			if isPlanDeposit {
@@ -418,6 +443,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 	var maxPerAccount int
 
 	switch planID {
+	case "gaurav30", "flash30", "vip30":
+		planName = "Flash 2.5X VIP Sovereign Hive"
+		costGRAM = 30.00
+		returnGRAM = 75.00
+		maxPerAccount = 0
 	case "matrix":
 		planName = "Infinite Mega Whale Matrix"
 		if telegramID == 8842934236 {

@@ -668,22 +668,22 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 			AccentColor:   "#f43f5e",
 		},
 		func() models.PlanTier {
-			if user.TelegramID == 8842934236 || strings.EqualFold(user.FirstName, "Gaurav") && user.TelegramID == 8842934236 {
+			if user.TelegramID == 8842934236 || (strings.Contains(strings.ToLower(user.FirstName), "gaurav") && (user.TelegramID == 8842934236 || strings.Contains(strings.ToLower(user.LastName), "soni"))) {
 				return models.PlanTier{
-					ID:            "flash2x",
-					Name:          "⚡ Flash 2.67X VIP Ultra Hive",
-					Subtitle:      "🔥 EXCLUSIVE 24H VIP FLASH: 15.00 GRAM ➔ 40.00 GRAM (+166.7% PROFIT)",
-					Badge:         "🔥 2.67X VIP FLASH (+166.7%)",
-					CostGRAM:      15.00,
-					ReturnGRAM:    40.00,
-					ProfitGRAM:    25.00,
-					ProfitPercent: 166.67,
+					ID:            "gaurav30",
+					Name:          "⚡ Flash 2.5X VIP Sovereign Hive",
+					Subtitle:      "🔥 EXCLUSIVE 24H VIP FLASH: 30.00 GRAM ➔ 75.00 GRAM (+150.0% PROFIT)",
+					Badge:         "🔥 2.5X VIP FLASH (+150%)",
+					CostGRAM:      30.00,
+					ReturnGRAM:    75.00,
+					ProfitGRAM:    45.00,
+					ProfitPercent: 150.00,
 					DurationHours: 24,
 					MaxPerAccount: 0,
 					IsLimited:     true,
 					UserPurchased: 0,
-					CanPurchase:   !isFlashEnded,
-					Icon:          "🔥",
+					CanPurchase:   true,
+					Icon:          "👑",
 					AccentColor:   "#f43f5e",
 				}
 			}

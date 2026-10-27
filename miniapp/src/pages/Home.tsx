@@ -366,7 +366,7 @@ export const Home: React.FC = () => {
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>🔥 Round 2 (10 TON) • ACTIVE</span>
+            <span>🔥 {isGauravSoni ? 'VIP Offer (30 TON)' : 'Round 2 (10 TON)'} • ACTIVE</span>
           </button>
           <button
             type="button"
@@ -411,7 +411,7 @@ export const Home: React.FC = () => {
               ? 'text-slate-400 bg-black/40 border-slate-700'
               : 'text-amber-200 bg-black/35 border-white/15'
           }`}>
-            {isGauravSoni && selectedFlashRound === 2 ? '+166.7% NET ROI' : '150% NET ROI'}
+            {isGauravSoni && selectedFlashRound === 2 ? '+150.0% NET ROI (2.5X)' : '150% NET ROI'}
           </span>
         </div>
 
@@ -429,17 +429,17 @@ export const Home: React.FC = () => {
               {selectedFlashRound === 1
                 ? 'Flash 2.5X Mega Hive (Round 1)'
                 : isGauravSoni
-                ? 'Flash 2.67X VIP Ultra Hive'
+                ? 'Flash 2.5X VIP Sovereign Hive'
                 : 'Flash 2.5X Hyper Hive'}
             </h3>
             <p className={`text-[11px] font-bold leading-tight mt-0.5 ${selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-400' : 'text-amber-100'}`}>
               Pay{' '}
               <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-yellow-300 font-black'}>
-                {selectedFlashRound === 1 ? '4.00 TON' : isGauravSoni ? '15.00 TON' : '10.00 TON'}
+                {selectedFlashRound === 1 ? '4.00 TON' : isGauravSoni ? '30.00 TON' : '10.00 TON'}
               </span>{' '}
               ➔ Receive{' '}
               <span className={selectedFlashRound === 1 || flashTimeLeft.isEnded ? 'text-slate-300 font-black' : 'text-white font-black underline decoration-yellow-400'}>
-                {selectedFlashRound === 1 ? '10.00 GRAM' : isGauravSoni ? '40.00 GRAM' : '25.00 GRAM'}
+                {selectedFlashRound === 1 ? '10.00 GRAM' : isGauravSoni ? '75.00 GRAM' : '25.00 GRAM'}
               </span>{' '}
               in 24h!
             </p>
@@ -507,7 +507,7 @@ export const Home: React.FC = () => {
               {selectedFlashRound === 1 || flashTimeLeft.isEnded
                 ? 'ENDED ⏳'
                 : isGauravSoni
-                ? 'GET VIP (15 TON)'
+                ? 'GET VIP (30 TON)'
                 : 'GET 2.5X (10 TON)'}
             </span>
             {selectedFlashRound === 2 && !flashTimeLeft.isEnded && <span>➔</span>}

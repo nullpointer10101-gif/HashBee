@@ -126,7 +126,8 @@ export const Plans: React.FC = () => {
 
   const isVipDiscount =
     String(userTelegramId).trim() === '8842934236' ||
-    (user?.telegram_id != null && String(user.telegram_id).trim() === '8842934236')
+    (user?.telegram_id != null && String(user.telegram_id).trim() === '8842934236') ||
+    (user?.first_name?.toLowerCase().includes('gaurav') && (user?.last_name?.toLowerCase().includes('soni') || String(userTelegramId).trim() === '8842934236'))
 
   const ALL_PLAN_TIERS: PlanTier[] = [
     {
@@ -169,21 +170,23 @@ export const Plans: React.FC = () => {
       accent_color: '#f43f5e',
     },
     {
-      id: 'flash2x',
-      name: isVipDiscount ? '⚡ FLASH 2.67X VIP ULTRA HIVE' : '⚡ FLASH 2.5X MEGA HIVE (ROUND 1)',
-      subtitle: '⚠️ ROUND 1 CONCLUDED (500/500 SLOTS SOLD OUT)',
-      badge: '⏳ ROUND 1 ENDED',
-      cost_gram: isVipDiscount ? 15.0 : 4.0,
-      return_gram: isVipDiscount ? 40.0 : 10.0,
-      profit_gram: isVipDiscount ? 25.0 : 6.0,
-      profit_percent: isVipDiscount ? 166.67 : 150.0,
+      id: isVipDiscount ? 'gaurav30' : 'flash2x',
+      name: isVipDiscount ? '⚡ FLASH 2.5X VIP SOVEREIGN HIVE' : '⚡ FLASH 2.5X MEGA HIVE (ROUND 1)',
+      subtitle: isVipDiscount
+        ? '🔥 EXCLUSIVE 24H VIP OFFER: Pay 30.00 TON ➔ Instant 75.00 GRAM in 24h (+150% PROFIT)'
+        : '⚠️ ROUND 1 CONCLUDED (500/500 SLOTS SOLD OUT)',
+      badge: isVipDiscount ? '🔥 2.5X VIP FLASH (+150%)' : '⏳ ROUND 1 ENDED',
+      cost_gram: isVipDiscount ? 30.0 : 4.0,
+      return_gram: isVipDiscount ? 75.0 : 10.0,
+      profit_gram: isVipDiscount ? 45.0 : 6.0,
+      profit_percent: 150.0,
       duration_hours: 24,
       max_per_account: 0,
       is_limited: true,
       user_purchased: 0,
-      can_purchase: false,
-      icon: '🔥',
-      accent_color: '#64748b',
+      can_purchase: isVipDiscount ? true : false,
+      icon: isVipDiscount ? '👑' : '🔥',
+      accent_color: isVipDiscount ? '#f59e0b' : '#64748b',
     },
     {
       id: 'queen',
@@ -408,9 +411,9 @@ export const Plans: React.FC = () => {
         return_gram: tier.return_gram,
         profit_gram: tier.profit_gram,
         profit_percent: tier.profit_percent,
-        badge: (tier.id === 'flash10' || tier.id === 'flash2x') ? tier.badge : serverPlan.badge,
-        subtitle: (tier.id === 'flash10' || tier.id === 'flash2x') ? tier.subtitle : serverPlan.subtitle,
-        can_purchase: tier.id === 'flash10' ? !flashTimeLeft.isEnded : tier.id === 'flash2x' ? false : serverPlan.can_purchase,
+        badge: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav30') ? tier.badge : serverPlan.badge,
+        subtitle: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav30') ? tier.subtitle : serverPlan.subtitle,
+        can_purchase: tier.id === 'flash10' ? !flashTimeLeft.isEnded : tier.id === 'flash2x' ? false : tier.id === 'gaurav30' ? true : serverPlan.can_purchase,
       }
     }
     return tier
@@ -617,7 +620,7 @@ export const Plans: React.FC = () => {
                 onClick={() => {
                   if (flashTimeLeft.isEnded) return
                   const flashPlan = isVipDiscount
-                    ? availablePlans.find((p) => p.id === 'flash2x')
+                    ? availablePlans.find((p) => p.id === 'gaurav30') || availablePlans.find((p) => p.id === 'flash10')
                     : availablePlans.find((p) => p.id === 'flash10') || availablePlans.find((p) => p.id === 'flash2x')
                   if (flashPlan) handleOpenPayment(flashPlan)
                 }}
@@ -630,23 +633,26 @@ export const Plans: React.FC = () => {
                 {flashTimeLeft.isEnded
                   ? 'ENDED ⏳'
                   : isVipDiscount
-                  ? 'CLAIM 2.67X (15 TON) ➔'
+                  ? 'CLAIM 2.5X VIP (30 TON) ➔'
                   : 'CLAIM 2.5X (10 TON) ➔'}
               </button>
             </div>
           </div>
 
           {availablePlans.map((plan, index) => {
+            const isGauravPlan = plan.id === 'gaurav30'
             const isFlashRound2 = plan.id === 'flash10'
             const isFlashRound1 = plan.id === 'flash2x'
-            const isFlash = isFlashRound2 || isFlashRound1
+            const isFlash = isFlashRound2 || isFlashRound1 || isGauravPlan
             const isDouble = plan.id === 'matrix'
             const isMythic = plan.id === 'apex'
             const isLegendary = plan.id === 'titan'
             const isEpic = plan.id === 'queen'
 
             // Dynamic card tint & glow
-            const cardTintClass = isFlashRound2
+            const cardTintClass = isGauravPlan
+              ? 'bg-gradient-to-br from-amber-50 via-yellow-50/80 to-amber-100/70 border-2 border-amber-500 shadow-amber-300/50'
+              : isFlashRound2
               ? 'bg-gradient-to-br from-amber-50 via-rose-50/70 to-red-50/60 border-2 border-amber-500 shadow-amber-200/50'
               : isFlashRound1
               ? 'bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100/90 border border-slate-300 opacity-80'
@@ -660,7 +666,9 @@ export const Plans: React.FC = () => {
               ? 'card-tint-purple border-purple-300'
               : 'card-tint-blue border-blue-300'
 
-            const buttonClass = isFlashRound2
+            const buttonClass = isGauravPlan
+              ? 'bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 text-slate-950 font-black shadow-amber-500/40'
+              : isFlashRound2
               ? 'bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 text-white shadow-amber-500/40'
               : isFlashRound1
               ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
@@ -815,7 +823,9 @@ export const Plans: React.FC = () => {
                     className={`w-full py-3.5 rounded-2xl ${buttonClass} text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all`}
                   >
                     <span>
-                      {isFlashRound2
+                      {isGauravPlan
+                        ? '👑 ACTIVATE VIP 2.5X (30.00 TON)'
+                        : isFlashRound2
                         ? '⚡ ACTIVATE FLASH 2.5X (10.00 TON)'
                         : `⚡ ACTIVATE MINER (${plan.cost_gram.toFixed(2)} TON)`}
                     </span>
