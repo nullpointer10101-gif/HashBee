@@ -72,10 +72,10 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		Port:          getEnv("PORT", "8080"),
 		Env:           getEnv("ENV", "development"),
-		BotToken:      getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", "")),
+		BotToken:      strings.Trim(strings.TrimSpace(getEnv("BOT_TOKEN", getEnv("TELEGRAM_BOT_TOKEN", ""))), "\"' \r\n\t"),
 		BotUsername:   "hashbe_bot",
 		MiniAppURL:    getEnv("MINIAPP_URL", "https://miniapp-five-topaz.vercel.app"),
-		WebhookURL:    getEnv("WEBHOOK_URL", ""),
+		WebhookURL:    getEnv("WEBHOOK_URL", "https://hashbee3.onrender.com"),
 		WebhookSecret: getEnv("WEBHOOK_SECRET", ""),
 		DatabaseURL:   mustGetEnv("DATABASE_URL"),
 		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6379"),

@@ -118,7 +118,8 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 
 // SetWebhook sets the bot webhook URL
 func (b *Bot) SetWebhook(webhookURL string) error {
-	fullURL := webhookURL + "/bot/webhook"
+	trimmed := strings.TrimRight(strings.TrimSpace(webhookURL), "/")
+	fullURL := strings.TrimSuffix(trimmed, "/bot/webhook") + "/bot/webhook"
 	reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setWebhook", b.cfg.BotToken)
 	var payload string
 	if b.cfg.WebhookSecret != "" {

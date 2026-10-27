@@ -313,37 +313,61 @@ func main() {
 	})
 
 	// =====================================================
-	// Telegram Webhook
+	// Telegram Webhook & Diagnostic Status
 	// =====================================================
-	if tgBot != nil {
-		if cfg.WebhookURL != "" {
-			if err := tgBot.SetWebhook(cfg.WebhookURL); err != nil {
-				log.Printf("⚠️  Failed to set webhook: %v", err)
-			} else {
-				log.Printf("✅ Webhook set to %s", cfg.WebhookURL)
+	r.GET("/bot/status", func(c *gin.Context) {
+		tok := strings.Trim(strings.TrimSpace(cfg.BotToken), "\"' \r\n\t")
+		preview := "empty"
+		if len(tok) > 8 {
+			preview = tok[:4] + "..." + tok[len(tok)-4:]
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"bot_initialized":   tgBot != nil,
+			"bot_token_length":  len(tok),
+			"bot_token_preview": preview,
+			"webhook_url":       cfg.WebhookURL,
+		})
+	})
+
+	if tgBot != nil && cfg.WebhookURL != "" {
+		if err := tgBot.SetWebhook(cfg.WebhookURL); err != nil {
+			log.Printf("⚠️  Failed to set webhook: %v", err)
+		} else {
+			log.Printf("✅ Webhook set to %s", cfg.WebhookURL)
+		}
+	}
+
+	r.POST("/bot/webhook", func(c *gin.Context) {
+		// Validate secret token
+		if cfg.WebhookSecret != "" {
+			secret := c.GetHeader("X-Telegram-Bot-Api-Secret-Token")
+			if secret != cfg.WebhookSecret {
+				c.Status(http.StatusForbidden)
+				return
 			}
 		}
 
-		r.POST("/bot/webhook", func(c *gin.Context) {
-			// Validate secret token
-			if cfg.WebhookSecret != "" {
-				secret := c.GetHeader("X-Telegram-Bot-Api-Secret-Token")
-				if secret != cfg.WebhookSecret {
-					c.Status(http.StatusForbidden)
-					return
-				}
-			}
+		var update tgbotapi.Update
+		if err := json.NewDecoder(c.Request.Body).Decode(&update); err != nil {
+			c.Status(http.StatusBadRequest)
+			return
+		}
 
-			var update tgbotapi.Update
-			if err := json.NewDecoder(c.Request.Body).Decode(&update); err != nil {
-				c.Status(http.StatusBadRequest)
-				return
-			}
-
+		if tgBot != nil {
 			go tgBot.HandleUpdate(update)
-			c.Status(http.StatusOK)
-		})
-	}
+		} else {
+			// Lazy initialize if token was provided/corrected
+			if lazyBot, err := bot.New(cfg, userSvc); err == nil && lazyBot != nil {
+				tgBot = lazyBot
+				referralSvc.SetBot(lazyBot)
+				missionSvc.SetBot(lazyBot)
+				go tgBot.HandleUpdate(update)
+			} else {
+				log.Printf("⚠️ [Webhook] Received update but bot is not initialized: %v", err)
+			}
+		}
+		c.Status(http.StatusOK)
+	})
 
 	// =====================================================
 	// Public API routes
