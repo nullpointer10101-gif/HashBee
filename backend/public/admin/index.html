@@ -104,7 +104,7 @@
   <div id="authControls" style="display:none; align-items:center; gap:12px;">
     <div onclick="promptChangeApiUrl()" style="cursor:pointer; display:flex; align-items:center; gap:6px; background:#12201b; padding:5px 12px; border-radius:8px; border:1px solid #10b981; font-size:11px;" title="Click to change Backend API URL">
       <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>
-      <span id="apiIndicator" class="font-mono" style="color:#10b981; font-weight:700;">hashbee2.onrender.com</span>
+      <span id="apiIndicator" class="font-mono" style="color:#10b981; font-weight:700;">hashbee3.onrender.com</span>
     </div>
     <span id="adminEmail" class="font-mono" style="font-size:12px; color:#10b981; background:#12201b; padding:4px 10px; border-radius:6px; border:1px solid #1d332b;"></span>
     <button onclick="logout()" class="btn btn-secondary" style="padding:6px 12px;">Logout</button>
@@ -130,7 +130,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Backend API URL</label>
-          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee2.onrender.com" placeholder="https://hashbee2.onrender.com">
+          <input type="text" id="apiBase" class="form-input font-mono" value="https://hashbee3.onrender.com" placeholder="https://hashbee3.onrender.com">
         </div>
         <button type="button" id="loginBtn" onclick="handleLogin(event)" class="btn btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:14px; margin-top:8px;">Login to Dashboard</button>
       </form>
@@ -1037,7 +1037,7 @@ Grow your TON in exactly 24 hours:
 <div id="toast"></div>
 
 <script>
-var API_URL = (localStorage.getItem('hb_api_url') || '').replace(/hashbee1\.onrender\.com/g, 'hashbee2.onrender.com') || 'https://hashbee2.onrender.com';
+var API_URL = (localStorage.getItem('hb_api_url') || '').replace(/hashbee[12]\.onrender\.com/g, 'hashbee3.onrender.com') || 'https://hashbee3.onrender.com';
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
@@ -1280,8 +1280,8 @@ function copyToClipboard(text, elem) {
 
 function getApiUrl() {
   let stored = localStorage.getItem('hb_api_url') || '';
-  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1') || stored.includes('hashbee1.onrender.com')) {
-    stored = 'https://hashbee2.onrender.com';
+  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1') || stored.includes('hashbee1.onrender.com') || stored.includes('hashbee2.onrender.com')) {
+    stored = 'https://hashbee3.onrender.com';
     localStorage.setItem('hb_api_url', stored);
   }
   return stored.replace(/\/$/, '');
@@ -1334,7 +1334,7 @@ async function handleLogin(e) {
   const loginId = (document.getElementById('loginId')?.value || '').trim();
   const password = (document.getElementById('loginPw')?.value || '').trim();
   let apiBaseInput = (document.getElementById('apiBase')?.value || '').trim();
-  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee2.onrender.com';
+  API_URL = apiBaseInput ? apiBaseInput.replace(/\/$/, '') : 'https://hashbee3.onrender.com';
   localStorage.setItem('hb_api_url', API_URL);
 
   if (!loginId || !password) {
@@ -1349,7 +1349,7 @@ async function handleLogin(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee2.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee3.onrender.com';
     console.log('Attempting login to:', activeUrl + '/api/admin/login');
     const res = await fetch(activeUrl + '/api/admin/login', {
       method: 'POST',
@@ -1565,7 +1565,7 @@ async function handleCreateCampaign(e) {
   }
 
   try {
-    const activeUrl = API_URL || 'https://hashbee2.onrender.com';
+    const activeUrl = API_URL || 'https://hashbee3.onrender.com';
     console.log('Publishing campaign to:', activeUrl + '/api/admin/campaigns');
     const res = await fetch(activeUrl + '/api/admin/campaigns', {
       method: 'POST',

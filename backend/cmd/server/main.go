@@ -309,7 +309,7 @@ func main() {
 			return
 		}
 		// For any other path, redirect to Vercel-hosted frontend
-		c.JSON(http.StatusOK, gin.H{"service": "hashbee-api", "docs": "https://hashbee2.onrender.com/health"})
+		c.JSON(http.StatusOK, gin.H{"service": "hashbee-api", "docs": "https://hashbee3.onrender.com/health"})
 	})
 
 	// =====================================================

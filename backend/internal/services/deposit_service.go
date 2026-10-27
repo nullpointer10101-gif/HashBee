@@ -20,6 +20,7 @@ import (
 type BotNotifier interface {
 	SendDepositNotification(telegramID int64, amountGram, ghsPower float64)
 	SendCampaignDepositNotification(ownerID uuid.UUID, title string, amountGram float64)
+	SendPlanActivationNotification(telegramID int64, planName string, costGram, returnGram, ghsPower float64)
 }
 
 type DepositService struct {

@@ -205,7 +205,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [payoutMirrorSyncing, setPayoutMirrorSyncing] = useState(false)
   const [payoutMirrorTesting, setPayoutMirrorTesting] = useState(false)
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee2.onrender.com'
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://hashbee3.onrender.com'
   const api = axios.create({
     baseURL: `${API_BASE}/api/admin`,
     headers: { Authorization: `Bearer ${token}` },
