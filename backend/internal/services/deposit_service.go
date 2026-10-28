@@ -144,10 +144,12 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			var recipientAddr string
 			var comment string
 
+			var senderAddr string
 			if action.Type == "TonTransfer" && action.TonTransfer != nil {
 				transfer := action.TonTransfer
 				amountGram = float64(transfer.Amount) / 1e9
 				recipientAddr = strings.ToLower(transfer.Recipient.Address)
+				senderAddr = strings.ToLower(transfer.Sender.Address)
 				comment = strings.TrimSpace(transfer.Comment)
 			} else if action.Type == "JettonTransfer" && action.JettonTransfer != nil {
 				jt := action.JettonTransfer
@@ -158,6 +160,7 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				} else {
 					recipientAddr = strings.ToLower(jt.RecipientsWallet)
 				}
+				senderAddr = strings.ToLower(jt.Sender.Address)
 				comment = strings.TrimSpace(jt.Comment)
 			} else {
 				continue
@@ -300,6 +303,21 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				}
 			}
 
+			// Filter out dummy preview / offline mock Telegram ID 12345678
+			if targetTelegramID == 12345678 {
+				targetTelegramID = 0
+			}
+
+			// Fallback: match by sender wallet address if targetTelegramID could not be determined from memo
+			if targetTelegramID <= 0 && senderAddress != "" && telegramID > 0 {
+				normSender := normalizeTonAddress(senderAddr)
+				normTarget := normalizeTonAddress(senderAddress)
+				if normSender != "" && normTarget != "" && normSender == normTarget {
+					targetTelegramID = telegramID
+					log.Printf("🔍 [DepositService] Matched deposit %s to user %d via sender address %s", eventId, telegramID, senderAddress)
+				}
+			}
+
 			if targetTelegramID <= 0 {
 				continue
 			}
@@ -428,6 +446,11 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 	}
 
 	return creditedCount, nil
+}
+
+// ActivatePlanViaDeposit exposes plan activation for manual admin crediting or verification
+func (s *DepositService) ActivatePlanViaDeposit(ctx context.Context, telegramID int64, planID string, amountGram float64, eventID string) (bool, error) {
+	return s.activatePlanViaDeposit(ctx, telegramID, planID, amountGram, eventID)
 }
 
 func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID int64, planID string, amountGram float64, eventID string) (bool, error) {

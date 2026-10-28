@@ -29,9 +29,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   if (!isOpen) return null
 
   const depositAddress = 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR'
-  const userMemo = user ? `HB_${user.telegram_id}` : 'HB_MINER'
+  const isMockUser = !user || user.telegram_id === 12345678 || user.telegram_id === 0
+  const userMemo = isMockUser ? '' : `HB_${user.telegram_id}`
 
   const copyMemo = () => {
+    if (isMockUser) {
+      toast.error('⚠️ Please open HashBee inside Telegram to get your unique deposit memo.')
+      return
+    }
     navigator.clipboard.writeText(userMemo)
     setCopiedMemo(true)
     toast.success('Memo copied!')
@@ -52,6 +57,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const modalEarningsPerMonth = modalEarningsPerDay * 30
 
   const handleOpenTonkeeper = () => {
+    if (isMockUser) {
+      toast.error('⚠️ Please open HashBee inside Telegram to link payments to your account.')
+      return
+    }
     const nanoAmount = Math.round(numDeposit * 1e9)
     const comment = encodeURIComponent(userMemo)
     const tonkeeperUrl = `https://app.tonkeeper.com/transfer/${depositAddress}?amount=${nanoAmount}&text=${comment}`
@@ -210,20 +219,26 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 <div className="text-[9px] font-extrabold text-[#7c3aed] uppercase mb-1 font-bold">
                   Transfer Memo (REQUIRED)
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    readOnly
-                    value={userMemo}
-                    className="flex-1 bg-white text-[11px] text-[#7c3aed] font-mono font-bold px-2.5 py-1.5 rounded-lg border border-purple-200 outline-none"
-                  />
-                  <button
-                    onClick={copyMemo}
-                    className="px-2.5 py-1.5 bg-purple-100 text-[#7c3aed] text-[10px] font-bold rounded-lg"
-                  >
-                    {copiedMemo ? '✓' : 'Copy'}
-                  </button>
-                </div>
+                {isMockUser ? (
+                  <div className="bg-amber-50 text-amber-900 text-[10px] p-2 rounded-lg border border-amber-200 font-semibold leading-relaxed">
+                    ⚠️ Open in Telegram to get your unique memo: <a href="https://t.me/hashbe_bot" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">@hashbe_bot</a>.
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      readOnly
+                      value={userMemo}
+                      className="flex-1 bg-white text-[11px] text-[#7c3aed] font-mono font-bold px-2.5 py-1.5 rounded-lg border border-purple-200 outline-none"
+                    />
+                    <button
+                      onClick={copyMemo}
+                      className="px-2.5 py-1.5 bg-purple-100 text-[#7c3aed] text-[10px] font-bold rounded-lg"
+                    >
+                      {copiedMemo ? '✓' : 'Copy'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -316,8 +316,13 @@ export const Plans: React.FC = () => {
     return () => clearInterval(interval)
   }, [])
 
+  const isMockUser = !userTelegramId || String(userTelegramId).trim() === '12345678' || String(userTelegramId).trim() === '0'
+
   const getPlanMemo = (planId: string) => {
-    const tgId = userTelegramId || '0'
+    if (isMockUser) {
+      return ''
+    }
+    const tgId = userTelegramId
     return `PLAN_${planId.toUpperCase()}_${tgId}`
   }
 
@@ -327,6 +332,10 @@ export const Plans: React.FC = () => {
   }
 
   const handle1ClickTonkeeper = (plan: PlanTier) => {
+    if (isMockUser) {
+      toast.error('⚠️ Please open HashBee inside Telegram (@hashbe_bot) so your miner payment links to your Telegram account!')
+      return
+    }
     const nanoAmount = Math.round(plan.cost_gram * 1e9)
     const memo = getPlanMemo(plan.id)
     const comment = encodeURIComponent(memo)
@@ -1048,28 +1057,39 @@ export const Plans: React.FC = () => {
                   <label className="text-[9px] text-[#7c3aed] uppercase block mb-1 font-bold">
                     Comment / Memo (CRITICAL)
                   </label>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      readOnly
-                      value={getPlanMemo(selectedPlan.id)}
-                      className="flex-1 bg-white text-[11px] text-[#7c3aed] font-mono font-bold px-3 py-2 rounded-xl border border-purple-200 outline-none select-all"
-                    />
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(getPlanMemo(selectedPlan.id))
-                        setCopiedMemo(true)
-                        setTimeout(() => setCopiedMemo(false), 2000)
-                        toast.success('Memo copied!')
-                      }}
-                      className="px-3 py-2 bg-purple-100 text-[#7c3aed] text-xs font-bold rounded-xl"
-                    >
-                      {copiedMemo ? '✓' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="text-[9px] text-slate-500 mt-1">
-                    ⚠️ You MUST paste this memo in your wallet so your miner activates immediately.
-                  </p>
+                  {isMockUser ? (
+                    <div className="bg-amber-50 text-amber-900 text-[11px] p-3 rounded-xl border border-amber-200 font-semibold leading-relaxed">
+                      ⚠️ You are viewing this page outside Telegram. To activate a miner and link your payment, please open HashBee inside Telegram: <a href="https://t.me/hashbe_bot" target="_blank" rel="noreferrer" className="underline font-bold text-amber-950">@hashbe_bot</a>.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          readOnly
+                          value={getPlanMemo(selectedPlan.id)}
+                          className="flex-1 bg-white text-[11px] text-[#7c3aed] font-mono font-bold px-3 py-2 rounded-xl border border-purple-200 outline-none select-all"
+                        />
+                        <button
+                          onClick={() => {
+                            const memo = getPlanMemo(selectedPlan.id)
+                            if (memo) {
+                              navigator.clipboard.writeText(memo)
+                              setCopiedMemo(true)
+                              setTimeout(() => setCopiedMemo(false), 2000)
+                              toast.success('Memo copied!')
+                            }
+                          }}
+                          className="px-3 py-2 bg-purple-100 text-[#7c3aed] text-xs font-bold rounded-xl"
+                        >
+                          {copiedMemo ? '✓' : 'Copy'}
+                        </button>
+                      </div>
+                      <p className="text-[9px] text-slate-500 mt-1">
+                        ⚠️ You MUST paste this memo in your wallet so your miner activates immediately.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
 
