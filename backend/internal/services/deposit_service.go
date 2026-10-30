@@ -270,6 +270,7 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 				"PLAN_VIP30_HB_", "PLAN_VIP30_HB", "PLAN_VIP30_", "PLAN_VIP30",
 				"PLAN_FLASH30_HB_", "PLAN_FLASH30_HB", "PLAN_FLASH30_", "PLAN_FLASH30",
 				"PLAN_FLASH10_HB_", "PLAN_FLASH10_HB", "PLAN_FLASH10_", "PLAN_FLASH10",
+				"PLAN_FLASH5_HB_", "PLAN_FLASH5_HB", "PLAN_FLASH5_", "PLAN_FLASH5",
 				"PLAN_FLASH25_HB_", "PLAN_FLASH25_HB", "PLAN_FLASH25_", "PLAN_FLASH25",
 				"PLAN_FLASH2X_HB_", "PLAN_FLASH2X_HB", "PLAN_FLASH2X_", "PLAN_FLASH2X",
 				"PLAN_FLASH_HB_", "PLAN_FLASH_HB", "PLAN_FLASH_", "PLAN_FLASH",
@@ -331,6 +332,9 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 			} else if strings.HasPrefix(upperComment, "PLAN_APEX") {
 				isPlanDeposit = true
 				planID = "apex"
+			} else if strings.HasPrefix(upperComment, "PLAN_FLASH5") {
+				isPlanDeposit = true
+				planID = "flash5"
 			} else if strings.HasPrefix(upperComment, "PLAN_FLASH10") || strings.HasPrefix(upperComment, "PLAN_FLASH25") {
 				isPlanDeposit = true
 				planID = "flash10"
@@ -397,6 +401,8 @@ func (s *DepositService) ProcessDepositsForUser(ctx context.Context, telegramID 
 						planID = "flash10"
 					} else if amountGram >= 6.0 {
 						planID = "titan"
+					} else if amountGram >= 4.5 && amountGram < 5.8 {
+						planID = "flash5"
 					} else if amountGram >= 4.0 {
 						planID = "flash10"
 					} else if amountGram >= 3.0 {
@@ -517,6 +523,11 @@ func (s *DepositService) activatePlanViaDeposit(ctx context.Context, telegramID 
 		} else {
 			costGRAM = 6.00
 		}
+		returnGRAM = 10.00
+		maxPerAccount = 0
+	case "flash5":
+		planName = "Flash 2X Mega Hive"
+		costGRAM = 5.00
 		returnGRAM = 10.00
 		maxPerAccount = 0
 	case "flash10":

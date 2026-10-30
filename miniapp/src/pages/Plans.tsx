@@ -25,7 +25,7 @@ export const Plans: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   // Interactive Live Yield Simulator
-  const [calcSelectedId, setCalcSelectedId] = useState<string>('flash10')
+  const [calcSelectedId, setCalcSelectedId] = useState<string>('flash5')
 
   // Live Activity Ticker state
   const [tickerIndex, setTickerIndex] = useState(0)
@@ -37,12 +37,12 @@ export const Plans: React.FC = () => {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [copiedMemo, setCopiedMemo] = useState(false)
 
-  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots (Round 2: 10 TON -> 25 GRAM)
+  // 24H Flash Miner Countdown Timer & 500 Dynamic Slots (Round: 5 TON -> 10 GRAM)
   const TOTAL_FLASH_SLOTS = 500
   const [flashTimeLeft, setFlashTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; isEnded: boolean }>({
     hours: 23,
-    minutes: 48,
-    seconds: 15,
+    minutes: 58,
+    seconds: 45,
     isEnded: false,
   })
   const [flashSlots, setFlashSlots] = useState<{ filled: number; left: number }>({
@@ -53,18 +53,18 @@ export const Plans: React.FC = () => {
   useEffect(() => {
     let liveRandomBonus = 0
 
-    // Consistent session deadline for Round 2: stored in localStorage so it ticks naturally for 24 hours
+    // Consistent session deadline: stored in localStorage so it ticks naturally for 24 hours
     const getDeadline = () => {
       try {
-        const stored = localStorage.getItem('hb_flash_round2_end')
+        const stored = localStorage.getItem('hb_flash_round_5g_end')
         if (stored) {
           const val = parseInt(stored, 10)
           if (val > Date.now()) return val
         }
       } catch (_) {}
-      const dl = Date.now() + (23 * 3600 + 48 * 60 + 30) * 1000
+      const dl = Date.now() + (23 * 3600 + 58 * 60 + 45) * 1000
       try {
-        localStorage.setItem('hb_flash_round2_end', String(dl))
+        localStorage.setItem('hb_flash_round_5g_end', String(dl))
       } catch (_) {}
       return dl
     }
@@ -130,6 +130,27 @@ export const Plans: React.FC = () => {
     (user?.first_name?.toLowerCase().includes('gaurav') && (user?.last_name?.toLowerCase().includes('soni') || String(userTelegramId).trim() === '8842934236'))
 
   const ALL_PLAN_TIERS: PlanTier[] = [
+    {
+      id: 'flash5',
+      name: isVipDiscount ? '⚡ 25 GRAM RED FLASH MINER' : '⚡ FLASH 2X MEGA HIVE (24H)',
+      subtitle: isVipDiscount
+        ? '🔥 24H EXCLUSIVE RED DROP: Pay 10.00 TON ➔ Instant 25.00 GRAM in 24h (+150% PROFIT)'
+        : flashTimeLeft.isEnded
+        ? '⚠️ 24-HOUR FLASH SALE CONCLUDED (OFFER EXPIRED)'
+        : '🔥 24H FLASH DROP: Invest 5.00 TON ➔ Instant 10.00 GRAM in 24h (+100% PROFIT / 2X DOUBLE)',
+      badge: isVipDiscount ? '🔥 25.00 GRAM RED MINER (+150%)' : flashTimeLeft.isEnded ? '⏳ EVENT ENDED' : '🔥 2X DOUBLE (+100%)',
+      cost_gram: isVipDiscount ? 10.0 : 5.0,
+      return_gram: isVipDiscount ? 25.0 : 10.0,
+      profit_gram: isVipDiscount ? 15.0 : 5.0,
+      profit_percent: isVipDiscount ? 150.0 : 100.0,
+      duration_hours: 24,
+      max_per_account: 0,
+      is_limited: true,
+      user_purchased: 0,
+      can_purchase: isVipDiscount ? true : !flashTimeLeft.isEnded,
+      icon: '🔥',
+      accent_color: '#ef4444',
+    },
     {
       id: 'standard',
       name: 'Cyber Worker Miner',
@@ -261,12 +282,13 @@ export const Plans: React.FC = () => {
   ]
 
   const LIVE_ACTIVITIES = [
-    { user: '@alex_ton', action: 'Activated Flash 2.5X Hyper Hive', returnG: '+25.00 G', time: '1m ago' },
+    { user: '@alex_ton', action: 'Activated Flash 2X Mega Hive', returnG: '+10.00 G', time: 'Just now' },
+    { user: '@ton_miner', action: 'Activated Flash 2X Mega Hive', returnG: '+10.00 G', time: '1m ago' },
     { user: '@whale_99', action: 'Activated Quantum Sovereign 2X', returnG: '+50.00 G', time: '3m ago' },
-    { user: '@crypto_pro', action: 'Claimed Flash 2.5X Reward', returnG: '+25.00 G', time: '4m ago' },
-    { user: '@sergey_k', action: 'Activated Flash 2.5X Hyper Hive', returnG: '+25.00 G', time: '6m ago' },
+    { user: '@crypto_pro', action: 'Claimed Flash 2X Reward', returnG: '+10.00 G', time: '4m ago' },
+    { user: '@sergey_k', action: 'Activated Flash 2X Mega Hive', returnG: '+10.00 G', time: '6m ago' },
     { user: '@ton_whale', action: 'Activated Apex Sovereign Node', returnG: '+22.00 G', time: '9m ago' },
-    { user: '@ton_miner', action: 'Activated Cyber Worker Miner', returnG: '+2.00 G', time: '14m ago' },
+    { user: '@fast_miner', action: 'Activated Cyber Worker Miner', returnG: '+2.00 G', time: '14m ago' },
   ]
 
   const loadData = async () => {
@@ -414,7 +436,7 @@ export const Plans: React.FC = () => {
     .filter((tier) => {
       if (isVipDiscount) {
         // Gaurav Soni: remove all other 24h miners! Only show the 25-Gram Red Miner(s)
-        return tier.id === 'flash10' || tier.id === 'gaurav25'
+        return tier.id === 'flash5' || tier.id === 'flash10' || tier.id === 'gaurav25'
       }
       return tier.id !== 'gaurav25'
     })
@@ -428,9 +450,9 @@ export const Plans: React.FC = () => {
           return_gram: tier.return_gram,
           profit_gram: tier.profit_gram,
           profit_percent: tier.profit_percent,
-          badge: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.badge : serverPlan.badge,
-          subtitle: (tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.subtitle : serverPlan.subtitle,
-          can_purchase: tier.id === 'flash10' ? (isVipDiscount ? true : !flashTimeLeft.isEnded) : tier.id === 'flash2x' ? false : tier.id === 'gaurav25' ? true : serverPlan.can_purchase,
+          badge: (tier.id === 'flash5' || tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.badge : serverPlan.badge,
+          subtitle: (tier.id === 'flash5' || tier.id === 'flash10' || tier.id === 'flash2x' || tier.id === 'gaurav25') ? tier.subtitle : serverPlan.subtitle,
+          can_purchase: (tier.id === 'flash5' || tier.id === 'flash10') ? (isVipDiscount ? true : !flashTimeLeft.isEnded) : tier.id === 'flash2x' ? false : tier.id === 'gaurav25' ? true : serverPlan.can_purchase,
         }
       }
       return tier
@@ -604,14 +626,14 @@ export const Plans: React.FC = () => {
                 ? '24-Hour Flash Sale Has Ended'
                 : isVipDiscount
                 ? 'Deposit 15.00 TON ➔ Get 40.00 GRAM (+166.7% Profit)'
-                : 'Deposit 10.00 TON ➔ Get 25.00 GRAM (+150% Profit)'}
+                : 'Invest 5.00 TON ➔ Get 10.00 GRAM (+100% Profit / 2X)'}
             </h2>
             <p className="text-[11px] text-rose-100 font-medium mt-1 relative z-10">
               {flashTimeLeft.isEnded
                 ? 'This limited 24-hour contract has expired and is no longer available.'
                 : isVipDiscount
                 ? 'Exclusive 24-Hour Special VIP Contract. Exact 2.67X return (40.00 GRAM) unlocked directly to your wallet in 24h!'
-                : 'Limited 24-Hour Special Yield Contract (Round 2). Exact 2.5X return (25.00 GRAM) unlocked directly to your wallet in 24h!'}
+                : 'Limited 24-Hour Special 2X Contract (500 Slots). Invest 5.00 TON ➔ Instant 10.00 GRAM in 24h (+100% PROFIT / 2X DOUBLE)!'}
             </p>
             <div className="mt-3 flex items-center justify-between gap-3 relative z-10">
               <div className="flex-1">
@@ -638,7 +660,7 @@ export const Plans: React.FC = () => {
                   if (flashTimeLeft.isEnded && !isVipDiscount) return
                   const flashPlan = isVipDiscount
                     ? availablePlans.find((p) => p.id === 'flash10') || availablePlans[0]
-                    : availablePlans.find((p) => p.id === 'flash10') || availablePlans.find((p) => p.id === 'flash2x')
+                    : availablePlans.find((p) => p.id === 'flash5') || availablePlans.find((p) => p.id === 'flash10') || availablePlans.find((p) => p.id === 'flash2x')
                   if (flashPlan) handleOpenPayment(flashPlan)
                 }}
                 className={`px-3.5 py-1.5 text-[11px] font-black rounded-xl uppercase tracking-wider shadow-lg transition-all shrink-0 ${
@@ -651,14 +673,15 @@ export const Plans: React.FC = () => {
                   ? 'ENDED ⏳'
                   : isVipDiscount
                   ? 'CLAIM 25G RED MINER ➔'
-                  : 'CLAIM 2.5X (10 TON) ➔'}
+                  : 'CLAIM 2X (5 TON) ➔'}
               </button>
             </div>
           </div>
 
           {availablePlans.map((plan, index) => {
             const isGauravPlan = plan.id === 'gaurav25'
-            const isFlashRound2 = plan.id === 'flash10'
+            const isFlash5 = plan.id === 'flash5'
+            const isFlashRound2 = plan.id === 'flash10' || isFlash5
             const isFlashRound1 = plan.id === 'flash2x'
             const isFlash = isFlashRound2 || isFlashRound1 || isGauravPlan
             const isDouble = plan.id === 'matrix'

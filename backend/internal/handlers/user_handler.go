@@ -627,10 +627,10 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		`SELECT COUNT(*), COALESCE(SUM(return_gram), 0) FROM user_plans WHERE user_id = $1 AND status = 'claimed'`,
 		user.ID).Scan(&claimedCount, &totalEarned)
 
-	// 24H Flash Miner Deadline (Round 2 active for 24 hours)
-	flashSaleDeadline := time.Date(2026, 10, 27, 23, 59, 59, 0, time.UTC)
+	// 24H Flash Miner Deadline (Active for 24 hours from current session)
+	flashSaleDeadline := time.Now().UTC().Add(24 * time.Hour)
 	now := time.Now().UTC()
-	isFlashEnded := now.After(flashSaleDeadline)
+	isFlashEnded := false
 
 	var plans []models.PlanTier
 	isGaurav := user.TelegramID == 8842934236 || strings.Contains(strings.ToLower(user.FirstName), "gaurav") || strings.Contains(strings.ToLower(user.Username), "gaurav")
@@ -675,6 +675,23 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 		}
 	} else {
 		plans = []models.PlanTier{
+			{
+				ID:            "flash5",
+				Name:          "⚡ 24H FLASH: 2X DOUBLE HIVE",
+				Subtitle:      "🔥 24H FLASH DROP: Invest 5.00 TON ➔ Instant 10.00 GRAM in 24h (+100% PROFIT / 2X DOUBLE)",
+				Badge:         "🔥 2X DOUBLE (+100%)",
+				CostGRAM:      5.00,
+				ReturnGRAM:    10.00,
+				ProfitGRAM:    5.00,
+				ProfitPercent: 100.00,
+				DurationHours: 24,
+				MaxPerAccount: 0,
+				IsLimited:     true,
+				UserPurchased: 0,
+				CanPurchase:   !isFlashEnded,
+				Icon:          "🔥",
+				AccentColor:   "#ef4444",
+			},
 			{
 				ID:            "standard",
 				Name:          "Cyber Worker Miner",
