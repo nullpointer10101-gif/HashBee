@@ -629,7 +629,6 @@ func (h *UserHandler) GetPlans(c *gin.Context) {
 
 	// 24H Flash Miner Deadline (Active for 24 hours from current session)
 	flashSaleDeadline := time.Now().UTC().Add(24 * time.Hour)
-	now := time.Now().UTC()
 	isFlashEnded := false
 
 	var plans []models.PlanTier
