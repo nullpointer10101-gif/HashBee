@@ -1,12 +1,23 @@
 /**
  * Multi-Provider Ad Coordinator for HashBee
- * Primary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
+ * Primary: Adsgram (Block ID: 56832 - Rewarded Video)
+ * Secondary: AdExium (WID: 8e21d2a6-6c80-4b16-baf9-990e07ff2f00)
  * Backup: GigaPub (App ID: 8543)
  * Automatic Ad Schedule: Strictly every 2 minutes with safety mutex
  */
 
 declare global {
   interface Window {
+    Adsgram?: {
+      init: (params: { blockId: string; debug?: boolean }) => {
+        show: () => Promise<{
+          done: boolean
+          description?: string
+          state?: string
+          error?: boolean
+        }>
+      }
+    }
     showGiga?: () => Promise<any>
     adexiumWidget?: any
     AdexiumWidget?: any
@@ -14,6 +25,47 @@ declare global {
     initAdexium?: () => any
     requestAdexiumAd?: (format?: string) => boolean
     _adexiumReady?: boolean
+  }
+}
+
+export const ADSGRAM_BLOCK_ID = '56832'
+let adsgramController: any = null
+
+export const initAdsgram = () => {
+  if (typeof window === 'undefined') return null
+  if (adsgramController) return adsgramController
+  if (window.Adsgram) {
+    try {
+      adsgramController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID })
+      console.log('🐝 [Adsgram] Initialized with blockId:', ADSGRAM_BLOCK_ID)
+      return adsgramController
+    } catch (e) {
+      console.warn('⚠️ [Adsgram] Init error:', e)
+    }
+  }
+  return null
+}
+
+export const showAdsgramAd = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') return false
+
+  const controller = initAdsgram() || (window.Adsgram ? window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID }) : null)
+  if (!controller) {
+    console.warn('⚠️ [Adsgram] Controller not available (SDK script still loading or blocked).')
+    return false
+  }
+
+  try {
+    console.log(`🎬 [Adsgram] Requesting rewarded video (Block ID: ${ADSGRAM_BLOCK_ID})...`)
+    const result = await controller.show()
+    console.log('🐝 [Adsgram] Playback result:', result)
+    if (result && result.done) {
+      return true
+    }
+    return false
+  } catch (err: any) {
+    console.warn('⚠️ [Adsgram] Ad dismissed, skipped or no-fill:', err?.description || err)
+    return false
   }
 }
 
@@ -341,11 +393,12 @@ export const showGigaPubAd = async (): Promise<{ success: boolean; duration: num
 /**
  * Full Sequential Waterfall:
  * 1. Checks global mutex & 30s delay between ads.
- * 2. Try AdExium first (with automatic regional inventory fallback).
- * 3. If AdExium fails/no-fill, ALWAYS cascade to GigaPub backup (100% fill coverage).
+ * 2. Try Adsgram first (Block 56832 - Official Telegram Monetization Partner).
+ * 3. If Adsgram fails/no-fill, cascade to AdExium.
+ * 4. If AdExium fails/no-fill, cascade to GigaPub backup (100% fill coverage).
  */
 export const showRewardedAdWithWaterfall = async (
-  preferredProvider: 'adexium' | 'gigapub' | 'any' = 'adexium'
+  preferredProvider: 'adsgram' | 'adexium' | 'gigapub' | 'any' = 'adsgram'
 ): Promise<{ success: boolean; provider: string; duration: number }> => {
   if (typeof window === 'undefined') return { success: false, provider: 'none', duration: 0 }
 
@@ -364,15 +417,32 @@ export const showRewardedAdWithWaterfall = async (
   isAdActive = true
 
   try {
-    // 1. Primary: AdExium
+    // 1. Primary: Adsgram (Block 56832) - Highest CPM & Direct TON/USDT Revenue
+    if (preferredProvider !== 'adexium' && preferredProvider !== 'gigapub') {
+      console.log('🎬 [Ads] Step 1/3: Requesting Adsgram rewarded video (Block 56832)...')
+      const adStartTime = Date.now()
+      const adsgramSuccess = await showAdsgramAd()
+      const adDuration = (Date.now() - adStartTime) / 1000
+
+      if (adsgramSuccess) {
+        lastAdCompletedTimestamp = Date.now()
+        setAdCooldown(AD_COOLDOWN_SECONDS)
+        console.log(`✅ [Ads] Adsgram ad watched and verified (${adDuration.toFixed(1)}s)!`)
+        return { success: true, provider: 'Adsgram', duration: adDuration }
+      }
+      console.log('⚠️ [Ads] Adsgram no-fill or dismissed. Cascading to AdExium...')
+    }
+
+    // 2. Secondary: AdExium
     if (preferredProvider !== 'gigapub') {
-      console.log('[Ads] Step 1/2: Requesting AdExium primary provider...')
+      console.log('🎬 [Ads] Step 2/3: Requesting AdExium fallback provider...')
       const adStartTime = Date.now()
       const adexSuccess = await showAdexiumAd()
       const adDuration = (Date.now() - adStartTime) / 1000
 
       if (adexSuccess && adDuration >= 9.5) {
         lastAdCompletedTimestamp = Date.now()
+        setAdCooldown(AD_COOLDOWN_SECONDS)
         console.log(`✅ [Ads] AdExium successfully verified (${adDuration.toFixed(1)}s)!`)
         return { success: true, provider: 'AdExium', duration: adDuration }
       }
@@ -384,12 +454,13 @@ export const showRewardedAdWithWaterfall = async (
       console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
     }
 
-    // 2. Backup: GigaPub (App ID 8543) - Guaranteed 100% cascade when AdExium has no fill
-    console.log('[Ads] Step 2/2: Requesting GigaPub backup provider (id: 8543)...')
+    // 3. Backup: GigaPub (App ID 8543) - Guaranteed 100% cascade when other networks have no fill
+    console.log('🎬 [Ads] Step 3/3: Requesting GigaPub backup provider (id: 8543)...')
     const gigaRes = await showGigaPubAd()
 
     if (gigaRes.success) {
       lastAdCompletedTimestamp = Date.now()
+      setAdCooldown(AD_COOLDOWN_SECONDS)
       console.log(`✅ [Ads] GigaPub successfully verified (${gigaRes.duration.toFixed(1)}s)!`)
       return { success: true, provider: 'GigaPub', duration: gigaRes.duration }
     }
@@ -476,16 +547,17 @@ export const initMonetagAutoAds = () => {
   if (typeof window === 'undefined' || hasInitializedAutoAds) return
   hasInitializedAutoAds = true
 
-  // Step 0: Pre-warm the AdExium widget as soon as possible.
-  // This starts the SDK connection to the ad network early so the first real
-  // ad request completes much faster (avoids cold-start RTT on first show).
+  // Step 0: Pre-warm Adsgram & AdExium widgets as soon as possible.
+  initAdsgram()
   const tryPrewarm = () => {
+    initAdsgram()
     const w = ensureAdexiumWidget()
     if (w) {
       console.log('[Ads] ✅ AdExium widget pre-warmed on init')
     } else {
       // Script not yet parsed — retry once after 3s
       setTimeout(() => {
+        initAdsgram()
         ensureAdexiumWidget()
       }, 3000)
     }
