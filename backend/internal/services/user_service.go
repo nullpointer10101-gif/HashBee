@@ -523,6 +523,8 @@ func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provi
 	providerName := "AdExium"
 	if strings.EqualFold(provider, "gigapub") {
 		providerName = "GigaPub"
+	} else if strings.EqualFold(provider, "adsgram") {
+		providerName = "Adsgram"
 	}
 	desc := fmt.Sprintf("Watched %s Ad (Option %d) - +0.50 GHS Mining Power", providerName, optionIndex+1)
 	idempKey := fmt.Sprintf("ad_reward_%s_%d", userID, time.Now().UnixNano())

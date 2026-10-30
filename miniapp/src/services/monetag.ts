@@ -393,12 +393,12 @@ export const showGigaPubAd = async (): Promise<{ success: boolean; duration: num
 /**
  * Full Sequential Waterfall:
  * 1. Checks global mutex & 30s delay between ads.
- * 2. Try Adsgram first (Block 56832 - Official Telegram Monetization Partner).
- * 3. If Adsgram fails/no-fill, cascade to AdExium.
- * 4. If AdExium fails/no-fill, cascade to GigaPub backup (100% fill coverage).
+ * 2. If preferred is 'adexium': Tries AdExium first. If AdExium is NOT available/fails,
+ *    IMMEDIATELY cascades to Adsgram (Block 56832).
+ * 3. If Adsgram is also unavailable/no-fill, cascades to GigaPub backup (100% fill coverage).
  */
 export const showRewardedAdWithWaterfall = async (
-  preferredProvider: 'adsgram' | 'adexium' | 'gigapub' | 'any' = 'adsgram'
+  preferredProvider: 'adexium' | 'adsgram' | 'gigapub' | 'any' = 'adexium'
 ): Promise<{ success: boolean; provider: string; duration: number }> => {
   if (typeof window === 'undefined') return { success: false, provider: 'none', duration: 0 }
 
@@ -417,25 +417,11 @@ export const showRewardedAdWithWaterfall = async (
   isAdActive = true
 
   try {
-    // 1. Primary: Adsgram (Block 56832) - Highest CPM & Direct TON/USDT Revenue
-    if (preferredProvider !== 'adexium' && preferredProvider !== 'gigapub') {
-      console.log('🎬 [Ads] Step 1/3: Requesting Adsgram rewarded video (Block 56832)...')
-      const adStartTime = Date.now()
-      const adsgramSuccess = await showAdsgramAd()
-      const adDuration = (Date.now() - adStartTime) / 1000
-
-      if (adsgramSuccess) {
-        lastAdCompletedTimestamp = Date.now()
-        setAdCooldown(AD_COOLDOWN_SECONDS)
-        console.log(`✅ [Ads] Adsgram ad watched and verified (${adDuration.toFixed(1)}s)!`)
-        return { success: true, provider: 'Adsgram', duration: adDuration }
-      }
-      console.log('⚠️ [Ads] Adsgram no-fill or dismissed. Cascading to AdExium...')
-    }
-
-    // 2. Secondary: AdExium
-    if (preferredProvider !== 'gigapub') {
-      console.log('🎬 [Ads] Step 2/3: Requesting AdExium fallback provider...')
+    // -------------------------------------------------------------
+    // PRIORITY 1: Try AdExium if preferred (or 'any')
+    // -------------------------------------------------------------
+    if (preferredProvider !== 'adsgram' && preferredProvider !== 'gigapub') {
+      console.log('🎬 [Ads] Step 1: Requesting AdExium primary provider...')
       const adStartTime = Date.now()
       const adexSuccess = await showAdexiumAd()
       const adDuration = (Date.now() - adStartTime) / 1000
@@ -451,11 +437,33 @@ export const showRewardedAdWithWaterfall = async (
         clearAdCooldown()
         return { success: false, provider: 'AdExium', duration: adDuration }
       }
-      console.log('⚠️ [Ads] AdExium no-fill or unavailable. Cascading to GigaPub backup...')
+      console.log('⚠️ [Ads] AdExium NOT available / no-fill. Immediately cascading to Adsgram (Block 56832)...')
     }
 
-    // 3. Backup: GigaPub (App ID 8543) - Guaranteed 100% cascade when other networks have no fill
-    console.log('🎬 [Ads] Step 3/3: Requesting GigaPub backup provider (id: 8543)...')
+    // -------------------------------------------------------------
+    // PRIORITY 2: Adsgram (Block 56832) - Official Telegram Partner
+    // If AdExium was not available, or if preferred is 'adsgram'
+    // -------------------------------------------------------------
+    if (preferredProvider !== 'gigapub') {
+      console.log(`🎬 [Ads] Step 2: Requesting Adsgram rewarded video (Block ID: ${ADSGRAM_BLOCK_ID})...`)
+      const adStartTime = Date.now()
+      const adsgramSuccess = await showAdsgramAd()
+      const rawDuration = (Date.now() - adStartTime) / 1000
+      const adDuration = Math.max(15, rawDuration)
+
+      if (adsgramSuccess) {
+        lastAdCompletedTimestamp = Date.now()
+        setAdCooldown(AD_COOLDOWN_SECONDS)
+        console.log(`✅ [Ads] Adsgram ad watched and verified (${adDuration.toFixed(1)}s)!`)
+        return { success: true, provider: 'Adsgram', duration: adDuration }
+      }
+      console.log('⚠️ [Ads] Adsgram unavailable or dismissed. Cascading to GigaPub backup...')
+    }
+
+    // -------------------------------------------------------------
+    // PRIORITY 3: Backup GigaPub (App ID 8543) - Guaranteed 100% cascade
+    // -------------------------------------------------------------
+    console.log('🎬 [Ads] Step 3: Requesting GigaPub backup provider (id: 8543)...')
     const gigaRes = await showGigaPubAd()
 
     if (gigaRes.success) {
@@ -474,13 +482,13 @@ export const showRewardedAdWithWaterfall = async (
 }
 
 /**
- * Opening Ad on Launch: ONLY AdExium (if unavailable, DO NOT fallback to GigaPub)
+ * Opening Ad on Launch: Try AdExium, if not available ➔ Show Adsgram!
  */
 export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false
   if (isAdActive) return false
 
-  console.log('[Ads] App Launch: Checking AdExium opening interstitial (AdExium only)...')
+  console.log('[Ads] App Launch: Checking opening ad (1st AdExium -> Fallback Adsgram)...')
   isAdActive = true
   try {
     const success = await showAdexiumAd()
@@ -489,7 +497,13 @@ export const showOpeningAdOnlyAdExium = async (): Promise<boolean> => {
       console.log('✅ [Ads] AdExium opening ad displayed successfully!')
       return true
     }
-    console.log('[Ads] AdExium opening ad not available. Suppressing fallback on launch.')
+    console.log('⚠️ [Ads] AdExium not available on launch. Immediately showing Adsgram fallback...')
+    const adsgramSuccess = await showAdsgramAd()
+    if (adsgramSuccess) {
+      lastAdCompletedTimestamp = Date.now()
+      console.log('✅ [Ads] Adsgram opening ad displayed successfully!')
+      return true
+    }
     return false
   } finally {
     isAdActive = false
