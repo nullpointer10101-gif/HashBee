@@ -693,6 +693,8 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 		orderClause = "u.honey_balance DESC, u.created_at DESC"
 	case "referrals_desc":
 		orderClause = "referral_count DESC, u.bp DESC, u.created_at DESC"
+	case "deposit_desc":
+		orderClause = "total_deposited DESC, u.created_at DESC"
 	default:
 		orderClause = "u.created_at DESC"
 	}
@@ -704,7 +706,13 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 		        COALESCE(GREATEST(
 		            (SELECT COUNT(*) FROM referrals r WHERE r.referrer_id = u.id AND r.level = 1),
 		            (SELECT COUNT(*) FROM users r2 WHERE r2.referrer_id = u.id)
-		        ), 0) AS referral_count
+		        ), 0) AS referral_count,
+		        COALESCE((
+		            SELECT SUM(t.amount) FROM transactions t
+		            WHERE t.user_id = u.id
+		              AND t.type IN ('deposit', 'deposit_balance', 'plan_purchase', 'campaign_payment')
+		              AND UPPER(t.currency) IN ('GRAM', 'TON', 'USDT')
+		        ), 0) AS total_deposited
 		 FROM users u %s ORDER BY %s LIMIT $%d OFFSET $%d`, whereClause, orderClause, argIdx, argIdx+1)
 
 	rows, err := s.db.Query(ctx, query, args...)
@@ -719,7 +727,7 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 		if err := rows.Scan(&u.ID, &u.TelegramID, &u.Username, &u.FirstName, &u.Language, &u.ReferrerID,
 			&u.BP, &u.HoneyBalance, &u.SpinBalance, &u.LastCollectAt, &u.StreakCount, &u.LastCheckinAt,
 			&u.Status, &u.HasCollected, &u.HasCompletedMission, &u.LastHiveFullNotifiedAt,
-			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt, &u.ReferralCount); err != nil {
+			&u.OptedOutNotifications, &u.CreatedAt, &u.UpdatedAt, &u.ReferralCount, &u.TotalDeposited); err != nil {
 			return nil, 0, err
 		}
 		users = append(users, u)

@@ -155,6 +155,11 @@
         <div class="stat-val font-mono" id="statOnlineUsers" style="color:#10b981;">-</div>
         <div class="stat-accent" style="background:#10b981;"></div>
       </div>
+      <div class="stat-card" style="border-color:#10b981; background:linear-gradient(180deg, #101c16 0%, #0c110f 100%);">
+        <div class="stat-title" style="color:#10b981; font-weight:800;">💎 Verified Real Deposits</div>
+        <div class="stat-val font-mono" id="statDeposits" style="color:#10b981;">-</div>
+        <div class="stat-accent" style="background:#10b981;"></div>
+      </div>
       <div class="stat-card">
         <div class="stat-title">Total GHS Mining Power</div>
         <div class="stat-val" id="statBP" style="color:#10b981;">-</div>
@@ -515,6 +520,7 @@ Grow your TON in exactly 24 hours:
             📥 Export CSV
           </button>
           <select id="userSortFilter" class="form-input" style="width:160px; padding:8px 10px; font-size:12px; background:#0f1714; color:#fff; border:1px solid #1c2b24;" onchange="loadUsers(0)">
+            <option value="deposit_desc">💎 Highest Real Deposits</option>
             <option value="created_desc">🕒 Newest First</option>
             <option value="created_asc">⏳ Oldest First</option>
             <option value="ghs_desc">⚡ Most GHS Power</option>
@@ -1441,6 +1447,11 @@ async function loadStats() {
       document.getElementById('statOnlineUsers').innerText = data.online_users !== undefined ? data.online_users : (data.dau || 0);
     }
     document.getElementById('statBP').innerText = (data.total_bp || 0).toFixed(1) + ' GHS';
+    if (document.getElementById('statDeposits')) {
+      const depAll = data.total_deposited_all !== undefined ? data.total_deposited_all : ((data.total_deposited_ton || 0) + (data.total_deposited_gram || 0) + (data.total_deposited_usd || 0));
+      const depCount = data.total_deposits_count !== undefined ? data.total_deposits_count : 0;
+      document.getElementById('statDeposits').innerText = depAll.toFixed(2) + ' G (' + depCount + ')';
+    }
     document.getElementById('statWithdrawals').innerText = data.pending_withdrawals || 0;
   } catch (e) {}
 }
@@ -2162,6 +2173,9 @@ async function loadUsers(offset = 0) {
             </div>
           </td>
           <td style="color:#10b981; font-weight:900;">${(u.bp || 0).toFixed(2)} GHS</td>
+          <td style="color:#10b981; font-weight:900;">
+            ${(u.total_deposited || 0) > 0 ? `<span class="badge" style="background:#14291f; color:#10b981; border:1px solid #22543d; font-weight:900;">💎 ${(u.total_deposited || 0).toFixed(2)} G</span>` : '<span class="text-muted" style="font-size:11px;">0.00</span>'}
+          </td>
           <td style="color:#38bdf8; font-weight:800;">
             <span class="badge" style="background:#0c2233; color:#38bdf8; border:1px solid #1e3a5f;">👥 ${u.referral_count || 0}</span>
           </td>

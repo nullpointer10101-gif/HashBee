@@ -130,17 +130,22 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var stats struct {
-		TotalUsers       int     `json:"total_users"`
-		OnlineUsers      int     `json:"online_users"`
-		DAU              int     `json:"dau"`
-		MAU              int     `json:"mau"`
-		NewUsersToday    int     `json:"new_users_today"`
-		TotalBP          float64 `json:"total_bp"`
-		TotalHoneyIssued float64 `json:"total_honey_issued"`
-		PendingWithdrawals int   `json:"pending_withdrawals"`
+		TotalUsers             int     `json:"total_users"`
+		OnlineUsers            int     `json:"online_users"`
+		DAU                    int     `json:"dau"`
+		MAU                    int     `json:"mau"`
+		NewUsersToday          int     `json:"new_users_today"`
+		TotalBP                float64 `json:"total_bp"`
+		TotalHoneyIssued       float64 `json:"total_honey_issued"`
+		PendingWithdrawals     int     `json:"pending_withdrawals"`
 		PendingWithdrawalValue float64 `json:"pending_withdrawal_value"`
-		CampaignRevenue  float64 `json:"campaign_revenue"`
-		TotalHoneyLiability float64 `json:"total_honey_liability"`
+		CampaignRevenue        float64 `json:"campaign_revenue"`
+		TotalHoneyLiability    float64 `json:"total_honey_liability"`
+		TotalDepositsCount     int     `json:"total_deposits_count"`
+		TotalDepositedTON      float64 `json:"total_deposited_ton"`
+		TotalDepositedGRAM     float64 `json:"total_deposited_gram"`
+		TotalDepositedUSD      float64 `json:"total_deposited_usd"`
+		TotalDepositedAll      float64 `json:"total_deposited_all"`
 	}
 
 	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&stats.TotalUsers)
@@ -153,6 +158,18 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 	h.db.QueryRow(ctx, `SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM withdrawals WHERE status = 'pending'`).Scan(&stats.PendingWithdrawals, &stats.PendingWithdrawalValue)
 	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'campaign_payment' AND currency = 'HONEY' AND amount < 0`).Scan(&stats.CampaignRevenue)
 	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(honey_balance), 0) FROM users`).Scan(&stats.TotalHoneyLiability)
+
+	h.db.QueryRow(ctx, `
+		SELECT 
+			COUNT(*),
+			COALESCE(SUM(CASE WHEN UPPER(currency) = 'TON' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN UPPER(currency) = 'GRAM' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN UPPER(currency) IN ('USD', 'USDT') THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(amount), 0)
+		FROM transactions
+		WHERE type IN ('deposit', 'deposit_balance', 'plan_purchase', 'campaign_payment')
+		  AND UPPER(currency) IN ('GRAM', 'TON', 'USDT')
+	`).Scan(&stats.TotalDepositsCount, &stats.TotalDepositedTON, &stats.TotalDepositedGRAM, &stats.TotalDepositedUSD, &stats.TotalDepositedAll)
 
 	c.JSON(http.StatusOK, stats)
 }
@@ -405,22 +422,22 @@ func (h *AdminHandler) GetUserDetail(c *gin.Context) {
 			var d DepositItem
 			if err := depRows.Scan(&d.ID, &d.Type, &d.Amount, &d.Currency, &d.Description, &d.CreatedAt); err == nil {
 				deposits = append(deposits, d)
-				// Accumulate genuine deposits & plan purchases (not internal BP adjustments or in-game honey crate opens)
-				if (d.Type == "deposit" || d.Type == "campaign_payment" || d.Type == "deposit_balance" || d.Type == "plan_purchase") && strings.ToUpper(d.Currency) != "BP" {
-					switch strings.ToUpper(d.Currency) {
-					case "TON":
-						totalDepositedTON += d.Amount
-					case "STARS", "STAR":
-						totalDepositedStars += d.Amount
-					case "GRAM":
-						totalDepositedGRAM += d.Amount
-					case "USD", "USDT":
-						totalDepositedUSD += d.Amount
-					}
-				}
 			}
 		}
 	}
+
+	// Calculate exact lifetime deposits across all records
+	_ = h.db.QueryRow(ctx, `
+		SELECT 
+			COALESCE(SUM(CASE WHEN UPPER(currency) = 'TON' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN UPPER(currency) = 'GRAM' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN UPPER(currency) IN ('USD', 'USDT') THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN UPPER(currency) IN ('STAR', 'STARS') THEN amount ELSE 0 END), 0)
+		FROM transactions
+		WHERE user_id = $1
+		  AND type IN ('deposit', 'deposit_balance', 'plan_purchase', 'campaign_payment')
+	`, u.ID).Scan(&totalDepositedTON, &totalDepositedGRAM, &totalDepositedUSD, &totalDepositedStars)
+	u.TotalDeposited = totalDepositedTON + totalDepositedGRAM + totalDepositedUSD
 
 	// 4. Fetch Withdrawals
 	withdrawals := make([]models.Withdrawal, 0)

@@ -33,6 +33,11 @@ interface UserDetail {
   language?: string
   referrer_id?: string
   referral_count: number
+  total_deposited?: number
+  total_deposited_ton?: number
+  total_deposited_gram?: number
+  total_deposited_usd?: number
+  user_deposits?: any[]
   bp: number
   honey_balance: number
   spin_balance?: number
@@ -43,6 +48,20 @@ interface UserDetail {
   has_completed_mission: boolean
   created_at: string
   updated_at?: string
+}
+
+interface DepositRecord {
+  id: string
+  user_id: string
+  username: string
+  first_name: string
+  telegram_id: number
+  type: string
+  amount: number
+  currency: string
+  tx_hash: string
+  description: string
+  created_at: string
 }
 
 interface Campaign {
@@ -58,7 +77,7 @@ interface Campaign {
 }
 
 export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ token, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'withdrawals' | 'users' | 'campaigns' | 'broadcast' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'withdrawals' | 'deposits' | 'users' | 'campaigns' | 'broadcast' | 'settings'>('overview')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [withdrawals, setWithdrawals] = useState<PendingWithdrawal[]>([])
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -71,6 +90,36 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [usersSort, setUsersSort] = useState('referrals_desc')
   const [usersStatusFilter, setUsersStatusFilter] = useState('')
   const [usersLoading, setUsersLoading] = useState(false)
+
+  // Deposits ledger state
+  const [depositsList, setDepositsList] = useState<DepositRecord[]>([])
+  const [depositsLoading, setDepositsLoading] = useState(false)
+  const [depositsFilter, setDepositsFilter] = useState('all')
+  const [depositsSearch, setDepositsSearch] = useState('')
+  const [depositsTotals, setDepositsTotals] = useState({ total_count: 0, total_gram_deposited: 0, total_usdt_equivalent: 0 })
+
+  const loadDeposits = async () => {
+    setDepositsLoading(true)
+    try {
+      const res = await api.get('/deposits', {
+        params: {
+          type: depositsFilter,
+          search: depositsSearch,
+          limit: 100,
+        }
+      })
+      setDepositsList(res.data?.deposits || [])
+      setDepositsTotals({
+        total_count: res.data?.total_count || 0,
+        total_gram_deposited: res.data?.total_gram_deposited || 0,
+        total_usdt_equivalent: res.data?.total_usdt_equivalent || 0,
+      })
+    } catch (err: any) {
+      toast.error('Failed to load deposits ledger')
+    } finally {
+      setDepositsLoading(false)
+    }
+  }
 
   // User Audit / Deep Dive Modal state
   const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null)
@@ -702,6 +751,181 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
           </div>
         )}
 
+        {/* Deposits Ledger Tab */}
+        {activeTab === 'deposits' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
+                  <span>💎</span> Real On-Chain Deposits Ledger
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Live verified ledger of all user deposits (Miner Power, 2X Flash Offers, NFT Plans, and Campaign Payments).
+                </p>
+              </div>
+              <button
+                onClick={loadDeposits}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all"
+              >
+                🔄 Refresh Ledger
+              </button>
+            </div>
+
+            {/* Deposits Summary Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                <div className="text-xs text-slate-400 uppercase font-semibold">Total Verified Deposits</div>
+                <div className="text-2xl font-extrabold text-emerald-400 mt-1 font-mono">
+                  {depositsTotals.total_count.toLocaleString()}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">On-chain transactions</div>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                <div className="text-xs text-slate-400 uppercase font-semibold">Total Deposited Volume</div>
+                <div className="text-2xl font-extrabold text-emerald-400 mt-1 font-mono">
+                  {depositsTotals.total_gram_deposited.toFixed(2)} GRAM / TON
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Crypto deposited</div>
+              </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                <div className="text-xs text-slate-400 uppercase font-semibold">USD Equivalent</div>
+                <div className="text-2xl font-extrabold text-amber-400 mt-1 font-mono">
+                  ${depositsTotals.total_usdt_equivalent.toFixed(2)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Real-time valuation</div>
+              </div>
+            </div>
+
+            {/* Filter and Search */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-2">
+                {[
+                  { id: 'all', label: 'All Deposits' },
+                  { id: 'miner', label: '⚡ Miner Power' },
+                  { id: 'plan', label: '👑 NFT Plans' },
+                  { id: 'campaign', label: '📢 Campaign Ads' },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setDepositsFilter(f.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      depositsFilter === f.id
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                        : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="🔍 Search user, Telegram ID, TX hash..."
+                  value={depositsSearch}
+                  onChange={(e) => setDepositsSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') loadDeposits() }}
+                  className="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500 w-64"
+                />
+                <button
+                  onClick={loadDeposits}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                >
+                  Filter
+                </button>
+              </div>
+            </div>
+
+            {/* Deposits Table */}
+            {depositsLoading ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-400">
+                <div className="inline-block animate-spin text-2xl mb-2">⚡</div>
+                <div>Loading verified deposits ledger...</div>
+              </div>
+            ) : depositsList.length === 0 ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
+                No deposit transactions found matching criteria.
+              </div>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-800/80 text-slate-400 uppercase text-[11px]">
+                    <tr>
+                      <th className="p-4">User (Click to Inspect)</th>
+                      <th className="p-4">Amount Deposited</th>
+                      <th className="p-4">Type / Benefit</th>
+                      <th className="p-4">Transaction Hash / Memo</th>
+                      <th className="p-4">Date & Time</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {depositsList.map((dep) => (
+                      <tr key={dep.id} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleInspectUser({ user_id: dep.user_id, username: dep.username, telegram_id: dep.telegram_id })}
+                            className="group flex flex-col items-start text-left focus:outline-none"
+                          >
+                            <span className="font-bold text-slate-100 group-hover:text-amber-400 transition-colors text-sm">
+                              {dep.first_name || dep.username || 'Anonymous'}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-mono">@{dep.username || dep.telegram_id}</span>
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-extrabold text-emerald-400 text-sm font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            +{dep.amount.toFixed(2)} {dep.currency}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700">
+                            {dep.type.replace('_', ' ')}
+                          </span>
+                          {dep.description && (
+                            <div className="text-[10px] text-slate-400 mt-1 max-w-[200px] truncate" title={dep.description}>
+                              {dep.description}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4 font-mono text-slate-400">
+                          {dep.tx_hash ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate max-w-[130px]" title={dep.tx_hash}>{dep.tx_hash}</span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(dep.tx_hash)
+                                  toast.success('Copied TX Hash!')
+                                }}
+                                className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 hover:bg-slate-700"
+                              >
+                                📋
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 font-sans italic">Direct Internal</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-slate-400 font-mono text-[11px]">
+                          {new Date(dep.created_at).toLocaleString()}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleInspectUser({ user_id: dep.user_id, username: dep.username, telegram_id: dep.telegram_id })}
+                            className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 font-bold transition-all text-xs"
+                          >
+                            Inspect User
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Users & Anti-Fraud Flags Tab */}
         {activeTab === 'users' && (
           <div>
@@ -734,6 +958,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   onChange={(e) => setUsersSort(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
                 >
+                  <option value="deposit_desc">💎 Highest Real Deposits</option>
                   <option value="referrals_desc">🔥 Most Referrals</option>
                   <option value="ghs_desc">⚡ Highest GHS Power</option>
                   <option value="balance_desc">🍯 Highest Balance</option>
