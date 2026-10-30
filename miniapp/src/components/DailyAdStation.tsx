@@ -56,7 +56,7 @@ function saveStationState(state: StationStorageState) {
 }
 
 export const DailyAdStation: React.FC<DailyAdStationProps> = ({
-  totalDailyAds = 20,
+  totalDailyAds = 30,
   powerPerAd = 25,
   ghsPerAd = 0.5,
   onRewardClaimed,
@@ -139,9 +139,9 @@ export const DailyAdStation: React.FC<DailyAdStationProps> = ({
         return updated
       })
 
-      // Set 30s breakdown cooldown ONLY after confirmed completion
-      setAdCooldown(30)
-      setAdCooldownRemaining(30)
+      // Set 7s cooldown ONLY after confirmed completion
+      setAdCooldown(7)
+      setAdCooldownRemaining(7)
 
       // Telegram Haptic feedback
       if (typeof window !== 'undefined' && window.Telegram?.WebApp?.HapticFeedback) {

@@ -72,9 +72,9 @@ export const showAdsgramAd = async (): Promise<boolean> => {
 // Global Ad Mutex: Ensures NEVER two ads play or load at the same time
 let isAdActive = false
 let lastAdCompletedTimestamp = 0
-export const AD_COOLDOWN_SECONDS = 30
+export const AD_COOLDOWN_SECONDS = 7
 export const LS_KEY_AD_COOLDOWN = 'hb_ad_cooldown_until'
-export const MIN_AD_COOLDOWN_MS = 30_000 // 30s min between ambient ads
+export const MIN_AD_COOLDOWN_MS = 7_000 // 7s min between ambient ads
 
 export const isAnyAdActive = (): boolean => isAdActive
 
@@ -407,10 +407,10 @@ export const showRewardedAdWithWaterfall = async (
     return { success: false, provider: 'busy', duration: 0 }
   }
 
-  // 30s breakdown cooldown enforcement
+  // 7s cooldown enforcement
   const cooldownRemaining = getAdCooldownRemaining()
   if (cooldownRemaining > 0) {
-    console.warn(`[Ads] 30s network cooldown active (${cooldownRemaining}s remaining). Request prevented.`)
+    console.warn(`[Ads] 7s cooldown active (${cooldownRemaining}s remaining). Request prevented.`)
     return { success: false, provider: 'cooldown', duration: 0 }
   }
 

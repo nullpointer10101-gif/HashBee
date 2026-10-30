@@ -465,13 +465,13 @@ func (s *UserService) RewardAdWatch(ctx context.Context, userID uuid.UUID, provi
 		return 0, 0, fmt.Errorf("video playback was too short (minimum 10 seconds required to earn +0.50 GHS)")
 	}
 
-	// 2. Anti-spam duration cooldown: ensure at least 30 seconds between completed ad rewards
+	// 2. Anti-spam duration cooldown: ensure at least 7 seconds between completed ad rewards
 	var lastAdTime *time.Time
 	_ = s.db.QueryRow(ctx,
 		`SELECT created_at FROM transactions WHERE user_id = $1 AND type = 'ad_reward' ORDER BY created_at DESC LIMIT 1`,
 		userID).Scan(&lastAdTime)
-	if lastAdTime != nil && time.Since(*lastAdTime) < 30*time.Second {
-		remaining := int((30*time.Second - time.Since(*lastAdTime)).Seconds())
+	if lastAdTime != nil && time.Since(*lastAdTime) < 7*time.Second {
+		remaining := int((7*time.Second - time.Since(*lastAdTime)).Seconds())
 		if remaining <= 0 {
 			remaining = 1
 		}

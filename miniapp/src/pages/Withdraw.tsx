@@ -121,8 +121,8 @@ export const Withdraw: React.FC = () => {
   }
 
   const handleReinvest = async () => {
-    if (!user || user.honey_balance < 1.0) {
-      toast.error(`Minimum reinvest amount is 1.00 USDT (1 USDT = 50 GHS). Current balance: ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT`)
+    if (!user || user.honey_balance < 5.0) {
+      toast.error(`Minimum reinvest amount is 5.00 USDT (1 USDT = 50 GHS). Current balance: ${user ? user.honey_balance.toFixed(4) : '0.0000'} USDT`)
       return
     }
 
@@ -238,7 +238,7 @@ export const Withdraw: React.FC = () => {
               className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 hover:brightness-105 relative z-10"
             >
               <span>⚡</span>
-              <span>{reinvesting ? 'REINVESTING...' : 'REINVEST TO MINING POWER (1 USDT = 50 GHS)'}</span>
+              <span>{reinvesting ? 'REINVESTING...' : 'REINVEST TO MINING POWER (MIN 5 USDT • 1 USDT = 50 GHS)'}</span>
             </button>
           </div>
 

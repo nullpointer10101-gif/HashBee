@@ -184,9 +184,9 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       return updated
     })
 
-    // Enforce 30-second breakdown delay ONLY because the ad actually completed and was verified!
-    setAdCooldown(30)
-    setAdCooldownRemaining(30)
+    // Enforce 7-second cooldown ONLY because the ad actually completed and was verified!
+    setAdCooldown(7)
+    setAdCooldownRemaining(7)
 
     toast.success(`🎉 10s+ Verified! +${powerAdded.toFixed(2)} GHS Mining Power added! (${(gigaAdState.counts[taskIndex] || 0) + 1}/${GIGA_ADS_PER_TIER})`)
     await refreshUser()
@@ -777,9 +777,9 @@ export const Missions: React.FC<MissionsProps> = ({ defaultTab }) => {
       {/* ═══════════════════════════════════════════════════════════ */}
       {view === 'watch' && (
         <div className="space-y-4">
-          {/* ── DAILY AD STATION (FOCUSED 20/DAY BOOST STATION) ── */}
+          {/* ── DAILY AD STATION (FOCUSED 30/DAY BOOST STATION) ── */}
           <DailyAdStation
-            totalDailyAds={20}
+            totalDailyAds={30}
             powerPerAd={25}
             ghsPerAd={0.5}
             onRewardClaimed={() => refreshUser()}

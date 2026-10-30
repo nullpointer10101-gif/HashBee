@@ -64,8 +64,8 @@ func (h *WithdrawalHandler) Reinvest(c *gin.Context) {
 		return
 	}
 
-	if req.HoneyAmount < 1.0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Minimum reinvest amount is 1 USDT"})
+	if req.HoneyAmount < 5.0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Minimum reinvest amount is 5 USDT"})
 		return
 	}
 
