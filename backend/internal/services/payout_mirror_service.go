@@ -57,10 +57,12 @@ func (s *PayoutMirrorService) StartWatcher(ctx context.Context, interval time.Du
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		// Initial sync after 10s startup delay
+		// Initial sync after 10s startup delay only if enabled
 		time.Sleep(10 * time.Second)
-		if _, err := s.SyncOnce(ctx); err != nil {
-			log.Printf("⚠️  [PayoutMirror] Initial sync warning: %v", err)
+		if s.settings.GetBool(ctx, "payout_mirror_enabled", false) {
+			if _, err := s.SyncOnce(ctx); err != nil {
+				log.Printf("⚠️  [PayoutMirror] Initial sync warning: %v", err)
+			}
 		}
 
 		for {
@@ -68,7 +70,7 @@ func (s *PayoutMirrorService) StartWatcher(ctx context.Context, interval time.Du
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				enabled := s.settings.GetBool(ctx, "payout_mirror_enabled", true)
+				enabled := s.settings.GetBool(ctx, "payout_mirror_enabled", false)
 				if !enabled {
 					continue
 				}

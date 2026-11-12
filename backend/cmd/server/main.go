@@ -147,8 +147,8 @@ func main() {
 	`)
 	_, _ = pool.Exec(ctx, `
 		INSERT INTO settings (key, value, description, updated_at)
-		VALUES ('payout_mirror_enabled', 'true', 'Auto-mirror payout proofs to Telegram channel', NOW())
-		ON CONFLICT (key) DO UPDATE SET value = 'true', updated_at = NOW();
+		VALUES ('payout_mirror_enabled', 'false', 'Auto-mirror payout proofs to Telegram channel', NOW())
+		ON CONFLICT (key) DO NOTHING;
 	`)
 
 
@@ -248,14 +248,14 @@ func main() {
 		missionSvc.SetBot(tgBot)
 	}
 
-	// Deposit Watcher Service (2m interval to conserve Render bandwidth; manual check endpoint handles instant claims)
+	// Deposit Watcher Service (15m interval to keep background Render bandwidth near-zero; manual verify endpoint handles instant user deposits)
 	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
 	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
-	depositSvc.StartWatcher(ctx, 2*time.Minute)
+	depositSvc.StartWatcher(ctx, 15*time.Minute)
 
-	// Payout Mirror Service (5m interval to conserve Render bandwidth)
+	// Payout Mirror Service (30m interval; only active if admin explicitly enables it)
 	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
-	payoutMirrorSvc.StartWatcher(ctx, 5*time.Minute)
+	payoutMirrorSvc.StartWatcher(ctx, 30*time.Minute)
 
 	// Handlers
 	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc, tgBot)

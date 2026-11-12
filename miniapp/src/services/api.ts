@@ -473,7 +473,11 @@ export interface PlansOverview {
 }
 
 export const fetchPlans = async (): Promise<PlansOverview> => {
+  const cached = getCached<PlansOverview>('plans_overview')
+  if (cached) return cached
+
   const res = await api.get('/api/plans')
+  setCached('plans_overview', res.data, 45000)
   return res.data
 }
 
@@ -484,11 +488,13 @@ export const fetchMyPlans = async (): Promise<UserPlanItem[]> => {
 
 export const buyPlan = async (planId: string): Promise<{ success: boolean; message: string; new_honey_balance: number; plan: UserPlanItem }> => {
   const res = await api.post('/api/plans/buy', { plan_id: planId })
+  invalidateApiCache('plans_overview')
   return res.data
 }
 
 export const claimPlan = async (userPlanId: string): Promise<{ success: boolean; message: string; claimed_gram: number; new_honey_balance: number }> => {
   const res = await api.post('/api/plans/claim', { user_plan_id: userPlanId })
+  invalidateApiCache('plans_overview')
   return res.data
 }
 
@@ -520,7 +526,11 @@ export const openCrate = async (tier: 'bronze' | 'silver' | 'gold' | 'god'): Pro
 }
 
 export const fetchViralBounty = async (): Promise<any> => {
+  const cached = getCached<any>('viral_bounty')
+  if (cached) return cached
+
   const res = await api.get('/api/viral-bounty')
+  setCached('viral_bounty', res.data, 60000)
   return res.data
 }
 
@@ -528,6 +538,7 @@ export const claimViralBounty = async (walletAddress: string): Promise<any> => {
   const res = await api.post('/api/viral-bounty/claim', {
     wallet_address: walletAddress,
   })
+  invalidateApiCache('viral_bounty')
   return res.data
 }
 
