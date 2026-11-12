@@ -10,9 +10,9 @@ const getInitData = () => {
 }
 
 const getCleanApiBase = () => {
-  let base = import.meta.env.VITE_API_URL || 'https://hashbee3.onrender.com'
-  if (base.includes('hashbee1.onrender.com') || base.includes('hashbee2.onrender.com')) {
-    base = 'https://hashbee3.onrender.com'
+  let base = import.meta.env.VITE_API_URL || 'https://hashbee1.onrender.com'
+  if (base.includes('hashbee2.onrender.com') || base.includes('hashbee3.onrender.com')) {
+    base = 'https://hashbee1.onrender.com'
   }
   return base
 }
