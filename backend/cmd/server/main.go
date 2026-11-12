@@ -248,14 +248,14 @@ func main() {
 		missionSvc.SetBot(tgBot)
 	}
 
-	// Deposit Watcher Service
+	// Deposit Watcher Service (2m interval to conserve Render bandwidth; manual check endpoint handles instant claims)
 	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
 	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
-	depositSvc.StartWatcher(ctx, 30*time.Second)
+	depositSvc.StartWatcher(ctx, 2*time.Minute)
 
-	// Payout Mirror Service (Auto-mirrors on-chain proofs from AiLabRobotPayouts)
+	// Payout Mirror Service (5m interval to conserve Render bandwidth)
 	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
-	payoutMirrorSvc.StartWatcher(ctx, 45*time.Second)
+	payoutMirrorSvc.StartWatcher(ctx, 5*time.Minute)
 
 	// Handlers
 	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc, tgBot)

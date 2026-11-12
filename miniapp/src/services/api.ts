@@ -26,6 +26,29 @@ const api = axios.create({
   },
 })
 
+// Lightweight in-memory TTL cache to avoid redundant API calls on tab switches
+const apiCache = new Map<string, { data: any; expiresAt: number }>()
+const getCached = <T>(key: string): T | null => {
+  const entry = apiCache.get(key)
+  if (entry && entry.expiresAt > Date.now()) {
+    return entry.data as T
+  }
+  apiCache.delete(key)
+  return null
+}
+const setCached = (key: string, data: any, ttlMs = 45000) => {
+  apiCache.set(key, { data, expiresAt: Date.now() + ttlMs })
+}
+export const invalidateApiCache = (prefix?: string) => {
+  if (!prefix) {
+    apiCache.clear()
+    return
+  }
+  for (const k of apiCache.keys()) {
+    if (k.startsWith(prefix)) apiCache.delete(k)
+  }
+}
+
 api.interceptors.request.use((config) => {
   const initData = getInitData()
   if (initData) {
@@ -177,6 +200,9 @@ export const buyUpgrade = async (upgradeId: string): Promise<{ new_bee_power: nu
 }
 
 export const fetchMissions = async (): Promise<Mission[]> => {
+  const cached = getCached<Mission[]>('missions')
+  if (cached) return cached
+
   const res = await api.get('/api/missions')
   const sponsored = res.data?.sponsored || []
   const milestone = res.data?.milestone || []
@@ -184,7 +210,7 @@ export const fetchMissions = async (): Promise<Mission[]> => {
   if (all.length === 0) {
     throw new Error('No missions in backend')
   }
-  return all.map((m: any) => ({
+  const mapped = all.map((m: any) => ({
     id: m.id,
     title: m.title,
     description: m.description,
@@ -198,10 +224,13 @@ export const fetchMissions = async (): Promise<Mission[]> => {
     category: m.category || (m.milestone_count ? 'referral_milestone' : 'sponsored'),
     expires_at: m.expires_at,
   }))
+  setCached('missions', mapped, 45000)
+  return mapped
 }
 
 export const claimMilestone = async (missionId: string): Promise<{ reward_power: number; message?: string }> => {
   const res = await api.post(`/api/missions/${missionId}/claim`)
+  invalidateApiCache('missions')
   return { reward_power: Number(res.data?.reward_bp || 0), message: res.data?.message || 'Milestone reward credited!' }
 }
 
@@ -212,6 +241,7 @@ export const completeMission = async (missionId: string): Promise<{ reward_honey
     // already started
   }
   const res = await api.post(`/api/missions/${missionId}/verify`)
+  invalidateApiCache('missions')
   return {
     reward_honey: res.data?.reward_honey || 100,
     reward_power: res.data?.reward_bp || 0.1,
@@ -228,13 +258,16 @@ export const rewardAdWatch = async (provider = 'GigaPub', optionIndex = 0, durat
 }
 
 export const fetchReferrals = async (): Promise<ReferralSummary> => {
+  const cached = getCached<ReferralSummary>('referrals')
+  if (cached) return cached
+
   const res = await api.get('/api/swarm')
   const swarm = res.data?.swarm || {}
   const referralLink = res.data?.referral_link || ''
   const refCode = res.data?.referral_code || referralLink.split('=').pop() || ''
   const rawList = swarm.referrals || []
 
-  return {
+  const result: ReferralSummary = {
     ref_code: refCode,
     invite_link: (referralLink || `https://t.me/hashbe_bot?start=${refCode}`)
       .replace(/hashbee_bot/gi, 'hashbe_bot')
@@ -253,12 +286,18 @@ export const fetchReferrals = async (): Promise<ReferralSummary> => {
       status: r.status || 'pending',
     })),
   }
+  setCached('referrals', result, 45000)
+  return result
 }
 
 export const fetchSpinEpoch = async (): Promise<string> => {
+  const cached = getCached<string>('spin_epoch')
+  if (cached) return cached
   try {
     const res = await api.get('/api/spin-epoch')
-    return res.data?.spin_epoch || '2026-09-26T00:00:00Z'
+    const val = res.data?.spin_epoch || '2026-09-26T00:00:00Z'
+    setCached('spin_epoch', val, 120000)
+    return val
   } catch {
     return '2026-09-26T00:00:00Z'
   }
