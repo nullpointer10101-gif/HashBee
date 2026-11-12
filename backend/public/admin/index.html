@@ -1272,7 +1272,7 @@ function copyToClipboard(text, elem) {
 
 function getApiUrl() {
   let stored = localStorage.getItem('hb_api_url') || '';
-  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1') || stored.includes('hashbee2.onrender.com') || stored.includes('hashbee1.onrender.com')) {
+  if (!stored || stored.includes('localhost') || stored.includes('127.0.0.1') || stored.includes('hashbee2.onrender.com') || stored.includes('hashbee3.onrender.com')) {
     stored = 'https://hashbee1.onrender.com';
     localStorage.setItem('hb_api_url', stored);
   }
