@@ -329,3 +329,80 @@ type PlanTier struct {
 	AccentColor     string  `json:"accent_color"`
 }
 
+// =====================================================
+// Vaultfinity Models (Safecrackers, Energy & Heist)
+// =====================================================
+
+type UserCrew struct {
+	ID            uuid.UUID `json:"id" db:"id"`
+	UserID        uuid.UUID `json:"user_id" db:"user_id"`
+	CrewType      string    `json:"crew_type" db:"crew_type"`
+	Name          string    `json:"name" db:"name"`
+	Count         int       `json:"count" db:"count"`
+	DailyGoldRate float64   `json:"daily_gold_rate" db:"daily_gold_rate"`
+	CostUSD       float64   `json:"cost_usd" db:"cost_usd"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type CrewCatalogItem struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	DailyGoldRate float64 `json:"daily_gold_rate"`
+	DailyUSD      float64 `json:"daily_usd"`
+	CostUSD       float64 `json:"cost_usd"`
+	RoiDailyPct   string  `json:"roi_daily_pct"`
+	OwnedCount    int     `json:"owned_count"`
+	Badge         string  `json:"badge"`
+	Icon          string  `json:"icon"`
+}
+
+type EnergyPack struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	EnergyKWh     float64 `json:"energy_kwh"`
+	CostUSD       float64 `json:"cost_usd"`
+	DurationLabel string  `json:"duration_label"`
+	Badge         string  `json:"badge,omitempty"`
+}
+
+type VaultStatus struct {
+	GoldStash           float64           `json:"gold_stash"`
+	GoldUSD             float64           `json:"gold_usd"`
+	GoldPerSecond       float64           `json:"gold_per_second"`
+	DailyGoldTotal      float64           `json:"daily_gold_total"`
+	DailyUSDTotal       float64           `json:"daily_usd_total"`
+	EnergyKWh           float64           `json:"energy_kwh"`
+	EnergyDurationHours float64           `json:"energy_duration_hours"`
+	IsEnergyDepleted    bool              `json:"is_energy_depleted"`
+	ActiveCrewCount     int               `json:"active_crew_count"`
+	Crew                []UserCrew        `json:"crew"`
+	CrewCatalog         []CrewCatalogItem `json:"crew_catalog"`
+	EnergyPacks         []EnergyPack      `json:"energy_packs"`
+	StreakDay           int               `json:"streak_day"`
+	StreakClaimedToday  bool              `json:"streak_claimed_today"`
+	StreakRewards       []float64         `json:"streak_rewards"`
+}
+
+type SyndicateEarning struct {
+	ID         uuid.UUID `json:"id" db:"id"`
+	ReferrerID uuid.UUID `json:"referrer_id" db:"referrer_id"`
+	BuyerID    uuid.UUID `json:"buyer_id" db:"buyer_id"`
+	SourceType string    `json:"source_type" db:"source_type"`
+	SourceItem string    `json:"source_item" db:"source_item"`
+	AmountUSD  float64   `json:"amount_usd" db:"amount_usd"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+
+	// Joined
+	BuyerUsername string `json:"buyer_username,omitempty"`
+}
+
+type SyndicateResponse struct {
+	InviteLink       string             `json:"invite_link"`
+	FriendsCount     int                `json:"friends_count"`
+	FriendsPurseUSD  float64            `json:"friends_purse_usd"`
+	TotalEarnedUSD   float64            `json:"total_earned_usd"`
+	RecentActivities []SyndicateEarning `json:"recent_activities"`
+}
+
+

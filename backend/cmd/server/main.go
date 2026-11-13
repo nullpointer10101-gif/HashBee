@@ -233,6 +233,14 @@ func main() {
 	viralBountySvc := services.NewViralBountyService(pool, settingsSvc)
 	_ = viralBountySvc.EnsureTable(ctx)
 
+	// Vault Heist Service & Schema
+	vaultSvc := services.NewVaultService(pool, settingsSvc)
+	if err := vaultSvc.EnsureSchema(ctx); err != nil {
+		log.Printf("⚠️  [Startup] Vault schema error: %v", err)
+	} else {
+		log.Printf("🏛️  [Startup] Vaultfinity schema & safecracker tables initialized")
+	}
+
 	// Clean up and refund any unqualified pending withdrawals
 	if refundedCount, err := withdrawalSvc.AutoRefundUnqualifiedPendingWithdrawals(ctx); err == nil && refundedCount > 0 {
 		log.Printf("🛡️ [Startup] Auto-refunded and removed %d unqualified pending withdrawals from admin queue", refundedCount)
@@ -263,6 +271,7 @@ func main() {
 	withdrawalHandler := handlers.NewWithdrawalHandler(withdrawalSvc)
 	campaignHandler := handlers.NewCampaignHandler(campaignSvc)
 	viralBountyHandler := handlers.NewViralBountyHandler(viralBountySvc)
+	vaultHandler := handlers.NewVaultHandler(vaultSvc, cfg.BotUsername)
 	adminHandler := handlers.NewAdminHandler(cfg, pool, userSvc, settingsSvc, campaignSvc, withdrawalSvc, payoutMirrorSvc, tgBot)
 
 	// Gin router
@@ -431,6 +440,15 @@ func main() {
 
 		// Rewarded Ads (GigaPub, Adsgram, AdExium)
 		protected.POST("/ads/reward", userHandler.RewardAd)
+
+		// Vault Heist (Vaultfinity) API Routes
+		protected.GET("/vault/status", vaultHandler.GetStatus)
+		protected.POST("/gold/smelt", vaultHandler.SmeltGold)
+		protected.POST("/crew/buy", vaultHandler.BuyCrew)
+		protected.POST("/energy/buy", vaultHandler.BuyEnergy)
+		protected.GET("/syndicate", vaultHandler.GetSyndicate)
+		protected.POST("/syndicate/claim", vaultHandler.ClaimSyndicate)
+		protected.POST("/daily-supply", vaultHandler.ClaimDailySupply)
 	}
 
 	// =====================================================
