@@ -45,41 +45,60 @@ const GOLD_INGOT_3D: Face3D[] = createBox3D(
 
 const AUGER_TIP_3D: Face3D[] = createCylinderZ3D(
   2,
-  11,
-  20,
   10,
+  18,
+  8,
   [148, 163, 184],
   [254, 240, 138],
   0.95,
   0.35
 );
 
-const RAIL_TIE_3D: Face3D[] = createBox3D(8, 3, 28, [92, 58, 33], 0.95, 0.2);
+// Static isometric camera angle (Gold Mine is 100% static)
+const STATIC_PITCH = 0.34;
+const STATIC_YAW = -0.46;
+
+// Pre-project static 3D rails once at module load for zero per-frame CPU overhead on mobile
+const STATIC_RAIL_FACES: Face3D[] = (() => {
+  const tie = createBox3D(8, 3, 28, [92, 58, 33], 0.95, 0.2);
+  const faces: Face3D[] = [];
+  for (let t = -3; t <= 2; t++) {
+    faces.push(...transformFaces(tie, 0, 0, 0, t * 22, 52, 18));
+  }
+  return faces;
+})();
+
+// Pre-compute static isometric floor grid lines once at module load
+const STATIC_GRID_LINES = (() => {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  for (let g = -140; g <= 140; g += 35) {
+    const p1 = rotatePoint3D({ x: g, y: 56, z: -110 }, STATIC_PITCH, STATIC_YAW, 0);
+    const p2 = rotatePoint3D({ x: g, y: 56, z: 110 }, STATIC_PITCH, STATIC_YAW, 0);
+    lines.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+
+    const p3 = rotatePoint3D({ x: -140, y: 56, z: g }, STATIC_PITCH, STATIC_YAW, 0);
+    const p4 = rotatePoint3D({ x: 140, y: 56, z: g }, STATIC_PITCH, STATIC_YAW, 0);
+    lines.push({ x1: p3.x, y1: p3.y, x2: p4.x, y2: p4.y });
+  }
+  return lines;
+})();
 
 // Pre-computed 3D Gold Bullion slots stacked on the Gold Mountain behind the Miner
 const MOUNTAIN_INGOT_SLOTS = [
-  // Base Tier (5% - 30%)
-  { threshold: 0.04, x: -95, y: 42, z: -24, rx: 0.1, ry: 0.3, rz: -0.15, isIngot: true },
-  { threshold: 0.09, x: -72, y: 44, z: -20, rx: 0.2, ry: -0.4, rz: 0.1, isIngot: false },
-  { threshold: 0.14, x: -48, y: 43, z: -22, rx: -0.1, ry: 0.5, rz: 0.05, isIngot: true },
-  { threshold: 0.19, x: -24, y: 44, z: -20, rx: 0.15, ry: -0.2, rz: -0.12, isIngot: true },
-  { threshold: 0.25, x: -112, y: 45, z: -16, rx: 0.05, ry: 0.6, rz: 0.2, isIngot: false },
-  // Mid-Low Tier (30% - 55%)
-  { threshold: 0.31, x: -84, y: 28, z: -26, rx: -0.15, ry: 0.25, rz: 0.18, isIngot: true },
-  { threshold: 0.37, x: -58, y: 26, z: -26, rx: 0.1, ry: -0.35, rz: -0.1, isIngot: true },
-  { threshold: 0.43, x: -34, y: 29, z: -24, rx: 0.25, ry: 0.4, rz: 0.12, isIngot: false },
-  { threshold: 0.49, x: -102, y: 31, z: -22, rx: -0.2, ry: 0.15, rz: -0.22, isIngot: true },
-  { threshold: 0.54, x: -16, y: 32, z: -22, rx: 0.12, ry: -0.45, rz: 0.08, isIngot: true },
-  // Upper-Mid Tier (55% - 80%)
-  { threshold: 0.6, x: -74, y: 12, z: -28, rx: 0.08, ry: 0.3, rz: -0.14, isIngot: true },
-  { threshold: 0.66, x: -48, y: 10, z: -28, rx: -0.12, ry: -0.25, rz: 0.16, isIngot: true },
-  { threshold: 0.72, x: -90, y: 16, z: -26, rx: 0.18, ry: 0.5, rz: -0.08, isIngot: false },
-  { threshold: 0.78, x: -28, y: 15, z: -26, rx: -0.15, ry: 0.2, rz: 0.22, isIngot: true },
-  // Summit Tier (80% - 100%)
-  { threshold: 0.84, x: -64, y: -6, z: -30, rx: 0.1, ry: -0.3, rz: 0.05, isIngot: true },
-  { threshold: 0.9, x: -46, y: -8, z: -30, rx: -0.08, ry: 0.35, rz: -0.12, isIngot: true },
-  { threshold: 0.95, x: -55, y: -22, z: -32, rx: 0.2, ry: 0.1, rz: 0.15, isIngot: true },
-  { threshold: 0.99, x: -76, y: -14, z: -30, rx: -0.18, ry: -0.4, rz: -0.1, isIngot: false },
+  // Base Tier (5% - 35%)
+  { threshold: 0.05, x: -92, y: 42, z: -24, rx: 0.1, ry: 0.3, rz: -0.15, isIngot: true },
+  { threshold: 0.13, x: -66, y: 44, z: -20, rx: 0.2, ry: -0.4, rz: 0.1, isIngot: false },
+  { threshold: 0.21, x: -42, y: 43, z: -22, rx: -0.1, ry: 0.5, rz: 0.05, isIngot: true },
+  { threshold: 0.29, x: -108, y: 45, z: -16, rx: 0.05, ry: 0.6, rz: 0.2, isIngot: false },
+  // Mid Tier (35% - 70%)
+  { threshold: 0.38, x: -82, y: 28, z: -26, rx: -0.15, ry: 0.25, rz: 0.18, isIngot: true },
+  { threshold: 0.47, x: -54, y: 26, z: -26, rx: 0.1, ry: -0.35, rz: -0.1, isIngot: true },
+  { threshold: 0.56, x: -98, y: 31, z: -22, rx: -0.2, ry: 0.15, rz: -0.22, isIngot: true },
+  { threshold: 0.65, x: -72, y: 12, z: -28, rx: 0.08, ry: 0.3, rz: -0.14, isIngot: true },
+  // Summit Tier (70% - 100%)
+  { threshold: 0.75, x: -48, y: 10, z: -28, rx: -0.12, ry: -0.25, rz: 0.16, isIngot: true },
+  { threshold: 0.85, x: -64, y: -6, z: -30, rx: 0.1, ry: -0.3, rz: 0.05, isIngot: true },
+  { threshold: 0.94, x: -55, y: -20, z: -32, rx: 0.2, ry: 0.1, rz: 0.15, isIngot: true },
 ];
 
 export default function HeistArena({
@@ -109,8 +128,8 @@ export default function HeistArena({
     const bgCanvas = bgCanvasRef.current;
     const fgCanvas = fgCanvasRef.current;
     if (!bgCanvas || !fgCanvas) return;
-    const bgCtx = bgCanvas.getContext('2d');
-    const fgCtx = fgCanvas.getContext('2d');
+    const bgCtx = bgCanvas.getContext('2d', { alpha: true });
+    const fgCtx = fgCanvas.getContext('2d', { alpha: true });
     if (!bgCtx || !fgCtx) return;
 
     let animId: number;
@@ -118,29 +137,25 @@ export default function HeistArena({
     let elapsed = 0;
     let smoothMountainRatio = Math.max(0, Math.min(1.15, vaultGoldRef.current / MIN_SMELT_GOLD));
 
-    // Static isometric camera angle (Gold Mine is 100% static!)
-    const STATIC_PITCH = 0.34;
-    const STATIC_YAW = -0.46;
-
     // Pool of 3D tumbling Gold Nuggets & Bars extracted from the Gold Mine
-    const flyingGold = Array.from({ length: 7 }, (_, i) => ({
-      progress: (i / 7) * 1.0,
-      speed: 0.55 + (i % 3) * 0.14,
-      arcHeight: 38 + (i % 4) * 14,
+    const flyingGold = Array.from({ length: 5 }, (_, i) => ({
+      progress: (i / 5) * 1.0,
+      speed: 0.58 + (i % 3) * 0.14,
+      arcHeight: 36 + (i % 3) * 12,
       targetType: i % 2 === 0 ? ('mountain' as const) : ('cart' as const),
       rx: i * 0.7,
       ry: i * 1.1,
       rz: i * 0.5,
     }));
 
-    // Pool of 3D drilling sparks & rock dust at the mine extraction point
-    const drillSparks = Array.from({ length: 24 }, (_, i) => ({
+    // Lightweight pool of drilling sparks (no shadowBlur for locked 60fps on mobile)
+    const drillSparks = Array.from({ length: 14 }, (_, i) => ({
       x: 248,
-      y: 148,
-      vx: -45 - Math.random() * 85,
-      vy: -35 - Math.random() * 75,
-      size: 1.6 + Math.random() * 2.5,
-      life: (i / 24) * 1.0,
+      y: 152,
+      vx: -40 - Math.random() * 80,
+      vy: -35 - Math.random() * 70,
+      size: 1.8 + Math.random() * 2.0,
+      life: (i / 14) * 1.0,
       color: i % 3 === 0 ? '#fef08a' : i % 2 === 0 ? '#fbbf24' : '#f59e0b',
     }));
 
@@ -153,7 +168,7 @@ export default function HeistArena({
       }
 
       // Smoothly interpolate Gold Mountain height toward (vaultGold / MIN_SMELT_GOLD)
-      // When user claims/smelts gold, vaultGold becomes 0 -> mountain rapidly drains & disappears!
+      // When user claims/smelts gold, vaultGold becomes 0 -> mountain rapidly drains & disappears
       const liveGold = vaultGoldRef.current;
       const targetRatio = liveGold < 2 ? 0 : Math.max(0, Math.min(1.15, liveGold / MIN_SMELT_GOLD));
       smoothMountainRatio += (targetRatio - smoothMountainRatio) * Math.min(1, dt * 9);
@@ -169,62 +184,51 @@ export default function HeistArena({
       // Animate the DOM Human Miner's digging thrust & drill vibration smoothly at 60fps
       if (minerDomRef.current) {
         if (isPowerOnline) {
-          const lungeX = Math.sin(elapsed * 7.5) * 6.5;
-          const lungeY = Math.abs(Math.cos(elapsed * 7.5)) * 2.5;
-          const jitter = Math.sin(elapsed * 42) * 1.1;
-          const tilt = Math.sin(elapsed * 7.5) * 2.2;
+          const lungeX = Math.sin(elapsed * 7.5) * 6.0;
+          const lungeY = Math.abs(Math.cos(elapsed * 7.5)) * 2.2;
+          const jitter = Math.sin(elapsed * 40) * 0.9;
+          const tilt = Math.sin(elapsed * 7.5) * 2.0;
           minerDomRef.current.style.transform = `translate3d(${lungeX + jitter}px, ${lungeY}px, 0) rotate(${tilt}deg)`;
         } else {
           minerDomRef.current.style.transform = 'translate3d(0px, 0px, 0px)';
         }
       }
 
-      // 1. Background 3D Cavern Isometric Floor Grid & Wooden Minecart Tracks
+      // 1. Background 3D Cavern Isometric Floor Grid
       const centerX = w * 0.54;
       const centerY = h * 0.56;
 
-      bgCtx.save();
-      bgCtx.strokeStyle = 'rgba(30, 41, 59, 0.48)';
+      bgCtx.strokeStyle = 'rgba(30, 41, 59, 0.45)';
       bgCtx.lineWidth = 1;
-      for (let g = -140; g <= 140; g += 28) {
-        const p1 = rotatePoint3D({ x: g, y: 56, z: -110 }, STATIC_PITCH, STATIC_YAW, 0);
-        const p2 = rotatePoint3D({ x: g, y: 56, z: 110 }, STATIC_PITCH, STATIC_YAW, 0);
-        bgCtx.beginPath();
-        bgCtx.moveTo(centerX + p1.x, centerY + p1.y);
-        bgCtx.lineTo(centerX + p2.x, centerY + p2.y);
-        bgCtx.stroke();
-
-        const p3 = rotatePoint3D({ x: -140, y: 56, z: g }, STATIC_PITCH, STATIC_YAW, 0);
-        const p4 = rotatePoint3D({ x: 140, y: 56, z: g }, STATIC_PITCH, STATIC_YAW, 0);
-        bgCtx.beginPath();
-        bgCtx.moveTo(centerX + p3.x, centerY + p3.y);
-        bgCtx.lineTo(centerX + p4.x, centerY + p4.y);
-        bgCtx.stroke();
+      bgCtx.beginPath();
+      for (let i = 0; i < STATIC_GRID_LINES.length; i++) {
+        const ln = STATIC_GRID_LINES[i];
+        bgCtx.moveTo(centerX + ln.x1, centerY + ln.y1);
+        bgCtx.lineTo(centerX + ln.x2, centerY + ln.y2);
       }
-      bgCtx.restore();
+      bgCtx.stroke();
 
       // 2. DYNAMIC 3D GOLD MOUNTAIN IN THE BACKGROUND OF THE MINER
       // Scales directly with smelt progress (0% = empty/disappears, low % = low mound, 100% = tall mountain)
       if (smoothMountainRatio > 0.008) {
         const clampedRatio = Math.min(1.12, smoothMountainRatio);
         const baseFloorY = 216;
-        // Mountain height scales from 14px up to 142px behind the Miner
-        const mainPeakH = 14 + clampedRatio * 126;
-        const leftPeakH = mainPeakH * 0.76;
+        // Mountain height scales from 14px up to 132px behind the Miner
+        const mainPeakH = 14 + clampedRatio * 118;
+        const leftPeakH = mainPeakH * 0.75;
         const rightPeakH = mainPeakH * 0.68;
 
-        // Horizontal spread also expands as more gold is stored
-        const spreadBonus = clampedRatio * 24;
-        const leftBaseX = 16 - spreadBonus * 0.35;
-        const rightBaseX = 228 + spreadBonus * 0.65;
+        const spreadBonus = clampedRatio * 22;
+        const leftBaseX = 18 - spreadBonus * 0.35;
+        const rightBaseX = 228 + spreadBonus * 0.6;
 
-        const leftPeakX = 64;
+        const leftPeakX = 68;
         const leftPeakY = baseFloorY - leftPeakH;
 
-        const mainPeakX = 136;
+        const mainPeakX = 140;
         const mainPeakY = baseFloorY - mainPeakH;
 
-        const rightPeakX = 196;
+        const rightPeakX = 198;
         const rightPeakY = baseFloorY - rightPeakH;
 
         bgCtx.save();
@@ -236,17 +240,17 @@ export default function HeistArena({
           6,
           mainPeakX,
           baseFloorY - mainPeakH * 0.45,
-          45 + clampedRatio * 75
+          42 + clampedRatio * 68
         );
-        auraGrad.addColorStop(0, `rgba(251, 191, 36, ${0.22 + clampedRatio * 0.28})`);
-        auraGrad.addColorStop(0.55, `rgba(217, 119, 6, ${0.1 + clampedRatio * 0.14})`);
+        auraGrad.addColorStop(0, `rgba(251, 191, 36, ${0.2 + clampedRatio * 0.26})`);
+        auraGrad.addColorStop(0.55, `rgba(217, 119, 6, ${0.09 + clampedRatio * 0.13})`);
         auraGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
         bgCtx.fillStyle = auraGrad;
         bgCtx.beginPath();
         bgCtx.arc(
           mainPeakX,
           baseFloorY - mainPeakH * 0.45,
-          45 + clampedRatio * 75,
+          42 + clampedRatio * 68,
           0,
           Math.PI * 2
         );
@@ -266,9 +270,9 @@ export default function HeistArena({
         shadeGrad.addColorStop(0.8, '#92400e');
         shadeGrad.addColorStop(1, '#451a03');
 
-        // B. Right Flank Gold Pile (behind Miner's drill arm)
+        // B. Right Flank Gold Pile
         bgCtx.beginPath();
-        bgCtx.moveTo(140, baseFloorY);
+        bgCtx.moveTo(142, baseFloorY);
         bgCtx.lineTo(rightPeakX, rightPeakY);
         bgCtx.lineTo(rightPeakX + 8, baseFloorY);
         bgCtx.closePath();
@@ -283,7 +287,7 @@ export default function HeistArena({
         bgCtx.fillStyle = shadeGrad;
         bgCtx.fill();
 
-        // C. Left Flank Gold Pile (clearly visible to the left of the Miner)
+        // C. Left Flank Gold Pile
         bgCtx.beginPath();
         bgCtx.moveTo(leftBaseX, baseFloorY);
         bgCtx.lineTo(leftPeakX, leftPeakY);
@@ -294,7 +298,7 @@ export default function HeistArena({
 
         bgCtx.beginPath();
         bgCtx.moveTo(leftPeakX, leftPeakY);
-        bgCtx.lineTo(126, baseFloorY);
+        bgCtx.lineTo(128, baseFloorY);
         bgCtx.lineTo(leftPeakX + 10, baseFloorY);
         bgCtx.closePath();
         bgCtx.fillStyle = shadeGrad;
@@ -302,9 +306,8 @@ export default function HeistArena({
 
         // D. Central Towering Gold Mountain Peak (directly behind the Miner)
         const ridgeMidX = mainPeakX + 6;
-        // Left sunlit face of central peak
         bgCtx.beginPath();
-        bgCtx.moveTo(52 - spreadBonus * 0.2, baseFloorY);
+        bgCtx.moveTo(54 - spreadBonus * 0.2, baseFloorY);
         bgCtx.lineTo(leftPeakX + 18, leftPeakY + leftPeakH * 0.22);
         bgCtx.lineTo(mainPeakX, mainPeakY);
         bgCtx.lineTo(ridgeMidX, baseFloorY);
@@ -312,11 +315,10 @@ export default function HeistArena({
         bgCtx.fillStyle = litGrad;
         bgCtx.fill();
 
-        // Right shaded 3D face of central peak
         bgCtx.beginPath();
         bgCtx.moveTo(mainPeakX, mainPeakY);
         bgCtx.lineTo(rightPeakX - 12, rightPeakY + rightPeakH * 0.2);
-        bgCtx.lineTo(214 + spreadBonus * 0.4, baseFloorY);
+        bgCtx.lineTo(216 + spreadBonus * 0.4, baseFloorY);
         bgCtx.lineTo(ridgeMidX, baseFloorY);
         bgCtx.closePath();
         bgCtx.fillStyle = shadeGrad;
@@ -324,7 +326,7 @@ export default function HeistArena({
 
         // Crisp 3D Ridge Highlights on the Mountain Crests
         bgCtx.strokeStyle = 'rgba(254, 249, 195, 0.78)';
-        bgCtx.lineWidth = 1.6;
+        bgCtx.lineWidth = 1.5;
         bgCtx.beginPath();
         bgCtx.moveTo(leftBaseX, baseFloorY);
         bgCtx.lineTo(leftPeakX, leftPeakY);
@@ -334,17 +336,17 @@ export default function HeistArena({
         bgCtx.stroke();
 
         // E. Twinkling 4-Point Golden Star Glints on the Mountain
-        const glintCount = Math.max(2, Math.floor(clampedRatio * 7));
+        const glintCount = Math.max(2, Math.floor(clampedRatio * 5));
         for (let s = 0; s < glintCount; s++) {
           const twinkle = Math.max(0, Math.sin(elapsed * 4.5 + s * 1.7));
-          if (twinkle > 0.2) {
-            const gx = 46 + ((s * 31) % 145);
+          if (twinkle > 0.25) {
+            const gx = 52 + ((s * 31) % 138);
             const maxGy = baseFloorY - 12;
             const minGy = mainPeakY + 14;
             const gy = maxGy - ((s * 23) % Math.max(12, maxGy - minGy));
-            const r = 2.5 + twinkle * 3.2;
+            const r = 2.4 + twinkle * 2.8;
 
-            bgCtx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.9})`;
+            bgCtx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.88})`;
             bgCtx.beginPath();
             bgCtx.moveTo(gx, gy - r);
             bgCtx.lineTo(gx + r * 0.3, gy - r * 0.3);
@@ -362,39 +364,36 @@ export default function HeistArena({
         bgCtx.restore();
       }
 
-      // 3. Render 3D Rails + Stacked 3D Gold Bullion Ingots on the Mountain
-      const bgFaces: Face3D[] = [];
-      for (let t = -3; t <= 2; t++) {
-        bgFaces.push(...transformFaces(RAIL_TIE_3D, 0, 0, 0, t * 22, 52, 18));
-      }
+      // 3. Render Pre-Computed 3D Rails + Stacked 3D Gold Bullion Ingots on the Mountain
+      const bgFaces: Face3D[] = [...STATIC_RAIL_FACES];
 
-      if (smoothMountainRatio > 0.02) {
-        MOUNTAIN_INGOT_SLOTS.forEach((slot) => {
+      if (smoothMountainRatio > 0.03) {
+        for (let i = 0; i < MOUNTAIN_INGOT_SLOTS.length; i++) {
+          const slot = MOUNTAIN_INGOT_SLOTS[i];
           if (smoothMountainRatio >= slot.threshold) {
-            // Scale vertical position with smoothMountainRatio so bars rise with the mountain
             const scaledY = 48 - (48 - slot.y) * Math.min(1.1, smoothMountainRatio);
             const mesh = slot.isIngot ? GOLD_INGOT_3D : GOLD_NUGGET_3D;
             bgFaces.push(
               ...transformFaces(mesh, slot.rx, slot.ry, slot.rz, slot.x, scaledY, slot.z)
             );
           }
-        });
+        }
       }
 
       renderScene3D(bgCtx, bgFaces, STATIC_PITCH, STATIC_YAW, centerX, centerY, 1.0, 540);
 
       // 4. Foreground 3D Extraction Effects (3D Spinning Auger Tip, 3D Tumbling Gold Bars & Sparks)
       const drillContactX = w * 0.59;
-      const drillContactY = h * 0.63;
+      const drillContactY = h * 0.64;
 
       if (isPowerOnline) {
         // Pulsing Golden Vein Shockwave at the Mine Extraction Point
-        const pulse = (elapsed * 3.5) % 1;
+        const pulse = (elapsed * 3.2) % 1;
         fgCtx.save();
         fgCtx.beginPath();
-        fgCtx.arc(drillContactX, drillContactY, 8 + pulse * 26, 0, Math.PI * 2);
-        fgCtx.strokeStyle = `rgba(251, 191, 36, ${(1 - pulse) * 0.65})`;
-        fgCtx.lineWidth = 2.2;
+        fgCtx.arc(drillContactX, drillContactY, 7 + pulse * 24, 0, Math.PI * 2);
+        fgCtx.strokeStyle = `rgba(251, 191, 36, ${(1 - pulse) * 0.6})`;
+        fgCtx.lineWidth = 2;
         fgCtx.stroke();
 
         // Warm Golden Core Glow where the Miner's drill breaches the Gold Mine
@@ -404,21 +403,21 @@ export default function HeistArena({
           2,
           drillContactX,
           drillContactY,
-          34
+          30
         );
-        glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
-        glowGrad.addColorStop(0.45, 'rgba(245, 158, 11, 0.4)');
+        glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.8)');
+        glowGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.35)');
         glowGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
         fgCtx.fillStyle = glowGrad;
         fgCtx.beginPath();
-        fgCtx.arc(drillContactX, drillContactY, 34, 0, Math.PI * 2);
+        fgCtx.arc(drillContactX, drillContactY, 30, 0, Math.PI * 2);
         fgCtx.fill();
         fgCtx.restore();
 
         // 3D Tumbling Gold Nuggets & Bullion Bars Erupting from the Mine
         const fgFaces: Face3D[] = [];
 
-        const lungeOffset = Math.sin(elapsed * 7.5) * 5;
+        const lungeOffset = Math.sin(elapsed * 7.5) * 4.5;
         fgFaces.push(
           ...transformFaces(
             AUGER_TIP_3D,
@@ -426,12 +425,13 @@ export default function HeistArena({
             Math.PI / 2 - 0.3,
             elapsed * 18,
             12 + lungeOffset,
-            16,
+            18,
             25
           )
         );
 
-        flyingGold.forEach((g, idx) => {
+        for (let idx = 0; idx < flyingGold.length; idx++) {
+          const g = flyingGold[idx];
           g.progress += dt * g.speed;
           if (g.progress >= 1) {
             g.progress = 0;
@@ -441,55 +441,50 @@ export default function HeistArena({
           g.rz += dt * 3.8;
 
           const t = g.progress;
-          // Start at the Gold Mine tunnel mouth (X = +24, Y = +14, Z = +18)
           const startX = 24;
-          const startY = 14;
+          const startY = 16;
           const startZ = 18;
 
-          // Target either the growing Gold Mountain behind the Miner OR the Minecart
-          const endX = g.targetType === 'mountain' ? -62 - (idx % 3) * 14 : 48 + (idx % 2) * 10;
+          const endX = g.targetType === 'mountain' ? -58 - (idx % 3) * 14 : 48 + (idx % 2) * 10;
           const endY =
             g.targetType === 'mountain'
-              ? 36 - Math.min(1, smoothMountainRatio) * 44
+              ? 36 - Math.min(1, smoothMountainRatio) * 42
               : 32;
           const endZ = g.targetType === 'mountain' ? -18 : 32;
 
           const curX = startX + (endX - startX) * t;
-          const curY =
-            startY + (endY - startY) * t - Math.sin(t * Math.PI) * g.arcHeight;
+          const curY = startY + (endY - startY) * t - Math.sin(t * Math.PI) * g.arcHeight;
           const curZ = startZ + (endZ - startZ) * t;
 
           const mesh = idx % 2 === 0 ? GOLD_INGOT_3D : GOLD_NUGGET_3D;
           fgFaces.push(...transformFaces(mesh, g.rx, g.ry, g.rz, curX, curY, curZ));
-        });
+        }
 
         renderScene3D(fgCtx, fgFaces, STATIC_PITCH, STATIC_YAW, centerX, centerY, 1.0, 540);
 
-        // Shower of 3D Sparks flying off the spinning drill bit
-        drillSparks.forEach((sp) => {
-          sp.life += dt * 1.9;
+        // Fast hardware-friendly sparks (no shadowBlur for smooth mobile rendering)
+        for (let i = 0; i < drillSparks.length; i++) {
+          const sp = drillSparks[i];
+          sp.life += dt * 2.0;
           if (sp.life >= 1) {
             sp.x = drillContactX + (Math.random() - 0.5) * 10;
             sp.y = drillContactY + (Math.random() - 0.5) * 10;
-            sp.vx = -35 - Math.random() * 80;
-            sp.vy = -45 - Math.random() * 70;
+            sp.vx = -35 - Math.random() * 75;
+            sp.vy = -42 - Math.random() * 65;
             sp.life = 0;
           } else {
             sp.x += sp.vx * dt;
             sp.y += sp.vy * dt;
-            sp.vy += 210 * dt; // gravity
+            sp.vy += 200 * dt;
           }
 
-          fgCtx.save();
           fgCtx.globalAlpha = Math.max(0, 1 - sp.life);
           fgCtx.fillStyle = sp.color;
-          fgCtx.shadowColor = sp.color;
-          fgCtx.shadowBlur = 6;
           fgCtx.beginPath();
           fgCtx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
           fgCtx.fill();
-          fgCtx.restore();
-        });
+        }
+        fgCtx.globalAlpha = 1;
       }
 
       animId = requestAnimationFrame(renderLoop);
@@ -550,30 +545,26 @@ export default function HeistArena({
         className="absolute inset-0 w-full h-full pointer-events-none z-10"
       />
 
-      {/* 3. Static Gold Mine + Animated Digging Human Miner */}
+      {/* 3. Static Gold Mine + Animated Digging Human Miner (Compressed & Hardware-Accelerated) */}
       <div className="absolute inset-0 pointer-events-none z-15">
         {/* STATIC GOLD MINE (Anchored firmly on the right side of the stage, facing left toward the Miner) */}
-        <div
-          className="absolute right-[6px] bottom-[16px] w-[196px] h-[196px] flex items-center justify-center"
-          style={{
-            filter: 'drop-shadow(0 14px 18px rgba(0, 0, 0, 0.85))',
-          }}
-        >
+        <div className="absolute right-[6px] bottom-[16px] w-[190px] h-[190px] flex items-center justify-center">
           {/* Ambient 3D Golden Furnace Glow inside the Mine Entrance */}
           <div
-            className="absolute inset-4 rounded-full opacity-55 blur-xl"
+            className="absolute inset-5 rounded-full opacity-50"
             style={{
               background: isPowerOnline
-                ? 'radial-gradient(circle, rgba(251,191,36,0.65) 0%, transparent 70%)'
-                : 'radial-gradient(circle, rgba(239,68,68,0.35) 0%, transparent 70%)',
+                ? 'radial-gradient(circle, rgba(251,191,36,0.55) 0%, transparent 72%)'
+                : 'radial-gradient(circle, rgba(239,68,68,0.3) 0%, transparent 72%)',
             }}
           />
           <Image
             src="/assets/aistudio/image_6512678f.png"
             alt="Static 3D Gold Mine"
-            width={200}
-            height={197}
-            quality={95}
+            width={190}
+            height={188}
+            priority
+            quality={75}
             referrerPolicy="no-referrer"
             className="w-full h-full object-contain select-none"
             style={{
@@ -582,20 +573,18 @@ export default function HeistArena({
           />
         </div>
 
-        {/* ANIMATED HUMAN MINER (Positioned in front of the Gold Mountain & Mine, actively digging) */}
+        {/* ANIMATED HUMAN MINER (Positioned clearly below the compact top-left badge so never hidden on phones) */}
         <div
           ref={minerDomRef}
-          className="absolute left-[76px] bottom-[12px] w-[162px] h-[162px] flex items-center justify-center will-change-transform"
-          style={{
-            filter: 'drop-shadow(0 12px 16px rgba(0, 0, 0, 0.85))',
-          }}
+          className="absolute left-[88px] bottom-[8px] w-[144px] h-[144px] flex items-center justify-center will-change-transform"
         >
           <Image
             src="/assets/aistudio/image_40be1902.png"
             alt="Human Miner Extracting Gold"
-            width={162}
-            height={162}
-            quality={95}
+            width={144}
+            height={142}
+            priority
+            quality={75}
             referrerPolicy="no-referrer"
             className="w-full h-full object-contain select-none"
           />
@@ -610,24 +599,24 @@ export default function HeistArena({
         className="absolute inset-0 w-full h-full pointer-events-none z-20"
       />
 
-      {/* 5. Top-Left Floating Safe Loot Card ("IN THE SAFE") */}
-      <div className="absolute top-3 left-3 z-30 flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-[#0d1316]/92 border border-[#f59e0b]/40 shadow-[0_8px_24px_rgba(0,0,0,0.75)] pointer-events-none">
-        <div className="w-11 h-11 rounded-xl bg-[#070a0c] border border-[#f59e0b]/45 flex items-center justify-center shrink-0">
-          <SafeLootIcon className="w-9 h-9" />
+      {/* 5. Compact Mobile-Friendly Top-Left Safe Loot Badge ("IN THE SAFE" — never hides the Miner) */}
+      <div className="absolute top-2 left-2 z-30 flex items-center gap-1.5 px-2 py-1 rounded-xl bg-[#0d1316]/90 border border-[#f59e0b]/40 shadow-[0_4px_14px_rgba(0,0,0,0.65)] pointer-events-none">
+        <div className="w-6 h-6 rounded-lg bg-[#070a0c] border border-[#f59e0b]/45 flex items-center justify-center shrink-0">
+          <SafeLootIcon className="w-5 h-5" />
         </div>
-        <div className="pr-1">
-          <div className="text-[10px] font-extrabold tracking-widest uppercase text-[#94a3b8]">
+        <div className="pr-0.5 leading-tight">
+          <div className="text-[8px] font-extrabold tracking-wider uppercase text-[#94a3b8] leading-none">
             IN THE SAFE
           </div>
           <div
-            className="text-xl font-extrabold text-white leading-none mt-0.5 tabular-nums tracking-tight"
+            className="text-xs font-extrabold text-white leading-none mt-0.5 tabular-nums tracking-tight"
             style={{ fontFamily: 'var(--font-mono), monospace' }}
           >
             {Math.floor(vaultGold).toLocaleString()}{' '}
-            <span className="text-xs font-extrabold text-[#fbbf24]">GOLD</span>
+            <span className="text-[9px] font-extrabold text-[#fbbf24]">GOLD</span>
           </div>
           <div
-            className="text-xs font-bold text-[#10b981] mt-1 tabular-nums"
+            className="text-[9px] font-bold text-[#10b981] leading-none mt-0.5 tabular-nums"
             style={{ fontFamily: 'var(--font-mono), monospace' }}
           >
             ≈ ${usdEquivalent} USD
@@ -636,8 +625,8 @@ export default function HeistArena({
       </div>
 
       {/* 6. Bottom-Left Live Extraction Status Pill + Gold Mountain Level Readout */}
-      <div className="absolute bottom-2.5 left-3 right-3 z-30 flex items-center justify-between gap-2 pointer-events-none">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#090d10]/90 border border-[#1e292d] text-[10px] font-semibold text-[#94a3b8]">
+      <div className="absolute bottom-2 left-2.5 right-2.5 z-30 flex items-center justify-between gap-1.5 pointer-events-none">
+        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#090d10]/90 border border-[#1e292d] text-[9px] font-semibold text-[#94a3b8]">
           {isPowerOnline ? (
             <span
               className="text-[#fbbf24] font-bold tabular-nums"
@@ -652,7 +641,7 @@ export default function HeistArena({
 
         {mountainPct > 0 && (
           <div
-            className="px-2 py-1 rounded-lg bg-[#090d10]/90 border border-[#f59e0b]/40 text-[10px] font-extrabold text-[#fde047] tabular-nums shadow"
+            className="px-2 py-0.5 rounded-lg bg-[#090d10]/90 border border-[#f59e0b]/40 text-[9px] font-extrabold text-[#fde047] tabular-nums shadow"
             style={{ fontFamily: 'var(--font-mono), monospace' }}
           >
             🏔️ Gold Pile: {mountainPct}%

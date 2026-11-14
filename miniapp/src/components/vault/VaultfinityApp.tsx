@@ -173,17 +173,17 @@ export default function VaultfinityApp() {
   const dailyUsdRate = dailyGoldRate * GOLD_TO_USD_RATE;
   const totalHackers = Object.values(crewCounts).reduce((a, b) => a + b, 0);
 
-  // Live 100ms Rolling Counter Loop
+  // Live Rolling Counter Loop (250ms tick for ultra-smooth mobile performance without excessive re-renders)
   useEffect(() => {
     const interval = setInterval(() => {
       setPowerKwh((currentPower) => {
         if (currentPower <= 0) return 0;
         // Scale tick rate so live counter and gold mountain visibly grow during preview
-        const tickGold = (dailyGoldRate / 86400) * 1.4;
+        const tickGold = (dailyGoldRate / 86400) * 3.5;
         setVaultGold((prevGold) => prevGold + tickGold);
         return Math.max(0, currentPower - tickGold * 0.25);
       });
-    }, 100);
+    }, 250);
 
     return () => clearInterval(interval);
   }, [dailyGoldRate]);

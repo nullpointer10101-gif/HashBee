@@ -13,3 +13,4 @@ export default function Image({ src, alt, width, height, className, priority, fi
     />
   );
 }
+

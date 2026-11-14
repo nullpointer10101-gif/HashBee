@@ -9,7 +9,6 @@ import {
   createCylinderZ3D,
   createGearZ3D,
   transformFaces,
-  buildOperative3D,
   renderScene3D,
 } from '@/lib/turn3d';
 
@@ -62,7 +61,7 @@ const TIER_AUGER_TIP_3D = createCylinderZ3D(
   1.5,
   7.5,
   14,
-  10,
+  8,
   [148, 163, 184],
   [254, 240, 138],
   0.95,
@@ -80,7 +79,6 @@ const PLASMA_BRIDGE = createBox3D(30, 8, 12, [30, 41, 59], 0.9, 0.7);
 
 const REACTOR_GEAR = createGearZ3D(22, 28, 10, 12, [217, 119, 6], [251, 191, 36], 0.9);
 const REACTOR_CORE = createBox3D(20, 20, 20, [6, 182, 212], 0.85, 0.95, 0.75);
-const GOLD_BAR_PROP = createBox3D(14, 6, 9, [251, 191, 36], 0.8, 0.9, 0.25);
 
 interface TierVisualConfig {
   mineImageSrc: string;
@@ -89,8 +87,6 @@ interface TierVisualConfig {
   sparkCount: number;
   glowColor: string;
   sparkColors: string[];
-  minerFilter: string;
-  mineFilter: string;
   mineScale: number;
   minerScale: number;
 }
@@ -101,11 +97,9 @@ const TIER_CONFIGS: Record<SafecrackerId, TierVisualConfig> = {
     mineImageSrc: '/assets/aistudio/image_6553642b.png',
     speedMultiplier: 1.0,
     goldCount: 3,
-    sparkCount: 8,
+    sparkCount: 6,
     glowColor: 'rgba(251, 191, 36, 0.45)',
     sparkColors: ['#fbbf24', '#f59e0b'],
-    minerFilter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.85))',
-    mineFilter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.85))',
     mineScale: 1.02,
     minerScale: 0.94,
   },
@@ -114,11 +108,9 @@ const TIER_CONFIGS: Record<SafecrackerId, TierVisualConfig> = {
     mineImageSrc: '/assets/aistudio/image_e88ff4fc.png',
     speedMultiplier: 1.35,
     goldCount: 4,
-    sparkCount: 12,
+    sparkCount: 8,
     glowColor: 'rgba(251, 191, 36, 0.55)',
     sparkColors: ['#fef08a', '#fbbf24', '#34d399'],
-    minerFilter: 'drop-shadow(0 8px 12px rgba(0,0,0,0.85))',
-    mineFilter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.85))',
     mineScale: 1.04,
     minerScale: 0.96,
   },
@@ -126,12 +118,10 @@ const TIER_CONFIGS: Record<SafecrackerId, TierVisualConfig> = {
     // 3rd Image: Spiked Blue-Steel Armored Mine (27,500/day · ≈ $0.275/day · $2.50)
     mineImageSrc: '/assets/aistudio/image_9a72a619.png',
     speedMultiplier: 1.75,
-    goldCount: 6,
-    sparkCount: 16,
+    goldCount: 5,
+    sparkCount: 10,
     glowColor: 'rgba(251, 191, 36, 0.65)',
     sparkColors: ['#fef08a', '#fbbf24', '#38bdf8'],
-    minerFilter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.9))',
-    mineFilter: 'drop-shadow(0 10px 16px rgba(0,0,0,0.9))',
     mineScale: 1.05,
     minerScale: 0.98,
   },
@@ -139,12 +129,10 @@ const TIER_CONFIGS: Record<SafecrackerId, TierVisualConfig> = {
     // 4th Image: Max-Level Golden Buttress & Twin Golden Gears Mine (60,000/day · ≈ $0.60/day · $5.00)
     mineImageSrc: '/assets/aistudio/image_91ed81c2.png',
     speedMultiplier: 2.2,
-    goldCount: 8,
-    sparkCount: 22,
+    goldCount: 6,
+    sparkCount: 12,
     glowColor: 'rgba(251, 191, 36, 0.8)',
     sparkColors: ['#fef08a', '#fbbf24', '#f59e0b'],
-    minerFilter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.9))',
-    mineFilter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.9))',
     mineScale: 1.06,
     minerScale: 1.0,
   },
@@ -166,7 +154,7 @@ export function SafecrackerSprite({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animId: number;
@@ -193,7 +181,7 @@ export function SafecrackerSprite({
       y: 90,
       vx: -25 - Math.random() * 50 * cfg.speedMultiplier,
       vy: -25 - Math.random() * 45 * cfg.speedMultiplier,
-      size: 1.2 + Math.random() * 1.7,
+      size: 1.4 + Math.random() * 1.6,
       life: (i / cfg.sparkCount) * 1.0,
       color: cfg.sparkColors[i % cfg.sparkColors.length],
     }));
@@ -221,23 +209,23 @@ export function SafecrackerSprite({
       const contactX = w * 0.55;
       const contactY = h * 0.65;
 
-      // 2. Warm Golden Vein Shockwave & Glow at Mine Mouth (matching main dashboard)
+      // 2. Warm Golden Vein Shockwave & Glow at Mine Mouth
       const pulse = (elapsed * 2.8) % 1;
       ctx.save();
       ctx.beginPath();
-      ctx.arc(contactX, contactY, 5 + pulse * 16, 0, Math.PI * 2);
+      ctx.arc(contactX, contactY, 5 + pulse * 15, 0, Math.PI * 2);
       ctx.strokeStyle = cfg.glowColor;
       ctx.globalAlpha = (1 - pulse) * 0.65;
       ctx.lineWidth = 1.6;
       ctx.stroke();
 
-      const glowGrad = ctx.createRadialGradient(contactX, contactY, 1, contactX, contactY, 20);
-      glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.75)');
-      glowGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.3)');
+      const glowGrad = ctx.createRadialGradient(contactX, contactY, 1, contactX, contactY, 18);
+      glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.72)');
+      glowGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.28)');
       glowGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(contactX, contactY, 20, 0, Math.PI * 2);
+      ctx.arc(contactX, contactY, 18, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
@@ -257,7 +245,6 @@ export function SafecrackerSprite({
         )
       );
 
-      // 3D Gold Nuggets / Bullion Bars erupting out of the Gold Mine according to plan tier
       const goldMesh =
         id === 'rookie'
           ? SMALL_NUGGET_3D
@@ -267,7 +254,8 @@ export function SafecrackerSprite({
           ? LARGE_BULLION_3D
           : BOSS_ROYAL_INGOT_3D;
 
-      goldParticles.forEach((g, idx) => {
+      for (let idx = 0; idx < goldParticles.length; idx++) {
+        const g = goldParticles[idx];
         if (animated) {
           g.progress += dt * g.speed;
           if (g.progress >= 1) g.progress = 0;
@@ -277,7 +265,6 @@ export function SafecrackerSprite({
         }
 
         const t = g.progress;
-        // Start right inside the Gold Mine tunnel mouth
         const startX = 16;
         const startY = 14;
         const startZ = 16;
@@ -288,12 +275,13 @@ export function SafecrackerSprite({
 
         const meshToUse = idx % 2 === 0 ? goldMesh : MEDIUM_GOLD_3D;
         faces.push(...transformFaces(meshToUse, g.rx, g.ry, g.rz, curX, curY, curZ));
-      });
+      }
 
       renderScene3D(ctx, faces, STATIC_PITCH, STATIC_YAW, w * 0.52, h * 0.55, 0.9, 420);
 
-      // 4. Drilling Sparks Erupting from Mine Contact Point
-      sparks.forEach((sp) => {
+      // 4. Fast Hardware-Friendly Drilling Sparks (no shadowBlur for smooth mobile rendering)
+      for (let i = 0; i < sparks.length; i++) {
+        const sp = sparks[i];
         if (animated) {
           sp.life += dt * 2.0;
           if (sp.life >= 1) {
@@ -309,16 +297,13 @@ export function SafecrackerSprite({
           }
         }
 
-        ctx.save();
         ctx.globalAlpha = Math.max(0, 1 - sp.life);
         ctx.fillStyle = sp.color;
-        ctx.shadowColor = sp.color;
-        ctx.shadowBlur = 4;
         ctx.beginPath();
         ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
-      });
+      }
+      ctx.globalAlpha = 1;
 
       if (animated) {
         animId = requestAnimationFrame(render);
@@ -335,7 +320,6 @@ export function SafecrackerSprite({
       <div
         className="absolute right-[-2px] bottom-[6px] w-[104px] h-[104px] flex items-center justify-center pointer-events-none"
         style={{
-          filter: cfg.mineFilter,
           transform: `scale(${cfg.mineScale})`,
         }}
       >
@@ -344,7 +328,7 @@ export function SafecrackerSprite({
           alt={`${id} Gold Mine`}
           width={108}
           height={108}
-          quality={95}
+          quality={75}
           referrerPolicy="no-referrer"
           className="w-full h-full object-contain"
           style={{ transform: 'scaleX(-1)' }}
@@ -355,16 +339,13 @@ export function SafecrackerSprite({
       <div
         ref={minerRef}
         className="absolute left-[2px] bottom-[4px] w-[92px] h-[92px] flex items-center justify-center pointer-events-none will-change-transform"
-        style={{
-          filter: cfg.minerFilter,
-        }}
       >
         <Image
           src="/assets/aistudio/image_40be1902.png"
           alt={id}
           width={96}
           height={96}
-          quality={95}
+          quality={75}
           referrerPolicy="no-referrer"
           className="w-full h-full object-contain"
         />
@@ -478,40 +459,41 @@ export function CryptoCoinBadge({ symbol, className = 'w-8 h-8' }: { symbol: Cry
   );
 }
 
-export function SyndicateHeroIllustration({ className = 'w-52 h-32' }: { className?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+export function SyndicateHeroIllustration({ className = 'w-44 h-28' }: { className?: string }) {
+  return (
+    <div className={`relative flex items-center justify-center select-none ${className}`}>
+      {/* Warm Golden Aura Behind the Syndicate Miner */}
+      <div
+        className="absolute inset-0 rounded-full opacity-75 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(254, 240, 138, 0.45) 0%, rgba(251, 191, 36, 0.15) 55%, transparent 75%)',
+        }}
+      />
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+      {/* Left Floating Gold Bullion Icon */}
+      <div className="w-8 h-8 -mr-2 mt-4 opacity-95 pointer-events-none">
+        <SafeLootIcon className="w-full h-full" />
+      </div>
 
-    let animId: number;
-    let phase = 0;
+      {/* Compressed Transparent-Cutout Miner Image Uploaded by User */}
+      <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center z-10">
+        <Image
+          src="/assets/aistudio/image_c12d2886.png"
+          alt="Syndicate Heist Miner"
+          width={112}
+          height={112}
+          priority
+          quality={75}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain select-none"
+        />
+      </div>
 
-    const draw = () => {
-      ctx.clearRect(0, 0, 220, 128);
-      const faces: Face3D[] = [];
-
-      faces.push(...transformFaces(REACTOR_GEAR, 0, 0, phase * 0.7, 0, 2, -12));
-      faces.push(...transformFaces(GOLD_BAR_PROP, 0.2, phase, 0, 0, 4, 10));
-
-      const leftOp = buildOperative3D('specialist', phase, phase * 2);
-      faces.push(...transformFaces(leftOp, 0, 0.48, 0, -52, 4, 8));
-
-      const rightOp = buildOperative3D('boss', phase + 1.5, phase * 2);
-      faces.push(...transformFaces(rightOp, 0, -0.48, 0, 52, 4, 8));
-
-      renderScene3D(ctx, faces, 0.24, 0, 110, 66, 1.15, 480);
-
-      phase += 0.028;
-      animId = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
-  return <canvas ref={canvasRef} width={220} height={128} className={className} />;
+      {/* Right Floating Gold Bullion Icon */}
+      <div className="w-8 h-8 -ml-2 mt-4 opacity-95 pointer-events-none">
+        <SafeLootIcon className="w-full h-full" />
+      </div>
+    </div>
+  );
 }

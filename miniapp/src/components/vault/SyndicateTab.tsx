@@ -64,8 +64,8 @@ export default function SyndicateTab({
   return (
     <div className="space-y-3.5 pb-6">
       {/* 1. Hero Illustration Banner */}
-      <div className="rounded-2xl p-5 bg-gradient-to-b from-[#9a3412] via-[#b45309] to-[#d97706] border border-[#fbbf24]/40 text-center flex flex-col items-center shadow-[0_8px_24px_rgba(245,158,11,0.18)]">
-        <SyndicateHeroIllustration className="w-44 h-24 mb-2 drop-shadow-[0_6px_12px_rgba(0,0,0,0.45)]" />
+      <div className="rounded-2xl p-4 sm:p-5 bg-gradient-to-b from-[#9a3412] via-[#b45309] to-[#d97706] border border-[#fbbf24]/40 text-center flex flex-col items-center shadow-[0_8px_24px_rgba(245,158,11,0.18)]">
+        <SyndicateHeroIllustration className="w-44 h-28 mb-1" />
         <h2 className="text-lg font-extrabold text-white tracking-tight">
           Recruit your heist crew, earn together forever.
         </h2>
