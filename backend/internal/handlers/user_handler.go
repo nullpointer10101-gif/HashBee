@@ -133,6 +133,31 @@ func (h *UserHandler) Collect(c *gin.Context) {
 	})
 }
 
+// POST /api/user/wallet — Register or update personal withdrawal wallet
+func (h *UserHandler) UpdateWallet(c *gin.Context) {
+	user := c.MustGet("user").(*models.User)
+	var req struct {
+		WalletAddress string `json:"wallet_address" binding:"required"`
+		WalletNetwork string `json:"wallet_network" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wallet_address and wallet_network required"})
+		return
+	}
+
+	if err := h.userSvc.UpdateWallet(c.Request.Context(), user.ID, req.WalletAddress, req.WalletNetwork); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":        true,
+		"wallet_address": req.WalletAddress,
+		"wallet_network": req.WalletNetwork,
+		"message":        "Wallet registered successfully",
+	})
+}
+
 type CheckDepositRequest struct {
 	SenderAddress string `json:"sender_address"`
 }

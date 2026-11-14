@@ -41,7 +41,7 @@ export interface CryptoAssetConfig {
   network: string;
   ratePerUsd: number; // how many coins per $1 USD
   minUsd: number;
-  placeholderAddress: string;
+  depositAddress: string;
   addressPrefix: string;
 }
 
@@ -154,7 +154,7 @@ export const CRYPTO_ASSETS: Record<CryptoSymbol, CryptoAssetConfig> = {
     network: 'TON',
     ratePerUsd: 0.892857143,
     minUsd: 1.0,
-    placeholderAddress: 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXt7vK82mLp9zR',
+    depositAddress: 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR',
     addressPrefix: 'UQ',
   },
   USDT: {
@@ -163,7 +163,7 @@ export const CRYPTO_ASSETS: Record<CryptoSymbol, CryptoAssetConfig> = {
     network: 'TON',
     ratePerUsd: 1.0,
     minUsd: 1.0,
-    placeholderAddress: 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXt7vK82mLp9zR',
+    depositAddress: 'UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR',
     addressPrefix: 'UQ',
   },
   TRX: {
@@ -172,7 +172,7 @@ export const CRYPTO_ASSETS: Record<CryptoSymbol, CryptoAssetConfig> = {
     network: 'TRON',
     ratePerUsd: 6.4516129,
     minUsd: 1.0,
-    placeholderAddress: 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb',
+    depositAddress: 'TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe',
     addressPrefix: 'T',
   },
 };

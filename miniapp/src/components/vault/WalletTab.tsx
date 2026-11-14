@@ -17,8 +17,11 @@ interface WalletTabProps {
   usdBalance: number;
   withdrawableUsd: number;
   transactions: WalletTransaction[];
+  savedWalletAddress?: string;
+  savedWalletNetwork?: string;
   onOpenInvoiceModal: (coin: CryptoSymbol, usdAmount: number, coinAmount: string) => void;
   onRequestWithdraw: (coin: CryptoSymbol, usdAmount: number, address: string) => void;
+  onSaveWalletAddress?: (address: string, network: string) => void;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
 
@@ -30,15 +33,18 @@ export default function WalletTab({
   usdBalance,
   withdrawableUsd,
   transactions,
+  savedWalletAddress,
+  savedWalletNetwork,
   onOpenInvoiceModal,
   onRequestWithdraw,
+  onSaveWalletAddress,
   onShowToast,
 }: WalletTabProps) {
   const [selectedCoin, setSelectedCoin] = useState<CryptoSymbol>('GRAM');
   const [topupAmountStr, setTopupAmountStr] = useState<string>('1');
   const [withdrawAmountStr, setWithdrawAmountStr] = useState<string>('1');
   const [recipientAddress, setRecipientAddress] = useState<string>(
-    CRYPTO_ASSETS.GRAM.placeholderAddress
+    savedWalletAddress || ''
   );
 
   const asset = CRYPTO_ASSETS[selectedCoin];
@@ -48,13 +54,6 @@ export default function WalletTab({
       coin === 'GRAM' ? 'coin_gram' : coin === 'USDT' ? 'coin_usdt' : 'coin_trx';
     triggerHaptic(coinSound);
     setSelectedCoin(coin);
-    // Update default demo address if untouched or matching another placeholder
-    const isDefaultAddress = Object.values(CRYPTO_ASSETS).some(
-      (c) => c.placeholderAddress === recipientAddress
-    );
-    if (isDefaultAddress || !recipientAddress) {
-      setRecipientAddress(CRYPTO_ASSETS[coin].placeholderAddress);
-    }
   };
 
   // Top-up calculations
@@ -65,12 +64,12 @@ export default function WalletTab({
   const parsedWithdrawUsd = Math.max(0, parseFloat(withdrawAmountStr) || 0);
   const withdrawCoinAmount = (parsedWithdrawUsd * asset.ratePerUsd).toFixed(4);
 
-  // Address format validation
+  // Address format validation per blockchain
   const trimmedAddress = recipientAddress.trim();
   const isAddressValid =
     selectedCoin === 'TRX'
-      ? trimmedAddress.startsWith('T') && trimmedAddress.length >= 24
-      : (trimmedAddress.startsWith('UQ') || trimmedAddress.startsWith('EQ')) &&
+      ? trimmedAddress.startsWith('T') && trimmedAddress.length === 34
+      : (trimmedAddress.startsWith('UQ') || trimmedAddress.startsWith('EQ') || trimmedAddress.startsWith('0:')) &&
         trimmedAddress.length >= 24;
 
   const handlePasteAddress = async () => {
@@ -78,17 +77,34 @@ export default function WalletTab({
     try {
       if (navigator.clipboard && navigator.clipboard.readText) {
         const text = await navigator.clipboard.readText();
-        if (text && text.trim().length > 8) {
+        if (text && text.trim().length >= 10) {
           setRecipientAddress(text.trim());
           onShowToast('Wallet address pasted from clipboard', 'info');
           return;
         }
       }
     } catch {
-      // Clipboard permission blocked in iframe; fallback to valid sample address
+      // Clipboard permission blocked
     }
-    setRecipientAddress(asset.placeholderAddress);
-    onShowToast(`Pasted verified ${asset.network} address`, 'info');
+    onShowToast(`Please type or paste your personal ${asset.network} address`, 'info');
+  };
+
+  const handleSaveWallet = () => {
+    if (!isAddressValid) {
+      triggerHaptic('error');
+      onShowToast(
+        selectedCoin === 'TRX'
+          ? 'Invalid TRON address (must start with T, 34 chars)'
+          : 'Invalid TON address (must start with UQ or EQ, 48 chars)',
+        'error'
+      );
+      return;
+    }
+    triggerHaptic('success');
+    if (onSaveWalletAddress) {
+      onSaveWalletAddress(trimmedAddress, asset.network);
+    }
+    onShowToast(`Personal ${asset.network} wallet registered successfully!`, 'success');
   };
 
   const handleMaxWithdraw = () => {
@@ -336,6 +352,16 @@ export default function WalletTab({
                   <ClipboardPaste className="w-3.5 h-3.5" />
                   <span>Paste</span>
                 </button>
+                {isAddressValid && recipientAddress !== savedWalletAddress && (
+                  <button
+                    type="button"
+                    onClick={handleSaveWallet}
+                    title="Register address to account"
+                    className="min-h-[38px] px-3 rounded-lg bg-[#10b981]/20 hover:bg-[#10b981]/30 border border-[#10b981]/40 text-[#34d399] text-xs font-bold shrink-0 cursor-pointer"
+                  >
+                    Save
+                  </button>
+                )}
               </div>
             </div>
 

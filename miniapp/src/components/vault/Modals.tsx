@@ -26,10 +26,7 @@ export function InvoiceModal({
 }: InvoiceModalProps) {
   const [copiedAddr, setCopiedAddr] = useState(false);
   const asset = CRYPTO_ASSETS[coin];
-  const vaultDepositAddress =
-    coin === 'TRX'
-      ? 'TVault9xCyBerHeist7781920491029384'
-      : 'UQCVaultfinityHeistPool8891029384756102938475';
+  const vaultDepositAddress = asset.depositAddress;
 
   const handleCopy = async () => {
     triggerHaptic('copy');

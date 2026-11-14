@@ -221,9 +221,12 @@ func main() {
 		missionSvc.SetBot(tgBot)
 	}
 
-	// Deposit Watcher Service (15m interval to keep background Render bandwidth near-zero; manual verify endpoint handles instant user deposits)
-	depositWallet := "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
-	depositSvc := services.NewDepositService(pool, tgBot, depositWallet)
+	// Permanent Immutable Deposit Addresses (Hardcoded System Configuration)
+	const (
+		ImmutableDepositWalletTON = "UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
+		ImmutableDepositWalletTRX = "TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe"
+	)
+	depositSvc := services.NewDepositService(pool, tgBot, ImmutableDepositWalletTON)
 	depositSvc.StartWatcher(ctx, 15*time.Minute)
 
 	// Payout Mirror Service (30m interval; only active if admin explicitly enables it)
@@ -370,6 +373,7 @@ func main() {
 	protected.Use(middleware.JWTAuth(cfg, userSvc))
 	{
 		protected.GET("/me", userHandler.GetMe)
+		protected.POST("/user/wallet", userHandler.UpdateWallet)
 		protected.POST("/collect", userHandler.Collect)
 		protected.POST("/check-deposit", userHandler.CheckDeposit)
 		protected.POST("/checkin", userHandler.Checkin)

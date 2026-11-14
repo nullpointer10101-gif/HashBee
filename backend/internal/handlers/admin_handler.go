@@ -850,6 +850,10 @@ func (h *AdminHandler) UpdateSettings(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	for k, v := range req.Settings {
+		// Immutable system deposit addresses protection: deposit addresses cannot be altered, replaced, or deleted
+		if strings.HasPrefix(k, "deposit_wallet") {
+			continue
+		}
 		if err := h.settings.Set(ctx, k, v); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update " + k})
 			return

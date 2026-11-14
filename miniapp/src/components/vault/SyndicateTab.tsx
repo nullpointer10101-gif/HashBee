@@ -8,6 +8,7 @@ import { Copy, Check, Share2, UserPlus } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
 
 interface SyndicateTabProps {
+  inviteLink?: string;
   unclaimedLoot: number;
   crewRecruited: number;
   totalLootEarned: number;
@@ -17,9 +18,8 @@ interface SyndicateTabProps {
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const REFERRAL_LINK = 'https://t.me/VaultfinityBot?start=644618';
-
 export default function SyndicateTab({
+  inviteLink,
   unclaimedLoot,
   crewRecruited,
   totalLootEarned,
@@ -29,12 +29,13 @@ export default function SyndicateTab({
   onShowToast,
 }: SyndicateTabProps) {
   const [copied, setCopied] = useState(false);
+  const activeInviteLink = inviteLink || 'https://t.me/hashbe_bot';
 
   const handleCopyLink = async () => {
     triggerHaptic('copy');
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(REFERRAL_LINK);
+        await navigator.clipboard.writeText(activeInviteLink);
       }
     } catch {
       // Fallback for sandboxed iframe
@@ -50,7 +51,7 @@ export default function SyndicateTab({
       '🥷 Join my Cyberpunk Bank Vault Heist crew in Vaultfinity! Crack gold 24/7 and cash out in TON & USDT:'
     );
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(
-      REFERRAL_LINK
+      activeInviteLink
     )}&text=${shareText}`;
 
     if (typeof window !== 'undefined' && window.Telegram?.WebApp?.openTelegramLink) {
@@ -123,7 +124,7 @@ export default function SyndicateTab({
           <input
             type="text"
             readOnly
-            value={REFERRAL_LINK}
+            value={activeInviteLink}
             aria-label="Your Syndicate invite link"
             className="w-full bg-transparent text-xs font-medium text-[#e2e8f0] focus:outline-none truncate select-all"
             style={{ fontFamily: 'var(--font-mono), monospace' }}

@@ -142,7 +142,17 @@ export const fetchProfile = async (): Promise<User> => {
     friend_crates_opened_count: Number(profileData.friend_crates_opened_count || 0),
     can_withdraw_lifetime: Boolean(profileData.can_withdraw_lifetime),
     one_time_withdrawal_granted: Boolean(profileData.one_time_withdrawal_granted),
+    wallet_address: profileData.wallet_address || '',
+    wallet_network: profileData.wallet_network || '',
   }
+}
+
+export const saveUserWallet = async (walletAddress: string, walletNetwork: string): Promise<{ success: boolean; wallet_address: string; wallet_network: string }> => {
+  const res = await api.post('/api/user/wallet', {
+    wallet_address: walletAddress,
+    wallet_network: walletNetwork,
+  })
+  return res.data
 }
 
 export const claimHoney = async (): Promise<{ claimed: number; new_balance: number }> => {

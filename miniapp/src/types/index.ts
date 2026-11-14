@@ -24,6 +24,8 @@ export interface User {
   friend_crates_opened_count?: number
   can_withdraw_lifetime?: boolean
   one_time_withdrawal_granted?: boolean
+  wallet_address?: string
+  wallet_network?: string
   created_at: string
 }
 

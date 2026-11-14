@@ -15,7 +15,11 @@ export const Referrals: React.FC = () => {
   const [copied, setCopied] = useState(false)
 
   const botUsername = import.meta.env.VITE_BOT_USERNAME || 'hashbe_bot'
-  const userTgId = user?.telegram_id || '6446145632'
+  const userTgId = user?.telegram_id
+    ? String(user.telegram_id)
+    : typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    ? String(window.Telegram.WebApp.initDataUnsafe.user.id)
+    : ''
 
   const loadReferrals = async () => {
     try {
@@ -24,8 +28,8 @@ export const Referrals: React.FC = () => {
       setSummary(data)
     } catch (err) {
       setSummary({
-        ref_code: String(userTgId),
-        invite_link: "https://t.me/hashbe_bot?start=" + userTgId,
+        ref_code: userTgId,
+        invite_link: userTgId ? `https://t.me/${botUsername}?start=${userTgId}` : `https://t.me/${botUsername}`,
         tier1_count: 0,
         tier2_count: 0,
         tier1_earnings: 0,

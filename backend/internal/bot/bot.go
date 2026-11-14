@@ -225,7 +225,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppWithTeslaPromoKeyboard("🏛️ Enter Vault", appURLWithRef)
+	keyboard := newWebAppKeyboard("🏛️ Enter Vault", appURLWithRef)
 
 	welcomeText := `🏛️ *VAULTFINITY — CYBER HEIST TYCOON*
 
@@ -293,12 +293,12 @@ Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, use
 	b.api.Send(reply)
 }
 
-// SendHiveFullNotification sends a "your hive is full" notification
+// SendHiveFullNotification sends a vault gold accumulation reminder
 func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🍯 Collect Now", miniAppURL)
+	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
 
-	text := "🍯 *Your Miner is full!*\n\nYour accumulated balance has reached maximum capacity. Claim your USDT now so your mining continues at full speed!"
+	text := "🏛️ *Your Vault Stash is accumulating!*\n\nYour safecrackers are cracking gold bars non-stop. Open the vault now to smelt your gold into real USD balance!"
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	msg.ReplyMarkup = keyboard
@@ -330,7 +330,7 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 		return
 	}
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("👥 View My Swarm", miniAppURL)
+	keyboard := newWebAppKeyboard("👥 View Syndicate", miniAppURL)
 
 	botName := "hashbe_bot"
 	if b.api != nil && b.api.Self.UserName != "" {

@@ -28,10 +28,13 @@ type WithdrawalRequest struct {
 	Amount  float64 `json:"amount" binding:"required,gt=0"`
 }
 
-// IsUserQualified checks if a user holds at least 1 NFT miner plan or has one-time grant
+// IsUserQualified checks if a user holds at least 1 heist operative, NFT miner plan, or has one-time grant
 func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUID) (bool, int, int, bool) {
 	var oneTimeGranted bool
 	_ = s.db.QueryRow(ctx, `SELECT COALESCE(one_time_withdrawal_granted, false) FROM users WHERE id = $1`, userID).Scan(&oneTimeGranted)
+
+	var crewsCount int
+	_ = s.db.QueryRow(ctx, `SELECT COUNT(*) FROM user_crew WHERE user_id = $1`, userID).Scan(&crewsCount)
 
 	var plansPurchased int
 	_ = s.db.QueryRow(ctx, `
@@ -42,20 +45,21 @@ func (s *WithdrawalService) IsUserQualified(ctx context.Context, userID uuid.UUI
 	`, userID).Scan(&plansPurchased)
 
 	var friendPlansPurchased int
-	if !oneTimeGranted && plansPurchased == 0 {
+	if !oneTimeGranted && plansPurchased == 0 && crewsCount == 0 {
 		_ = s.db.QueryRow(ctx, `
 			SELECT COUNT(DISTINCT r.referred_id) FROM referrals r
 			WHERE r.referrer_id = $1
 			  AND (
 				EXISTS (SELECT 1 FROM user_plans up WHERE up.user_id = r.referred_id)
+				OR EXISTS (SELECT 1 FROM user_crew uc WHERE uc.user_id = r.referred_id)
 				OR EXISTS (SELECT 1 FROM transactions t WHERE t.user_id = r.referred_id AND t.type = 'plan_purchase')
 			  )
 		`, userID).Scan(&friendPlansPurchased)
 	}
 
-	// User must hold at least 1 NFT Miner Plan directly (or have one-time admin grant)
-	qualified := oneTimeGranted || plansPurchased >= 1
-	return qualified, plansPurchased, friendPlansPurchased, oneTimeGranted
+	// User must hold at least 1 Heist Operative or NFT Miner Plan directly (or have one-time admin grant)
+	qualified := oneTimeGranted || crewsCount >= 1 || plansPurchased >= 1
+	return qualified, crewsCount + plansPurchased, friendPlansPurchased, oneTimeGranted
 }
 
 // CreateWithdrawal validates gates and creates a withdrawal request
@@ -73,7 +77,10 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	}
 
 	// Validate network
-	validNetworks := map[string]bool{"USDT_BSC": true, "USDT_BEP20": true, "GRAM": true, "USDT": true}
+	validNetworks := map[string]bool{
+		"USDT_BSC": true, "USDT_BEP20": true, "GRAM": true, "USDT": true,
+		"TRX": true, "TRON": true, "TON": true,
+	}
 	if !validNetworks[req.Network] {
 		return nil, fmt.Errorf("invalid network: %s", req.Network)
 	}
@@ -96,15 +103,15 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 		return nil, fmt.Errorf("insufficient Honey balance: have %.8f, need %.8f", u.HoneyBalance, req.Amount)
 	}
 
-	// Strict Gate: Only earned rewards (mining yield, spins, plans, crates, referral & mission rewards) are withdrawable.
+	// Strict Gate: Only earned rewards (gold smelting, mining yield, spins, plans, crates, referral & mission rewards) are withdrawable.
 	// Deposited funds cannot be directly withdrawn.
 	var totalEarned float64
 	_ = s.db.QueryRow(ctx, `
 		SELECT COALESCE(SUM(amount), 0)
 		FROM transactions
 		WHERE user_id = $1
-		  AND type IN ('collect', 'spin_reward', 'crate_reward', 'plan_reward', 'mission_reward', 'referral_reward', 'admin_adjustment', 'adjustment')
-		  AND currency IN ('HONEY', 'USDT', 'GRAM')
+		  AND type IN ('collect', 'spin_reward', 'crate_reward', 'plan_reward', 'mission_reward', 'referral_reward', 'admin_adjustment', 'adjustment', 'gold_smelt')
+		  AND currency IN ('HONEY', 'USDT', 'GRAM', 'USD')
 		  AND amount > 0
 	`, userID).Scan(&totalEarned)
 
@@ -122,13 +129,13 @@ func (s *WithdrawalService) CreateWithdrawal(ctx context.Context, userID uuid.UU
 	}
 
 	if usdtAmount > maxWithdrawable {
-		return nil, fmt.Errorf("only earned rewards (mining yield, spins, daily plans & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
+		return nil, fmt.Errorf("only earned rewards (vault gold smelt, daily plans & referrals) can be withdrawn. Available withdrawable earnings: %.4f USDT", maxWithdrawable)
 	}
 
-	// Check Lifetime Withdrawal Qualification (Must hold >= 1 NFT Miner)
+	// Check Lifetime Withdrawal Qualification (Must hold >= 1 Operative or NFT Miner)
 	qualified, _, _, _ := s.IsUserQualified(ctx, userID)
 	if !qualified {
-		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must hold at least 1 NFT Miner (starts from 1.30 GRAM / TON)")
+		return nil, fmt.Errorf("QUALIFICATION_REQUIRED: To unlock cashouts, you must hire at least 1 Heist Operative (starts from $0.50 USD / Lockpick Rookie)")
 	}
 
 	// Check cooldown

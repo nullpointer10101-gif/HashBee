@@ -28,6 +28,7 @@ import {
   claimSyndicatePurse as apiClaimSyndicatePurse,
   claimDailySupply as apiClaimDailySupply,
   requestWithdrawal,
+  saveUserWallet,
 } from '@/services/api';
 import VaultTab from './VaultTab';
 import BlackMarketTab from './BlackMarketTab';
@@ -72,6 +73,10 @@ export default function VaultfinityApp() {
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
 
   // Syndicate Referral State
+  const defaultInviteLink = user?.telegram_id
+    ? `https://t.me/hashbe_bot?start=${user.telegram_id}`
+    : 'https://t.me/hashbe_bot';
+  const [inviteLink, setInviteLink] = useState<string>(defaultInviteLink);
   const [unclaimedSyndicateLoot, setUnclaimedSyndicateLoot] = useState<number>(0.0);
   const [crewRecruited, setCrewRecruited] = useState<number>(0);
   const [totalSyndicateEarned, setTotalSyndicateEarned] = useState<number>(0.0);
@@ -83,6 +88,9 @@ export default function VaultfinityApp() {
     if (user?.honey_balance !== undefined) {
       setUsdBalance(user.honey_balance);
       setWithdrawableUsd(user.honey_balance);
+    }
+    if (user?.telegram_id) {
+      setInviteLink(`https://t.me/hashbe_bot?start=${user.telegram_id}`);
     }
 
     const loadBackendStatus = async () => {
@@ -118,17 +126,29 @@ export default function VaultfinityApp() {
           );
         }
       } catch (e) {
-        // Safe offline / mock fallback
+        // Safe offline fallback
       }
 
       try {
         const synd = await apiFetchSyndicate();
         if (!isMounted || !synd) return;
+        if (synd.invite_link) setInviteLink(synd.invite_link);
         if (synd.friends_count !== undefined) setCrewRecruited(synd.friends_count);
         if (synd.friends_purse_usd !== undefined) setUnclaimedSyndicateLoot(synd.friends_purse_usd);
         if (synd.total_earned_usd !== undefined) setTotalSyndicateEarned(synd.total_earned_usd);
+        if (synd.recent_activities && Array.isArray(synd.recent_activities)) {
+          const mapped: AffiliateMember[] = synd.recent_activities.map((a: any) => ({
+            id: a.id,
+            username: a.buyer_username ? `@${a.buyer_username.replace(/^@/, '')}` : '@operative',
+            year: '2026',
+            joinedAgo: 'recently',
+            earnedUsd: Number(a.amount_usd || 0),
+            crewSize: 1,
+          }));
+          setAffiliates(mapped);
+        }
       } catch (e) {
-        // Safe offline / mock fallback
+        // Safe offline fallback
       }
     };
 
@@ -367,7 +387,18 @@ export default function VaultfinityApp() {
     showToast(`Top-up credited: +$${usdAmount.toFixed(2)} USD`, 'success');
   };
 
-  const handleRequestWithdraw = (coin: CryptoSymbol, usdAmount: number, address: string) => {
+  const handleSaveWalletAddress = async (address: string, network: string) => {
+    try {
+      await saveUserWallet(address, network);
+      if (refreshUser) refreshUser();
+      showToast(`Personal ${network} address registered!`, 'success');
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || err?.message || 'Failed to register address';
+      showToast(errMsg, 'error');
+    }
+  };
+
+  const handleRequestWithdraw = async (coin: CryptoSymbol, usdAmount: number, address: string) => {
     if (usdAmount < 1.0) {
       triggerHaptic('error', soundEnabled);
       showToast('Minimum withdrawal is $1.00 USD', 'error');
@@ -384,23 +415,34 @@ export default function VaultfinityApp() {
     }
 
     triggerHaptic('drill', soundEnabled);
-    setWithdrawableUsd((prev) => Math.max(0, prev - usdAmount));
-    setUsdBalance((prev) => Math.max(0, prev - usdAmount));
+    try {
+      const net = coin === 'TRX' ? 'TRX' : coin === 'USDT' ? 'USDT' : 'GRAM';
+      await requestWithdrawal(usdAmount, address, net);
+      // Auto-save the validated wallet address
+      await saveUserWallet(address, coin === 'TRX' ? 'TRON' : 'TON');
 
-    const newTx: WalletTransaction = {
-      id: `tx-${Date.now()}`,
-      type: 'Withdraw',
-      date: '13/11/26',
-      coinAmount: (usdAmount * (coin === 'GRAM' ? 0.8928 : coin === 'TRX' ? 6.45 : 1)).toFixed(4),
-      coinSymbol: coin,
-      usdValue: usdAmount,
-      status: 'Completed',
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-    showToast(
-      `Withdrawal of $${usdAmount.toFixed(2)} sent to ${address.slice(0, 6)}...${address.slice(-4)}`,
-      'success'
-    );
+      setWithdrawableUsd((prev) => Math.max(0, prev - usdAmount));
+      setUsdBalance((prev) => Math.max(0, prev - usdAmount));
+
+      const newTx: WalletTransaction = {
+        id: `tx-${Date.now()}`,
+        type: 'Withdraw',
+        date: new Date().toLocaleDateString(),
+        coinAmount: (usdAmount * (coin === 'GRAM' ? 0.8928 : coin === 'TRX' ? 6.45 : 1)).toFixed(4),
+        coinSymbol: coin,
+        usdValue: usdAmount,
+        status: 'Processing',
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+      showToast(
+        `Withdrawal of $${usdAmount.toFixed(2)} USD queued for payout!`,
+        'success'
+      );
+      if (refreshUser) refreshUser();
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error || err?.message || 'Withdrawal request failed';
+      showToast(errMsg, 'error');
+    }
   };
 
   const handleCollectSyndicatePurse = () => {
@@ -620,8 +662,11 @@ export default function VaultfinityApp() {
                   usdBalance={usdBalance}
                   withdrawableUsd={withdrawableUsd}
                   transactions={transactions}
+                  savedWalletAddress={user?.wallet_address}
+                  savedWalletNetwork={user?.wallet_network}
                   onOpenInvoiceModal={handleOpenInvoiceModal}
                   onRequestWithdraw={handleRequestWithdraw}
+                  onSaveWalletAddress={handleSaveWalletAddress}
                   onShowToast={showToast}
                 />
               </motion.div>
@@ -636,6 +681,7 @@ export default function VaultfinityApp() {
                 transition={{ duration: 0.14 }}
               >
                 <SyndicateTab
+                  inviteLink={inviteLink}
                   unclaimedLoot={unclaimedSyndicateLoot}
                   crewRecruited={crewRecruited}
                   totalLootEarned={totalSyndicateEarned}

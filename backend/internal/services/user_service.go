@@ -611,6 +611,17 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		), 0)
 	`, user.ID).Scan(&validInvites)
 
+	var walletAddr, walletNet *string
+	_ = s.db.QueryRow(ctx, `SELECT wallet_address, wallet_network FROM users WHERE id = $1`, user.ID).Scan(&walletAddr, &walletNet)
+	wAddr := ""
+	if walletAddr != nil {
+		wAddr = *walletAddr
+	}
+	wNet := ""
+	if walletNet != nil {
+		wNet = *walletNet
+	}
+
 	canWithdraw := (oneTimeGranted || plansPurchased >= 1)
 
 	return &models.UserProfile{
@@ -633,7 +644,35 @@ func (s *UserService) GetUserProfile(ctx context.Context, user *models.User) *mo
 		FriendCratesOpenedCount:  friendPlansPurchased,
 		CanWithdrawLifetime:      canWithdraw,
 		OneTimeWithdrawalGranted: oneTimeGranted,
+		WalletAddress:            wAddr,
+		WalletNetwork:            wNet,
 	}
+}
+
+// UpdateWallet validates and associates a user's personal withdrawal wallet address
+func (s *UserService) UpdateWallet(ctx context.Context, userID uuid.UUID, walletAddress, walletNetwork string) error {
+	trimmed := strings.TrimSpace(walletAddress)
+	net := strings.ToUpper(strings.TrimSpace(walletNetwork))
+
+	// Validate address format per blockchain
+	if net == "TRX" || net == "TRON" {
+		if !strings.HasPrefix(trimmed, "T") || len(trimmed) < 24 || len(trimmed) > 42 {
+			return fmt.Errorf("invalid TRON address format: must start with 'T' (34 characters)")
+		}
+	} else if net == "TON" || net == "GRAM" || net == "USDT" {
+		if (!strings.HasPrefix(trimmed, "UQ") && !strings.HasPrefix(trimmed, "EQ") && !strings.HasPrefix(trimmed, "0:")) || len(trimmed) < 24 {
+			return fmt.Errorf("invalid TON address format: must start with UQ, EQ, or 0:")
+		}
+	} else {
+		return fmt.Errorf("unsupported wallet network: %s", walletNetwork)
+	}
+
+	_, err := s.db.Exec(ctx, `
+		UPDATE users 
+		SET wallet_address = $1, wallet_network = $2, updated_at = NOW() 
+		WHERE id = $3
+	`, trimmed, net, userID)
+	return err
 }
 
 // GetTransactionHistory returns paginated transaction history for a user

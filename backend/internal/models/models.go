@@ -70,6 +70,8 @@ type UserProfile struct {
 	FriendCratesOpenedCount  int        `json:"friend_crates_opened_count"`
 	CanWithdrawLifetime      bool       `json:"can_withdraw_lifetime"`
 	OneTimeWithdrawalGranted bool       `json:"one_time_withdrawal_granted"`
+	WalletAddress            string     `json:"wallet_address"`
+	WalletNetwork            string     `json:"wallet_network"`
 }
 
 // Referral statuses
