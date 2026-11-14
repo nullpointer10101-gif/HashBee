@@ -157,3 +157,4 @@ for (const f of filesToUpdate) {
 }
 
 console.log('Finished updating admin templates.');
+

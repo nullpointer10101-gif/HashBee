@@ -21,3 +21,4 @@ async function checkSchemas() {
 }
 
 checkSchemas().catch(console.error);
+
