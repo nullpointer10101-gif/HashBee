@@ -159,7 +159,10 @@ func (h *UserHandler) UpdateWallet(c *gin.Context) {
 }
 
 type CheckDepositRequest struct {
-	SenderAddress string `json:"sender_address"`
+	SenderAddress string  `json:"sender_address"`
+	Coin          string  `json:"coin"`
+	ExpectedUSD   float64 `json:"expected_usd"`
+	TxHash        string  `json:"tx_hash"`
 }
 
 // POST /api/check-deposit — Trigger instant blockchain deposit verification
@@ -168,9 +171,14 @@ func (h *UserHandler) CheckDeposit(c *gin.Context) {
 	var req CheckDepositRequest
 	_ = c.ShouldBindJSON(&req)
 
+	senderAddr := strings.TrimSpace(req.SenderAddress)
+	if senderAddr == "" && user.WalletAddress != nil {
+		senderAddr = *user.WalletAddress
+	}
+
 	creditedCount := 0
 	if h.depositSvc != nil {
-		count, _ := h.depositSvc.ProcessDepositsForUser(c.Request.Context(), user.TelegramID, req.SenderAddress)
+		count, _ := h.depositSvc.ProcessDepositsForUser(c.Request.Context(), user.TelegramID, senderAddr)
 		creditedCount = count
 		if creditedCount > 0 {
 			if updatedUser, err := h.userSvc.GetByID(c.Request.Context(), user.ID); err == nil && updatedUser != nil {
@@ -180,10 +188,23 @@ func (h *UserHandler) CheckDeposit(c *gin.Context) {
 	}
 
 	profile := h.userSvc.GetUserProfile(c.Request.Context(), user)
+	if creditedCount > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"verified": true,
+			"credited": creditedCount,
+			"profile":  profile,
+			"status":   "success",
+			"message":  "Payment verified and credited successfully!",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
+		"verified": false,
+		"credited": 0,
 		"profile":  profile,
-		"status":   "checked",
-		"credited": creditedCount,
+		"status":   "pending",
+		"message":  "Payment not detected. Please complete your payment and try again.",
 	})
 }
 

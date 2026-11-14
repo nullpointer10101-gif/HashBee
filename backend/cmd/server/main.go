@@ -227,7 +227,8 @@ func main() {
 		ImmutableDepositWalletTRX = "TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe"
 	)
 	depositSvc := services.NewDepositService(pool, tgBot, ImmutableDepositWalletTON)
-	depositSvc.StartWatcher(ctx, 15*time.Minute)
+	// Automated on-chain deposit watcher polls blockchain every 5 minutes (strictly verifies on-chain transfers)
+	depositSvc.StartWatcher(ctx, 5*time.Minute)
 
 	// Payout Mirror Service (30m interval; only active if admin explicitly enables it)
 	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
@@ -460,8 +461,9 @@ func main() {
 		}
 	}
 
-	// Start Automated Broadcast Worker
-	adminHandler.StartAutoBroadcastWorker(ctx)
+	// Automatic broadcasts are permanently stopped.
+	// Broadcasts are strictly sent only when explicitly triggered by an admin in the admin panel.
+	// (adminHandler.StartAutoBroadcastWorker is intentionally disabled)
 
 	// =====================================================
 	// Start server

@@ -29,6 +29,7 @@ import {
   claimDailySupply as apiClaimDailySupply,
   requestWithdrawal,
   saveUserWallet,
+  checkDeposit,
 } from '@/services/api';
 import VaultTab from './VaultTab';
 import BlackMarketTab from './BlackMarketTab';
@@ -362,29 +363,60 @@ export default function VaultfinityApp() {
     });
   };
 
-  const handleConfirmSimulatedPayment = (
+  const handleVerifyBlockchainPayment = async (
     coin: CryptoSymbol,
     usdAmount: number,
     coinAmount: string
-  ) => {
-    setUsdBalance((prev) => prev + usdAmount);
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(
-      today.getMonth() + 1
-    ).padStart(2, '0')}/26`;
+  ): Promise<{ verified: boolean; message?: string }> => {
+    try {
+      const res = await checkDeposit({
+        coin,
+        expected_usd: usdAmount,
+        sender_address: user?.wallet_address || '',
+      });
 
-    const newTx: WalletTransaction = {
-      id: `tx-${Date.now()}`,
-      type: 'Top-up',
-      date: dateStr,
-      coinAmount,
-      coinSymbol: coin,
-      usdValue: usdAmount,
-      status: 'Credited',
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-    setInvoiceModal((prev) => ({ ...prev, isOpen: false }));
-    showToast(`Top-up credited: +$${usdAmount.toFixed(2)} USD`, 'success');
+      if (res && res.verified) {
+        if (res.profile?.honey_balance !== undefined) {
+          setUsdBalance(res.profile.honey_balance);
+          setWithdrawableUsd(res.profile.honey_balance);
+        } else {
+          setUsdBalance((prev) => prev + usdAmount);
+          setWithdrawableUsd((prev) => prev + usdAmount);
+        }
+
+        const today = new Date();
+        const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(
+          today.getMonth() + 1
+        ).padStart(2, '0')}/26`;
+
+        const newTx: WalletTransaction = {
+          id: `tx-${Date.now()}`,
+          type: 'Top-up',
+          date: dateStr,
+          coinAmount,
+          coinSymbol: coin,
+          usdValue: usdAmount,
+          status: 'Credited',
+        };
+        setTransactions((prev) => [newTx, ...prev]);
+        if (refreshUser) refreshUser();
+        showToast(`Payment confirmed! Credited +$${usdAmount.toFixed(2)} USD`, 'success');
+        return { verified: true, message: 'Payment confirmed! Balance credited.' };
+      }
+
+      return {
+        verified: false,
+        message:
+          res?.message ||
+          'Payment not detected. Please complete your payment and try again.',
+      };
+    } catch {
+      return {
+        verified: false,
+        message:
+          'Payment not detected. Please complete your payment and try again.',
+      };
+    }
   };
 
   const handleSaveWalletAddress = async (address: string, network: string) => {
@@ -466,30 +498,6 @@ export default function VaultfinityApp() {
         refreshUser();
       })
       .catch(() => {});
-  };
-
-  const handleSimulateReferral = () => {
-    triggerHaptic('share', soundEnabled);
-    const bonus = 0.25;
-    setUnclaimedSyndicateLoot((prev) => prev + bonus);
-    setCrewRecruited((prev) => prev + 1);
-    setTotalSyndicateEarned((prev) => prev + bonus);
-
-    const handles = ['@cyber_viper', '@ton_whale99', '@neon_driller', '@vault_phantom'];
-    const randomHandle = handles[Math.floor(Math.random() * handles.length)];
-
-    setAffiliates((prev) => [
-      {
-        id: `af-${Date.now()}`,
-        username: randomHandle,
-        year: '2026',
-        joinedAgo: 'Just now',
-        earnedUsd: bonus,
-        crewSize: 2,
-      },
-      ...prev,
-    ]);
-    showToast(`New recruit ${randomHandle} hired a Drill Specialist! +$${bonus.toFixed(2)}`, 'success');
   };
 
   return (
@@ -699,7 +707,6 @@ export default function VaultfinityApp() {
                   totalLootEarned={totalSyndicateEarned}
                   affiliates={affiliates}
                   onCollectPurse={handleCollectSyndicatePurse}
-                  onSimulateReferral={handleSimulateReferral}
                   onShowToast={showToast}
                 />
               </motion.div>
@@ -780,7 +787,7 @@ export default function VaultfinityApp() {
           usdAmount={invoiceModal.usdAmount}
           coinAmount={invoiceModal.coinAmount}
           onClose={() => setInvoiceModal((prev) => ({ ...prev, isOpen: false }))}
-          onConfirmSimulatedPayment={handleConfirmSimulatedPayment}
+          onVerifyPayment={handleVerifyBlockchainPayment}
         />
 
         <InsufficientBalanceModal
@@ -793,11 +800,6 @@ export default function VaultfinityApp() {
             setInsufficientModal((prev) => ({ ...prev, isOpen: false }));
             setWalletMode('topup');
             setActiveTab('wallet');
-          }}
-          onInstantDemoTopup={() => {
-            setUsdBalance((prev) => prev + 5.0);
-            setInsufficientModal((prev) => ({ ...prev, isOpen: false }));
-            showToast('Sandbox Credit Added: +$5.00 USD!', 'success');
           }}
         />
       </div>

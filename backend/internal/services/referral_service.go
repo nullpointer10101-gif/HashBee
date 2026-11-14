@@ -30,6 +30,10 @@ func (s *ReferralService) SetBot(bot ReferralBotNotifier) {
 
 // SetReferrer links an existing user to a referrer and establishes level 1-3 referral records
 func (s *ReferralService) SetReferrer(ctx context.Context, userID, referrerID uuid.UUID) error {
+	// Prevent self-referral
+	if userID == referrerID {
+		return nil
+	}
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return err

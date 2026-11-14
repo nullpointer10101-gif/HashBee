@@ -13,7 +13,11 @@ interface InvoiceModalProps {
   usdAmount: number;
   coinAmount: string;
   onClose: () => void;
-  onConfirmSimulatedPayment: (coin: CryptoSymbol, usdAmount: number, coinAmount: string) => void;
+  onVerifyPayment: (
+    coin: CryptoSymbol,
+    usdAmount: number,
+    coinAmount: string
+  ) => Promise<{ verified: boolean; message?: string }>;
 }
 
 export function InvoiceModal({
@@ -22,9 +26,15 @@ export function InvoiceModal({
   usdAmount,
   coinAmount,
   onClose,
-  onConfirmSimulatedPayment,
+  onVerifyPayment,
 }: InvoiceModalProps) {
   const [copiedAddr, setCopiedAddr] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'error' | 'success';
+    text: string;
+  } | null>(null);
+
   const asset = CRYPTO_ASSETS[coin];
   const vaultDepositAddress = asset.depositAddress;
 
@@ -39,6 +49,40 @@ export function InvoiceModal({
     }
     setCopiedAddr(true);
     setTimeout(() => setCopiedAddr(false), 1800);
+  };
+
+  const handleConfirmClick = async () => {
+    setIsVerifying(true);
+    setStatusMessage(null);
+    triggerHaptic('drill');
+
+    try {
+      const res = await onVerifyPayment(coin, usdAmount, coinAmount);
+      if (res && res.verified) {
+        setStatusMessage({
+          type: 'success',
+          text: res.message || 'Payment confirmed! Balance credited.',
+        });
+        setTimeout(() => {
+          onClose();
+          setStatusMessage(null);
+        }, 1600);
+      } else {
+        setStatusMessage({
+          type: 'error',
+          text:
+            res?.message ||
+            'Payment not detected. Please complete your payment and try again.',
+        });
+      }
+    } catch {
+      setStatusMessage({
+        type: 'error',
+        text: 'Payment not detected. Please complete your payment and try again.',
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -146,25 +190,48 @@ export function InvoiceModal({
               </div>
             </div>
 
+            {/* On-Chain Verification Feedback Banner */}
+            {statusMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-3 rounded-xl border text-xs font-semibold leading-relaxed text-center ${
+                  statusMessage.type === 'error'
+                    ? 'bg-rose-950/60 border-rose-800 text-rose-200'
+                    : 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+                }`}
+              >
+                {statusMessage.text}
+              </motion.div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-2 pt-1">
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 type="button"
-                onClick={() => {
-                  triggerHaptic('drill');
-                  onConfirmSimulatedPayment(coin, usdAmount, coinAmount);
-                }}
-                className="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-[#059669] to-[#10b981] hover:brightness-110 text-white font-extrabold text-sm shadow-[0_6px_18px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isVerifying}
+                onClick={handleConfirmClick}
+                className="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-[#059669] to-[#10b981] hover:brightness-110 disabled:opacity-50 text-white font-extrabold text-sm shadow-[0_6px_18px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 cursor-pointer transition-all"
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Confirm Payment (+${usdAmount.toFixed(2)} USD)</span>
+                {isVerifying ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying On-Chain...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Confirm Payment (+${usdAmount.toFixed(2)} USD)</span>
+                  </>
+                )}
               </motion.button>
 
               <button
                 type="button"
                 onClick={() => {
                   triggerHaptic('modal_close');
+                  setStatusMessage(null);
                   onClose();
                 }}
                 className="w-full min-h-[42px] rounded-xl bg-[#0a0d0e] border border-[#1e292d] text-xs font-bold text-[#94a3b8] hover:text-white cursor-pointer"
@@ -186,7 +253,6 @@ interface InsufficientBalanceModalProps {
   currentUsd: number;
   onClose: () => void;
   onGoToDeposit: () => void;
-  onInstantDemoTopup: () => void;
 }
 
 export function InsufficientBalanceModal({
@@ -196,7 +262,6 @@ export function InsufficientBalanceModal({
   currentUsd,
   onClose,
   onGoToDeposit,
-  onInstantDemoTopup,
 }: InsufficientBalanceModalProps) {
   const shortfall = Math.max(0, requiredUsd - currentUsd);
 
@@ -279,21 +344,19 @@ export function InsufficientBalanceModal({
                 className="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-[#ea580c] via-[#f59e0b] to-[#fbbf24] text-[#0a0d0e] font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_6px_18px_rgba(245,158,11,0.28)] cursor-pointer"
               >
                 <Wallet className="w-4 h-4 stroke-[2.5]" />
-                <span>Top Up Wallet (GRAM / USDT / TRX)</span>
+                <span>Top Up Wallet (TON / USDT / TRX)</span>
               </motion.button>
 
-              <motion.button
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="button"
                 onClick={() => {
-                  triggerHaptic('recharge');
-                  onInstantDemoTopup();
+                  triggerHaptic('modal_close');
+                  onClose();
                 }}
-                className="w-full min-h-[44px] rounded-xl bg-[#06b6d4]/15 hover:bg-[#06b6d4]/25 border border-[#06b6d4]/40 text-[#22d3ee] font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full min-h-[40px] rounded-xl bg-[#0a0d0e] border border-[#1e292d] text-xs font-bold text-[#94a3b8] hover:text-white cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Instant Sandbox Credit (+$5.00 USD)</span>
-              </motion.button>
+                Close
+              </button>
             </div>
           </motion.div>
         </div>

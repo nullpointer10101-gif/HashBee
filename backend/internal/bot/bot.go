@@ -396,7 +396,7 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 		return
 	}
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("👥 View Syndicate", miniAppURL)
+	keyboard := newWebAppKeyboard("🔨 Open Heist Miner", miniAppURL)
 
 	botName := "hashbe_bot"
 	if b.api != nil && b.api.Self.UserName != "" {
@@ -409,7 +409,7 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 	safeName := html.EscapeString(joinerName)
 	text := fmt.Sprintf(`🎉 <b>New Syndicate Recruit!</b>
 
-👤 <b>%s</b> just joined your Vaultfinity Syndicate crew!
+👤 <b>%s</b> just joined your Heist Miner Syndicate crew!
 
 💰 <b>Commissions:</b> You will earn a <b>10%% lifetime cut</b> on every Safecracker they hire and every Battery Pack they buy, plus a <b>$0.02 cash bounty</b> on their first hire!
 

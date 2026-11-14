@@ -418,8 +418,16 @@ export const cancelCampaign = async (id: string): Promise<void> => {
   await api.delete(`/api/campaigns/${id}`)
 }
 
-export const checkDeposit = async (senderAddress?: string): Promise<any> => {
-  const res = await api.post('/api/check-deposit', { sender_address: senderAddress || '' })
+export const checkDeposit = async (
+  param?: string | { sender_address?: string; coin?: string; expected_usd?: number; tx_hash?: string }
+): Promise<any> => {
+  let payload: any = {}
+  if (typeof param === 'string') {
+    payload = { sender_address: param }
+  } else if (param) {
+    payload = param
+  }
+  const res = await api.post('/api/check-deposit', payload)
   return res.data
 }
 

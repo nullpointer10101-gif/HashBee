@@ -41,3 +41,4 @@ botGo = botGo.replace('Your miner is accumulating at the upgraded rate 24/7!', '
 
 fs.writeFileSync('backend/internal/bot/bot.go', botGo, 'utf8');
 console.log('3. Cleaned backend/internal/bot/bot.go');
+

@@ -14,7 +14,6 @@ interface SyndicateTabProps {
   totalLootEarned: number;
   affiliates: AffiliateMember[];
   onCollectPurse: () => void;
-  onSimulateReferral: () => void;
   onShowToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
 
@@ -25,7 +24,6 @@ export default function SyndicateTab({
   totalLootEarned,
   affiliates,
   onCollectPurse,
-  onSimulateReferral,
   onShowToast,
 }: SyndicateTabProps) {
   const [copied, setCopied] = useState(false);
@@ -167,15 +165,6 @@ export default function SyndicateTab({
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#94a3b8]">
               SYNDICATE PURSE
             </span>
-            <button
-              type="button"
-              onClick={onSimulateReferral}
-              className="text-[10px] font-bold text-[#06b6d4] hover:underline flex items-center gap-0.5 cursor-pointer"
-              title="Simulate a new crew recruit commission"
-            >
-              <UserPlus className="w-3 h-3" />
-              <span>+Test Recruit</span>
-            </button>
           </div>
           <div className="text-xs text-[#94a3b8] mt-0.5">Unclaimed Loot:</div>
           <div
