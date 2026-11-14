@@ -23,7 +23,7 @@ export const Withdraw: React.FC = () => {
   const [showQualifyModal, setShowQualifyModal] = useState(false)
   const navigate = useNavigate()
 
-  const minWithdrawal = 0.10
+  const minWithdrawal = 1.00
   const plansCount = Number(user?.plans_count || user?.plans_active_count || user?.plans_completed_count || user?.crates_opened_count || 0)
   const isOneTimeGranted = user?.one_time_withdrawal_granted || false
   const isLifetimeQualified = Boolean(user?.can_withdraw_lifetime || (plansCount >= 1 || isOneTimeGranted))
@@ -314,7 +314,7 @@ export const Withdraw: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
-                  min="0.10"
+                  min="1.00"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}

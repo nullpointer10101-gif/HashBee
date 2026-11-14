@@ -34,7 +34,7 @@ hashbee/
 | Question | Decision | Configurable? |
 |---|---|---|
 | Purchase packs | **OFF** by default in v1 | Yes — `FEATURE_PAID_PACKS=false` in settings table |
-| Campaigns | **ON** | Yes — admin toggle |             
+| Campaigns | **ON** | Yes — admin toggle |     
 | Admin approval for campaigns | **Optional** — off by default | Yes — admin toggle |
 | Anti-cheat leave penalty | **OFF** by default | Yes — admin toggle |
 | Verification method (unverifiable missions) | Timer (15s) + honor system | Yes — per-campaign setting |

@@ -154,11 +154,16 @@ func (s *PayoutMirrorService) SyncOnce(ctx context.Context) (int, error) {
 			continue
 		}
 
-		// Build HashBee styled payout proof message
-		hashBeeMsg, btnText, btnURL := s.formatHashBeePayoutProof(p)
+		// Enforce realistic bounds: strictly between 1.00 and 55.00 (no tiny 0.10/0.22 and no massive 100/200)
+		if p.Amount < 1.0 || p.Amount > 55.0 {
+			continue
+		}
+
+		// Build Heist Miner styled payout proof message
+		heistMsg, btnText, btnURL := s.formatHeistMinerPayoutProof(p)
 
 		if s.sender != nil {
-			err := s.sender.SendChannelPayoutProof(targetChannel, hashBeeMsg, btnText, btnURL)
+			err := s.sender.SendChannelPayoutProof(targetChannel, heistMsg, btnText, btnURL)
 			if err != nil {
 				log.Printf("⚠️  [PayoutMirror] Error sending payout proof for post %d to %s: %v", p.PostID, targetChannel, err)
 			} else {
@@ -275,10 +280,10 @@ func (s *PayoutMirrorService) parseTelegramPosts(htmlContent string) []PayoutPos
 			}
 		}
 
-		// Map to realistic 24H HashBee Yield amounts if amount is in tiny satoshis or zero
-		if amount <= 0 || amount < 0.1 {
-			sampleTiers := []float64{0.80, 2.00, 4.50, 10.00, 22.00, 50.00}
-			amount = sampleTiers[rand.Intn(len(sampleTiers))]
+		// Enforce realistic bounds requested: minimum 1.00, maximum 55.00
+		if amount < 1.0 || amount > 55.0 {
+			sampleRealistic := []float64{1.85, 2.50, 4.20, 6.75, 12.30, 18.50, 24.10, 33.60, 42.00, 51.50}
+			amount = sampleRealistic[rand.Intn(len(sampleRealistic))]
 		}
 
 		results = append(results, PayoutPostData{
@@ -296,8 +301,8 @@ func (s *PayoutMirrorService) parseTelegramPosts(htmlContent string) []PayoutPos
 	return results
 }
 
-// formatHashBeePayoutProof transforms raw data into a clean HashBee branded payout proof with real on-chain transaction link
-func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (string, string, string) {
+// formatHeistMinerPayoutProof transforms raw data into a clean Heist Miner branded payout proof with real on-chain transaction link
+func (s *PayoutMirrorService) formatHeistMinerPayoutProof(data PayoutPostData) (string, string, string) {
 	var usdVal float64 = data.Amount
 
 	// Short hash display with spaces around ellipsis (e.g. 0x9ff ... 25b88)
@@ -343,7 +348,7 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 	}
 
 	if targetChannel == "" {
-		targetChannel = s.settings.GetString(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
+		targetChannel = s.settings.GetString(ctx, "payout_mirror_target_channel", "@VaultfinityPayouts")
 	}
 
 	// Fetch 1 live post from AiLabRobotPayouts
@@ -357,7 +362,7 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 				posts := s.parseTelegramPosts(string(bodyBytes))
 				if len(posts) > 0 {
 					latest := posts[len(posts)-1]
-					msg, btnText, btnURL := s.formatHashBeePayoutProof(latest)
+					msg, btnText, btnURL := s.formatHeistMinerPayoutProof(latest)
 					return s.sender.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
 				}
 			}
@@ -371,11 +376,11 @@ func (s *PayoutMirrorService) SendTestProof(ctx context.Context, targetChannel s
 		TxURL:        "https://bscscan.com/tx/0x59494162992a8dacffd985ebc1798d4da4d112010c70d61bf8465ac525dec56a",
 		Network:      "BNB Smart Chain (BEP-20)",
 		ExplorerName: "BscScan",
-		Amount:       2.00,
+		Amount:       12.50,
 		Currency:     "GRAM",
 	}
 
-	msg, btnText, btnURL := s.formatHashBeePayoutProof(testData)
+	msg, btnText, btnURL := s.formatHeistMinerPayoutProof(testData)
 	return s.sender.SendChannelPayoutProof(targetChannel, msg, btnText, btnURL)
 }
 
