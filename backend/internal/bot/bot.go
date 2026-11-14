@@ -3,7 +3,6 @@ package bot
 import (
 	"sync"
 	"sync/atomic"
-	"html"
 	"time"
 	"context"
 	"fmt"
@@ -243,16 +242,9 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			newUser, isNew, _ := b.userSvc.GetOrCreate(ctx, from.ID, from.UserName, from.FirstName, from.LanguageCode, refID)
-			// Notify the referrer when a new user joins via their link
+			// User registered via invite link - no automated spam messages sent
 			if isNew && refID != nil && newUser != nil {
-				joinerName := from.FirstName
-				if joinerName == "" {
-					joinerName = from.UserName
-				}
-				if joinerName == "" {
-					joinerName = "A new user"
-				}
-				b.SendReferralJoinNotification(*refID, joinerName)
+				log.Printf("👤 Operative %d registered via referrer %d", from.ID, *refID)
 			}
 		}(*msg.From, referrerTelegramID)
 	}
@@ -390,60 +382,14 @@ func (b *Bot) SendWithdrawalNotification(telegramID int64, status, reason string
 	b.api.Send(msg)
 }
 
-// SendReferralJoinNotification notifies the referrer immediately when a new friend joins via their link
+// SendReferralJoinNotification is permanently disabled: no automatic registration broadcasts
 func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName string) {
-	if b == nil || b.api == nil || referrerTelegramID == 0 {
-		return
-	}
-	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🔨 Open Heist Miner", miniAppURL)
-
-	botName := "hashbe_bot"
-	if b.api != nil && b.api.Self.UserName != "" {
-		botName = b.api.Self.UserName
-	}
-	if strings.EqualFold(botName, "hashbee_bot") || botName == "" {
-		botName = "hashbe_bot"
-	}
-
-	safeName := html.EscapeString(joinerName)
-	text := fmt.Sprintf(`🎉 <b>New Syndicate Recruit!</b>
-
-👤 <b>%s</b> just joined your Heist Miner Syndicate crew!
-
-💰 <b>Commissions:</b> You will earn a <b>10%% lifetime cut</b> on every Safecracker they hire and every Battery Pack they buy, plus a <b>$0.02 cash bounty</b> on their first hire!
-
-🤝 Keep sharing your link to grow your Syndicate and earn together!
-
-Your invite link: https://t.me/%s?start=%d`, safeName, botName, referrerTelegramID)
-
-	msg := tgbotapi.NewMessage(referrerTelegramID, text)
-	msg.ParseMode = "HTML"
-	msg.DisableWebPagePreview = true
-	msg.ReplyMarkup = keyboard
-	b.api.Send(msg)
+	// Disabled
 }
 
-// SendReferralActivatedNotification notifies referrer of new active referral
+// SendReferralActivatedNotification is permanently disabled: no automatic activation broadcasts
 func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName string, rewardBP float64) {
-	if b == nil || b.api == nil || telegramID == 0 {
-		return
-	}
-	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🔨 Check Drill Speed", miniAppURL)
-
-	safeName := html.EscapeString(referredName)
-	text := fmt.Sprintf(`🎉 <b>Syndicate Recruit Active!</b>
-
-👤 <b>%s</b> just started drilling and smelted their first gold!
-
-⚡ You've unlocked bonus syndicate drill commission!
-Your squad yield is now active 24/7. 🔨`, safeName, rewardBP)
-
-	msg := tgbotapi.NewMessage(telegramID, text)
-	msg.ParseMode = "HTML"
-	msg.ReplyMarkup = keyboard
-	b.api.Send(msg)
+	// Disabled
 }
 
 // SendDepositNotification notifies user of credited blockchain deposit and alerts Kanzx

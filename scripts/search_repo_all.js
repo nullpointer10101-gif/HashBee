@@ -22,3 +22,4 @@ function searchDir(dir) {
 
 searchDir('.');
 console.log('Search complete.');
+

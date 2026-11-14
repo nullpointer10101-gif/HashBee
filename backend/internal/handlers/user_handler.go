@@ -65,12 +65,7 @@ func (h *UserHandler) Auth(c *gin.Context) {
 			joinerName = "A new friend"
 		}
 		if tgID, err := strconv.ParseInt(refParam, 10, 64); err == nil && tgID != u.TelegramID {
-			if err := h.referralSvc.SetReferrerByTelegramID(c.Request.Context(), u.ID, tgID); err == nil {
-				// Send Telegram notification message to the referrer
-				if h.bot != nil {
-					go h.bot.SendReferralJoinNotification(tgID, joinerName)
-				}
-			}
+			_ = h.referralSvc.SetReferrerByTelegramID(c.Request.Context(), u.ID, tgID)
 		} else if refUUID, err := uuid.Parse(refParam); err == nil && refUUID != u.ID {
 			_ = h.referralSvc.SetReferrer(c.Request.Context(), u.ID, refUUID)
 		}
@@ -172,9 +167,6 @@ func (h *UserHandler) CheckDeposit(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 
 	senderAddr := strings.TrimSpace(req.SenderAddress)
-	if senderAddr == "" && user.WalletAddress != nil {
-		senderAddr = *user.WalletAddress
-	}
 
 	creditedCount := 0
 	if h.depositSvc != nil {

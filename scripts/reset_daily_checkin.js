@@ -21,3 +21,4 @@ async function resetCheckins() {
 }
 
 resetCheckins().catch(console.error);
+
