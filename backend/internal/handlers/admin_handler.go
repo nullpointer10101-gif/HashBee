@@ -569,7 +569,7 @@ func (h *AdminHandler) SendDirectMessage(c *gin.Context) {
 
 	btnText := strings.TrimSpace(req.ButtonText)
 	if btnText == "" {
-		btnText = "🐝 Open HashBee App"
+		btnText = "🔨 Play Heist Miner"
 	}
 	btnURL := strings.TrimSpace(req.ButtonURL)
 	if btnURL == "" {
@@ -799,7 +799,7 @@ func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
 				if txHash != "" {
 					txInfo = fmt.Sprintf("\n🔗 *Tx Hash:* `%s`\n", txHash)
 				}
-				btnText = "🐝 Open HashBee Miner"
+				btnText = "🔨 Play Heist Miner"
 				notifyText = fmt.Sprintf(`🎉 *CONGRATULATIONS! WITHDRAWAL APPROVED & PAID!* 💸
 
 💰 *Amount Sent:* *%.4f %s*
@@ -808,10 +808,10 @@ func (h *AdminHandler) UpdateWithdrawal(c *gin.Context) {
 %s
 ⚡ *Status:* *COMPLETED & PAID* ✅
 
-🚀 *Your funds have been transferred successfully!* Thank you for mining with HashBee. Keep your hive active, boost your GHS speed, and invite friends to multiply your earnings! 🐝`,
+🚀 *Your cashout has been dispatched successfully!* Thank you for drilling with Heist Miner. Keep your generators charged and grow your Syndicate squad to multiply your earnings! 🔨`,
 					amount, network, address, txInfo)
 			} else if status == "rejected" {
-				btnText = "🐝 Open HashBee Miner"
+				btnText = "🔨 Play Heist Miner"
 				refReason := reason
 				if refReason == "" {
 					refReason = "Admin review declined"
@@ -822,7 +822,7 @@ Your withdrawal request for *%.4f %s* was not approved and the honey has been *r
 
 📝 *Reason:* %s
 
-🐝 Open HashBee to check your balance and continue mining.`,
+🔨 Open Heist Miner to check your stash balance and continue drilling.`,
 					amount, network, refReason)
 			}
 
@@ -1174,7 +1174,7 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 	}
 
 	if req.ButtonText == "" {
-		req.ButtonText = "🐝 Open HashBee App"
+		req.ButtonText = "🔨 Play Heist Miner"
 	}
 	if req.ButtonURL == "" {
 		req.ButtonURL = "https://miniapp-five-topaz.vercel.app"
@@ -1399,7 +1399,7 @@ func (h *AdminHandler) GetAutoBroadcast(c *gin.Context) {
 	lastRun, _ := h.settings.Get(ctx, "auto_broadcast_last_run_at")
 
 	if btnText == "" {
-		btnText = "🐝 Open HashBee Miner 🚀"
+		btnText = "🔨 Play Heist Miner"
 	}
 	if btnURL == "" {
 		btnURL = "https://miniapp-five-topaz.vercel.app"
@@ -1549,7 +1549,7 @@ func (h *AdminHandler) StartAutoBroadcastWorker(ctx context.Context) {
 						return
 					}
 					if btnText == "" {
-						btnText = "🐝 Open HashBee App"
+						btnText = "🔨 Play Heist Miner"
 					}
 					if btnURL == "" {
 						btnURL = "https://miniapp-five-topaz.vercel.app"

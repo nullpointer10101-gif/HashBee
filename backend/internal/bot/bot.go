@@ -430,15 +430,15 @@ func (b *Bot) SendReferralActivatedNotification(telegramID int64, referredName s
 		return
 	}
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("⚡ Check Mining Power", miniAppURL)
+	keyboard := newWebAppKeyboard("🔨 Check Drill Speed", miniAppURL)
 
 	safeName := html.EscapeString(referredName)
-	text := fmt.Sprintf(`🎉 <b>Referral Activated!</b>
+	text := fmt.Sprintf(`🎉 <b>Syndicate Recruit Active!</b>
 
-👤 <b>%s</b> just collected their first mining harvest!
+👤 <b>%s</b> just started drilling and smelted their first gold!
 
-⚡ You've unlocked <b>+%.2f GHS</b> Hash Power bonus!
-Your mining speed has increased automatically. 🚀`, safeName, rewardBP)
+⚡ You've unlocked bonus syndicate drill commission!
+Your squad yield is now active 24/7. 🔨`, safeName, rewardBP)
 
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "HTML"
@@ -451,7 +451,7 @@ func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower flo
 	if b == nil || b.api == nil {
 		return
 	}
-	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+%.3f GRAM*\n⚡ Mining Power Added: *+%.2f GHS*!\n\nYour miner is accumulating at the upgraded rate 24/7!", amountGram, ghsPower)
+	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+%.3f GRAM*\n⚡ Auxiliary Power & Drill Speed Credited!* ⚡\n\nYour safecrackers are drilling at the upgraded rate 24/7! 🔨", amountGram, ghsPower)
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	b.api.Send(msg)

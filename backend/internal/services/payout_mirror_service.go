@@ -98,7 +98,7 @@ func (s *PayoutMirrorService) SyncOnce(ctx context.Context) (int, error) {
 		sourceURL = "https://t.me/s/" + clean
 	}
 
-	targetChannel := s.settings.GetString(ctx, "payout_mirror_target_channel", "@HashBeePayouts")
+	targetChannel := s.settings.GetString(ctx, "payout_mirror_target_channel", "@VaultfinityPayouts")
 	if targetChannel == "" {
 		targetChannel = "@HashBeePayouts"
 	}
@@ -311,7 +311,7 @@ func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (str
 		currency = "GRAM"
 	}
 
-	msg := fmt.Sprintf(`✅ <b>HashBee Withdrawal Complete</b>
+	msg := fmt.Sprintf(`✅ <b>Heist Miner Cashout Complete</b>
 
 🔹 Amount: %.2f %s
 🔹 In USD: $%.2f
@@ -330,7 +330,7 @@ func (s *PayoutMirrorService) formatHashBeePayoutProof(data PayoutPostData) (str
 		}
 	}
 
-	btnText := "⚡ Start Bot ➔"
+	btnText := "🔨 Play Heist Miner ➔"
 	btnURL := fmt.Sprintf("https://t.me/%s?start=start", botUsername)
 
 	return msg, btnText, btnURL
