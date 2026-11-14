@@ -401,18 +401,24 @@ func (s *UserService) DailyCheckin(ctx context.Context, userID uuid.UUID) (float
 	}
 
 	now := time.Now()
-	today := now.Truncate(24 * time.Hour)
 
-	// Already checked in today
-	if u.LastCheckinAt != nil && u.LastCheckinAt.Truncate(24*time.Hour).Equal(today) {
-		return 0, u.StreakCount, fmt.Errorf("already checked in today")
+	// Enforce strict 24-hour interval between daily check-ins
+	if u.LastCheckinAt != nil {
+		timeSince := now.Sub(*u.LastCheckinAt)
+		if timeSince < 24*time.Hour {
+			rem := 24*time.Hour - timeSince
+			hrs := int(rem.Hours())
+			mins := int(rem.Minutes()) % 60
+			secs := int(rem.Seconds()) % 60
+			return 0, u.StreakCount, fmt.Errorf("next check-in available in %02dh %02dm %02ds", hrs, mins, secs)
+		}
 	}
 
-	// Check if streak is maintained (last checkin was yesterday)
+	// Check if streak is maintained (within 24h to 48h)
 	newStreak := 1
 	if u.LastCheckinAt != nil {
-		yesterday := today.Add(-24 * time.Hour)
-		if u.LastCheckinAt.Truncate(24 * time.Hour).Equal(yesterday) {
+		timeSince := now.Sub(*u.LastCheckinAt)
+		if timeSince <= 48*time.Hour {
 			newStreak = u.StreakCount + 1
 			if newStreak > 7 {
 				newStreak = 1 // Reset after day 7

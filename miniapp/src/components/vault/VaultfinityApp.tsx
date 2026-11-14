@@ -67,8 +67,34 @@ export default function VaultfinityApp() {
     boss: 0,
   });
 
-  // 7-Day Daily Generator Streak
+  // 7-Day Daily Generator Streak & 24h Cooldown
   const [streakDays, setStreakDays] = useState<DailyMilestone[]>(INITIAL_STREAK);
+  const [nextClaimSeconds, setNextClaimSeconds] = useState<number>(0);
+
+  // 1-second countdown ticker for 24h generator drop
+  useEffect(() => {
+    if (nextClaimSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setNextClaimSeconds((prev) => {
+        if (prev <= 1) {
+          // Cooldown finished, unlock next day
+          setStreakDays((days) => {
+            const firstUnclaimed = days.findIndex((d) => !d.claimed);
+            if (firstUnclaimed >= 0) {
+              return days.map((d, idx) => ({
+                ...d,
+                claimable: idx === firstUnclaimed,
+              }));
+            }
+            return days;
+          });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [nextClaimSeconds]);
 
   // Wallet Transactions History
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
@@ -117,12 +143,17 @@ export default function VaultfinityApp() {
           setCrewCounts(newCounts);
         }
 
+        if (status.next_claim_seconds !== undefined) {
+          setNextClaimSeconds(status.next_claim_seconds);
+        }
+
         if (status.streak_day) {
+          const isLocked = (status.next_claim_seconds && status.next_claim_seconds > 0) || status.streak_claimed_today;
           setStreakDays((prev) =>
             prev.map((d) => {
               if (d.day < status.streak_day) return { ...d, claimed: true, claimable: false };
-              if (d.day === status.streak_day) return { ...d, claimed: status.streak_claimed_today, claimable: !status.streak_claimed_today };
-              return d;
+              if (d.day === status.streak_day) return { ...d, claimed: isLocked, claimable: !isLocked };
+              return { ...d, claimed: false, claimable: false };
             })
           );
         }
@@ -275,19 +306,21 @@ export default function VaultfinityApp() {
 
     triggerHaptic('drill', soundEnabled);
     setPowerKwh((prev) => prev + milestone.kwh);
+    
+    // Strict 24h lockout: mark claimed and lock ALL days
     setStreakDays((prev) =>
       prev.map((d) => {
         if (d.day === day) return { ...d, claimed: true, claimable: false };
-        if (d.day === day + 1) return { ...d, claimable: true };
-        return d;
+        return { ...d, claimable: false };
       })
     );
+    setNextClaimSeconds(86400);
 
     if (day === 7) {
       setCrewCounts((prev) => ({ ...prev, rookie: prev.rookie + 1 }));
       showToast(`Day 7 Claimed: +${milestone.kwh.toLocaleString()} kWh & Free Drill Drone!`, 'success');
     } else {
-      showToast(`Day ${day} Generator Supply: +${milestone.kwh.toLocaleString()} kWh online!`, 'success');
+      showToast(`Day ${day} Generator Supply: +${milestone.kwh.toLocaleString()} kWh online! (Next claim in 24h)`, 'success');
     }
 
     apiClaimDailySupply()
@@ -296,7 +329,10 @@ export default function VaultfinityApp() {
           setPowerKwh((prev) => prev + res.reward_kwh);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        const msg = err?.response?.data?.error || err?.message;
+        if (msg) showToast(msg, 'error');
+      });
   };
 
   const handleBuySafecracker = (unit: SafecrackerUnit) => {
@@ -631,6 +667,7 @@ export default function VaultfinityApp() {
                   totalHackers={totalHackers}
                   powerKwh={powerKwh}
                   streakDays={streakDays}
+                  nextClaimSeconds={nextClaimSeconds}
                   onSmeltGold={handleSmeltGold}
                   onOpenBatteryShop={() => {
                     triggerHaptic('recharge', soundEnabled);

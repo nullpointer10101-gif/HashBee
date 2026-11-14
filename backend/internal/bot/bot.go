@@ -33,7 +33,7 @@ type InlineKeyboardMarkupCustom struct {
 	InlineKeyboard [][]InlineKeyboardButtonWithWebApp `json:"inline_keyboard"`
 }
 
-const PayoutsChannelURL = "https://t.me/+L4xApdSQJkA3N2Rl"
+const PayoutsChannelURL = "https://t.me/HashBeePayouts"
 
 func newStartTwoButtonKeyboard(appBtnText, appURL, payoutBtnText, payoutURL string) InlineKeyboardMarkupCustom {
 	appBtnText = strings.TrimSpace(appBtnText)

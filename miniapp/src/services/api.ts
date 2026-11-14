@@ -603,6 +603,7 @@ export interface VaultStatusResponse {
   }>
   streak_day: number
   streak_claimed_today: boolean
+  next_claim_seconds?: number
   streak_rewards: number[]
 }
 

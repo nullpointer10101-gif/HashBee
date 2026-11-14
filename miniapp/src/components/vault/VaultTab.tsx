@@ -20,6 +20,7 @@ interface VaultTabProps {
   totalHackers: number;
   powerKwh: number;
   streakDays: DailyMilestone[];
+  nextClaimSeconds?: number;
   onSmeltGold: () => void;
   onOpenBatteryShop: () => void;
   onClaimStreakDay: (day: number) => void;
@@ -33,6 +34,7 @@ export default function VaultTab({
   totalHackers,
   powerKwh,
   streakDays,
+  nextClaimSeconds = 0,
   onSmeltGold,
   onOpenBatteryShop,
   onClaimStreakDay,
@@ -201,9 +203,20 @@ export default function VaultTab({
       <div className="rounded-2xl bg-[#13191b] border border-[#1e292d] p-3.5 space-y-2.5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-white">Daily Generator Supply</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white">Daily Generator Supply</h2>
+              {nextClaimSeconds > 0 && (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  ⏱️ {Math.floor(nextClaimSeconds / 3600).toString().padStart(2, '0')}:
+                  {Math.floor((nextClaimSeconds % 3600) / 60).toString().padStart(2, '0')}:
+                  {(nextClaimSeconds % 60).toString().padStart(2, '0')}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-[#94a3b8]">
-              Come back every day — the power streak grows
+              {nextClaimSeconds > 0
+                ? 'Next generator drop unlocks in 24 hours'
+                : 'Come back every day — the power streak grows'}
             </p>
           </div>
           <span className="text-[11px] font-semibold text-[#fbbf24]">

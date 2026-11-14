@@ -383,6 +383,7 @@ type VaultStatus struct {
 	EnergyPacks         []EnergyPack      `json:"energy_packs"`
 	StreakDay           int               `json:"streak_day"`
 	StreakClaimedToday  bool              `json:"streak_claimed_today"`
+	NextClaimSeconds    int64             `json:"next_claim_seconds"`
 	StreakRewards       []float64         `json:"streak_rewards"`
 }
 

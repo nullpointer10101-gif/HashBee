@@ -269,11 +269,18 @@ func (s *VaultService) GetVaultStatus(ctx context.Context, userID uuid.UUID) (*m
 		remainingHours = (energyKWh / energyBurnRatePerSec) / 3600.0
 	}
 
-	// Check streak status
-	today := now.Truncate(24 * time.Hour)
+	// Check streak status: strict 24-hour interval
 	streakClaimedToday := false
-	if lastCheckinAt != nil && lastCheckinAt.Truncate(24*time.Hour).Equal(today) {
-		streakClaimedToday = true
+	var nextClaimSeconds int64 = 0
+	if lastCheckinAt != nil {
+		timeSince := now.Sub(*lastCheckinAt)
+		if timeSince < 24*time.Hour {
+			streakClaimedToday = true
+			nextClaimSeconds = int64((24*time.Hour - timeSince).Seconds())
+			if nextClaimSeconds < 0 {
+				nextClaimSeconds = 0
+			}
+		}
 	}
 
 	// Build catalog with user owned counts
@@ -303,6 +310,7 @@ func (s *VaultService) GetVaultStatus(ctx context.Context, userID uuid.UUID) (*m
 		EnergyPacks:         StandardEnergyPacks,
 		StreakDay:           streakCount,
 		StreakClaimedToday:  streakClaimedToday,
+		NextClaimSeconds:    nextClaimSeconds,
 		StreakRewards:       DailyBatteryRewards,
 	}
 
@@ -665,16 +673,24 @@ func (s *VaultService) ClaimDailySupply(ctx context.Context, userID uuid.UUID) (
 	}
 
 	now := time.Now()
-	today := now.Truncate(24 * time.Hour)
 
-	if lastCheckinAt != nil && lastCheckinAt.Truncate(24*time.Hour).Equal(today) {
-		return 0, streakCount, fmt.Errorf("already claimed today's battery supply drop")
+	// Enforce strict 24-hour interval between generator claims
+	if lastCheckinAt != nil {
+		timeSince := now.Sub(*lastCheckinAt)
+		if timeSince < 24*time.Hour {
+			rem := 24*time.Hour - timeSince
+			hrs := int(rem.Hours())
+			mins := int(rem.Minutes()) % 60
+			secs := int(rem.Seconds()) % 60
+			return 0, streakCount, fmt.Errorf("Next generator claim available in %02dh %02dm %02ds", hrs, mins, secs)
+		}
 	}
 
 	newStreak := 1
 	if lastCheckinAt != nil {
-		yesterday := today.Add(-24 * time.Hour)
-		if lastCheckinAt.Truncate(24 * time.Hour).Equal(yesterday) {
+		timeSince := now.Sub(*lastCheckinAt)
+		// If claimed within 24h to 48h, advance streak; if > 48h, reset to Day 1
+		if timeSince <= 48*time.Hour {
 			newStreak = streakCount + 1
 			if newStreak > 7 {
 				newStreak = 1

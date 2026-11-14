@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { QRCodeSVG } from 'qrcode.react';
 import { CryptoSymbol, CRYPTO_ASSETS } from '@/lib/game-data';
 import { CryptoCoinBadge } from './CyberSprites';
 import { X, Copy, Check, ShieldCheck, AlertTriangle, Wallet, Zap } from 'lucide-react';
@@ -124,30 +125,14 @@ export function InvoiceModal({
 
             {/* QR Code Visual & Amount Summary */}
             <div className="rounded-2xl bg-[#0a0d0e] border border-[#1e292d] p-4 flex flex-col items-center text-center space-y-3">
-              {/* Stylized Crisp SVG QR Code */}
+              {/* Real Scannable Blockchain QR Code */}
               <div className="w-36 h-36 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-md">
-                <svg viewBox="0 0 100 100" className="w-full h-full fill-[#0a0d0e]">
-                  <rect x="4" y="4" width="28" height="28" rx="4" fill="none" stroke="#0a0d0e" strokeWidth="6" />
-                  <rect x="12" y="12" width="12" height="12" rx="2" />
-                  <rect x="68" y="4" width="28" height="28" rx="4" fill="none" stroke="#0a0d0e" strokeWidth="6" />
-                  <rect x="76" y="12" width="12" height="12" rx="2" />
-                  <rect x="4" y="68" width="28" height="28" rx="4" fill="none" stroke="#0a0d0e" strokeWidth="6" />
-                  <rect x="12" y="76" width="12" height="12" rx="2" />
-                  {/* Data matrix blocks */}
-                  <rect x="40" y="8" width="8" height="8" />
-                  <rect x="52" y="16" width="8" height="16" />
-                  <rect x="40" y="28" width="8" height="8" />
-                  <rect x="8" y="40" width="16" height="8" />
-                  <rect x="32" y="44" width="12" height="12" rx="2" fill="#f59e0b" />
-                  <rect x="52" y="40" width="16" height="8" />
-                  <rect x="76" y="44" width="16" height="8" />
-                  <rect x="40" y="60" width="16" height="8" />
-                  <rect x="64" y="60" width="8" height="16" />
-                  <rect x="80" y="64" width="12" height="12" />
-                  <rect x="40" y="76" width="8" height="16" />
-                  <rect x="56" y="84" width="16" height="8" />
-                  <rect x="80" y="84" width="12" height="12" />
-                </svg>
+                <QRCodeSVG
+                  value={vaultDepositAddress}
+                  size={128}
+                  level="M"
+                  includeMargin={false}
+                />
               </div>
 
               <div>
