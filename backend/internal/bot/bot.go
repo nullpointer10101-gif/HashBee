@@ -264,21 +264,19 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 
 	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", appURLWithRef, "💸 Official Payouts Channel ↗️", PayoutsChannelURL)
 
-	welcomeText := `🔨 *HEIST MINER — CYBER HEIST TYCOON*
+	welcomeText := `⚡ *HEIST MINER* 🔨💰
 ━━━━━━━━━━━━━━━━━━━━━
-🎉 *WELCOME OPERATIVE! YOUR STARTER PACK IS READY:*
-🎁 *+1 Free Drill Rookie* (5,000 Gold / Day)
-🔋 *+50,000 kWh Battery Pack* (Keeps drills running 24/7)
-💰 *+$0.50 Starter Mining Yield*
+🎉 *Vault Access Granted! Your Starter Gift is Ready:*
 
-⚡ *HOW TO PROFIT 24/7:*
-• 🥷 *Drill Vault Gold:* Automated safecrackers extract bullion non-stop.
-• 🔥 *Smelt Into Cash:* Convert gold directly into Real USD ($1.00 = 100k Gold).
-• 💎 *Instant Cashouts:* Withdraw in *TON*, *USD₮ (TON)*, or *TRX (TRON)*.
-• 👥 *10% Syndicate Cut:* Earn a permanent 10% slice of every operative & battery your friends buy!
+💰 *+$0.50* Free Cashout Balance
+🔋 *+50,000 kWh* Drill Battery Pack
+🔨 *+1 Free* Cyber Drill Operative
 
-🛡️ *VERIFIED ON-CHAIN PROOFS:*
-Check live automated cashouts posted in our official Proofs channel below.`
+⛏️ *Automated gold drilling is active 24/7.*
+Smelt vault bullion into real cash & withdraw instantly to *TON, USD₮, or TRX*!
+
+━━━━━━━━━━━━━━━━━━━━━
+👇 *Tap below to launch and collect your gold:*`
 
 	if referrerTelegramID != nil {
 		welcomeText += fmt.Sprintf("\n\n🤝 *Syndicate Boost:* You were recruited by operative `%d`! Starter hashrate boosted.", *referrerTelegramID)
