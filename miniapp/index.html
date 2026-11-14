@@ -21,27 +21,19 @@
     <!-- Telegram WebApp SDK (provided by Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 
-    <!-- Adsgram Monetization SDK (Block: 56832) -->
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-
-    <!-- Adexium Monetization Script -->
+    <!-- Adexium Monetization Script (Primary & Exclusive) -->
     <script type="text/javascript" src="https://cdn.tgads.space/assets/js/adexium-widget.min.js"></script>
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 const adexiumWidget = new AdexiumWidget({wid: '8e21d2a6-6c80-4b16-baf9-990e07ff2f00', adFormat: 'interstitial'});
                 window.adexiumWidget = adexiumWidget;
+                console.log('[AdExium] Exclusive widget initialized');
             } catch(e) {
                 console.warn('[AdExium] widget init error:', e);
             }
         });
     </script>
-
-    <!-- GigaPub Backup Player (App ID 8543) - Loop suppressed for controlled waterfall -->
-    <script type="text/javascript">
-      window.__giga_inter_running__ = true;
-    </script>
-    <script src="https://ad.gigapub.tech/script?id=8543" async></script>
 
     <script>
       // Initialize Telegram WebApp SDK safely
