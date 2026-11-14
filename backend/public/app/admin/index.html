@@ -242,15 +242,14 @@
           <div class="form-group">
             <label class="form-label">Choose Hype Template</label>
             <select id="broadcastTemplate" class="form-input" onchange="applyTemplate(this.value)">
-              <option value="flash_2x_double" selected>⚡ FLASH 2X: 5.00 TON ➔ 10.00 G (+100% Profit • 500 Slots)</option>
-              <option value="withdraw_min_010">💸 Instant Cashout ➔ Min Withdrawal Only 0.10 G!</option>
-              <option value="spin_free_waiting">🎰 Free Lucky Spin Waiting ➔ Win 1.00 GRAM Jackpot ({name})</option>
-              <option value="hive_full_alert">🚨 Urgent: Mining Rig Full! Collect Honey ({name})</option>
-              <option value="mystery_crate_drop">📦 Free Mystery Crate Drop Unlocked ➔ Open & Win Big</option>
-              <option value="viral_referrals_rush">👥 Viral Invite Rush: +1 Spin & +5 GHS Per Friend</option>
-              <option value="withdraw_proof_alert">💎 All Payouts Verified ➔ On-Chain Proofs Sent</option>
-              <option value="plan_starter_trial">⚡ Starter Worker Miner: 1.30 TON ➔ 2.00 G (+53.8%)</option>
-              <option value="missions_bounty">⭐ Sponsor Missions ➔ Free GHS Drops</option>
+              <option value="vault_gold_smelt" selected>🔥 Smelt Vault Gold ➔ Convert Bullion to Cash</option>
+              <option value="safecracker_hire">🥷 Expand Crew ➔ Hire Drill Rookies & Cyber Bosses</option>
+              <option value="battery_power_drop">🔋 Generator Power Drop ➔ Recharge Drills 24/7</option>
+              <option value="daily_power_streak">🎁 24H Power Drop Ready ➔ Claim Up to 12K kWh ({name})</option>
+              <option value="withdraw_proof_alert">💎 All Payouts Verified ➔ On-Chain Proofs in @HashBeePayouts</option>
+              <option value="syndicate_commissions">👥 Syndicate Recruit Rush ➔ 10% Cut Forever</option>
+              <option value="fusion_reactor_pack">⚡ Fusion Power Reactor ➔ +2M kWh Pack ($3.00)</option>
+              <option value="heist_leaderboard">🏆 Vault Cracked ➔ Top Operatives & Cashouts</option>
               <option value="custom">✍️ Custom Message</option>
             </select>
           </div>
@@ -263,7 +262,7 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
             <div class="form-group">
               <label class="form-label">Button Text</label>
-              <input type="text" id="broadcastBtnText" class="form-input" value="🐝 Open HashBee App" oninput="updatePreview()">
+              <input type="text" id="broadcastBtnText" class="form-input" value="🔨 Play Heist Miner" oninput="updatePreview()">
             </div>
             <div class="form-group">
               <label class="form-label">Button WebApp URL</label>
@@ -389,16 +388,15 @@
             </button>
           </div>
           <select id="autoBroadcastTemplateSelect" class="form-input" onchange="applyAutoTemplate(this.value)">
-            <option value="flash_2x_double" selected>⚡ FLASH 2X: 5.00 TON ➔ 10.00 G (+100% Profit • 500 Slots)</option>
-            <option value="withdraw_min_010">💸 Instant Cashout ➔ Min Withdrawal Only 0.10 G!</option>
-            <option value="spin_free_waiting">🎰 Free Lucky Spin Waiting ➔ Win 1.00 GRAM Jackpot ({name})</option>
-            <option value="hive_full_alert">🚨 Urgent: Mining Rig Full! Collect Honey ({name})</option>
-            <option value="mystery_crate_drop">📦 Free Mystery Crate Drop Unlocked ➔ Open & Win Big</option>
-            <option value="viral_referrals_rush">👥 Viral Invite Rush: +1 Spin & +5 GHS Per Friend</option>
-            <option value="withdraw_proof_alert">💎 All Payouts Verified ➔ On-Chain Proofs Sent</option>
-            <option value="plan_starter_trial">⚡ Starter Worker Miner: 1.30 TON ➔ 2.00 G (+53.8%)</option>
-            <option value="missions_bounty">⭐ Sponsor Missions ➔ Free GHS Drops</option>
-            <option value="custom">✍️ Custom Message Below</option>
+            <option value="vault_gold_smelt" selected>🔥 Smelt Vault Gold ➔ Convert Bullion to Cash</option>
+              <option value="safecracker_hire">🥷 Expand Crew ➔ Hire Drill Rookies & Cyber Bosses</option>
+              <option value="battery_power_drop">🔋 Generator Power Drop ➔ Recharge Drills 24/7</option>
+              <option value="daily_power_streak">🎁 24H Power Drop Ready ➔ Claim Up to 12K kWh ({name})</option>
+              <option value="withdraw_proof_alert">💎 All Payouts Verified ➔ On-Chain Proofs in @HashBeePayouts</option>
+              <option value="syndicate_commissions">👥 Syndicate Recruit Rush ➔ 10% Cut Forever</option>
+              <option value="fusion_reactor_pack">⚡ Fusion Power Reactor ➔ +2M kWh Pack ($3.00)</option>
+              <option value="heist_leaderboard">🏆 Vault Cracked ➔ Top Operatives & Cashouts</option>
+              <option value="custom">✍️ Custom Message</option>
           </select>
         </div>
 
@@ -938,7 +936,7 @@ Grow your TON in exactly 24 hours:
     </div>
     <div class="form-group">
       <label class="form-label">Button Text</label>
-      <input type="text" id="directMsgBtnText" class="form-input" value="🐝 Open HashBee App">
+      <input type="text" id="directMsgBtnText" class="form-input" value="🔨 Play Heist Miner">
     </div>
     <div class="form-group">
       <label class="form-label">Button WebApp URL</label>
@@ -1424,9 +1422,9 @@ function switchTab(tabId, el) {
     loadAutoBroadcast();
     loadPayoutMirrorStatus();
     if (!document.getElementById('broadcastMsg').value) {
-      applyTemplate('flash_2x_double');
+      applyTemplate('vault_gold_smelt');
       const sel = document.getElementById('broadcastTemplate');
-      if (sel) sel.value = 'flash_2x_double';
+      if (sel) sel.value = 'vault_gold_smelt';
     }
   }
 }
