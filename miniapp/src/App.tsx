@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { LanguageProvider } from './context/LanguageContext'
 import { Navbar } from './components/Navbar'
+import VaultfinityApp from './components/vault/VaultfinityApp'
 import { Home } from './pages/Home'
 import { Referrals } from './pages/Referrals'
 import { Missions } from './pages/Missions'
@@ -17,6 +18,8 @@ import { initMonetagAutoAds } from './services/monetag'
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
+  const location = useLocation()
+  const isVaultHome = location.pathname === '/'
   const [verifiedMap, setVerifiedMap] = useState<Record<string, boolean>>({})
 
   // Resolve current Telegram account ID
@@ -71,7 +74,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-[#0f172a] font-sans antialiased selection:bg-[#0066ff] selection:text-[#ffffff] relative">
+    <div className={`min-h-screen ${isVaultHome ? 'bg-[#060809]' : 'bg-[#f4f7fb]'} text-[#0f172a] font-sans antialiased relative`}>
       {/* 🔒 1-TIME VIP CHANNEL VERIFICATION MODAL OVERLAY FOR EVERY TELEGRAM ACCOUNT */}
       {!isVerified && (!activeTgId || !verifiedMap[String(activeTgId)]) && (
         <PrivateGroupGatekeeper
@@ -83,13 +86,14 @@ const AppContent: React.FC = () => {
       )}
 
       {/* 🚗 1-TIME TESLA MINING FULL IMPRESSIVE TAKEOVER PAGE (SHOWS 2 TIMES UPON OPENING APP) */}
-      <TeslaMiningTakeover />
+      {!isVaultHome && <TeslaMiningTakeover />}
 
       {/* 🎁 10 GRAM 7-DAY VIRAL REFERRAL BOUNTY FLOATING WIDGET */}
-      <ViralBountyWidget />
+      {!isVaultHome && <ViralBountyWidget />}
 
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<VaultfinityApp />} />
+        <Route path="/classic" element={<Home />} />
         <Route path="/watch" element={<Missions defaultTab="watch" />} />
         <Route path="/plans" element={<Plans />} />
         <Route path="/crates" element={<Plans />} />
@@ -99,7 +103,7 @@ const AppContent: React.FC = () => {
         <Route path="/missions" element={<Missions defaultTab="tasks" />} />
         <Route path="/withdraw" element={<Withdraw />} />
       </Routes>
-      <Navbar />
+      {!isVaultHome && <Navbar />}
     </div>
   )
 }

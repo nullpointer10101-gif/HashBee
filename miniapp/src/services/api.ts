@@ -542,6 +542,122 @@ export const claimViralBounty = async (walletAddress: string): Promise<any> => {
   return res.data
 }
 
+// =====================================================
+// Vault Heist (Vaultfinity) API Methods
+// =====================================================
+
+export interface VaultStatusResponse {
+  gold_stash: number
+  gold_usd: number
+  gold_per_second: number
+  daily_gold_total: number
+  daily_usd_total: number
+  energy_kwh: number
+  energy_duration_hours: number
+  is_energy_depleted: boolean
+  active_crew_count: number
+  crew: Array<{
+    id: string
+    crew_type: string
+    name: string
+    count: number
+    daily_gold_rate: number
+    cost_usd: number
+  }>
+  crew_catalog: Array<{
+    id: string
+    name: string
+    daily_gold_rate: number
+    daily_usd: number
+    cost_usd: number
+    roi_daily_pct: string
+    owned_count: number
+    badge: string
+    icon: string
+  }>
+  energy_packs: Array<{
+    id: string
+    name: string
+    energy_kwh: number
+    cost_usd: number
+    duration_label: string
+    badge?: string
+  }>
+  streak_day: number
+  streak_claimed_today: boolean
+  streak_rewards: number[]
+}
+
+export const fetchVaultStatus = async (): Promise<VaultStatusResponse> => {
+  const res = await api.get('/api/vault/status')
+  return res.data
+}
+
+export const smeltGold = async (): Promise<{
+  success: boolean
+  gold_smelted: number
+  usd_credited: number
+  new_balance: number
+}> => {
+  const res = await api.post('/api/gold/smelt')
+  return res.data
+}
+
+export const buyCrew = async (crewType: string): Promise<{
+  success: boolean
+  crew: any
+  new_balance: number
+}> => {
+  const res = await api.post('/api/crew/buy', { crew_type: crewType })
+  return res.data
+}
+
+export const buyEnergy = async (packId: string): Promise<{
+  success: boolean
+  energy_kwh: number
+  new_balance: number
+}> => {
+  const res = await api.post('/api/energy/buy', { pack_id: packId })
+  return res.data
+}
+
+export const fetchSyndicate = async (): Promise<{
+  invite_link: string
+  friends_count: number
+  friends_purse_usd: number
+  total_earned_usd: number
+  recent_activities: Array<{
+    id: string
+    buyer_username: string
+    source_type: string
+    source_item: string
+    amount_usd: number
+    created_at: string
+  }>
+}> => {
+  const res = await api.get('/api/syndicate')
+  return res.data
+}
+
+export const claimSyndicatePurse = async (): Promise<{
+  success: boolean
+  collected_usd: number
+  new_balance: number
+}> => {
+  const res = await api.post('/api/syndicate/claim')
+  return res.data
+}
+
+export const claimDailySupply = async (): Promise<{
+  success: boolean
+  reward_kwh: number
+  streak_day: number
+}> => {
+  const res = await api.post('/api/daily-supply')
+  return res.data
+}
+
+
 
 
 
