@@ -38,3 +38,4 @@ code = code.replace(
 
 fs.writeFileSync('admin/src/pages/Dashboard.tsx', code, 'utf8');
 console.log('Cleaned up remaining items!');
+

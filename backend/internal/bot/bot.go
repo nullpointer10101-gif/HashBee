@@ -38,7 +38,7 @@ const TeslaBotURL = "https://t.me/teslaFarmbot?start=8823265955"
 func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	text = strings.TrimSpace(text)
 	if text == "" {
-		text = "🏛️ Enter Vault"
+		text = "🔨 Play Heist Miner"
 	}
 	url = strings.TrimSpace(url)
 	if url == "" {
@@ -116,13 +116,47 @@ func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
-	log.Printf("🐝 HashBee Bot authorized as @%s", api.Self.UserName)
+	log.Printf("🔨 Heist Miner Bot authorized as @%s (%s)", api.Self.UserName, api.Self.FirstName)
 	if api.Self.UserName != "" {
 		cfg.BotUsername = api.Self.UserName
 	} else {
 		cfg.BotUsername = "hashbe_bot"
 	}
-	return &Bot{api: api, cfg: cfg, userSvc: userSvc}, nil
+	botInstance := &Bot{api: api, cfg: cfg, userSvc: userSvc}
+	botInstance.ensureBotMetadata()
+	return botInstance, nil
+}
+
+func (b *Bot) ensureBotMetadata() {
+	if b == nil || b.cfg == nil || b.cfg.BotToken == "" {
+		return
+	}
+	go func() {
+		apiBase := fmt.Sprintf("https://api.telegram.org/bot%s", b.cfg.BotToken)
+
+		// 1. setMyName
+		http.Post(apiBase+"/setMyName", "application/json", strings.NewReader(`{"name":"Heist Miner 🔨"}`))
+
+		// 2. setMyDescription
+		desc := `{"description":"🔨 Welcome to Heist Miner — Cyber Heist Tycoon!\n\n🥷 Hire Safecrackers to drill bullion from the cyber vault 24/7\n🔋 Charge auxiliary batteries & maintain power streaks\n🔥 Smelt Gold directly into Real USD / TON / USDT / TRX\n👥 Build your Syndicate & earn 10% lifetime cuts on all hires & batteries\n\n👇 Tap \"🔨 Play Heist Miner\" below to start drilling!"}`
+		http.Post(apiBase+"/setMyDescription", "application/json", strings.NewReader(desc))
+
+		// 3. setMyShortDescription
+		shortDesc := `{"short_description":"🔨 Crack the cyber vault & earn crypto 24/7! Smelt gold into real cashouts."}`
+		http.Post(apiBase+"/setMyShortDescription", "application/json", strings.NewReader(shortDesc))
+
+		// 4. setChatMenuButton
+		appURL := b.cfg.MiniAppURL
+		if appURL == "" {
+			appURL = "https://miniapp-five-topaz.vercel.app"
+		}
+		menuPayload := fmt.Sprintf(`{"menu_button":{"type":"web_app","text":"🔨 Play Heist Miner","web_app":{"url":"%s"}}}`, appURL)
+		http.Post(apiBase+"/setChatMenuButton", "application/json", strings.NewReader(menuPayload))
+
+		// 5. setMyCommands
+		cmdsPayload := `{"commands":[{"command":"start","description":"🔨 Launch Heist Miner Mini App"},{"command":"balance","description":"💰 View your Gold & Cash Balance"},{"command":"help","description":"📖 Heist Guide & Safecracker Manual"}]}`
+		http.Post(apiBase+"/setMyCommands", "application/json", strings.NewReader(cmdsPayload))
+	}()
 }
 
 func (b *Bot) GetSelf() *tgbotapi.User {
@@ -221,13 +255,14 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 	// Auto-set the chat menu button for this user to open the Mini App
 	go func(chatID int64, appURL string) {
 		reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setChatMenuButton", b.cfg.BotToken)
-		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"🏛️ Enter Vault","web_app":{"url":"%s"}}}`, chatID, appURL)
+		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"🔨 Play Heist Miner","web_app":{"url":"%s"}}}`, chatID, appURL)
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppKeyboard("🏛️ Enter Vault", appURLWithRef)
+	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", appURLWithRef)
 
-	welcomeText := `🏛️ *VAULTFINITY — CYBER HEIST TYCOON*
+	welcomeText := `🔨 *HEIST MINER*
+*Cyber Heist Tycoon*
 
 🥷 *Crack the Vault & Earn Crypto 24/7*
 
@@ -235,7 +270,7 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 🔥 *Smelt Gold directly into Real USD / GRAM / USDT / TRX!*
 👥 *Earn 10% Cut of every Operative & Battery your Syndicate buys!*
 
-Tap below to enter the Vault:`
+Tap below to start drilling:`
 
 	if referrerTelegramID != nil {
 		welcomeText += fmt.Sprintf("\n\n🤝 You were recruited by `%d`! You get an instant syndicate starter boost.", *referrerTelegramID)
@@ -250,15 +285,15 @@ Tap below to enter the Vault:`
 }
 
 func (b *Bot) handleHelp(msg *tgbotapi.Message) {
-	text := `🏛️ *Vaultfinity Help*
+	text := `🔨 *Heist Miner — Operative Manual*
 
-*Safecrackers* — Operatives cracking gold bars from the vault 24/7.
+*Safecrackers* — Operatives drilling bullion from the vault 24/7.
 *Battery Grid* — Power needed to keep operatives drilling. Recharge via 7-day daily drops or batteries.
 *Smelt Gold* — Convert your mined gold into real withdrawable cash balance.
 *Syndicate* — Invite crew members and earn 10% lifetime cuts on all hires & batteries!`
 
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
+	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -269,7 +304,7 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
+	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
 
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
@@ -279,10 +314,10 @@ func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 		return
 	}
 
-	text := fmt.Sprintf(`🏛️ *Your Vaultfinity Stash*
+	text := fmt.Sprintf(`🔨 *Your Heist Miner Stash*
 
 💰 Balance: *$%.4f USD*
-⚡ Hashrate: *%.1f GHS*
+⚡ Drill Rate: *%.1f GHS*
 🔥 Streak: *%d days*
 
 Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, user.BP, user.StreakCount)
@@ -296,9 +331,9 @@ Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, use
 // SendHiveFullNotification sends a vault gold accumulation reminder
 func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
+	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
 
-	text := "🏛️ *Your Vault Stash is accumulating!*\n\nYour safecrackers are cracking gold bars non-stop. Open the vault now to smelt your gold into real USD balance!"
+	text := "🔨 *Your Vault Stash is accumulating!*\n\nYour safecrackers are drilling gold non-stop. Open Heist Miner now to smelt your gold into real USD balance!"
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	msg.ReplyMarkup = keyboard

@@ -533,24 +533,36 @@ export default function VaultfinityApp() {
 
         {/* 1. Sticky Top Header */}
         <header className="shrink-0 h-[62px] px-3.5 bg-[#0e1315]/95 backdrop-blur-md border-b border-[#1e292d] flex items-center justify-between gap-2 z-30">
-          {/* Left: Circular Avatar with Glowing Border, @hacker, and Tier Label */}
+          {/* Left: Bot Avatar with Hammer badge + Heist Miner branding */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-[#f59e0b] via-[#fbbf24] to-[#06b6d4] shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0">
-              <div className="w-full h-full rounded-full bg-[#0a0d0e] flex items-center justify-center text-sm font-extrabold text-[#fbbf24]">
-                {(user?.first_name || user?.username || 'H')[0].toUpperCase()}
+            <div className="relative w-10 h-10 rounded-full p-0.5 bg-gradient-to-tr from-[#f59e0b] via-[#fbbf24] to-[#06b6d4] shadow-[0_0_14px_rgba(245,158,11,0.4)] shrink-0">
+              <div className="w-full h-full rounded-full bg-[#0a0d0e] flex items-center justify-center overflow-hidden relative">
+                <img
+                  src="/bot_avatar.jpg"
+                  alt="Heist Miner 🔨"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="text-sm font-extrabold text-[#fbbf24]">🔨</span>
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 border border-[#060809] flex items-center justify-center text-[9px]">
+                🔨
               </div>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-extrabold text-white truncate">
-                  {user?.username ? `@${user.username}` : (user?.first_name || '@hacker')}
+                <span className="text-sm font-black text-white truncate flex items-center gap-1">
+                  <span>Heist Miner</span>
+                  <span className="text-xs">🔨</span>
                 </span>
-                <span className="text-[10px] font-bold text-[#fbbf24] bg-[#f59e0b]/15 border border-[#f59e0b]/30 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  Heist Master
+                <span className="text-[10px] font-bold text-[#fbbf24] bg-[#f59e0b]/15 border border-[#f59e0b]/30 px-1.5 py-0.2 rounded-full whitespace-nowrap">
+                  {user?.username ? `@${user.username}` : 'Operative'}
                 </span>
               </div>
-              <div className="text-[11px] text-[#94a3b8] truncate">
-                Vault drills 24/7, you earn
+              <div className="text-[10px] text-[#94a3b8] truncate font-mono">
+                Cyber Heist Tycoon
               </div>
             </div>
           </div>

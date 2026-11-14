@@ -33,40 +33,50 @@ const AppContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#060809] flex flex-col items-center justify-center text-white px-4 relative overflow-hidden selection:bg-[#f59e0b]">
         {/* Ambient background glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br from-[#f59e0b]/20 to-[#06b6d4]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#f59e0b]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br from-[#f59e0b]/25 to-[#06b6d4]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#f59e0b]/15 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Animated Cyber Vault Icon */}
+        {/* Animated Bot Avatar / Logo */}
         <div className="relative mb-6">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-[#f59e0b] via-[#fbbf24] to-[#06b6d4] p-0.5 shadow-2xl shadow-amber-500/25 animate-pulse">
-            <div className="w-full h-full rounded-3xl bg-[#0a0d0e] flex items-center justify-center text-4xl relative overflow-hidden">
-              <span className="animate-bounce" style={{ animationDuration: '2s' }}>🏛️</span>
+          <div className="w-28 h-28 rounded-3xl bg-gradient-to-tr from-[#f59e0b] via-[#fbbf24] to-[#06b6d4] p-1 shadow-[0_0_30px_rgba(245,158,11,0.35)] animate-pulse">
+            <div className="w-full h-full rounded-[22px] bg-[#0a0d0e] flex items-center justify-center relative overflow-hidden">
+              <img
+                src="/bot_avatar.jpg"
+                alt="Heist Miner 🔨"
+                className="w-full h-full object-cover rounded-[22px]"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <span className="text-4xl fallback-emoji">🔨</span>
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
             </div>
           </div>
           {/* Orbiting particle ring */}
-          <div className="absolute -inset-2 rounded-[28px] border border-amber-400/30 animate-spin" style={{ animationDuration: '8s' }} />
+          <div className="absolute -inset-2 rounded-[28px] border border-amber-400/40 animate-spin" style={{ animationDuration: '8s' }} />
+          {/* Hammer Badge on bottom right corner */}
+          <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-amber-500 border-2 border-[#060809] flex items-center justify-center text-sm shadow-lg shadow-amber-500/50">
+            🔨
+          </div>
         </div>
 
         {/* Title Branding */}
-        <h1 className="text-xl font-black tracking-wider uppercase text-white mb-1 flex items-center gap-2">
-          <span>VAULTFINITY</span>
-          <span className="text-[10px] bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 font-black px-2 py-0.5 rounded-full">
-            HEIST
-          </span>
+        <h1 className="text-2xl font-black tracking-wider uppercase text-white mb-1 flex items-center gap-2">
+          <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 bg-clip-text text-transparent">HEIST MINER</span>
+          <span className="text-xl">🔨</span>
         </h1>
         <p className="text-[11px] font-mono font-bold text-[#94a3b8] uppercase tracking-widest mb-6">
           Cyber Heist Tycoon
         </p>
 
         {/* Animated Cyber Progress Bar */}
-        <div className="w-48 h-1.5 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-slate-700/60 mb-3">
+        <div className="w-52 h-2 bg-slate-800/90 rounded-full overflow-hidden p-0.5 border border-slate-700/80 mb-3.5 shadow-inner">
           <div className="h-full bg-gradient-to-r from-amber-400 via-amber-500 to-[#06b6d4] rounded-full animate-pulse" style={{ width: '100%' }} />
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-[#94a3b8] font-medium">
+        <div className="flex items-center gap-2 text-xs text-[#94a3b8] font-semibold">
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>Connecting to vault security grid...</span>
+          <span>Connecting to Heist Miner grid...</span>
         </div>
       </div>
     )
