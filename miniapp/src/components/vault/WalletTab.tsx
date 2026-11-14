@@ -424,39 +424,45 @@ export default function WalletTab({
         <h3 className="text-sm font-extrabold text-white">History</h3>
 
         <div className="divide-y divide-[#1e292d]">
-          {transactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <CryptoCoinBadge symbol={tx.coinSymbol} className="w-8 h-8 shrink-0" />
-                <div className="min-w-0">
-                  <div className="text-xs font-extrabold text-white">{tx.type}</div>
-                  <div
-                    className="text-[11px] text-[#94a3b8] tabular-nums truncate"
-                    style={{ fontFamily: 'var(--font-mono), monospace' }}
-                  >
-                    {tx.date} · {tx.coinAmount} {tx.coinSymbol}
+          {transactions.length === 0 ? (
+            <div className="py-6 text-center text-xs text-[#64748b] font-medium">
+              No transactions yet. Top up or withdraw to see activity here.
+            </div>
+          ) : (
+            transactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <CryptoCoinBadge symbol={tx.coinSymbol} className="w-8 h-8 shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-xs font-extrabold text-white">{tx.type}</div>
+                    <div
+                      className="text-[11px] text-[#94a3b8] tabular-nums truncate"
+                      style={{ fontFamily: 'var(--font-mono), monospace' }}
+                    >
+                      {tx.date} · {tx.coinAmount} {tx.coinSymbol}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="text-right shrink-0">
-                <div
-                  className={`text-xs font-extrabold tabular-nums ${
-                    tx.type === 'Top-up' ? 'text-white' : 'text-[#fbbf24]'
-                  }`}
-                  style={{ fontFamily: 'var(--font-mono), monospace' }}
-                >
-                  {tx.type === 'Top-up' ? '+' : '-'}${tx.usdValue.toFixed(2)}
+                <div className="text-right shrink-0">
+                  <div
+                    className={`text-xs font-extrabold tabular-nums ${
+                      tx.type === 'Top-up' ? 'text-white' : 'text-[#fbbf24]'
+                    }`}
+                    style={{ fontFamily: 'var(--font-mono), monospace' }}
+                  >
+                    {tx.type === 'Top-up' ? '+' : '-'}${tx.usdValue.toFixed(2)}
+                  </div>
+                  <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] text-[10px] font-bold">
+                    {tx.status}
+                  </span>
                 </div>
-                <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] text-[10px] font-bold">
-                  {tx.status}
-                </span>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

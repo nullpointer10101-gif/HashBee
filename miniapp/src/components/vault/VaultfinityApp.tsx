@@ -51,16 +51,16 @@ export default function VaultfinityApp() {
   const [walletMode, setWalletMode] = useState<'topup' | 'withdraw'>('topup');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
-  // Core Economy State (Initialized to 746 Gold = 74% Gold Mountain behind Miner)
-  const [usdBalance, setUsdBalance] = useState<number>(0.0067);
-  const [withdrawableUsd, setWithdrawableUsd] = useState<number>(0.0067);
-  const [vaultGold, setVaultGold] = useState<number>(746);
-  const [powerKwh, setPowerKwh] = useState<number>(36812);
+  // Core Economy State (Clean Initial State: 0 Gold, 50,000 kWh starter power, $0.00 Balance)
+  const [usdBalance, setUsdBalance] = useState<number>(0.0);
+  const [withdrawableUsd, setWithdrawableUsd] = useState<number>(0.0);
+  const [vaultGold, setVaultGold] = useState<number>(0.0);
+  const [powerKwh, setPowerKwh] = useState<number>(50000);
 
-  // Initial Owned Crew: 1 Lockpick Rookie (5,000/day) + 1 Drill Specialist (10,000/day) = 2 Hackers, 15,000 Gold/day ($0.15/day)
+  // Initial Owned Crew: 1 Starter Lockpick Rookie (5,000/day)
   const [crewCounts, setCrewCounts] = useState<Record<SafecrackerId, number>>({
     rookie: 1,
-    specialist: 1,
+    specialist: 0,
     infiltrator: 0,
     boss: 0,
   });
@@ -69,13 +69,13 @@ export default function VaultfinityApp() {
   const [streakDays, setStreakDays] = useState<DailyMilestone[]>(INITIAL_STREAK);
 
   // Wallet Transactions History
-  const [transactions, setTransactions] = useState<WalletTransaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
 
   // Syndicate Referral State
   const [unclaimedSyndicateLoot, setUnclaimedSyndicateLoot] = useState<number>(0.0);
-  const [crewRecruited, setCrewRecruited] = useState<number>(1518);
-  const [totalSyndicateEarned, setTotalSyndicateEarned] = useState<number>(45.27);
-  const [affiliates, setAffiliates] = useState<AffiliateMember[]>(INITIAL_AFFILIATES);
+  const [crewRecruited, setCrewRecruited] = useState<number>(0);
+  const [totalSyndicateEarned, setTotalSyndicateEarned] = useState<number>(0.0);
+  const [affiliates, setAffiliates] = useState<AffiliateMember[]>([]);
 
   // Synchronize with real backend on mount
   useEffect(() => {

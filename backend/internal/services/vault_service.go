@@ -710,3 +710,4 @@ func (s *VaultService) ClaimDailySupply(ctx context.Context, userID uuid.UUID) (
 
 	return rewardKWh, newStreak, nil
 }
+

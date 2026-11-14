@@ -191,3 +191,4 @@ func (h *VaultHandler) ClaimDailySupply(c *gin.Context) {
 		"message":       "Daily generator battery drop claimed",
 	})
 }
+

@@ -138,11 +138,11 @@ export const BATTERY_PACKS: BatteryPackItem[] = [
 ];
 
 export const INITIAL_STREAK: DailyMilestone[] = [
-  { day: 1, kwh: 2000, label: '2,000', claimed: true },
-  { day: 2, kwh: 3000, label: '3,000', claimed: true },
-  { day: 3, kwh: 4000, label: '4,000', claimed: true },
-  { day: 4, kwh: 5000, label: '5,000', claimed: true },
-  { day: 5, kwh: 6000, label: '6,000', claimed: false, claimable: true },
+  { day: 1, kwh: 2000, label: '2,000', claimed: false, claimable: true },
+  { day: 2, kwh: 3000, label: '3,000', claimed: false },
+  { day: 3, kwh: 4000, label: '4,000', claimed: false },
+  { day: 4, kwh: 5000, label: '5,000', claimed: false },
+  { day: 5, kwh: 6000, label: '6,000', claimed: false },
   { day: 6, kwh: 8000, label: '8,000', claimed: false },
   { day: 7, kwh: 12000, label: '12K', claimed: false, bonusTag: '+Drone 🎁' },
 ];
@@ -177,43 +177,9 @@ export const CRYPTO_ASSETS: Record<CryptoSymbol, CryptoAssetConfig> = {
   },
 };
 
-export const INITIAL_TRANSACTIONS: WalletTransaction[] = [
-  {
-    id: 'tx-101',
-    type: 'Top-up',
-    date: '03/11/26',
-    coinAmount: '1.30',
-    coinSymbol: 'USDT',
-    usdValue: 1.30,
-    status: 'Credited',
-  },
-  {
-    id: 'tx-102',
-    type: 'Top-up',
-    date: '29/10/26',
-    coinAmount: '4.4642',
-    coinSymbol: 'GRAM',
-    usdValue: 5.00,
-    status: 'Credited',
-  },
-  {
-    id: 'tx-103',
-    type: 'Withdraw',
-    date: '24/10/26',
-    coinAmount: '1.9642',
-    coinSymbol: 'GRAM',
-    usdValue: 2.20,
-    status: 'Completed',
-  },
-];
+export const INITIAL_TRANSACTIONS: WalletTransaction[] = [];
 
-export const INITIAL_AFFILIATES: AffiliateMember[] = [
-  { id: 'af-1', username: '@aldino', year: '2026', joinedAgo: '2h ago', earnedUsd: 3.85, crewSize: 6 },
-  { id: 'af-2', username: '@krypto_ghost', year: '2026', joinedAgo: '5h ago', earnedUsd: 1.40, crewSize: 3 },
-  { id: 'af-3', username: '@zero_cool_ton', year: '2026', joinedAgo: '1d ago', earnedUsd: 6.20, crewSize: 9 },
-  { id: 'af-4', username: '@nyx_protocol', year: '2026', joinedAgo: '2d ago', earnedUsd: 0.92, crewSize: 2 },
-  { id: 'af-5', username: '@vex_breaker', year: '2026', joinedAgo: '4d ago', earnedUsd: 4.50, crewSize: 5 },
-];
+export const INITIAL_AFFILIATES: AffiliateMember[] = [];
 
 // 100,000 Gold = $1.00 USD => 1,000 Gold = $0.01 USD => 281 Gold = $0.00281 USD
 export const GOLD_TO_USD_RATE = 0.00001;

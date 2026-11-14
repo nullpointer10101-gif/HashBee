@@ -227,36 +227,42 @@ export default function SyndicateTab({
         <h3 className="text-sm font-extrabold text-white">Earnings from crew</h3>
 
         <div className="divide-y divide-[#1e292d]">
-          {affiliates.map((member) => (
-            <div
-              key={member.id}
-              className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-extrabold text-white truncate">
-                    {member.username}
-                  </span>
-                  <span
-                    className="text-xs font-semibold text-[#64748b] tabular-nums"
-                    style={{ fontFamily: 'var(--font-mono), monospace' }}
-                  >
-                    {member.year}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#94a3b8]">
-                  Joined {member.joinedAgo} · {member.crewSize} Safecrackers
-                </div>
-              </div>
-
-              <div
-                className="text-xs font-extrabold text-[#10b981] tabular-nums shrink-0"
-                style={{ fontFamily: 'var(--font-mono), monospace' }}
-              >
-                +${member.earnedUsd.toFixed(2)}
-              </div>
+          {affiliates.length === 0 ? (
+            <div className="py-6 text-center text-xs text-[#64748b] font-medium">
+              No recruits yet. Share your invite link above to start earning 10% lifetime cuts!
             </div>
-          ))}
+          ) : (
+            affiliates.map((member) => (
+              <div
+                key={member.id}
+                className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-2"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-white truncate">
+                      {member.username}
+                    </span>
+                    <span
+                      className="text-xs font-semibold text-[#64748b] tabular-nums"
+                      style={{ fontFamily: 'var(--font-mono), monospace' }}
+                    >
+                      {member.year}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[#94a3b8]">
+                    Joined {member.joinedAgo} · {member.crewSize} Safecrackers
+                  </div>
+                </div>
+
+                <div
+                  className="text-xs font-extrabold text-[#10b981] tabular-nums shrink-0"
+                  style={{ fontFamily: 'var(--font-mono), monospace' }}
+                >
+                  +${member.earnedUsd.toFixed(2)}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

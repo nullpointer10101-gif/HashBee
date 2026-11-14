@@ -38,7 +38,7 @@ const TeslaBotURL = "https://t.me/teslaFarmbot?start=8823265955"
 func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	text = strings.TrimSpace(text)
 	if text == "" {
-		text = "🐝 Open HashBee App"
+		text = "🏛️ Enter Vault"
 	}
 	url = strings.TrimSpace(url)
 	if url == "" {
@@ -65,7 +65,7 @@ func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 func newWebAppWithTeslaPromoKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	text = strings.TrimSpace(text)
 	if text == "" {
-		text = "🐝 Open HashBee App"
+		text = "🏛️ Enter Vault"
 	}
 	url = strings.TrimSpace(url)
 	if url == "" {
@@ -221,26 +221,24 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 	// Auto-set the chat menu button for this user to open the Mini App
 	go func(chatID int64, appURL string) {
 		reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setChatMenuButton", b.cfg.BotToken)
-		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"⛏️ Open Miner","web_app":{"url":"%s"}}}`, chatID, appURL)
+		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"🏛️ Enter Vault","web_app":{"url":"%s"}}}`, chatID, appURL)
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppWithTeslaPromoKeyboard("⛏️ Open Miner", appURLWithRef)
+	keyboard := newWebAppWithTeslaPromoKeyboard("🏛️ Enter Vault", appURLWithRef)
 
-	welcomeText := `⛏️ *MINE & EARN*
+	welcomeText := `🏛️ *VAULTFINITY — CYBER HEIST TYCOON*
 
-🎁 *Join And Get 50 GHS POWER*
+🥷 *Crack the Vault & Earn Crypto 24/7*
 
-✅ *Minimum Withdrawal 0.10 GRAM*
+🎁 *Claim 1 Free Starter Safecracker + 50,000 kWh Battery!*
+🔥 *Smelt Gold directly into Real USD / GRAM / USDT / TRX!*
+👥 *Earn 10% Cut of every Operative & Battery your Syndicate buys!*
 
-✍️ *Earn And Withdraw Without Restrictions.*
-
-⚡ *One-Time Bonus:* Claim *Free 1 USDT* on Tesla Mining Bot!
-
-Tap below to start earning:`
+Tap below to enter the Vault:`
 
 	if referrerTelegramID != nil {
-		welcomeText += fmt.Sprintf("\n\n🤝 You were invited by `%d`! You get a *+5 GHS* welcome bonus.", *referrerTelegramID)
+		welcomeText += fmt.Sprintf("\n\n🤝 You were recruited by `%d`! You get an instant syndicate starter boost.", *referrerTelegramID)
 	}
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
@@ -252,18 +250,15 @@ Tap below to start earning:`
 }
 
 func (b *Bot) handleHelp(msg *tgbotapi.Message) {
-	text := `🐝 *HashBee Help*
+	text := `🏛️ *Vaultfinity Help*
 
-*Bee Power (BP / GHS)* — Your earning rate. More GHS = more USDT per day.
-*USDT* — The currency you collect and cash out directly via BSC (BEP-20) or GRAM.
-*Mining* — Generates USDT continuously 24/7. Collect regularly!
-*Referrals* — Invite friends using your Telegram ID link for bonus GHS.
-*Missions* — Complete tasks to earn free GHS.
-*Cash Out* — Fast withdrawal to USDT (BSC) or GRAM.
-*Support* — Contact @Bonkcs99 for official assistance.`
+*Safecrackers* — Operatives cracking gold bars from the vault 24/7.
+*Battery Grid* — Power needed to keep operatives drilling. Recharge via 7-day daily drops or batteries.
+*Smelt Gold* — Convert your mined gold into real withdrawable cash balance.
+*Syndicate* — Invite crew members and earn 10% lifetime cuts on all hires & batteries!`
 
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
+	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -274,7 +269,7 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🍯 Open Miner", miniAppURL)
+	keyboard := newWebAppKeyboard("🏛️ Enter Vault", miniAppURL)
 
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
@@ -284,13 +279,13 @@ func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 		return
 	}
 
-	text := fmt.Sprintf(`🐝 *Your HashBee Balance*
+	text := fmt.Sprintf(`🏛️ *Your Vaultfinity Stash*
 
-🍯 Balance: *%.7f USDT*
-⚡ Mining Power: *%.1f GHS*
+💰 Balance: *$%.4f USD*
+⚡ Hashrate: *%.1f GHS*
 🔥 Streak: *%d days*
 
-Open the miner to collect your pending USDT!`, user.HoneyBalance, user.BP, user.StreakCount)
+Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, user.BP, user.StreakCount)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -346,14 +341,13 @@ func (b *Bot) SendReferralJoinNotification(referrerTelegramID int64, joinerName 
 	}
 
 	safeName := html.EscapeString(joinerName)
-	text := fmt.Sprintf(`🎉 <b>New Friend Joined!</b>
+	text := fmt.Sprintf(`🎉 <b>New Syndicate Recruit!</b>
 
-👤 <b>%s</b> just joined HashBee using your invite link!
+👤 <b>%s</b> just joined your Vaultfinity Syndicate crew!
 
-⏳ <b>Status:</b> Pending
-⚡ <b>Reward:</b> You will receive <b>+3 GHS</b> Hash Power bonus as soon as they collect their first mining harvest!
+💰 <b>Commissions:</b> You will earn a <b>10%% lifetime cut</b> on every Safecracker they hire and every Battery Pack they buy, plus a <b>$0.02 cash bounty</b> on their first hire!
 
-🤝 Keep sharing your link to grow your Swarm and earn more bonuses!
+🤝 Keep sharing your link to grow your Syndicate and earn together!
 
 Your invite link: https://t.me/%s?start=%d`, safeName, botName, referrerTelegramID)
 

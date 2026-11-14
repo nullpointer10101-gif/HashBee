@@ -14,13 +14,21 @@ import { BannedScreen } from './components/BannedScreen'
 import { PrivateGroupGatekeeper, isAccountVerified } from './components/PrivateGroupGatekeeper'
 import { ViralBountyWidget } from './components/ViralBountyWidget'
 import { TeslaMiningTakeover } from './components/TeslaMiningTakeover'
+import { MaintenanceScreen } from './components/MaintenanceScreen'
 import { initMonetagAutoAds } from './services/monetag'
+
+// Toggle to true while resetting databases and migrating system
+const IS_MAINTENANCE_MODE = true
 
 const AppContent: React.FC = () => {
   const { user, isBanned, loading } = useAuth()
   const location = useLocation()
   const isVaultHome = location.pathname === '/'
   const [verifiedMap, setVerifiedMap] = useState<Record<string, boolean>>({})
+
+  if (IS_MAINTENANCE_MODE) {
+    return <MaintenanceScreen />
+  }
 
   // Resolve current Telegram account ID
   const activeTgId = user?.telegram_id || (typeof window !== 'undefined' ? window.Telegram?.WebApp?.initDataUnsafe?.user?.id : 0) || 0
