@@ -5,10 +5,20 @@ import toast from 'react-hot-toast'
 interface AdminStats {
   total_users: number
   active_users_24h: number
+  total_gold_stash?: number
+  total_energy_kwh?: number
+  total_safecrackers?: number
+  total_syndicate_earned?: number
   total_honey_supply: number
   total_usd_liability: number
   total_campaign_revenue: number
   pending_withdrawals_count: number
+  pending_withdrawal_value?: number
+  total_deposits_count?: number
+  total_deposited_ton?: number
+  total_deposited_gram?: number
+  total_deposited_usd?: number
+  total_deposited_all?: number
 }
 
 interface PendingWithdrawal {
@@ -40,6 +50,8 @@ interface UserDetail {
   user_deposits?: any[]
   bp: number
   honey_balance: number
+  gold_stash?: number
+  energy_kwh?: number
   spin_balance?: number
   last_collect_at?: string
   streak_count?: number
@@ -130,7 +142,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   // Settings state
   const [settings, setSettings] = useState({
     min_withdrawal_honey: 10000,
-    honey_to_usd_rate: 0.0001,
+    honey_to_usd_rate: 0.00001,
     tier1_ref_percent: 10,
     tier2_ref_percent: 2.5,
     base_bee_power: 10,
@@ -139,58 +151,52 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   // Broadcast state
   const SPIN_TEMPLATES = [
     {
-      id: 'flash_2x_double',
-      label: '⚡ FLASH 2X: 5.00 TON ➔ 10.00 G (+100% • 500 Slots)',
-      message: '⚡ *24H FLASH SALE: 5.00 TON ➔ 10.00 GRAM!* 🔥\n\nDouble your crypto balance in exactly 24 hours:\n💰 *Invest 5.00 TON ➔ Payout 10.00 GRAM*\n📈 *+100% Guaranteed 2X Double ROI*\n⏳ Strictly limited: 500 Slots Allocation!\n🛡️ Automatic on-chain release at maturity\n\n👇 Claim your 2X Yield Slot in 1-click:',
-      button: '⚡ Double 5 TON (Get 10 G) ➔',
+      id: 'vault_gold_smelt',
+      label: '🔥 Gold Vein Strike ➔ Smelt Your Vault Ore ({name})',
+      message: '🔥 *GOLD VEIN STRIKE: SMELT YOUR VAULT ORE!* 🪙⚡\n\nYour automated safecracker drills struck an ultra-rich gold vein:\n• 🪙 *Gold Stash Waiting*: Convert 1,000+ Gold bars into real USD\n• 💵 *Direct Cashout*: 100,000 Gold = $1.00 USD\n• ⚡ Fast settlements in GRAM, USD₮ & TRX\n• 🛡️ Zero transaction fees\n\n👇 Tap below to smelt your gold into cash:',
+      button: '🔥 Smelt Vault Gold Now ➔',
     },
     {
-      id: 'withdraw_min_010',
-      label: '💸 Instant Cashout ➔ Min Withdrawal Only 0.10 G!',
-      message: '💸 *INSTANT CASHOUT: MINIMUM JUST 0.10 G!* 💎⚡\n\nCash out your mining earnings to your wallet right now:\n• 🚀 *Min Cashout*: Only *0.10 GRAM / USDT*\n• ⚡ Instant settlements to TON & BSC\n• 🛡️ Zero transaction fees\n• 🔎 Verified proofs in @HashBeePayouts\n\n👇 Cash out your balance immediately:',
-      button: '💸 Cash Out My Balance ➔',
+      id: 'battery_power_drop',
+      label: '🔋 Power Drop: +50,000 kWh Auxiliary Power ({name})',
+      message: '🔋 *AUXILIARY POWER DROP: +50,000 kWh CREDITED!* ⚡\n\nA high-capacity battery cell was delivered to your heist squad:\n• ⚡ *50,000 kWh Power*: Keeps drills active for days\n• 🛑 *No Power = No Gold*: Don\'t let your generators go dark\n• 🚀 24/7 automated continuous gold extraction\n\n👇 Check your battery level & keep drilling:',
+      button: '⚡ Check Generator & Drill ➔',
     },
     {
-      id: 'spin_free_waiting',
-      label: '🎰 Free Lucky Spin Waiting ➔ Win 1.00 GRAM Jackpot ({name})',
-      message: '🎰 *FREE LUCKY SPIN WAITING FOR YOU!* 🎡\n\nHey {name}, your daily turn is ready on the Lucky Wheel:\n👑 *1.00 GRAM Jackpot*\n💵 *Instant TON & USDT Cash Drops*\n⚡ *Permanent Hashpower Boosts*\n\n👇 Spin now and claim your prize:',
-      button: '🎡 Spin Lucky Wheel Free 🎰',
+      id: 'safecracker_hire',
+      label: '🥷 Expand Your Crew: Black Market Restocked!',
+      message: '🥷 *EXPAND YOUR CREW: BLACK MARKET RESTOCKED!* 🛒\n\nUpgrade your heist squad with specialized cyber operatives:\n• 🥷 *Lockpick Rookie*: $0.50 (5,000 Gold/day · 10%/day)\n• 🤖 *Cyber Specialist*: $1.00 (10,000 Gold/day · 10%/day)\n• ⚡ *Neural Hacker*: $2.50 (27,500 Gold/day · 11%/day)\n• 👑 *Master Infiltrator*: $5.00 (55,000 Gold/day · 11%/day)\n\n👇 Hire elite operatives to stack daily yield:',
+      button: '🛒 Visit Black Market ➔',
     },
     {
-      id: 'hive_full_alert',
-      label: '🚨 Urgent: Mining Rig Full! Collect Honey ({name})',
-      message: '🚨 *ATTENTION {name}: MINING RIG FULL!* 🍯⚠️\n\nYour honeycomb has reached 100% storage capacity:\n• 🛑 Mining has paused until you harvest\n• 🍯 Unclaimed Honey waiting in your hive\n• ⚡ Tap once to collect & resume 24/7 mining\n\n👇 Harvest your honey now:',
-      button: '🍯 Collect Honey & Resume Mining ➔',
-    },
-    {
-      id: 'mystery_crate_drop',
-      label: '📦 Free Mystery Crate Drop Unlocked ➔ Open & Win Big',
-      message: '📦 *FREE MYSTERY CRATE DROP UNLOCKED!* 🎁✨\n\nA special loot crate has been credited to your account:\n• 💎 Hidden TON & GRAM rewards\n• ⚡ Massive Hashrate & GHS boosters\n• 🔓 Instant unlock with 1 tap!\n\n👇 Open your Mystery Crate now:',
-      button: '🎁 Open Free Mystery Crate ➔',
-    },
-    {
-      id: 'viral_referrals_rush',
-      label: '👥 Viral Invite Rush: +1 Spin & +5 GHS Per Friend',
-      message: '👥 *INVITE 1 FRIEND = 1 FREE SPIN + 5 GHS!* 🚀\n\nTurn your friends into daily passive crypto income:\n• 🎁 *+1 Free Lucky Wheel Spin* per invite\n• ⚡ *+5.0 GHS Mining Power* instantly\n• 🍯 *10% + 5% Lifetime Commissions*\n\n👇 Share your invite link & get spins:',
-      button: '👥 Invite Friends & Get Free Spins 🚀',
+      id: 'syndicate_commissions',
+      label: '👥 Syndicate Recruit Rush: 10% Cut of Every Hire Forever',
+      message: '👥 *SYNDICATE RECRUIT RUSH: 10% CUT FOREVER!* 🚀\n\nRecruit your crew and build your passive syndicate empire:\n• 💰 *10% Cut* on every safecracker your friends hire\n• 🔋 *10% Cut* on every battery pack they purchase\n• 🎁 *$0.02 Instant Cash Bounty* on their first recruit hire\n• 👛 Direct claim into your main cash balance!\n\n👇 Copy your unique invite link & recruit now:',
+      button: '👥 Recruit Syndicate Crew ➔',
     },
     {
       id: 'withdraw_proof_alert',
-      label: '💎 All Payouts Verified ➔ On-Chain Proofs Sent',
-      message: '💎 *PAYOUTS SENT! ALL CASHOUTS VERIFIED* 💸\n\nAll pending user withdrawals have been dispatched on-chain!\n• 🚀 Over 2,500+ active miners paid today\n• 🔎 View live transaction hashes in @HashBeePayouts\n• 💰 Got balance? Cash out from 0.10 G!\n\n👇 Withdraw your earnings or view proofs:',
-      button: '💸 Check Balance & Withdraw ➔',
+      label: '💸 Instant Crypto Cashouts Dispatched: TON, USDT & TRX',
+      message: '💸 *INSTANT CASHOUTS DISPATCHED!* 💎⚡\n\nAll pending operative withdrawals have been processed on-chain:\n• 🚀 Cash out directly in *GRAM (TON)*, *USD₮ (TON)*, or *TRX (TRON)*\n• ⚡ Fast automatic blockchain settlements\n• 🛡️ Zero platform withdrawal fees\n• 💰 Got smelted gold? Cash out from $1.00 USD!\n\n👇 Open your wallet & request cash out:',
+      button: '💼 Open Wallet & Cash Out ➔',
     },
     {
-      id: 'plan_starter_trial',
-      label: '⚡ Starter Worker Miner: 1.30 TON ➔ 2.00 G (+53.8%)',
-      message: '⚡ *STARTER MINER: 1.30 TON ➔ 2.00 GRAM!* 🍯\n\nThe most affordable daily yield miner:\n• 💰 *Pay 1.30 TON ➔ Receive 2.00 GRAM (+53.8% Profit)*\n• 🔓 Unlocks instant lifetime withdrawals\n• 🚀 24-Hour guaranteed settlement cycle\n\n👇 Start your Cyber Worker miner:',
-      button: '⚡ Activate Starter Miner (1.30 TON) ➔',
+      id: 'daily_power_streak',
+      label: '🎁 7-Day Power Drop Ready: Claim Up to 12K kWh Energy',
+      message: '🎁 *DAILY POWER DROP READY: CLAIM UP TO 12K kWh!* ⚡\n\nDon\'t break your consecutive login power streak:\n• 📅 Day 1: +2,000 kWh\n• 📅 Day 3: +4,000 kWh\n• 📅 Day 7: +12,000 kWh + Drone Companion 🎁\n• ⚡ Free energy to keep your safecrackers drilling!\n\n👇 Claim today\'s power drop in 1-click:',
+      button: '🎁 Claim Daily Power Drop ➔',
     },
     {
-      id: 'missions_bounty',
-      label: '⭐ Sponsor Missions ➔ Free GHS Drops',
-      message: '⭐ *NEW SPONSOR MISSIONS: EARN FREE GHS!* 🚀\n\nQuick 5-second tasks just dropped:\n• 📢 Join partner channels: +0.50 GHS each\n• 🎬 Watch video ads: Free Honey credited\n• ⚡ Speed up your passive mining income!\n\n👇 Complete tasks & claim rewards:',
-      button: '⭐ Claim Free Mission Rewards ➔',
+      id: 'fusion_reactor_pack',
+      label: '⚡ Best Value: Fusion Power Reactor (+2M kWh • 133 Days)',
+      message: '⚡ *BEST VALUE: FUSION POWER REACTOR (+2M kWh)!* 🔋\n\nNever worry about empty batteries again:\n• 🔋 *+2,000,000 kWh Fusion Power*\n• ⏳ Powers your heist squad for over *133 Days!*\n• 💰 Only *$3.00 USD* (Massive 80% bulk discount)\n\n👇 Charge your generator with Fusion Core:',
+      button: '⚡ Get Fusion Reactor ($3.00) ➔',
+    },
+    {
+      id: 'heist_leaderboard',
+      label: '🏆 Vault Cracked: Top Heist Operatives Live Ranking',
+      message: '🏆 *VAULT CRACKED: TOP HEIST OPERATIVES!* 🏛️💎\n\nThe central bullion vaults are being cracked 24/7:\n• 🥇 Over 100M+ Gold ore extracted this week\n• 💵 Thousands in USD cashouts sent to operatives\n• 🥷 Stack duplicate operatives to multiply your drill speed!\n\n👇 Enter the Vault & claim your share of the gold:',
+      button: '🏛️ Enter Cyber Vault ➔',
     },
   ]
   const [selectedTemplate, setSelectedTemplate] = useState(SPIN_TEMPLATES[0])
@@ -205,7 +211,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
   const [payoutMirrorConfig, setPayoutMirrorConfig] = useState({
     enabled: false,
     source_url: 'https://t.me/s/AiLabRobotPayouts',
-    target_channel: '@HashBeePayouts',
+    target_channel: '@VaultfinityPayouts',
     last_post_id: 0,
   })
   const [payoutMirrorLoading, setPayoutMirrorLoading] = useState(false)
@@ -228,21 +234,31 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       const s = statsRes.data || {}
       setStats({
         total_users: s.total_users || 0,
-        active_users_24h: s.dau || 0,
+        active_users_24h: s.online_users || s.dau || 0,
+        total_gold_stash: s.total_gold_stash || 0,
+        total_energy_kwh: s.total_energy_kwh || 0,
+        total_safecrackers: s.total_safecrackers || 0,
+        total_syndicate_earned: s.total_syndicate_earned || 0,
         total_honey_supply: s.total_honey_issued || 0,
-        total_usd_liability: (s.total_honey_issued || 0) * 0.0001,
-        total_campaign_revenue: 0,
+        total_usd_liability: s.total_honey_liability || 0,
+        total_campaign_revenue: s.campaign_revenue || 0,
         pending_withdrawals_count: s.pending_withdrawals || 0,
+        pending_withdrawal_value: s.pending_withdrawal_value || 0,
+        total_deposits_count: s.total_deposits_count || 0,
+        total_deposited_ton: s.total_deposited_ton || 0,
+        total_deposited_gram: s.total_deposited_gram || 0,
+        total_deposited_usd: s.total_deposited_usd || 0,
+        total_deposited_all: s.total_deposited_all || 0,
       })
       const wList = wRes.data?.withdrawals || []
       setWithdrawals(wList.map((w: any) => ({
         id: w.id,
         user_id: w.user_id,
-        username: w.username || 'miner',
+        username: w.username || 'operative',
         first_name: w.first_name || '',
         telegram_id: w.telegram_id,
         amount_honey: w.honey_amount || w.amount,
-        amount_usd: (w.honey_amount || w.amount) * 0.0001,
+        amount_usd: (w.honey_amount || w.amount),
         wallet_address: w.address,
         payout_method: w.network,
         status: w.status,
@@ -251,41 +267,23 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       setCampaigns(cRes.data?.campaigns || [])
     } catch (err: any) {
       setStats({
-        total_users: 14850,
-        active_users_24h: 3420,
-        total_honey_supply: 84500000,
-        total_usd_liability: 8450,
-        total_campaign_revenue: 12500,
-        pending_withdrawals_count: 2,
+        total_users: 0,
+        active_users_24h: 0,
+        total_gold_stash: 0,
+        total_energy_kwh: 0,
+        total_safecrackers: 0,
+        total_syndicate_earned: 0,
+        total_honey_supply: 0,
+        total_usd_liability: 0,
+        total_campaign_revenue: 0,
+        pending_withdrawals_count: 0,
+        total_deposits_count: 0,
+        total_deposited_ton: 0,
+        total_deposited_gram: 0,
+        total_deposited_usd: 0,
+        total_deposited_all: 0,
       })
-      setWithdrawals([
-        {
-          id: 'w-101',
-          user_id: '13c57081-f1aa-48da-b5b4-b6e854aa4d50',
-          username: 'conlonhaha1',
-          first_name: 'co ne',
-          telegram_id: 7875362990,
-          amount_honey: 0.05,
-          amount_usd: 0.05,
-          wallet_address: 'UQAZJ9kqtXXwzt7dL2ietCvlGsoFamIlxu2KRe9eYoxGlyiL',
-          payout_method: 'GRAM',
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'w-102',
-          user_id: '18e915f8-0fd8-4595-8dd9-39db9e5117b7',
-          username: 'vvvvv20008',
-          first_name: 'V',
-          telegram_id: 5168204866,
-          amount_honey: 0.05,
-          amount_usd: 0.05,
-          wallet_address: 'UQAJV_xgsVCmsoruBm5C1E7QQnm1fazfXZWbP8riA3MLo7xz',
-          payout_method: 'GRAM',
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        },
-      ])
+      setWithdrawals([])
     } finally {
       setLoading(false)
     }
@@ -522,25 +520,25 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
     if (user.referral_count >= 10) {
       score += 40
-      reasons.push(`🔥 Top Promoter (${user.referral_count} direct invites)`)
+      reasons.push(`🔥 Master Syndicate Leader (${user.referral_count} operatives recruited)`)
     } else if (user.referral_count >= 2) {
       score += 20
-      reasons.push(`👥 Active Inviter (${user.referral_count} invites)`)
+      reasons.push(`👥 Active Syndicate Recruiter (${user.referral_count} recruits)`)
     }
 
     if (user.has_collected) {
       score += 20
-      reasons.push(`⛏️ Active Cloud Miner (Harvested honey)`)
+      reasons.push(`⛏️ Active Safecracker (Drilling Vault)`)
     }
 
     if (user.has_completed_mission) {
       score += 20
-      reasons.push(`🎯 Mission Verified (Followed channels/tasks)`)
+      reasons.push(`🎯 Mission Infiltration Verified (Followed channels/tasks)`)
     }
 
     if (user.bp > 15) {
       score += 15
-      reasons.push(`⚡ Hashpower Accumulated (${user.bp.toFixed(1)} GHS)`)
+      reasons.push(`⚡ Drill Hashrate (${user.bp.toFixed(1)} GHS)`)
     }
 
     const ageHours = (Date.now() - new Date(user.created_at).getTime()) / (1000 * 60 * 60)
@@ -555,13 +553,13 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
     let verdict = '🟢 HIGH LEGITIMACY (REAL USER)'
     let badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
     if (score >= 60) {
-      verdict = '🟢 HIGH LEGITIMACY (REAL ACTIVE PROMOTER)'
+      verdict = '🟢 HIGH LEGITIMACY (ELITE HEIST OPERATIVE)'
       badgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
     } else if (score >= 35) {
-      verdict = '🔵 MODERATE LEGITIMACY (NORMAL MINER)'
+      verdict = '🔵 MODERATE LEGITIMACY (ACTIVE VAULT CRACKER)'
       badgeClass = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
     } else {
-      verdict = '🟡 LOW ACTIVITY / UNVERIFIED (CHECK CAREFULLY)'
+      verdict = '🟡 LOW ACTIVITY / UNVERIFIED OPERATIVE'
       badgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40'
     }
 
@@ -574,21 +572,22 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       <aside className="w-64 bg-slate-900 border-r border-slate-800 p-4 flex flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 px-2 py-3 mb-6">
-            <span className="text-3xl">🐝</span>
+            <span className="text-3xl">🏛️</span>
             <div>
-              <h1 className="font-extrabold text-amber-400 text-lg tracking-wide">HashBee</h1>
-              <span className="text-[11px] text-slate-400 font-mono">Admin Console v1.0</span>
+              <h1 className="font-black text-amber-400 text-lg tracking-wide">Vaultfinity</h1>
+              <span className="text-[11px] text-amber-400/70 font-mono uppercase font-semibold">Cyber Heist HQ</span>
             </div>
           </div>
 
           <nav className="space-y-1">
             {[
-              { id: 'overview', label: '📊 Overview & Stats', badge: null },
+              { id: 'overview', label: '📊 Heist Overview', badge: null },
               { id: 'withdrawals', label: '💸 Pending Payouts', badge: withdrawals.length },
-              { id: 'users', label: '👥 Users & Fraud Flags', badge: null },
-              { id: 'campaigns', label: '📢 Campaigns & Ads', badge: null },
-              { id: 'broadcast', label: '📣 Broadcast & Spins', badge: null },
-              { id: 'settings', label: '⚙️ System Settings', badge: null },
+              { id: 'deposits', label: '💰 Deposits Ledger', badge: null },
+              { id: 'users', label: '🥷 Operatives & Telemetry', badge: null },
+              { id: 'campaigns', label: '📢 Missions & Ads', badge: null },
+              { id: 'broadcast', label: '📣 Heist Broadcasts', badge: null },
+              { id: 'settings', label: '⚙️ Security & Settings', badge: null },
             ].map((item) => (
               <button
                 key={item.id}
@@ -622,28 +621,227 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
       <main className="flex-1 p-8 overflow-y-auto">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div>
-            <h2 className="text-2xl font-bold text-slate-100 mb-6">Executive Dashboard</h2>
-            <div className="grid grid-cols-4 gap-4 mb-8">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <div className="text-xs text-slate-400 uppercase font-semibold">Total Registered Users</div>
-                <div className="text-3xl font-extrabold text-amber-400 mt-2">{stats?.total_users.toLocaleString()}</div>
-                <div className="text-[11px] text-emerald-400 mt-1">Active 24h: {stats?.active_users_24h.toLocaleString()}</div>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2.5">
+                  <span>🏛️</span> Vaultfinity Cyber Heist Command
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Real-time telemetric command for vault cracking operations, operative payrolls, and blockchain reserves.
+                </p>
               </div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <div className="text-xs text-slate-400 uppercase font-semibold">Total Honey Supply</div>
-                <div className="text-3xl font-extrabold text-amber-400 mt-2">{(stats?.total_honey_supply || 0) / 1000000}M 🍯</div>
-                <div className="text-[11px] text-slate-400 mt-1">In user hives & balances</div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={loadData}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all"
+                >
+                  🔄 Refresh Telemetry
+                </button>
+                <button
+                  onClick={() => setActiveTab('broadcast')}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
+                >
+                  📣 Quick Broadcast
+                </button>
               </div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <div className="text-xs text-slate-400 uppercase font-semibold">USD Reserve Requirement</div>
-                <div className="text-3xl font-extrabold text-amber-400 mt-2">${stats?.total_usd_liability.toLocaleString()}</div>
-                <div className="text-[11px] text-amber-400/80 mt-1">Est. liability at $0.0001/Honey</div>
+            </div>
+
+            {/* 8-Card High-Performance Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card 1: Operatives */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-amber-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>🥷 Total Operatives</span>
+                  <span className="text-emerald-400 font-mono text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">LIVE</span>
+                </div>
+                <div className="text-3xl font-black text-slate-100 mt-2 font-mono">
+                  {stats?.total_users.toLocaleString() || '0'}
+                </div>
+                <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Active 24h: {stats?.active_users_24h.toLocaleString() || '0'}
+                </div>
               </div>
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-                <div className="text-xs text-slate-400 uppercase font-semibold">Campaign Revenue</div>
-                <div className="text-3xl font-extrabold text-emerald-400 mt-2">${stats?.total_campaign_revenue.toLocaleString()}</div>
-                <div className="text-[11px] text-emerald-300 mt-1">Sponsored ad sales</div>
+
+              {/* Card 2: Vault Gold Stash */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-amber-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>🪙 Vault Gold Stash</span>
+                  <span className="text-amber-400 text-xs">ORE</span>
+                </div>
+                <div className="text-3xl font-black text-amber-400 mt-2 font-mono">
+                  {((stats?.total_gold_stash || 0) / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  Mined vault bullion across squad
+                </div>
+              </div>
+
+              {/* Card 3: Power Grid Reserve */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-cyan-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>🔋 Auxiliary Power Grid</span>
+                  <span className="text-cyan-400 text-xs">ENERGY</span>
+                </div>
+                <div className="text-3xl font-black text-cyan-400 mt-2 font-mono">
+                  {((stats?.total_energy_kwh || 0) / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}k <span className="text-sm font-sans font-normal text-slate-400">kWh</span>
+                </div>
+                <div className="text-[11px] text-cyan-300/80 mt-1">
+                  Continuous generator capacity
+                </div>
+              </div>
+
+              {/* Card 4: Safecrackers in Field */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-purple-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>🦾 Active Safecrackers</span>
+                  <span className="text-purple-400 text-xs">CREW</span>
+                </div>
+                <div className="text-3xl font-black text-purple-300 mt-2 font-mono">
+                  {stats?.total_safecrackers?.toLocaleString() || '0'}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  Hired cyber agents drilling vaults
+                </div>
+              </div>
+
+              {/* Card 5: Verified Deposits */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>💎 Verified Deposits</span>
+                  <span className="text-emerald-400 text-xs">USD</span>
+                </div>
+                <div className="text-3xl font-black text-emerald-400 mt-2 font-mono">
+                  ${(stats?.total_deposited_all || 0).toFixed(2)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  {stats?.total_deposits_count || 0} on-chain payments received
+                </div>
+              </div>
+
+              {/* Card 6: Pending Cashouts */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-rose-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>💸 Pending Cashouts</span>
+                  <span className="text-rose-400 text-xs">QUEUE</span>
+                </div>
+                <div className="text-3xl font-black text-rose-300 mt-2 font-mono">
+                  ${(stats?.pending_withdrawal_value || 0).toFixed(2)}
+                </div>
+                <div className="text-[11px] text-rose-400/80 mt-1 font-semibold">
+                  {withdrawals.length} cashout requests waiting
+                </div>
+              </div>
+
+              {/* Card 7: Syndicate Commissions */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-amber-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>👥 Syndicate Commissions</span>
+                  <span className="text-amber-400 text-xs">AFFILIATE</span>
+                </div>
+                <div className="text-3xl font-black text-amber-300 mt-2 font-mono">
+                  ${(stats?.total_syndicate_earned || 0).toFixed(2)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  10% cut earned by recruiters
+                </div>
+              </div>
+
+              {/* Card 8: Campaign Ad Revenue */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 uppercase font-bold tracking-wider">
+                  <span>📢 Mission Sponsorships</span>
+                  <span className="text-emerald-400 text-xs">ADS</span>
+                </div>
+                <div className="text-3xl font-black text-emerald-300 mt-2 font-mono">
+                  ${(stats?.total_campaign_revenue || 0).toFixed(2)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  Sponsored task promotions
+                </div>
+              </div>
+            </div>
+
+            {/* Permanent Escrow Deposit Wallets Card */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xl">
+                    🛡️
+                  </div>
+                  <div>
+                    <h3 className="font-black text-slate-100 text-sm tracking-wide">
+                      Permanent Deposit Escrow Infrastructure
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Immutable hardcoded system receiving addresses for all user deposits (Power, Safecrackers, Missions).
+                    </p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  🔒 IMMUTABLE SYSTEM CORE
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* TON Address */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                      <span>💎</span> TON Network (GRAM & USD₮-TON)
+                    </span>
+                    <a
+                      href="https://tonscan.org/address/UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] text-cyan-400 hover:underline font-mono"
+                    >
+                      TONScan ↗
+                    </a>
+                  </div>
+                  <div className="font-mono text-xs text-slate-200 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 select-all break-all flex items-center justify-between gap-2">
+                    <span>UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR');
+                        toast.success('📋 TON address copied!');
+                      }}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 font-sans font-bold text-[10px] shrink-0"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                {/* TRON Address */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                      <span>🔴</span> TRON Network (TRX)
+                    </span>
+                    <a
+                      href="https://tronscan.org/#/address/TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] text-rose-400 hover:underline font-mono"
+                    >
+                      TRONScan ↗
+                    </a>
+                  </div>
+                  <div className="font-mono text-xs text-slate-200 bg-slate-900 p-2.5 rounded-lg border border-slate-800/80 select-all break-all flex items-center justify-between gap-2">
+                    <span>TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe');
+                        toast.success('📋 TRON address copied!');
+                      }}
+                      className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 font-sans font-bold text-[10px] shrink-0"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -719,7 +917,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                         </td>
                         <td className="p-4">
                           <span className="font-extrabold text-emerald-400 text-sm">
-                            {w.amount_honey} {w.payout_method || 'GRAM'}
+                            ${w.amount_usd || w.amount_honey} USD ({w.payout_method || 'GRAM'})
                           </span>
                         </td>
                         <td className="p-4">
@@ -760,7 +958,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   <span>💎</span> Real On-Chain Deposits Ledger
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Live verified ledger of all user deposits (Miner Power, 2X Flash Offers, NFT Plans, and Campaign Payments).
+                  Live verified ledger of all operative deposits (Battery Power Packs, Safecrackers, and Campaign Missions).
                 </p>
               </div>
               <button
@@ -801,8 +999,8 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
               <div className="flex gap-2">
                 {[
                   { id: 'all', label: 'All Deposits' },
-                  { id: 'miner', label: '⚡ Miner Power' },
-                  { id: 'plan', label: '👑 NFT Plans' },
+                  { id: 'battery', label: '🔋 Battery Packs' },
+                  { id: 'safecracker', label: '🥷 Safecrackers' },
                   { id: 'campaign', label: '📢 Campaign Ads' },
                 ].map((f) => (
                   <button
@@ -931,8 +1129,8 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-100">User Intelligence & Fraud Detection</h2>
-                <p className="text-xs text-slate-400 mt-1">Audit any user, view active mining hashrate, mission telemetry, and referrals.</p>
+                <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2"><span>🥷</span> Operative Telemetry & Fraud Detection</h2>
+                <p className="text-xs text-slate-400 mt-1">Audit heist operatives, inspect cyber drill speeds, syndicate referral networks, and cashout requests.</p>
               </div>
               <div className="text-xs text-slate-400 font-mono bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
                 Total Matches: <strong className="text-amber-400 font-bold">{usersTotal.toLocaleString()}</strong>
@@ -959,9 +1157,9 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500"
                 >
                   <option value="deposit_desc">💎 Highest Real Deposits</option>
-                  <option value="referrals_desc">🔥 Most Referrals</option>
-                  <option value="ghs_desc">⚡ Highest GHS Power</option>
-                  <option value="balance_desc">🍯 Highest Balance</option>
+                  <option value="referrals_desc">👥 Largest Syndicate Crew</option>
+                  <option value="ghs_desc">⚡ Highest Drill Speed (GHS)</option>
+                  <option value="balance_desc">🪙 Highest Gold / Cash</option>
                   <option value="created_desc">🕒 Newest First</option>
                   <option value="created_asc">📅 Oldest First</option>
                 </select>
@@ -1002,11 +1200,11 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-800 text-slate-400 uppercase text-[11px]">
                     <tr>
-                      <th className="p-4">User</th>
+                      <th className="p-4">Operative</th>
                       <th className="p-4">Telegram ID</th>
-                      <th className="p-4">Referrals</th>
-                      <th className="p-4">Hashpower (GHS)</th>
-                      <th className="p-4">Mined Balance</th>
+                      <th className="p-4">Syndicate Crew</th>
+                      <th className="p-4">Drill Rate</th>
+                      <th className="p-4">Balance / Gold</th>
                       <th className="p-4">Missions</th>
                       <th className="p-4">Status</th>
                       <th className="p-4 text-right">Actions</th>
@@ -1038,7 +1236,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                           </span>
                         </td>
                         <td className="p-4 font-extrabold text-cyan-400">{u.bp.toFixed(2)} GHS</td>
-                        <td className="p-4 font-bold text-amber-300">{u.honey_balance.toFixed(2)} 🍯</td>
+                        <td className="p-4 font-bold text-amber-300 font-mono">${u.honey_balance.toFixed(2)}</td>
                         <td className="p-4">
                           {u.has_completed_mission ? (
                             <span className="text-emerald-400 font-bold">✅ Yes</span>
@@ -1088,7 +1286,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-slate-400">Completed: <strong className="text-emerald-400">{c.completed_count}</strong></div>
-                    <div className="text-xs text-slate-400">Reward: <strong className="text-amber-300">{c.reward_per_user} 🍯</strong></div>
+                    <div className="text-xs text-slate-400">Reward: <strong className="text-amber-300">+{c.reward_per_user} Gold / Energy</strong></div>
                   </div>
                 </div>
               ))}
@@ -1100,7 +1298,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
         {activeTab === 'broadcast' && (
           <div className="max-w-2xl">
             <h2 className="text-2xl font-bold text-slate-100 mb-2">📣 Broadcast & Spin Management</h2>
-            <p className="text-slate-400 text-sm mb-6">Send spin announcements and manage the spin epoch permanently.</p>
+            <p className="text-slate-400 text-sm mb-6">Broadcast heist announcements, power drops, and syndicate incentives to all operatives.</p>
 
             <div className="bg-rose-950/40 border border-rose-700/40 rounded-2xl p-5 mb-6">
               <div className="flex items-start justify-between">
@@ -1166,7 +1364,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                     <h3 className="text-lg font-bold text-emerald-400">Payouts Channel Auto-Mirror (Live Proofs)</h3>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">
-                    Scrapes live payout hashes from external source channels and posts branded 24H HashBee payout proofs to your channel.
+                    Scrapes live payout hashes from external source channels and posts branded Vaultfinity heist cashout proofs to your channel.
                   </p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-extrabold ${payoutMirrorConfig.enabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400'}`}>
@@ -1200,12 +1398,12 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-emerald-400 uppercase block mb-1.5">Target HashBee Channel</label>
+                    <label className="text-xs font-bold text-emerald-400 uppercase block mb-1.5">Target Vaultfinity Channel</label>
                     <input
                       type="text"
                       value={payoutMirrorConfig.target_channel}
                       onChange={(e) => setPayoutMirrorConfig({ ...payoutMirrorConfig, target_channel: e.target.value })}
-                      placeholder="@HashBeePayouts or -100..."
+                      placeholder="@VaultfinityPayouts or -100..."
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-emerald-500"
                     />
                   </div>
@@ -1251,54 +1449,92 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
 
         {/* System Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="max-w-xl">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6">Global Economy & System Settings</h2>
-            <form onSubmit={handleSaveSettings} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="max-w-2xl space-y-6">
+            <div>
+              <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2">
+                <span>⚙️</span> Vaultfinity Economy & Security Settings
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Configure payout thresholds, syndicate referral commission cuts, and view permanent vault parameters.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveSettings} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Min Withdrawal Threshold (Honey)</label>
-                <input
-                  type="number"
-                  value={settings.min_withdrawal_honey}
-                  onChange={(e) => setSettings({ ...settings, min_withdrawal_honey: parseInt(e.target.value) })}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
-                />
+                <label className="text-xs font-bold text-slate-300 uppercase block mb-1.5">
+                  Minimum Cashout Threshold (USD)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={settings.min_withdrawal_honey}
+                    onChange={(e) => setSettings({ ...settings, min_withdrawal_honey: parseInt(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
+                  />
+                  <span className="text-xs text-slate-400 font-mono shrink-0">$1.00 USD Min</span>
+                </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Honey Exchange Rate ($ per Honey)</label>
-                <input
-                  type="number"
-                  step="0.00001"
-                  value={settings.honey_to_usd_rate}
-                  onChange={(e) => setSettings({ ...settings, honey_to_usd_rate: parseFloat(e.target.value) })}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
-                />
+                <label className="text-xs font-bold text-slate-300 uppercase block mb-1.5">
+                  Gold Ore Smelting Rate (USD per Gold)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={settings.honey_to_usd_rate}
+                    onChange={(e) => setSettings({ ...settings, honey_to_usd_rate: parseFloat(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
+                  />
+                  <span className="text-xs text-slate-400 font-mono shrink-0">100k Gold = $1.00</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1">Tier 1 Referral (%)</label>
+                  <label className="text-xs font-bold text-slate-300 uppercase block mb-1.5">
+                    Tier 1 Syndicate Cut (%)
+                  </label>
                   <input
                     type="number"
                     value={settings.tier1_ref_percent}
                     onChange={(e) => setSettings({ ...settings, tier1_ref_percent: parseFloat(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">Direct recruit purchases (10%)</p>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1">Tier 2 Referral (%)</label>
+                  <label className="text-xs font-bold text-slate-300 uppercase block mb-1.5">
+                    Tier 2 Syndicate Cut (%)
+                  </label>
                   <input
                     type="number"
                     value={settings.tier2_ref_percent}
                     onChange={(e) => setSettings({ ...settings, tier2_ref_percent: parseFloat(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 font-bold focus:outline-none focus:border-amber-500"
                   />
+                  <p className="text-[10px] text-slate-500 mt-1">Second-level squad (2.5%)</p>
+                </div>
+              </div>
+
+              {/* Permanent Escrow Notice in Settings */}
+              <div className="bg-slate-950/70 border border-amber-500/30 rounded-xl p-4 mt-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-400 mb-1">
+                  <span>🔒</span> Immutable Escrow Wallets (System Level)
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Deposit receiving addresses are locked in core backend configuration and cannot be altered or overwritten from this dashboard, preventing any admin or unauthorized address manipulation.
+                </p>
+                <div className="mt-2 space-y-1 font-mono text-[11px] text-slate-300">
+                  <div>TON: <span className="text-cyan-400 select-all">UQDAqNQO65I06uJT4oxnfQPAQoE3qnMYYSeXtat_fF-JioNR</span></div>
+                  <div>TRON: <span className="text-rose-400 select-all">TKuKMQpQVbAfdwzbQm6zxGrfTRdC2ZixVe</span></div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-sm hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20"
+                className="w-full py-3.5 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-sm hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20"
               >
                 Save System Configuration
               </button>
@@ -1391,21 +1627,21 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                 {/* Key Telemetry Metrics Grid */}
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                    <div className="text-[10px] uppercase font-bold text-slate-400">Total Referrals</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Syndicate Recruits</div>
                     <div className="text-xl font-extrabold text-amber-400 mt-1">👥 {selectedUser.referral_count}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Direct L1 miners</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Direct squad operatives</div>
                   </div>
 
                   <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                    <div className="text-[10px] uppercase font-bold text-slate-400">Active Hashpower</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Drill Hashrate</div>
                     <div className="text-xl font-extrabold text-cyan-400 mt-1">⚡ {selectedUser.bp.toFixed(2)} GHS</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">Permanent rate</div>
                   </div>
 
                   <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                    <div className="text-[10px] uppercase font-bold text-slate-400">Mined Balance</div>
-                    <div className="text-xl font-extrabold text-emerald-400 mt-1">🍯 {selectedUser.honey_balance.toFixed(2)}</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">${(selectedUser.honey_balance * 0.0001).toFixed(4)} USD</div>
+                    <div className="text-[10px] uppercase font-bold text-slate-400">Vault Balance</div>
+                    <div className="text-xl font-extrabold text-emerald-400 mt-1">${selectedUser.honey_balance.toFixed(2)}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Available for cashout</div>
                   </div>
                 </div>
 
@@ -1430,9 +1666,9 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                   </div>
 
                   <div className="flex justify-between items-center py-1 border-b border-slate-800/60">
-                    <span className="text-slate-400">Cloud Mining Harvest:</span>
+                    <span className="text-slate-400">Vault Extraction Activity:</span>
                     <span className={selectedUser.has_collected ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                      {selectedUser.has_collected ? '✅ Active Miner (Harvested)' : '❌ Never Harvested'}
+                      {selectedUser.has_collected ? '✅ Active Operative (Drilling)' : '❌ Never Drilled'}
                     </span>
                   </div>
 
@@ -1453,7 +1689,7 @@ export const Dashboard: React.FC<{ token: string; onLogout: () => void }> = ({ t
                       <div className="flex justify-between">
                         <span className="text-slate-400">Requested Amount:</span>
                         <span className="font-extrabold text-emerald-400">
-                          {selectedWithdrawalContext.amount_honey} {selectedWithdrawalContext.payout_method || 'GRAM'}
+                          ${selectedWithdrawalContext.amount_usd || selectedWithdrawalContext.amount_honey} USD ({selectedWithdrawalContext.payout_method || 'GRAM'})
                         </span>
                       </div>
                       <div>

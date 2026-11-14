@@ -26,12 +26,12 @@ export const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin 
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-[#060809] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#0e1315] border border-[#1e292d] rounded-3xl p-8 shadow-2xl shadow-amber-500/10">
         <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🐝</div>
-          <h1 className="text-2xl font-black text-amber-400">HashBee Control Panel</h1>
-          <p className="text-xs text-slate-400 mt-1">Administrator Sign In</p>
+          <div className="text-5xl mb-3">🏛️</div>
+          <h1 className="text-2xl font-black text-amber-400">Vaultfinity Control Panel</h1>
+          <p className="text-xs text-[#94a3b8] mt-1">Cyber Heist Tycoon · Admin Sign In</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

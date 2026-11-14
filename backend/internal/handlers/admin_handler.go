@@ -146,6 +146,10 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 		TotalDepositedGRAM     float64 `json:"total_deposited_gram"`
 		TotalDepositedUSD      float64 `json:"total_deposited_usd"`
 		TotalDepositedAll      float64 `json:"total_deposited_all"`
+		TotalGoldStash         float64 `json:"total_gold_stash"`
+		TotalEnergyKWh         float64 `json:"total_energy_kwh"`
+		TotalSafecrackers      int     `json:"total_safecrackers"`
+		TotalSyndicateEarned   float64 `json:"total_syndicate_earned"`
 	}
 
 	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&stats.TotalUsers)
@@ -154,10 +158,13 @@ func (h *AdminHandler) Dashboard(c *gin.Context) {
 	h.db.QueryRow(ctx, `SELECT COUNT(DISTINCT user_id) FROM analytics_events WHERE created_at >= NOW() - INTERVAL '30 days'`).Scan(&stats.MAU)
 	h.db.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '1 day'`).Scan(&stats.NewUsersToday)
 	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(bp), 0) FROM users`).Scan(&stats.TotalBP)
-	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'collect' AND currency = 'HONEY'`).Scan(&stats.TotalHoneyIssued)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type IN ('collect', 'gold_smelt')`).Scan(&stats.TotalHoneyIssued)
 	h.db.QueryRow(ctx, `SELECT COUNT(*), COALESCE(SUM(amount), 0) FROM withdrawals WHERE status = 'pending'`).Scan(&stats.PendingWithdrawals, &stats.PendingWithdrawalValue)
-	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'campaign_payment' AND currency = 'HONEY' AND amount < 0`).Scan(&stats.CampaignRevenue)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'campaign_payment' AND amount < 0`).Scan(&stats.CampaignRevenue)
 	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(honey_balance), 0) FROM users`).Scan(&stats.TotalHoneyLiability)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(gold_stash), 0), COALESCE(SUM(energy_kwh), 0) FROM users`).Scan(&stats.TotalGoldStash, &stats.TotalEnergyKWh)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(count), 0) FROM user_crew`).Scan(&stats.TotalSafecrackers)
+	h.db.QueryRow(ctx, `SELECT COALESCE(SUM(amount_usd), 0) FROM syndicate_earnings`).Scan(&stats.TotalSyndicateEarned)
 
 	h.db.QueryRow(ctx, `
 		SELECT 
@@ -1266,122 +1273,112 @@ type AutoBroadcastTemplate struct {
 
 var RotatingBroadcastTemplates = []AutoBroadcastTemplate{
 	{
-		Key: "flash_2x_double",
-		Message: `⚡ *24H FLASH SALE: 5.00 TON ➔ 10.00 GRAM!* 🔥
+		Key: "vault_gold_smelt",
+		Message: `🔥 *GOLD VEIN STRIKE: SMELT YOUR VAULT ORE!* 🪙⚡
 
-Double your crypto balance in exactly 24 hours:
-💰 *Invest 5.00 TON ➔ Payout 10.00 GRAM*
-📈 *+100% Guaranteed 2X Double ROI*
-⏳ Strictly limited: 500 Slots Allocation!
-🛡️ Automatic on-chain release at maturity
-
-👇 Claim your 2X Yield Slot in 1-click:`,
-		ButtonText: "⚡ Double 5 TON (Get 10 G) ➔",
-		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
-	},
-	{
-		Key: "withdraw_min_010",
-		Message: `💸 *INSTANT CASHOUT: MINIMUM JUST 0.10 G!* 💎⚡
-
-Cash out your mining earnings to your wallet right now:
-• 🚀 *Min Cashout*: Only *0.10 GRAM / USDT*
-• ⚡ Instant settlements to TON & BSC
+Your automated safecracker drills struck an ultra-rich gold vein:
+• 🪙 *Gold Stash Waiting*: Convert 1,000+ Gold bars into real USD
+• 💵 *Direct Cashout*: 100,000 Gold = $1.00 USD
+• ⚡ Fast settlements in GRAM, USD₮ & TRX
 • 🛡️ Zero transaction fees
-• 🔎 Verified proofs in @HashBeePayouts
 
-👇 Cash out your balance immediately:`,
-		ButtonText: "💸 Cash Out My Balance ➔",
+👇 Tap below to smelt your gold into cash:`,
+		ButtonText: "🔥 Smelt Vault Gold Now ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "spin_free_waiting",
-		Message: `🎰 *FREE LUCKY SPIN WAITING FOR YOU!* 🎡
+		Key: "battery_power_drop",
+		Message: `🔋 *AUXILIARY POWER DROP: +50,000 kWh CREDITED!* ⚡
 
-Hey {name}, your daily turn is ready on the Lucky Wheel:
-👑 *1.00 GRAM Jackpot*
-💵 *Instant TON & USDT Cash Drops*
-⚡ *Permanent Hashpower Boosts*
+A high-capacity battery cell was delivered to your heist squad:
+• ⚡ *50,000 kWh Power*: Keeps drills active for days
+• 🛑 *No Power = No Gold*: Don't let your generators go dark
+• 🚀 24/7 automated continuous gold extraction
 
-👇 Spin now and claim your prize:`,
-		ButtonText: "🎡 Spin Lucky Wheel Free 🎰",
+👇 Check your battery level & keep drilling:`,
+		ButtonText: "⚡ Check Generator & Drill ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "hive_full_alert",
-		Message: `🚨 *ATTENTION {name}: MINING RIG FULL!* 🍯⚠️
+		Key: "safecracker_hire",
+		Message: `🥷 *EXPAND YOUR CREW: BLACK MARKET RESTOCKED!* 🛒
 
-Your honeycomb has reached 100% storage capacity:
-• 🛑 Mining has paused until you harvest
-• 🍯 Unclaimed Honey waiting in your hive
-• ⚡ Tap once to collect & resume 24/7 mining
+Upgrade your heist squad with specialized cyber operatives:
+• 🥷 *Lockpick Rookie*: $0.50 (5,000 Gold/day · 10%/day)
+• 🤖 *Cyber Specialist*: $1.00 (10,000 Gold/day · 10%/day)
+• ⚡ *Neural Hacker*: $2.50 (27,500 Gold/day · 11%/day)
+• 👑 *Master Infiltrator*: $5.00 (55,000 Gold/day · 11%/day)
 
-👇 Harvest your honey now:`,
-		ButtonText: "🍯 Collect Honey & Resume Mining ➔",
+👇 Hire elite operatives to stack daily yield:`,
+		ButtonText: "🛒 Visit Black Market ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "mystery_crate_drop",
-		Message: `📦 *FREE MYSTERY CRATE DROP UNLOCKED!* 🎁✨
+		Key: "syndicate_commissions",
+		Message: `👥 *SYNDICATE RECRUIT RUSH: 10% CUT FOREVER!* 🚀
 
-A special loot crate has been credited to your account:
-• 💎 Hidden TON & GRAM rewards
-• ⚡ Massive Hashrate & GHS boosters
-• 🔓 Instant unlock with 1 tap!
+Recruit your crew and build your passive syndicate empire:
+• 💰 *10% Cut* on every safecracker your friends hire
+• 🔋 *10% Cut* on every battery pack they purchase
+• 🎁 *$0.02 Instant Cash Bounty* on their first recruit hire
+• 👛 Direct claim into your main cash balance!
 
-👇 Open your Mystery Crate now:`,
-		ButtonText: "🎁 Open Free Mystery Crate ➔",
-		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
-	},
-	{
-		Key: "viral_referrals_rush",
-		Message: `👥 *INVITE 1 FRIEND = 1 FREE SPIN + 5 GHS!* 🚀
-
-Turn your friends into daily passive crypto income:
-• 🎁 *+1 Free Lucky Wheel Spin* per invite
-• ⚡ *+5.0 GHS Mining Power* instantly
-• 🍯 *10% + 5% Lifetime Commissions*
-
-👇 Share your invite link & get spins:`,
-		ButtonText: "👥 Invite Friends & Get Free Spins 🚀",
+👇 Copy your unique invite link & recruit now:`,
+		ButtonText: "👥 Recruit Syndicate Crew ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
 		Key: "withdraw_proof_alert",
-		Message: `💎 *PAYOUTS SENT! ALL CASHOUTS VERIFIED* 💸
+		Message: `💸 *INSTANT CASHOUTS DISPATCHED!* 💎⚡
 
-All pending user withdrawals have been dispatched on-chain!
-• 🚀 Over 2,500+ active miners paid today
-• 🔎 View live transaction hashes in @HashBeePayouts
-• 💰 Got balance? Cash out from 0.10 G!
+All pending operative withdrawals have been processed on-chain:
+• 🚀 Cash out directly in *GRAM (TON)*, *USD₮ (TON)*, or *TRX (TRON)*
+• ⚡ Fast automatic blockchain settlements
+• 🛡️ Zero platform withdrawal fees
+• 💰 Got smelted gold? Cash out from $1.00 USD!
 
-👇 Withdraw your earnings or view proofs:`,
-		ButtonText: "💸 Check Balance & Withdraw ➔",
+👇 Open your wallet & request cash out:`,
+		ButtonText: "💼 Open Wallet & Cash Out ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "plan_starter_trial",
-		Message: `⚡ *STARTER MINER: 1.30 TON ➔ 2.00 GRAM!* 🍯
+		Key: "daily_power_streak",
+		Message: `🎁 *DAILY POWER DROP READY: CLAIM UP TO 12K kWh!* ⚡
 
-The most affordable daily yield miner:
-• 💰 *Pay 1.30 TON ➔ Receive 2.00 GRAM (+53.8% Profit)*
-• 🔓 Unlocks instant lifetime withdrawals
-• 🚀 24-Hour guaranteed settlement cycle
+Don't break your consecutive login power streak:
+• 📅 Day 1: +2,000 kWh
+• 📅 Day 3: +4,000 kWh
+• 📅 Day 7: +12,000 kWh + Drone Companion 🎁
+• ⚡ Free energy to keep your safecrackers drilling!
 
-👇 Start your Cyber Worker miner:`,
-		ButtonText: "⚡ Activate Starter Miner (1.30 TON) ➔",
+👇 Claim today's power drop in 1-click:`,
+		ButtonText: "🎁 Claim Daily Power Drop ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 	{
-		Key: "missions_bounty",
-		Message: `⭐ *NEW SPONSOR MISSIONS: EARN FREE GHS!* 🚀
+		Key: "fusion_reactor_pack",
+		Message: `⚡ *BEST VALUE: FUSION POWER REACTOR (+2M kWh)!* 🔋
 
-Quick 5-second tasks just dropped:
-• 📢 Join partner channels: +0.50 GHS each
-• 🎬 Watch video ads: Free Honey credited
-• ⚡ Speed up your passive mining income!
+Never worry about empty batteries again:
+• 🔋 *+2,000,000 kWh Fusion Power*
+• ⏳ Powers your heist squad for over *133 Days!*
+• 💰 Only *$3.00 USD* (Massive 80% bulk discount)
 
-👇 Complete tasks & claim rewards:`,
-		ButtonText: "⭐ Claim Free Mission Rewards ➔",
+👇 Charge your generator with Fusion Core:`,
+		ButtonText: "⚡ Get Fusion Reactor ($3.00) ➔",
+		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
+	},
+	{
+		Key: "heist_leaderboard",
+		Message: `🏆 *VAULT CRACKED: TOP HEIST OPERATIVES!* 🏛️💎
+
+The central bullion vaults are being cracked 24/7:
+• 🥇 Over 100M+ Gold ore extracted this week
+• 💵 Thousands in USD cashouts sent to operatives
+• 🥷 Stack duplicate operatives to multiply your drill speed!
+
+👇 Enter the Vault & claim your share of the gold:`,
+		ButtonText: "🏛️ Enter Cyber Vault ➔",
 		ButtonURL:  "https://miniapp-five-topaz.vercel.app",
 	},
 }
