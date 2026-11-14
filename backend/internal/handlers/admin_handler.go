@@ -1167,6 +1167,7 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		ButtonText       string `json:"button_text"`
 		ButtonURL        string `json:"button_url"`
 		TargetTelegramID int64  `json:"target_telegram_id"`
+		Audience         string `json:"audience"` // "all", "channel", "both", "single"
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -1181,11 +1182,20 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 	}
 
 	var recipients []bot.BroadcastRecipient
-	if req.TargetTelegramID > 0 {
+	const payoutsChannelID int64 = -1003750950966
+
+	if req.Audience == "channel" {
+		recipients = append(recipients, bot.BroadcastRecipient{TelegramID: payoutsChannelID, FirstName: "Operative"})
+	} else if req.TargetTelegramID != 0 {
 		var fn string
-		_ = h.db.QueryRow(c.Request.Context(), `SELECT COALESCE(first_name, username, '') FROM users WHERE telegram_id = $1`, req.TargetTelegramID).Scan(&fn)
+		if req.TargetTelegramID > 0 {
+			_ = h.db.QueryRow(c.Request.Context(), `SELECT COALESCE(first_name, username, '') FROM users WHERE telegram_id = $1`, req.TargetTelegramID).Scan(&fn)
+		} else {
+			fn = "Operative"
+		}
 		recipients = append(recipients, bot.BroadcastRecipient{TelegramID: req.TargetTelegramID, FirstName: fn})
 	} else {
+		// "all" or "both"
 		rows, err := h.db.Query(c.Request.Context(), `SELECT DISTINCT telegram_id, COALESCE(first_name, username, '') FROM users WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned')`)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query users: " + err.Error()})
@@ -1198,6 +1208,9 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 			if err := rows.Scan(&id, &fn); err == nil && id > 0 {
 				recipients = append(recipients, bot.BroadcastRecipient{TelegramID: id, FirstName: fn})
 			}
+		}
+		if req.Audience == "both" {
+			recipients = append(recipients, bot.BroadcastRecipient{TelegramID: payoutsChannelID, FirstName: "Operative"})
 		}
 	}
 
