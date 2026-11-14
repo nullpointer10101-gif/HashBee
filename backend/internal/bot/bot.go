@@ -397,14 +397,14 @@ func (b *Bot) SendDepositNotification(telegramID int64, amountGram, ghsPower flo
 	if b == nil || b.api == nil {
 		return
 	}
-	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+%.3f GRAM*\n⚡ Auxiliary Power & Drill Speed Credited!* ⚡\n\nYour safecrackers are drilling at the upgraded rate 24/7! 🔨", amountGram, ghsPower)
+	text := fmt.Sprintf("🎉 *Deposit Received & Verified!*\n\n💎 Deposited: *+$%.2f USD₮*\n⚡ Auxiliary Power & Drill Speed Credited!* ⚡\n\nYour safecrackers are drilling at the upgraded rate 24/7! 🔨", amountGram, ghsPower)
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	b.api.Send(msg)
 
 	// Instant alert to Kanzx (@kiopajje / 6446145632)
 	kanzxID := int64(6446145632)
-	adminAlert := fmt.Sprintf("🚨 *NEW DEPOSIT CONFIRMED!*\n\n👤 *User TG ID:* `%d`\n💎 *Amount:* `+%.3f GRAM`\n⚡ *Mining Power Added:* `+%.2f GHS`\n⏰ *Time:* `%s UTC`",
+	adminAlert := fmt.Sprintf("🚨 *NEW DEPOSIT CONFIRMED!*\n\n👤 *User TG ID:* `%d`\n💎 *Amount:* `+$%.2f USD₮`\n⚡ *Mining Power Added:* `+%.2f GHS`\n⏰ *Time:* `%s UTC`",
 		telegramID, amountGram, ghsPower, time.Now().UTC().Format("2006-01-02 15:04:05"))
 	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
 	adminMsg.ParseMode = "Markdown"
@@ -417,7 +417,7 @@ func (b *Bot) SendCampaignDepositNotification(ownerID uuid.UUID, title string, a
 		return
 	}
 	kanzxID := int64(6446145632)
-	adminAlert := fmt.Sprintf("📢 *NEW CAMPAIGN DEPOSIT CONFIRMED!*\n\n🆔 *Owner UUID:* `%s`\n🎯 *Campaign:* `%s`\n💎 *Payment:* `+%.3f GRAM`\n⏰ *Time:* `%s UTC`",
+	adminAlert := fmt.Sprintf("📢 *NEW CAMPAIGN DEPOSIT CONFIRMED!*\n\n🆔 *Owner UUID:* `%s`\n🎯 *Campaign:* `%s`\n💎 *Payment:* `+$%.2f USD₮`\n⏰ *Time:* `%s UTC`",
 		ownerID.String(), title, amountGram, time.Now().UTC().Format("2006-01-02 15:04:05"))
 	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
 	adminMsg.ParseMode = "Markdown"
@@ -432,7 +432,7 @@ func (b *Bot) SendPlanActivationNotification(telegramID int64, planName string, 
 	miniAppURL := b.getFreshMiniAppURL()
 	keyboard := newWebAppKeyboard("🤖 View Active Miner", miniAppURL)
 
-	text := fmt.Sprintf("🎉 *MINING CONTRACT ACTIVATED!* 💎\n\n🤖 *NFT Miner:* *%s*\n💰 *Paid:* *%.2f TON*\n📈 *Guaranteed Return:* *%.2f GRAM*\n⚡ *Mining Power Added:* *+%.0f GHS*\n⏱️ *Duration:* *24 Hours (Guaranteed Settlement)*\n\nYour miner is accumulating rewards 24/7! Open the app anytime to track your contract.",
+	text := fmt.Sprintf("🎉 *MINING CONTRACT ACTIVATED!* 💎\n\n🤖 *NFT Miner:* *%s*\n💰 *Paid:* *%.2f TON*\n📈 *Guaranteed Return:* *%.2f USD₮*\n⚡ *Mining Power Added:* *+%.0f GHS*\n⏱️ *Duration:* *24 Hours (Guaranteed Settlement)*\n\nYour miner is accumulating rewards 24/7! Open the app anytime to track your contract.",
 		planName, costGram, returnGram, ghsPower)
 
 	msg := tgbotapi.NewMessage(telegramID, text)
@@ -442,7 +442,7 @@ func (b *Bot) SendPlanActivationNotification(telegramID int64, planName string, 
 
 	// Instant alert to Kanzx (@kiopajje / 6446145632)
 	kanzxID := int64(6446145632)
-	adminAlert := fmt.Sprintf("🚨 *NEW PLAN CONTRACT ACTIVATED!*\n\n👤 *User TG ID:* `%d`\n🤖 *Plan:* `%s`\n💰 *Cost:* `%.2f TON`\n📈 *Return:* `%.2f GRAM`\n⚡ *Power Added:* `+%.0f GHS`\n⏰ *Time:* `%s UTC`",
+	adminAlert := fmt.Sprintf("🚨 *NEW PLAN CONTRACT ACTIVATED!*\n\n👤 *User TG ID:* `%d`\n🤖 *Plan:* `%s`\n💰 *Cost:* `%.2f TON`\n📈 *Return:* `%.2f USD₮`\n⚡ *Power Added:* `+%.0f GHS`\n⏰ *Time:* `%s UTC`",
 		telegramID, planName, costGram, returnGram, ghsPower, time.Now().UTC().Format("2006-01-02 15:04:05"))
 	adminMsg := tgbotapi.NewMessage(kanzxID, adminAlert)
 	adminMsg.ParseMode = "Markdown"

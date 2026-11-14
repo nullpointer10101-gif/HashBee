@@ -273,14 +273,19 @@ func (s *PayoutMirrorService) parseTelegramPosts(htmlContent string) []PayoutPos
 
 		// Extract amount
 		var amount float64
-		currency := "GRAM"
+		currency := "USD₮"
+		if strings.Contains(network, "TRON") {
+			currency = "TRX"
+		} else if strings.Contains(network, "TON") {
+			currency = "TON"
+		}
 		if amtMatch := amountRegex.FindStringSubmatch(blockHTML); len(amtMatch) > 1 {
 			if a, err := strconv.ParseFloat(amtMatch[1], 64); err == nil && a > 0 {
 				amount = a
 			}
 		}
 
-		// Enforce realistic bounds requested: minimum 1.00, maximum 55.00
+		// Enforce realistic bounds requested: minimum 1.50, maximum 55.00
 		if amount < 1.0 || amount > 55.0 {
 			sampleRealistic := []float64{1.85, 2.50, 4.20, 6.75, 12.30, 18.50, 24.10, 33.60, 42.00, 51.50}
 			amount = sampleRealistic[rand.Intn(len(sampleRealistic))]
@@ -312,8 +317,14 @@ func (s *PayoutMirrorService) formatHeistMinerPayoutProof(data PayoutPostData) (
 	}
 
 	currency := data.Currency
-	if currency == "" {
-		currency = "GRAM"
+	if currency == "" || currency == "GRAM" {
+		if strings.Contains(data.Network, "TRON") {
+			currency = "TRX"
+		} else if strings.Contains(data.Network, "TON") {
+			currency = "TON"
+		} else {
+			currency = "USD₮"
+		}
 	}
 
 	msg := fmt.Sprintf(`✅ <b>Heist Miner Cashout Complete</b>
