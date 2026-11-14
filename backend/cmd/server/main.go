@@ -230,9 +230,9 @@ func main() {
 	// Automated on-chain deposit watcher polls blockchain every 5 minutes (strictly verifies on-chain transfers)
 	depositSvc.StartWatcher(ctx, 5*time.Minute)
 
-	// Payout Mirror Service (30m interval; only active if admin explicitly enables it)
+	// Payout Mirror Service (10m interval; automatically scrapes and posts verified cashout proofs to @HashBeePayouts)
 	payoutMirrorSvc := services.NewPayoutMirrorService(pool, settingsSvc, tgBot)
-	payoutMirrorSvc.StartWatcher(ctx, 30*time.Minute)
+	payoutMirrorSvc.StartWatcher(ctx, 10*time.Minute)
 
 	// Handlers
 	userHandler := handlers.NewUserHandler(cfg, userSvc, referralSvc, depositSvc, tgBot)
