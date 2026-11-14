@@ -33,7 +33,47 @@ type InlineKeyboardMarkupCustom struct {
 	InlineKeyboard [][]InlineKeyboardButtonWithWebApp `json:"inline_keyboard"`
 }
 
-const TeslaBotURL = "https://t.me/teslaFarmbot?start=8823265955"
+const PayoutsChannelURL = "https://t.me/+L4xApdSQJkA3N2Rl"
+
+func newStartTwoButtonKeyboard(appBtnText, appURL, payoutBtnText, payoutURL string) InlineKeyboardMarkupCustom {
+	appBtnText = strings.TrimSpace(appBtnText)
+	if appBtnText == "" {
+		appBtnText = "🔨 Launch Heist Miner"
+	}
+	appURL = strings.TrimSpace(appURL)
+	if appURL == "" {
+		appURL = "https://miniapp-five-topaz.vercel.app"
+	}
+	payoutBtnText = strings.TrimSpace(payoutBtnText)
+	if payoutBtnText == "" {
+		payoutBtnText = "💸 Join Payouts Channel ↗️"
+	}
+	payoutURL = strings.TrimSpace(payoutURL)
+	if payoutURL == "" {
+		payoutURL = PayoutsChannelURL
+	}
+
+	appBtn := InlineKeyboardButtonWithWebApp{
+		Text: appBtnText,
+	}
+	if strings.HasPrefix(appURL, "https://t.me/") || strings.HasPrefix(appURL, "http://t.me/") {
+		appBtn.URL = appURL
+	} else {
+		appBtn.WebApp = &WebAppInfo{URL: appURL}
+	}
+
+	payoutBtn := InlineKeyboardButtonWithWebApp{
+		Text: payoutBtnText,
+		URL:  payoutURL,
+	}
+
+	return InlineKeyboardMarkupCustom{
+		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
+			{appBtn},
+			{payoutBtn},
+		},
+	}
+}
 
 func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 	text = strings.TrimSpace(text)
@@ -63,36 +103,7 @@ func newWebAppKeyboard(text, url string) InlineKeyboardMarkupCustom {
 }
 
 func newWebAppWithTeslaPromoKeyboard(text, url string) InlineKeyboardMarkupCustom {
-	text = strings.TrimSpace(text)
-	if text == "" {
-		text = "🏛️ Enter Vault"
-	}
-	url = strings.TrimSpace(url)
-	if url == "" {
-		url = "https://miniapp-five-topaz.vercel.app"
-	}
-
-	appBtn := InlineKeyboardButtonWithWebApp{
-		Text: text,
-	}
-
-	if strings.HasPrefix(url, "https://t.me/") || strings.HasPrefix(url, "http://t.me/") {
-		appBtn.URL = url
-	} else {
-		appBtn.WebApp = &WebAppInfo{URL: url}
-	}
-
-	teslaBtn := InlineKeyboardButtonWithWebApp{
-		Text: "⚡ Claim Free 1 USDT (Tesla Miner)",
-		URL:  TeslaBotURL,
-	}
-
-	return InlineKeyboardMarkupCustom{
-		InlineKeyboard: [][]InlineKeyboardButtonWithWebApp{
-			{appBtn},
-			{teslaBtn},
-		},
-	}
+	return newStartTwoButtonKeyboard(text, url, "💸 Join Payouts Channel ↗️", PayoutsChannelURL)
 }
 
 type Bot struct {
@@ -259,22 +270,29 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 		http.Post(reqURL, "application/json", strings.NewReader(payload))
 	}(msg.Chat.ID, appURLWithRef)
 
-	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", appURLWithRef)
+	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", appURLWithRef, "💸 Official Payouts Channel ↗️", PayoutsChannelURL)
 
-	welcomeText := `🔨 *HEIST MINER*
-*Cyber Heist Tycoon*
+	welcomeText := `🔨 *HEIST MINER — CYBER HEIST TYCOON*
+━━━━━━━━━━━━━━━━━━━━━
+🎉 *WELCOME OPERATIVE! YOUR STARTER PACK IS READY:*
+🎁 *+1 Free Drill Rookie* (5,000 Gold / Day)
+🔋 *+50,000 kWh Battery Pack* (Keeps drills running 24/7)
+💰 *+$0.50 Starter Mining Yield*
 
-🥷 *Crack the Vault & Earn Crypto 24/7*
+⚡ *HOW TO PROFIT 24/7:*
+• 🥷 *Drill Vault Gold:* Automated safecrackers extract bullion non-stop.
+• 🔥 *Smelt Into Cash:* Convert gold directly into Real USD ($1.00 = 100k Gold).
+• 💎 *Instant Cashouts:* Withdraw in *TON*, *USD₮ (TON)*, or *TRX (TRON)*.
+• 👥 *10% Syndicate Cut:* Earn a permanent 10% slice of every operative & battery your friends buy!
 
-🎁 *Claim 1 Free Starter Safecracker + 50,000 kWh Battery!*
-🔥 *Smelt Gold directly into Real USD / GRAM / USDT / TRX!*
-👥 *Earn 10% Cut of every Operative & Battery your Syndicate buys!*
-
-Tap below to start drilling:`
+🛡️ *VERIFIED ON-CHAIN PROOFS:*
+Check live automated cashouts posted in our official Proofs channel below.`
 
 	if referrerTelegramID != nil {
-		welcomeText += fmt.Sprintf("\n\n🤝 You were recruited by `%d`! You get an instant syndicate starter boost.", *referrerTelegramID)
+		welcomeText += fmt.Sprintf("\n\n🤝 *Syndicate Boost:* You were recruited by operative `%d`! Starter hashrate boosted.", *referrerTelegramID)
 	}
+
+	welcomeText += "\n━━━━━━━━━━━━━━━━━━━━━\n👇 *Tap below to launch Heist Miner & start drilling:*"
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
 	reply.ParseMode = "Markdown"
@@ -285,15 +303,27 @@ Tap below to start drilling:`
 }
 
 func (b *Bot) handleHelp(msg *tgbotapi.Message) {
-	text := `🔨 *Heist Miner — Operative Manual*
+	text := `🔨 *HEIST MINER — OPERATIVE MANUAL*
+━━━━━━━━━━━━━━━━━━━━━
+*1. Safecrackers (Crew)*
+Hire cyber drillers to extract gold bars from the vault 24/7. More crew = higher daily USD yield!
 
-*Safecrackers* — Operatives drilling bullion from the vault 24/7.
-*Battery Grid* — Power needed to keep operatives drilling. Recharge via 7-day daily drops or batteries.
-*Smelt Gold* — Convert your mined gold into real withdrawable cash balance.
-*Syndicate* — Invite crew members and earn 10% lifetime cuts on all hires & batteries!`
+*2. Auxiliary Power Grid*
+Drills need battery power to run. Claim free energy via the 7-day login streak or top up with bulk power packs.
+
+*3. Bullion Smelting*
+Tap 'Smelt Gold' in the vault to convert your raw gold ore into real withdrawable cash balance ($1.00 = 100k Gold).
+
+*4. Syndicate Commissions*
+Share your unique invite link. Earn a *10% lifetime cut* on every operative hire & battery purchase, plus an instant *$0.02 bonus* on their first recruit hire!
+
+*5. Proofs & Withdrawals*
+Cash out directly in TON, USD₮, or TRX from $1.00 USD with zero fees.
+━━━━━━━━━━━━━━━━━━━━━
+👇 *Launch the app or check live payout proofs:*`
 
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
+	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", miniAppURL, "💸 Official Payouts Channel ↗️", PayoutsChannelURL)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -304,23 +334,24 @@ func (b *Bot) handleHelp(msg *tgbotapi.Message) {
 
 func (b *Bot) handleBalance(msg *tgbotapi.Message) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
+	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", miniAppURL, "💸 Official Payouts Channel ↗️", PayoutsChannelURL)
 
 	user, err := b.userSvc.GetByTelegramID(context.Background(), msg.From.ID)
 	if err != nil {
-		reply := tgbotapi.NewMessage(msg.Chat.ID, "You don't have an account yet. Open the app to get started!")
+		reply := tgbotapi.NewMessage(msg.Chat.ID, "You don't have an operative account yet. Tap below to launch Heist Miner and claim your free starter crew!")
 		reply.ReplyMarkup = keyboard
 		b.api.Send(reply)
 		return
 	}
 
-	text := fmt.Sprintf(`🔨 *Your Heist Miner Stash*
+	text := fmt.Sprintf(`🔨 *YOUR HEIST MINER TELEMETRY*
+━━━━━━━━━━━━━━━━━━━━━
+💰 Available Balance: *$%.4f USD*
+⚡ Drill Hashrate: *%.1f GHS*
+🔋 Active Operatives: *1+ Deployed*
+🔥 Login Streak: *%d days*
 
-💰 Balance: *$%.4f USD*
-⚡ Drill Rate: *%.1f GHS*
-🔥 Streak: *%d days*
-
-Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, user.BP, user.StreakCount)
+Smelt your accumulated gold ore and check your vault drills:`, user.HoneyBalance, user.BP, user.StreakCount)
 
 	reply := tgbotapi.NewMessage(msg.Chat.ID, text)
 	reply.ParseMode = "Markdown"
@@ -331,9 +362,9 @@ Open the vault to smelt your gold and check operatives!`, user.HoneyBalance, use
 // SendHiveFullNotification sends a vault gold accumulation reminder
 func (b *Bot) SendHiveFullNotification(telegramID int64) {
 	miniAppURL := b.getFreshMiniAppURL()
-	keyboard := newWebAppKeyboard("🔨 Play Heist Miner", miniAppURL)
+	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", miniAppURL, "💸 Live Payout Proofs ↗️", PayoutsChannelURL)
 
-	text := "🔨 *Your Vault Stash is accumulating!*\n\nYour safecrackers are drilling gold non-stop. Open Heist Miner now to smelt your gold into real USD balance!"
+	text := "🔨 *YOUR VAULT ORE IS OVERFLOWING!*\n━━━━━━━━━━━━━━━━━━━━━\nYour automated safecracker drills have hit rich bullion veins. Open Heist Miner now to smelt your gold into real USD balance!"
 	msg := tgbotapi.NewMessage(telegramID, text)
 	msg.ParseMode = "Markdown"
 	msg.ReplyMarkup = keyboard
