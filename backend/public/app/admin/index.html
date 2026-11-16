@@ -1033,196 +1033,112 @@ var API_URL = (localStorage.getItem('hb_api_url') || '').replace(/hashbee[23]\.o
 let token = localStorage.getItem('hb_admin_token') || '';
 
 const HYPE_TEMPLATES = {
-  flash_2x_double: {
-    msg: `⚡ *24H FLASH: 10.00 TON ➔ 25.00 GRAM!* 🔥
+  vault_gold_smelt: {
+    msg: `🔥 *GOLD VEIN STRIKE: SMELT YOUR VAULT BULLION!* 🪙⚡
 
-Grow your TON in exactly 24 hours:
-💰 *Pay 10.00 TON ➔ Receive 25.00 GRAM*
-📈 *+150% Guaranteed 2.5X Profit*
-⏳ Only 500 total pieces available today!
+Your cyber drills have extracted bullion from the central vault:
+• 🪙 *Gold Stash Ready*: Smelt raw gold directly into withdrawable USD
+• 💵 *Fixed Exchange Rate*: 100,000 Gold = $1.00 USD
+• ⚡ Fast cashout settlements in TON, USD₮ & TRX
+• 🛡️ Zero platform withdrawal fees
 
-👇 Claim your 25.00 GRAM in 1-click:`,
-    btn: '⚡ Claim 2.5X Yield (25.00 G) ➔'
+👇 Tap below to smelt your gold into real cash:`,
+    btn: '🔥 Smelt Gold Into Cash ➔'
   },
-  withdraw_min_010: {
-    msg: `💸 *INSTANT CASHOUT: MINIMUM JUST 0.10 G!* 💎⚡
+  safecracker_hire: {
+    msg: `🥷 *EXPAND YOUR DRILL CREW: BLACK MARKET RESTOCKED!* 🛒🔨
 
-Withdraw your mining balance right now:
-• 🚀 *Min Cashout*: Only *0.10 GRAM / USDT*
-• ⚡ Instant settlements to TON & BSC
-• 🛡️ Zero withdrawal fees
+Hire elite safecrackers to drill gold from the cyber vault 24/7:
+• 🥷 *Lockpick Rookie*: $0.50 (5,000 Gold/day • 10% daily yield)
+• 🤖 *Cyber Specialist*: $1.00 (10,000 Gold/day • 10% daily yield)
+• ⚡ *Neural Hacker*: $2.50 (27,500 Gold/day • 11% daily yield)
+• 👑 *Master Infiltrator*: $5.00 (55,000 Gold/day • 11% daily yield)
 
-👇 Check balance & cash out:`,
-    btn: '💸 Cashout My Earnings Now ➔'
+👇 Hire operatives to multiply your 24/7 income:`,
+    btn: '🥷 Hire Drill Operatives ➔'
   },
-  spin_free_waiting: {
-    msg: `🎰 *FREE LUCKY SPIN WAITING FOR YOU!* 🎡
+  battery_power_drop: {
+    msg: `🔋 *GENERATOR POWER DROP: RECHARGE DRILLS NOW!* ⚡
 
-Hey {name}, your turn is ready on the Lucky Wheel:
-👑 *1.00 GRAM Jackpot*
-💵 *Instant USDT Cash Drops*
-⚡ *Permanent Hashrate Boosts*
+Don't let your drills stop — hackers only drill while power is live:
+• ⚡ *Auxiliary Battery Grid*: Keep generators humming 24/7
+• 🛑 *No Power = No Gold*: Check your remaining battery runtime
+• 🎁 *7-Day Drops*: Claim free daily energy packs every 24 hours!
 
-👇 Spin now and claim your prize:`,
-    btn: '🎡 Spin Lucky Wheel Free 🎰'
+👇 Check battery level & keep drills online:`,
+    btn: '⚡ Check Generator & Drill ➔'
   },
-  watch_ads_boost: {
-    msg: `📺 *FREE BOOST: WATCH ADS & MINE FASTER!* ⚡
+  daily_power_streak: {
+    msg: `🎁 *DAILY GENERATOR DROP READY: CLAIM FREE BATTERY!* ⚡
 
-Zero deposit needed:
-• 🎬 3 Quick Ads = Free Honey credited
-• ⚡ Permanent GHS Mining Speed
-• 🔄 Refreshes every 3 hours 24/7!
+Hey {name}, your 24-hour generator supply drop is ready to collect:
+• 📅 *Daily Energy Drop*: Claim up to +12,000 kWh free power
+• 🎁 *7-Day Streak Bonus*: Unlock free Drill Drone companion!
+• ⚡ Powers your crew to extract gold bars non-stop
 
-👇 Boost your miner for free:`,
-    btn: '⚡ Watch Ads & Boost Speed ➔'
-  },
-  plan_god_tier: {
-    msg: `🔥 *APEX WHALE: +10.00 TON PURE PROFIT!* 💎
-
-Highest yield contract on HashBee:
-• 💎 *Pay 12.00 TON ➔ Get 22.00 GRAM*
-• 💰 *+83.3% Net Profit in 24 Hours*
-• ⚡ Instant on-chain confirmation
-
-👇 Claim your Apex Node:`,
-    btn: '🔥 Claim Apex Hive (22 G) ➔'
-  },
-  plan_standard_53pct: {
-    msg: `⚡ *24H PROFIT: 1.30 TON ➔ 2.00 GRAM!* 🍯
-
-Get guaranteed daily mining yield:
-• 💰 *1.30 TON in ➔ 2.00 GRAM out*
-• 🚀 *+53.8% Profit in 24 hours*
-• 🛡️ Instant next-day settlement
-
-👇 Activate your Cyber Miner:`,
-    btn: '⚡ Activate 1.30 TON Plan (+53%) ➔'
-  },
-  hive_full_alert: {
-    msg: `🚨 *ATTENTION {name}: MINING RIG FULL!* 🍯⚠️
-
-Your honeycomb reached 100% capacity!
-• 🛑 Mining has paused until you harvest
-• 🍯 Unclaimed Honey waiting in your hive
-• ⚡ Collect in 1 tap to resume 24/7 mining
-
-👇 Harvest now to keep earning:`,
-    btn: '🍯 Harvest Honey & Resume Mining ➔'
-  },
-  mystery_crate_drop: {
-    msg: `📦 *MYSTERY CRATE DROP UNLOCKED!* 🎁✨
-
-Special loot crates are ready to open:
-• 💎 Hidden TON & GRAM rewards
-• ⚡ Massive Hashrate multipliers
-• 🔓 Instant unlock with 1 tap!
-
-👇 Open your Mystery Crate:`,
-    btn: '🎁 Open Mystery Crate ➔'
-  },
-  plan_matrix_2x: {
-    msg: `🌌 *WHALE MATRIX: 25 TON ➔ 50 GRAM!* 🚀
-
-The ultimate 24h double contract:
-• 💎 *Deposit 25.00 TON ➔ Payout 50.00 GRAM*
-• 👑 *+100% 2X Double Settlement*
-• 🛡️ Direct blockchain transfer
-
-👇 Lock your 2X Whale Node:`,
-    btn: '🌌 Double 25 TON (Get 50 G) ➔'
-  },
-  viral_referrals_rush: {
-    msg: `👥 *INVITE 1 FRIEND = 1 FREE SPIN + GHS!* 🚀
-
-Turn your friends into daily passive income:
-• 🎁 *+1 Free Lucky Wheel Spin* per friend
-• ⚡ *+5.0 GHS Mining Power* per invite
-• 🍯 *10% + 5% Lifetime Commissions*
-
-👇 Share your personal invite link:`,
-    btn: '👥 Invite Friends & Get Spins 🚀'
-  },
-  plan_titan_66pct: {
-    msg: `💎 *CYBER TITAN: 6.00 TON ➔ 10.00 GRAM!* ⚡
-
-Rapid high-yield 24-hour payout:
-• 💰 *Pay 6.00 TON ➔ Receive 10.00 GRAM*
-• 📈 *+4.00 GRAM Profit (+66.7% ROI)*
-• 🚀 Automatic on-chain release
-
-👇 Activate Titan Miner:`,
-    btn: '💎 Start Titan Hive (10 G) ➔'
-  },
-  plan_queen_whale: {
-    msg: `👑 *ROYAL NODE: 3.00 TON ➔ 4.50 GRAM!* 💎
-
-Solid daily income guaranteed:
-• 💰 *Deposit 3.00 TON ➔ Get 4.50 GRAM*
-• ⚡ *+50.0% Profit in 24 Hours*
-• 🛡️ 100% Verified yield
-
-👇 Activate Royal Miner:`,
-    btn: '👑 Activate Royal Node ➔'
-  },
-  plan_starter_trial: {
-    msg: `⚡ *ACTIVATE CYBER WORKER: 1.30 TON ➔ 2.00 G!* 💎
-
-High-value 24-hour daily yield miner:
-• ⚡ *Pay 1.30 TON ➔ Receive 2.00 GRAM (+53.8% Profit)*
-• 🔓 Unlocks instant lifetime withdrawals
-• 🚀 24H Guaranteed cycle
-
-👇 Start your miner:`,
-    btn: '⚡ Activate Worker (1.30 TON) ➔'
+👇 Claim today's power drop in 1-click:`,
+    btn: '🎁 Claim 24H Power Drop ➔'
   },
   withdraw_proof_alert: {
-    msg: `💎 *PAYOUTS SENT! ALL CASHOUTS VERIFIED* 💸
+    msg: `💸 *HEIST MINER CASHOUTS COMPLETE: ALL PROOFS POSTED!* 💎⚡
 
-All pending user withdrawals dispatched on-chain!
-• 🚀 Hundreds of miners paid today
-• 🔎 Live proofs in @HashBeePayouts
-• 💰 Got balance? Cash out from 0.10 G!
+All pending operative withdrawals have been verified on-chain:
+• 🚀 Withdraw in *TON*, *USD₮ (TON)*, or *TRX (TRON)*
+• 🔎 Live multi-chain transaction proofs in @HashBeePayouts
+• 💰 Minimum withdrawal: *$1.00 USD* with zero fees!
 
-👇 Withdraw your mined crypto:`,
-    btn: '💸 Withdraw To My Wallet ➔'
+👇 Open wallet & request cashout:`,
+    btn: '💸 Withdraw To Wallet ➔'
   },
-  missions_bounty: {
-    msg: `⭐ *NEW SPONSOR MISSIONS: EARN FREE GHS!* 🚀
+  syndicate_commissions: {
+    msg: `👥 *BUILD YOUR SYNDICATE: EARN 10% CUT FOR LIFE!* 🚀
 
-Quick 5-second tasks just dropped:
-• 📢 Join partner channels: +0.50 GHS each
-• 🎬 Watch video ads: +1.0 Honey each
-• ⚡ Speed up your passive income!
+Recruit friends into your heist squad and stack permanent passive cuts:
+• 💰 *10% Cash Cut* on every safecracker operative they hire
+• 🔋 *10% Cash Cut* on every battery pack they purchase
+• 🎁 *$0.02 Instant Cash Bounty* on their first recruit hire
+• 👛 Directly claimable into your main cash balance!
 
-👇 Complete tasks & claim rewards:`,
-    btn: '⭐ Claim Free Mission Rewards ➔'
+👇 Copy invite link & grow your Syndicate:`,
+    btn: '👥 Recruit Syndicate Crew ➔'
   },
-  daily_streak_bonus: {
-    msg: `🔥 *DAILY BONUS WAITING FOR YOU!* 🎁
+  fusion_reactor_pack: {
+    msg: `⚡ *BEST VALUE: FUSION POWER REACTOR (+2M kWh)!* 🔋
 
-Hey {name}, don't break your mining streak:
-• 🍯 Free daily Honey credit ready
-• ⚡ Hashpower accelerator active
-• 💎 Only takes 3 seconds to claim!
+Never worry about empty generator batteries again:
+• 🔋 *+2,000,000 kWh Fusion Power Pack*
+• ⏳ Keeps your drill crew running for over *133 Days non-stop!*
+• 💰 Massive bulk discount: Only *$3.00 USD*
 
-👇 Claim your daily bonus:`,
-    btn: '🎁 Claim Daily Bonus Now ➔'
+👇 Equip Fusion Reactor in the Black Market:`,
+    btn: '⚡ Get Fusion Reactor ($3.00) ➔'
+  },
+  heist_leaderboard: {
+    msg: `🏆 *VAULT HEIST LEADERBOARD: BULLETS & BULLION!* 🏛️💎
+
+Operatives worldwide are cracking the cyber vaults non-stop:
+• 🥇 Over 100M+ Gold bullion smelted this week
+• 💵 Thousands in verified on-chain payouts delivered
+• 🥷 Stack multiple safecrackers to maximize your daily extraction
+
+👇 Launch Heist Miner & claim your share:`,
+    btn: '🔨 Enter The Vault Now ➔'
+  },
+  custom: {
+    msg: '',
+    btn: '🔨 Play Heist Miner'
   }
 };
 
-// Backwards compatibility aliases
-HYPE_TEMPLATES.spin_dopamine_jackpot = HYPE_TEMPLATES.spin_free_waiting;
-HYPE_TEMPLATES.spin_viral_referrals = HYPE_TEMPLATES.viral_referrals_rush;
-HYPE_TEMPLATES.personalized_buzz = HYPE_TEMPLATES.hive_full_alert;
-HYPE_TEMPLATES.withdraw_alert = HYPE_TEMPLATES.withdraw_proof_alert;
-HYPE_TEMPLATES.tasks_drop = HYPE_TEMPLATES.missions_bounty;
-HYPE_TEMPLATES.spin_vip_drop = HYPE_TEMPLATES.spin_free_waiting;
-HYPE_TEMPLATES.crate_mega_jackpot = HYPE_TEMPLATES.mystery_crate_drop;
-HYPE_TEMPLATES.viral_25k = HYPE_TEMPLATES.missions_bounty;
-HYPE_TEMPLATES.viral_20k = HYPE_TEMPLATES.missions_bounty;
-HYPE_TEMPLATES.mining_boost = HYPE_TEMPLATES.watch_ads_boost;
-HYPE_TEMPLATES.ghs_drop = HYPE_TEMPLATES.missions_bounty;
+// Aliases for compatibility
+HYPE_TEMPLATES.mining_boost = HYPE_TEMPLATES.vault_gold_smelt;
+HYPE_TEMPLATES.watch_ads_boost = HYPE_TEMPLATES.vault_gold_smelt;
+HYPE_TEMPLATES.spin_free_waiting = HYPE_TEMPLATES.daily_power_streak;
+HYPE_TEMPLATES.spin_dopamine_jackpot = HYPE_TEMPLATES.daily_power_streak;
+HYPE_TEMPLATES.mystery_crate_drop = HYPE_TEMPLATES.battery_power_drop;
+HYPE_TEMPLATES.viral_referrals_rush = HYPE_TEMPLATES.syndicate_commissions;
+HYPE_TEMPLATES.hive_full_alert = HYPE_TEMPLATES.vault_gold_smelt;
+HYPE_TEMPLATES.missions_bounty = HYPE_TEMPLATES.daily_power_streak;
 
 function showToast(msg, isErr=false) {
   const t = document.getElementById('toast');
@@ -1377,7 +1293,7 @@ function initDashboard(admin) {
   document.getElementById('dashboardView').style.display = 'block';
   document.getElementById('authControls').style.display = 'flex';
   document.getElementById('adminEmail').innerText = admin?.email || 'admin@hashbee.io';
-  applyTemplate('mining_boost');
+  applyTemplate('vault_gold_smelt');
   
   loadStats();
   loadCampaigns();
@@ -1667,6 +1583,9 @@ function applyTemplate(key) {
   if (HYPE_TEMPLATES[key]) {
     document.getElementById('broadcastMsg').value = HYPE_TEMPLATES[key].msg;
     document.getElementById('broadcastBtnText').value = HYPE_TEMPLATES[key].btn;
+  } else if (key === 'custom') {
+    document.getElementById('broadcastMsg').value = '';
+    document.getElementById('broadcastBtnText').value = '🔨 Play Heist Miner';
   }
   updatePreview();
 }

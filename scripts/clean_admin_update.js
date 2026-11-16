@@ -56,3 +56,4 @@ function update(file) {
 update('miniapp/public/admin/index.html');
 update('backend/public/admin/index.html');
 update('backend/public/app/admin/index.html');
+

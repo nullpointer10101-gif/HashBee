@@ -18,3 +18,4 @@ function updateFile(path) {
 
 updateFile('miniapp/public/admin/index.html');
 updateFile('backend/public/admin/index.html');
+
