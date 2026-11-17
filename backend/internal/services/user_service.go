@@ -779,3 +779,9 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 	}
 	return users, total, nil
 }
+
+// MarkOptedOutByTelegramID flags a user who blocked the bot or is deactivated
+func (s *UserService) MarkOptedOutByTelegramID(ctx context.Context, telegramID int64) error {
+	_, err := s.db.Exec(ctx, `UPDATE users SET opted_out_notifications = true WHERE telegram_id = $1`, telegramID)
+	return err
+}

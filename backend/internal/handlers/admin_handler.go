@@ -1196,7 +1196,7 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		recipients = append(recipients, bot.BroadcastRecipient{TelegramID: req.TargetTelegramID, FirstName: fn})
 	} else {
 		// "all" or "both"
-		rows, err := h.db.Query(c.Request.Context(), `SELECT DISTINCT telegram_id, COALESCE(first_name, username, '') FROM users WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned')`)
+		rows, err := h.db.Query(c.Request.Context(), `SELECT DISTINCT telegram_id, COALESCE(first_name, username, '') FROM users WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned') AND (opted_out_notifications IS NOT TRUE)`)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query users: " + err.Error()})
 			return

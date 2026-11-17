@@ -589,11 +589,11 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 	}
 	close(jobs)
 
-	limiter := time.NewTicker(35 * time.Millisecond)
+	limiter := time.NewTicker(33 * time.Millisecond)
 	defer limiter.Stop()
 
 	var wg sync.WaitGroup
-	workers := 8
+	workers := 25
 	if total < workers {
 		workers = total
 	}
@@ -625,14 +625,28 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 				msg.ReplyMarkup = keyboard
 
 				if _, err := b.api.Send(msg); err != nil {
-					// Fallback to plain text if Markdown entity parsing failed
-					msgPlain := tgbotapi.NewMessage(r.TelegramID, userMsg)
-					msgPlain.DisableWebPagePreview = true
-					msgPlain.ReplyMarkup = keyboard
-					if _, err2 := b.api.Send(msgPlain); err2 != nil {
+					errMsg := strings.ToLower(err.Error())
+					if strings.Contains(errMsg, "blocked by the user") || strings.Contains(errMsg, "user is deactivated") || strings.Contains(errMsg, "chat not found") {
 						atomic.AddInt64(&failedCount, 1)
+						if b.userSvc != nil {
+							go func(tid int64) {
+								c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+								defer cancel()
+								_ = b.userSvc.MarkOptedOutByTelegramID(c, tid)
+							}(r.TelegramID)
+						}
+					} else if strings.Contains(errMsg, "can't parse entities") || strings.Contains(errMsg, "entity") {
+						// Only retry plain text if Markdown entity parsing specifically failed
+						msgPlain := tgbotapi.NewMessage(r.TelegramID, userMsg)
+						msgPlain.DisableWebPagePreview = true
+						msgPlain.ReplyMarkup = keyboard
+						if _, err2 := b.api.Send(msgPlain); err2 != nil {
+							atomic.AddInt64(&failedCount, 1)
+						} else {
+							atomic.AddInt64(&sentCount, 1)
+						}
 					} else {
-						atomic.AddInt64(&sentCount, 1)
+						atomic.AddInt64(&failedCount, 1)
 					}
 				} else {
 					atomic.AddInt64(&sentCount, 1)
