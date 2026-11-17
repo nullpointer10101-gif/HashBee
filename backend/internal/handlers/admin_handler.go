@@ -1235,7 +1235,7 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 
 	// Launch background broadcast
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Hour)
 		defer cancel()
 
 		if h.bot != nil {
