@@ -88,7 +88,7 @@ func TelegramAuth(cfg *config.Config, userSvc *services.UserService) gin.Handler
 		}
 
 		// Upsert user WITH referrerTelegramID immediately
-		user, _, err := userSvc.GetOrCreate(c.Request.Context(), tgUser.ID, tgUser.Username, tgUser.FirstName, tgUser.LanguageCode, referrerTelegramID)
+		user, isNew, err := userSvc.GetOrCreate(c.Request.Context(), tgUser.ID, tgUser.Username, tgUser.FirstName, tgUser.LanguageCode, referrerTelegramID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user"})
 			c.Abort()
@@ -99,6 +99,7 @@ func TelegramAuth(cfg *config.Config, userSvc *services.UserService) gin.Handler
 		c.Set("telegram_id", tgUser.ID)
 		c.Set("start_param", tgUser.StartParam)
 		c.Set("user", user)
+		c.Set("is_new_user", isNew)
 		c.Next()
 	}
 }

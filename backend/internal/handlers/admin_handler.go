@@ -1181,6 +1181,14 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		req.ButtonURL = "https://miniapp-five-topaz.vercel.app"
 	}
 
+	// Persist as the active broadcast template so all future users who join also receive it automatically
+	if req.Message != "" {
+		_ = h.settings.Set(c.Request.Context(), "active_broadcast_message", req.Message)
+		_ = h.settings.Set(c.Request.Context(), "active_broadcast_button_text", req.ButtonText)
+		_ = h.settings.Set(c.Request.Context(), "active_broadcast_button_url", req.ButtonURL)
+		_ = h.settings.Set(c.Request.Context(), "active_broadcast_updated_at", time.Now().UTC().Format(time.RFC3339))
+	}
+
 	var recipients []bot.BroadcastRecipient
 	const payoutsChannelID int64 = -1003750950966
 
@@ -1195,8 +1203,17 @@ func (h *AdminHandler) Broadcast(c *gin.Context) {
 		}
 		recipients = append(recipients, bot.BroadcastRecipient{TelegramID: req.TargetTelegramID, FirstName: fn})
 	} else {
-		// "all" or "both"
-		rows, err := h.db.Query(c.Request.Context(), `SELECT DISTINCT telegram_id, COALESCE(first_name, username, '') FROM users WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned') AND (opted_out_notifications IS NOT TRUE)`)
+		// "all" or "both": Query ALL registered users, ordered by created_at DESC so newest users are processed first
+		rows, err := h.db.Query(c.Request.Context(), `
+			SELECT telegram_id, fn 
+			FROM (
+				SELECT DISTINCT ON (telegram_id) telegram_id, COALESCE(first_name, username, '') AS fn, created_at 
+				FROM users 
+				WHERE telegram_id > 0 AND (status IS NULL OR status != 'banned') 
+				ORDER BY telegram_id, created_at DESC
+			) u 
+			ORDER BY created_at DESC
+		`)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query users: " + err.Error()})
 			return

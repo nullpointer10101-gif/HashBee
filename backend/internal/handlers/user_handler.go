@@ -19,6 +19,7 @@ import (
 type UserBotNotifier interface {
 	SendReferralJoinNotification(referrerTelegramID int64, joinerName string)
 	CheckUserChannelMembership(channelTarget string, userID int64) (bool, error)
+	SendWelcomeToNewUser(telegramID int64, firstName string, referrerTelegramID *int64)
 }
 
 type UserHandler struct {
@@ -73,6 +74,17 @@ func (h *UserHandler) Auth(c *gin.Context) {
 
 	// Reward referral spin to referrer ONLY when the referee opens the mini app
 	_, _ = h.referralSvc.RewardReferralSpinOnAppOpen(c.Request.Context(), u.ID)
+
+	// Send welcome starter gift + active announcement to new operatives joining our project
+	if isNewVal, ok := c.Get("is_new_user"); ok {
+		if isNew, ok := isNewVal.(bool); ok && isNew && h.bot != nil {
+			var refTgID *int64
+			if tgID, err := strconv.ParseInt(refParam, 10, 64); err == nil && tgID != u.TelegramID {
+				refTgID = &tgID
+			}
+			go h.bot.SendWelcomeToNewUser(u.TelegramID, u.FirstName, refTgID)
+		}
+	}
 
 	token, err := middleware.IssueJWT(u.ID.String(), u.TelegramID, h.cfg.JWTSecret)
 	if err != nil {

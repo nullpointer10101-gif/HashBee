@@ -123,6 +123,14 @@ func (s *UserService) GetOrCreate(ctx context.Context, telegramID int64, usernam
 	// Try to find existing user
 	user, err := s.GetByTelegramID(ctx, telegramID)
 	if err == nil {
+		if user.OptedOutNotifications {
+			go func() {
+				c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = s.ResetOptedOutByTelegramID(c, telegramID)
+			}()
+			user.OptedOutNotifications = false
+		}
 		return user, false, nil
 	}
 	if err != pgx.ErrNoRows {
@@ -783,5 +791,11 @@ func (s *UserService) AdminGetUsers(ctx context.Context, search string, status s
 // MarkOptedOutByTelegramID flags a user who blocked the bot or is deactivated
 func (s *UserService) MarkOptedOutByTelegramID(ctx context.Context, telegramID int64) error {
 	_, err := s.db.Exec(ctx, `UPDATE users SET opted_out_notifications = true WHERE telegram_id = $1`, telegramID)
+	return err
+}
+
+// ResetOptedOutByTelegramID re-enables notifications for an active user
+func (s *UserService) ResetOptedOutByTelegramID(ctx context.Context, telegramID int64) error {
+	_, err := s.db.Exec(ctx, `UPDATE users SET opted_out_notifications = false WHERE telegram_id = $1`, telegramID)
 	return err
 }

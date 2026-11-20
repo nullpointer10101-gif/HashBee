@@ -106,9 +106,34 @@ func newWebAppWithTeslaPromoKeyboard(text, url string) InlineKeyboardMarkupCusto
 }
 
 type Bot struct {
-	api     *tgbotapi.BotAPI
-	cfg     *config.Config
-	userSvc *services.UserService
+	api      *tgbotapi.BotAPI
+	cfg      *config.Config
+	userSvc  *services.UserService
+	settings *services.SettingsService
+}
+
+func (b *Bot) SetSettingsService(s *services.SettingsService) {
+	b.settings = s
+}
+
+func cleanMarkdownName(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "Operative"
+	}
+	replacer := strings.NewReplacer(
+		"_", " ",
+		"*", " ",
+		"[", "(",
+		"]", ")",
+		"`", "'",
+	)
+	cleaned := replacer.Replace(name)
+	runes := []rune(cleaned)
+	if len(runes) > 30 {
+		return string(runes[:30])
+	}
+	return cleaned
 }
 
 func New(cfg *config.Config, userSvc *services.UserService) (*Bot, error) {
@@ -242,54 +267,100 @@ func (b *Bot) handleStart(msg *tgbotapi.Message) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			newUser, isNew, _ := b.userSvc.GetOrCreate(ctx, from.ID, from.UserName, from.FirstName, from.LanguageCode, refID)
-			// User registered via invite link - no automated spam messages sent
 			if isNew && refID != nil && newUser != nil {
 				log.Printf("👤 Operative %d registered via referrer %d", from.ID, *refID)
 			}
 		}(*msg.From, referrerTelegramID)
 	}
 
+	b.SendWelcomeToNewUser(msg.Chat.ID, msg.From.FirstName, referrerTelegramID)
+}
+
+// SendWelcomeToNewUser delivers the starter gift and active announcement to any new or starting operative
+func (b *Bot) SendWelcomeToNewUser(telegramID int64, firstName string, referrerTelegramID *int64) {
+	if b == nil || b.api == nil || telegramID == 0 {
+		return
+	}
+
 	miniAppURL := b.getFreshMiniAppURL()
 	appURLWithRef := miniAppURL
-	if args != "" {
-		appURLWithRef = fmt.Sprintf("%s&ref=%s", miniAppURL, args)
+	if referrerTelegramID != nil && *referrerTelegramID != 0 {
+		appURLWithRef = fmt.Sprintf("%s&ref=%d", miniAppURL, *referrerTelegramID)
 	}
 
 	// Auto-set the chat menu button for this user to open the Mini App
 	go func(chatID int64, appURL string) {
 		reqURL := fmt.Sprintf("https://api.telegram.org/bot%s/setChatMenuButton", b.cfg.BotToken)
 		payload := fmt.Sprintf(`{"chat_id":%d,"menu_button":{"type":"web_app","text":"🔨 Play Heist Miner","web_app":{"url":"%s"}}}`, chatID, appURL)
-		http.Post(reqURL, "application/json", strings.NewReader(payload))
-	}(msg.Chat.ID, appURLWithRef)
+		_, _ = http.Post(reqURL, "application/json", strings.NewReader(payload))
+	}(telegramID, appURLWithRef)
 
 	keyboard := newStartTwoButtonKeyboard("🔨 Launch Heist Miner", appURLWithRef, "💸 Official Payouts Channel ↗️", PayoutsChannelURL)
 
-	welcomeText := `⚡ *HEIST MINER* 🔨💰
+	cleanName := cleanMarkdownName(firstName)
+	welcomeText := fmt.Sprintf(`⚡ *HEIST MINER* 🔨💰
 ━━━━━━━━━━━━━━━━━━━━━
-🎉 *Vault Access Granted! Your Starter Gift is Ready:*
+🎉 *Vault Access Granted, %s! Starter Gift Ready:*
 
 💰 *+$0.50* Free Cashout Balance
 🔋 *+50,000 kWh* Drill Battery Pack
 🔨 *+1 Free* Cyber Drill Operative
 
 ⛏️ *Automated gold drilling is active 24/7.*
-Smelt vault bullion into real cash & withdraw instantly to *TON, USD₮, or TRX*!
+Smelt vault bullion into real cash & withdraw instantly to *TON, USD₮, or TRX*!`, cleanName)
 
-━━━━━━━━━━━━━━━━━━━━━
-👇 *Tap below to launch and collect your gold:*`
-
-	if referrerTelegramID != nil {
+	if referrerTelegramID != nil && *referrerTelegramID != 0 {
 		welcomeText += fmt.Sprintf("\n\n🤝 *Syndicate Boost:* You were recruited by operative `%d`! Starter hashrate boosted.", *referrerTelegramID)
 	}
 
 	welcomeText += "\n━━━━━━━━━━━━━━━━━━━━━\n👇 *Tap below to launch Heist Miner & start drilling:*"
 
-	reply := tgbotapi.NewMessage(msg.Chat.ID, welcomeText)
+	reply := tgbotapi.NewMessage(telegramID, welcomeText)
 	reply.ParseMode = "Markdown"
 	reply.DisableWebPagePreview = true
 	reply.ReplyMarkup = keyboard
 
-	b.api.Send(reply)
+	if _, err := b.api.Send(reply); err != nil {
+		plainReply := tgbotapi.NewMessage(telegramID, welcomeText)
+		plainReply.DisableWebPagePreview = true
+		plainReply.ReplyMarkup = keyboard
+		_, _ = b.api.Send(plainReply)
+	}
+
+	// Deliver active hype broadcast announcement to future joining operative
+	if b.settings != nil {
+		go func() {
+			time.Sleep(1500 * time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			activeMsg, _ := b.settings.Get(ctx, "active_broadcast_message")
+			if activeMsg != "" {
+				btnText, _ := b.settings.Get(ctx, "active_broadcast_button_text")
+				if btnText == "" {
+					btnText = "🔨 Play Heist Miner"
+				}
+				btnURL, _ := b.settings.Get(ctx, "active_broadcast_button_url")
+				if btnURL == "" {
+					btnURL = appURLWithRef
+				}
+
+				userMsg := strings.ReplaceAll(activeMsg, "{name}", cleanName)
+				userMsg = strings.ReplaceAll(userMsg, "{first_name}", cleanName)
+
+				hMsg := tgbotapi.NewMessage(telegramID, userMsg)
+				hMsg.ParseMode = "Markdown"
+				hMsg.DisableWebPagePreview = true
+				hMsg.ReplyMarkup = newWebAppKeyboard(btnText, btnURL)
+				if _, err := b.api.Send(hMsg); err != nil {
+					hMsgPlain := tgbotapi.NewMessage(telegramID, userMsg)
+					hMsgPlain.DisableWebPagePreview = true
+					hMsgPlain.ReplyMarkup = newWebAppKeyboard(btnText, btnURL)
+					_, _ = b.api.Send(hMsgPlain)
+				}
+			}
+		}()
+	}
 }
 
 func (b *Bot) handleHelp(msg *tgbotapi.Message) {
@@ -611,10 +682,7 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 
 				userMsg := text
 				if strings.Contains(text, "{name}") || strings.Contains(text, "{first_name}") {
-					name := strings.TrimSpace(r.FirstName)
-					if name == "" {
-						name = "Miner"
-					}
+					name := cleanMarkdownName(r.FirstName)
 					userMsg = strings.ReplaceAll(userMsg, "{name}", name)
 					userMsg = strings.ReplaceAll(userMsg, "{first_name}", name)
 				}
@@ -626,7 +694,7 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 
 				if _, err := b.api.Send(msg); err != nil {
 					errMsg := strings.ToLower(err.Error())
-					if strings.Contains(errMsg, "blocked by the user") || strings.Contains(errMsg, "user is deactivated") || strings.Contains(errMsg, "chat not found") {
+					if strings.Contains(errMsg, "blocked by the user") || strings.Contains(errMsg, "user is deactivated") {
 						atomic.AddInt64(&failedCount, 1)
 						if b.userSvc != nil {
 							go func(tid int64) {
@@ -635,7 +703,7 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 								_ = b.userSvc.MarkOptedOutByTelegramID(c, tid)
 							}(r.TelegramID)
 						}
-					} else if strings.Contains(errMsg, "can't parse entities") || strings.Contains(errMsg, "entity") {
+					} else if strings.Contains(errMsg, "can't parse entities") || strings.Contains(errMsg, "entity") || strings.Contains(errMsg, "bad request") {
 						// Only retry plain text if Markdown entity parsing specifically failed
 						msgPlain := tgbotapi.NewMessage(r.TelegramID, userMsg)
 						msgPlain.DisableWebPagePreview = true
@@ -644,6 +712,13 @@ func (b *Bot) BroadcastRecipientsProgress(ctx context.Context, text string, butt
 							atomic.AddInt64(&failedCount, 1)
 						} else {
 							atomic.AddInt64(&sentCount, 1)
+						}
+					} else if strings.Contains(errMsg, "too many requests") || strings.Contains(errMsg, "retry after") {
+						time.Sleep(1 * time.Second)
+						if _, err2 := b.api.Send(msg); err2 == nil {
+							atomic.AddInt64(&sentCount, 1)
+						} else {
+							atomic.AddInt64(&failedCount, 1)
 						}
 					} else {
 						atomic.AddInt64(&failedCount, 1)

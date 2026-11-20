@@ -217,6 +217,7 @@ func main() {
 		log.Printf("⚠️  Bot initialization failed: %v (continuing without bot)", err)
 		tgBot = nil
 	} else if tgBot != nil {
+		tgBot.SetSettingsService(settingsSvc)
 		referralSvc.SetBot(tgBot)
 		missionSvc.SetBot(tgBot)
 	}
